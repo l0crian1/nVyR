@@ -454,7 +454,7 @@ def test_strip_private_flag_reaches_script(controller, monkeypatch):
 
     controller.execute('show firewall ipv4 forward filter rule 10 | strip-private')
 
-    assert calls == [['firewall.nvyr.op', 'show', '--strip-private',
+    assert calls == [['firewall.nvyr.op', 'show', '--strip-private', 'all',
                       '--family', 'ipv4', '--hook', 'forward', '--stage', 'filter', '--rule', '10']]
 
 

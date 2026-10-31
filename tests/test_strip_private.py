@@ -9,7 +9,7 @@ import sys
 import pytest
 
 from nvyr import opmode
-from nvyr.errors import ParseError
+from nvyr.errors import ParseError, ValidationError
 from nvyr.helpers.strip_private import (
     ConfigurationMasker, strip_ip, strip_ipv4, strip_ipv6, strip_mac,
     strip_password, strip_value,
@@ -34,6 +34,78 @@ from nvyr.schema import Schema
 def test_reusable_masks(function, value, masked):
     assert function(value, False) is value
     assert function(value, True) == masked
+
+
+@pytest.mark.parametrize('function,value,mode,expected', [
+    (strip_ip, '10.5.12.34/24', 'partial', '10.5.xxx.xxx/24'),
+    (strip_ip, '2001:db8::1234/64', 'partial', '2001:db8:x:x:x:x:x:x/64'),
+    (strip_ip, 'fe80::1234%eth0', 'partial', 'fe80:0:x:x:x:x:x:x'),
+    (strip_ip, '::1', 'partial', '0:0:x:x:x:x:x:x'),
+    (strip_ip, '10.5.1.1-10.6.1.10', 'partial', '10.5.xxx.xxx-10.6.xxx.xxx'),
+    (strip_ip, '8.8.8.8/32', 'public', '<ipv4>'),
+    (strip_ip, '2606:4700::1111', 'public', '<ipv6>'),
+    (strip_ip, '10.5.1.1/24', 'public', '10.5.1.1/24'),
+    (strip_ip, '100.64.1.1', 'public', '100.64.1.1'),
+    (strip_ip, 'fe80::1%eth0', 'public', 'fe80::1%eth0'),
+    (strip_ip, 'fd00::1', 'public', 'fd00::1'),
+    (strip_ip, '224.0.0.1', 'public', '224.0.0.1'),
+    (strip_mac, '02:11:22:33:44:55', 'partial', '02:11:22:xx:xx:xx'),
+    (strip_mac, '02:11:22:33:44:55', 'public', '02:11:22:33:44:55'),
+    (strip_value, 'Customer location', 'partial', '<private>'),
+    (strip_value, 'Customer location', 'public', 'Customer location'),
+    (strip_password, 'secret', 'public', '<password>'),
+    (strip_password, 'secret', 'partial', '<password>'),
+])
+def test_masking_modes(function, value, mode, expected):
+    assert function(value, mode) == expected
+
+
+def test_partial_configuration_keeps_colliding_tags_and_changes_distinct():
+    schema = Schema({'kind': 'node', 'children': {'address': {'kind': 'tag_node', 'strip_kind': 'ipv4'}}})
+    masker = ConfigurationMasker(schema, 'partial')
+    before = {'address': {'10.5.1.1': {}, '10.5.1.2': {}}}
+    after = {'address': {'10.5.1.1': {}, '10.5.1.3': {}}}
+    old, new = masker.tree(before), masker.tree(after)
+
+    assert len(old['address']) == len(new['address']) == 2
+    assert len(set(old['address']) & set(new['address'])) == 1
+    assert all(key.startswith('10.5.xxx.xxx') for key in new['address'])
+    assert masker.path(('address', '10.5.1.1'))[1] in new['address']
+
+
+def test_mode_completion_and_validation(controller, session):
+    candidates = dict(controller.completion('show | strip-private ', session)['candidates'])
+    assert {'all', 'partial', 'public'} <= candidates.keys()
+
+    with pytest.raises(ValidationError, match='permitted values'):
+        controller.execute('show | strip-private invalid', session)
+
+    with pytest.raises(ParseError, match='one strip-private mode'):
+        controller.execute('show | strip-private partial | strip-private public', session)
+
+    with pytest.raises(ParseError, match='incomplete'):
+        controller.execute('show | match', session)
+
+
+def test_interface_public_and_partial_modes_preserve_field_types():
+    from nvyr.op_scripts import interfaces
+
+    kernel = {'ifalias': 'Customer location', 'address': '02:11:22:33:44:55', 'addr_info': [
+        {'local': '10.5.1.1', 'broadcast': '10.5.1.255'}, {'local': '8.8.8.8'},
+        {'local': '2606:4700::1111'}]}
+    original = deepcopy(kernel)
+    public = interfaces._mask_kernel_data(kernel, 'public')
+    partial = interfaces._mask_kernel_data(kernel, 'partial')
+
+    assert public['ifalias'] == kernel['ifalias']
+    assert public['address'] == kernel['address']
+    assert public['addr_info'] == [{'local': '10.5.1.1', 'broadcast': '10.5.1.255'},
+                                 {'local': '<ipv4>'}, {'local': '<ipv6>'}]
+    assert partial['address'] == '02:11:22:xx:xx:xx'
+    assert partial['ifalias'] == '<private>'
+    assert partial['addr_info'][2]['local'] == '2606:4700:x:x:x:x:x:x'
+    assert kernel == original
+    assert interfaces._mask_transceiver({'serial': 'secret'}, 'partial') == {'serial': '<private>'}
 
 
 def test_masked_tags_remain_distinct_and_diffs_keep_changes():
@@ -127,6 +199,22 @@ def test_configuration_views(configured_private, view, suffix):
     assert '192.0.2.10' in controller.execute('show running-configuration', session)['text']
 
 
+def test_configuration_mode_selection(configured_private):
+    controller, engine, session = configured_private
+    original = deepcopy(engine.running)
+    partial = controller.execute('show running-configuration | strip-private partial | commands', session)['text']
+    public = controller.execute('show running-configuration | strip-private public | commands', session)['text']
+
+    assert '192.0.xxx.xxx/24' in partial
+    assert '2001:db8:x:x:x:x:x:x/64' in partial
+    assert '02:11:22:xx:xx:xx' in partial
+    assert 'Customer location' not in partial
+    assert '192.0.2.10/24' in public
+    assert '02:11:22:33:44:55' in public
+    assert 'Customer location' in public
+    assert engine.running == original
+
+
 def test_scoped_commands_operational_running_and_other_modifiers(configured_private):
     controller, engine, session = configured_private
     controller.execute('edit interfaces dummy dum0', session)
@@ -160,15 +248,16 @@ def test_scoped_commands_operational_running_and_other_modifiers(configured_priv
     ('show interfaces eth0 detail', ['show', '--intf_name', 'eth0', '--detail']),
     ('show interfaces ethernet statistics', ['show', '--intf_type', 'ethernet', '--statistics']),
 ])
-def test_script_flag_dispatch_preserves_optional_positions(controller, session, monkeypatch, line, expected):
+@pytest.mark.parametrize('mode', ['', ' all', ' partial', ' public'])
+def test_script_flag_dispatch_preserves_optional_positions(controller, session, monkeypatch, line, expected, mode):
     calls = []
     monkeypatch.setattr('nvyr.controller.cmd', lambda argv, **kwargs:
                         calls.append(argv) or 'script output 192.0.2.1\n')
 
     for prefix, context in [('', None), ('run ', session)]:
-        result = controller.execute(prefix + line + ' | strip-private', context)
+        result = controller.execute(prefix + line + ' | strip-private' + mode, context)
 
-        assert calls[-1] == ['interfaces.nvyr.op', expected[0], '--strip-private', *expected[1:]]
+        assert calls[-1] == ['interfaces.nvyr.op', expected[0], '--strip-private', mode.strip() or 'all', *expected[1:]]
 
         # The framework must not guess at or rewrite the script's output.
         assert result['text'] == 'script output 192.0.2.1\n'
@@ -187,7 +276,7 @@ def test_line_placeholder_and_streaming(controller):
         controller.execute(line)
 
 
-def test_installed_script_receives_boolean_and_original_line(controller, tmp_path, monkeypatch):
+def test_installed_script_receives_mode_and_original_line(controller, tmp_path, monkeypatch):
     from build_tools.op_scripts import install_scripts
 
     source = tmp_path / 'scripts'
@@ -197,7 +286,7 @@ import json
 from nvyr import opmode
 from nvyr.helpers.strip_private import strip_ip
 @opmode.command
-def show(line: str, strip_private: bool = False):
+def show(line: str, strip_private: str | None = None):
     return json.dumps([strip_private, strip_ip('192.0.2.1', strip_private), line])
 opmode.run()
 ''')
@@ -209,9 +298,11 @@ opmode.run()
         'kind': 'leaf_node', 'command': {'argv': ['example.nvyr.op', 'show', '@line']}}}})
     line = 'report "value with spaces"'
 
-    assert json.loads(controller.execute(line)['text']) == [False, '192.0.2.1', line]
+    assert json.loads(controller.execute(line)['text']) == [None, '192.0.2.1', line]
 
-    assert json.loads(controller.execute(line + ' | strip-private')['text']) == [True, '<ipv4>', line]
+    assert json.loads(controller.execute(line + ' | strip-private')['text']) == ['all', '<ipv4>', line]
+    assert json.loads(controller.execute(line + ' | strip-private partial')['text']) == ['partial', '192.0.xxx.xxx', line]
+    assert json.loads(controller.execute(line + ' | strip-private public')['text']) == ['public', '192.0.2.1', line]
 
 
 def test_direct_executable_cannot_silently_ignore_masking(controller, monkeypatch):
@@ -241,7 +332,7 @@ def test_interface_script_masks_before_formatting_without_changing_input(monkeyp
                    {'local': '2001:db8::10', 'prefixlen': 64, 'scope': 'global'}]}]
     original = deepcopy(kernel)
     monkeypatch.setattr(interfaces, 'cmd', lambda argv: json.dumps(kernel))
-    words = ['show', '--strip-private']
+    words = ['show', '--strip-private', 'all']
 
     for name, enabled in [('raw', raw), ('detail', detail), ('statistics', statistics)]:
         if enabled:

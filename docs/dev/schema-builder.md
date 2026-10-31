@@ -455,6 +455,12 @@ such as `<ipv4-1>` keep distinct tag keys and changed values distinct, including
 password changes, without exposing source data or hashes. Aliases are shared
 between the sides of one comparison and are not persistent identifiers.
 
+The optional `all`, `partial`, and `public` pipe choices select the masking mode;
+omitting the choice selects `all`. Partial configuration values have a unique
+suffix, for example `10.5.xxx.xxx/24 <private-1>`, so addresses with the same
+visible portion still occupy distinct tag keys and remain distinguishable in diffs.
+Operational interface displays do not need these configuration aliases.
+
 The modifier supports `show`, running/candidate views, saved/history comparisons,
 edit scopes, and `| commands`. It runs before formatting and other text modifiers,
 so both `| strip-private | commands` and `| commands | strip-private` work.

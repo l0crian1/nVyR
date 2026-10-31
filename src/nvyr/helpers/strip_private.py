@@ -14,26 +14,53 @@ def strip_ip(value, strip_private=False):
         # NAT pools can be expressed as an inclusive address range.
         if isinstance(value, str) and value.count('-') == 1:
             start, end = value.split('-')
-            left, right = strip_ip(start, True), strip_ip(end, True)
+            left, right = strip_ip(start, strip_private), strip_ip(end, strip_private)
+            if strip_private == 'partial' and left != start and right != end:
+                return f'{left}-{right}'
             if left == right and left in {'<ipv4>', '<ipv6>'}:
                 return left
+            if strip_private == 'public':
+                for masked in (left, right):
+                    if masked in {'<ipv4>', '<ipv6>'}:
+                        return masked
 
         return value
+
+    if strip_private == 'public' and (not address.ip.is_global or address.ip.is_multicast):
+        return value
+
+    if strip_private == 'partial':
+        # Fixed boundaries retain useful topology hints without exposing host bits.
+        if address.version == 4:
+            masked = '.'.join(str(address.ip).split('.')[:2]) + '.xxx.xxx'
+        else:
+            # packed excludes any scope identifier and handles compressed addresses.
+            hextets = [int.from_bytes(address.ip.packed[offset:offset + 2], 'big') for offset in (0, 2)]
+            masked = ':'.join(f'{part:x}' for part in hextets) + ':x:x:x:x:x:x'
+
+        if '/' in value:
+            masked += f'/{address.network.prefixlen}'
+        return masked
 
     return f'<ipv{address.version}>'
 
 
 def strip_ipv4(value, strip_private=False):
-    masked = strip_ip(value, strip_private)
-    return masked if masked == '<ipv4>' else value
+    return strip_ip(value, strip_private) if ':' not in value else value
 
 
 def strip_ipv6(value, strip_private=False):
-    masked = strip_ip(value, strip_private)
-    return masked if masked == '<ipv6>' else value
+    return strip_ip(value, strip_private) if ':' in value else value
 
 
 def strip_mac(value, strip_private=False):
+    if strip_private == 'public':
+        return value
+    if strip_private == 'partial':
+        parts = value.split(':')
+        if len(parts) == 6 and all(len(part) == 2 and all(char in '0123456789abcdefABCDEF' for char in part)
+                                   for part in parts):
+            return ':'.join(parts[:3]) + ':xx:xx:xx'
     return '<mac>' if strip_private else value
 
 
@@ -43,7 +70,7 @@ def strip_password(value, strip_private=False):
 
 def strip_value(value, strip_private=False):
     """Mask other sensitive values, including names and free-form descriptions."""
-    return '<private>' if strip_private else value
+    return '<private>' if strip_private and strip_private != 'public' else value
 
 
 KINDS = {'ipv4': strip_ipv4, 'ipv6': strip_ipv6, 'ip': strip_ip,
@@ -54,12 +81,13 @@ class ConfigurationMasker:
     """Copy schema-marked values, with aliases local to a single display.
 
     Distinct values must stay distinct: otherwise masked tag keys collide and
-    comparisons silently lose changes. Aliases contain no hashes or source data.
+    comparisons silently lose changes. Alias suffixes contain no hashes or source data.
     Reuse one instance for both sides of a diff and its selected scope.
     """
 
-    def __init__(self, schema):
+    def __init__(self, schema, mode='all'):
         self.schema = schema
+        self.mode = mode
         self.aliases = {}
 
     def value(self, node, value):
@@ -67,13 +95,16 @@ class ConfigurationMasker:
         if kind is None:
             return value
 
-        masked = KINDS[kind](value, True)
+        masked = KINDS[kind](value, self.mode)
         if masked == value:
             return value
 
         key = (masked, value)
         if key not in self.aliases:
-            self.aliases[key] = f'{masked[:-1]}-{len(self.aliases) + 1}>'
+            identifier = len(self.aliases) + 1
+            # Partial addresses can collide too; keep distinct keys and diff values.
+            self.aliases[key] = (f'{masked[:-1]}-{identifier}>' if masked.startswith('<')
+                                 else f'{masked} <private-{identifier}>')
 
         return self.aliases[key]
 

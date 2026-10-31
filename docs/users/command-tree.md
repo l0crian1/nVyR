@@ -13447,5 +13447,5 @@ operational mode
 ├── match <regex>
 ├── more
 ├── no-more
-└── strip-private
+└── strip-private [<all|partial|public>]
 ```

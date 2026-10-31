@@ -36,7 +36,8 @@ class Pipelines:
 
         for index, tokens in enumerate(stages):
             cursor = self.schema.resolve(tokens)
-            if cursor.expect in {"value", "tag"} or "command" not in cursor.node:
+            if (cursor.expect in {"value", "tag"} and not cursor.node.get('optional_value')
+                    or "command" not in cursor.node):
                 raise ParseError("The output modifier is incomplete. Use ? to see its required value.")
 
             if cursor.node.get("sink") and index != len(stages) - 1:

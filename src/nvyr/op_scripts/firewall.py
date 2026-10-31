@@ -85,10 +85,10 @@ def _value(value, field, private):
     if not private or not text:
         return text
     if field in ('description', 'prefix'):
-        return strip_value(text, True)
+        return strip_value(text, private)
     if field in ('source-mac', 'destination-mac', 'mac', 'ether_addr'):
-        return strip_mac(text, True)
-    return strip_ip(text, True)
+        return strip_mac(text, private)
+    return strip_ip(text, private)
 
 
 def _last_used(record):
@@ -476,7 +476,7 @@ def _show_limit(record, title, private):
 @opmode.command
 def runtime(kind: str, family: str | None = None, hook: str | None = None, stage: str | None = None,
             named: bool = False, chain_name: str | None = None, rule: str | None = None,
-            strip_private: bool = False, raw: bool = False):
+            strip_private: str | None = None, raw: bool = False):
     """Inspect installed limits or quotas without resetting any state."""
     if kind not in ('limit', 'quota'):
         raise OperationalError('Select limit or quota runtime state.')
@@ -548,7 +548,7 @@ def runtime(kind: str, family: str | None = None, hook: str | None = None, stage
 def show(family: str | None = None, hook: str | None = None, stage: str | None = None, named: bool = False,
          chain_name: str | None = None, rule: str | None = None,
          section: str | None = None, group_kind: str | None = None,
-         group_name: str | None = None, strip_private: bool = False, detail: bool = False,
+         group_name: str | None = None, strip_private: str | None = None, detail: bool = False,
          zone_name: str | None = None, failsafe: bool = False):
     """Show all firewall objects or a selected family, chain, rule, or group."""
     if rule is not None and named and chain_name is None:

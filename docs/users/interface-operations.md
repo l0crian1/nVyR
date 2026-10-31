@@ -44,7 +44,21 @@ show interfaces eth0 transceiver
   These are distinct from the generic kernel counters in `statistics`.
 - `transceiver`: decoded module fields, including vendor/part/serial information,
   measurements and alarms where available. Multiple optical lanes remain distinct.
-  `strip-private` masks module serial identifiers.
+  `strip-private` and `strip-private partial` mask module serial identifiers.
+
+Use the privacy modifier on summary, detail, raw, or hardware views:
+
+```text
+show interfaces | strip-private
+show interfaces eth0 detail | strip-private partial
+show interfaces | strip-private public
+```
+
+`partial` displays addresses such as `10.5.xxx.xxx/24` and
+`2001:db8:x:x:x:x:x:x/64`, and MACs such as `02:11:22:xx:xx:xx`.
+Descriptions remain fully masked. `public` masks only globally routable unicast
+IP addresses, retaining non-public addresses, MACs, descriptions, and serials.
+Bare `strip-private` and `strip-private all` retain full masking.
 
 The existing `show interfaces ethernet eth0 ...` selector also supports these
 views. Omitting the interface queries physical Ethernet interfaces; an explicit

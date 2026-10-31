@@ -72,9 +72,13 @@ class Controller:
 
         stages = split_pipeline(text)
         parsed_pipeline = self.pipelines.parse(stages[1:])  # Validate sinks before effects.
-        strip_private = any(name == 'strip-private' for name, _ in parsed_pipeline)
+        privacy_modes = [value or 'all' for name, value in parsed_pipeline if name == 'strip-private']
+        if len(set(privacy_modes)) > 1:
+            raise ParseError('Use one strip-private mode per command.')
+
+        strip_private = privacy_modes[0] if privacy_modes else None
         parsed_pipeline = [(name, value) for name, value in parsed_pipeline if name != 'strip-private']
-        masker = ConfigurationMasker(self.engine.schema) if strip_private else None
+        masker = ConfigurationMasker(self.engine.schema, strip_private) if strip_private else None
 
         tokens = stages[0]
         schema = self.control if session else self.operational
@@ -116,7 +120,7 @@ class Controller:
                 # Prepend the function option before user values (including --).
                 # The script signature, not an output text filter, owns masking.
                 command = dict(command)
-                command['argv'] = command['argv'][:2] + ['--strip-private'] + command['argv'][2:]
+                command['argv'] = command['argv'][:2] + ['--strip-private', strip_private] + command['argv'][2:]
 
             if isinstance(command, dict) and command.get('stream'):
                 event = {'event': 'command',

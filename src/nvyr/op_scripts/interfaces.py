@@ -38,7 +38,7 @@ def _get_kernel_data(raw, ifname = None, intf_type = None, detail = False,
     kernel_interface = json.loads(cmd(address_show_cmd))
 
     if strip_private:
-        kernel_interface = _mask_kernel_data(kernel_interface)
+        kernel_interface = _mask_kernel_data(kernel_interface, strip_private)
 
     # Return early if raw
     if raw:
@@ -53,24 +53,25 @@ def _get_kernel_data(raw, ifname = None, intf_type = None, detail = False,
     return kernel_interface, kernel_interface_out
 
 
-def _mask_kernel_data(value, field=None):
+def _mask_kernel_data(value, mode='all', field=None):
     """Mask a copy before either raw output or table layout is constructed."""
     if isinstance(value, dict):
-        return {key: _mask_kernel_data(item, key) for key, item in value.items()}
+        return {key: _mask_kernel_data(item, mode, key) for key, item in value.items()}
 
     if isinstance(value, list):
-        return [_mask_kernel_data(item, field) for item in value]
+        return [_mask_kernel_data(item, mode, field) for item in value]
 
     if isinstance(value, str):
         if field == 'ifalias':
-            return strip_value(value, True)
+            return strip_value(value, mode)
 
-        masked = strip_ip(value, True)
+        masked = strip_ip(value, mode)
         if masked != value:
             return masked
 
-        if field in {'address', 'broadcast', 'permaddr'}:
-            return strip_mac(value, True)
+        # Address and broadcast fields can hold either an IP or a link address.
+        if field in {'address', 'broadcast', 'permaddr'} and re.fullmatch(r'(?:[0-9a-fA-F]{2}:){5,}[0-9a-fA-F]{2}', value):
+            return strip_mac(value, mode)
 
     return value
 
@@ -298,7 +299,7 @@ def _hardware_output(name, view, data):
 
 @opmode.command
 def hardware(view: str, intf_name: str | None = None, intf_type: str | None = None,
-             raw: bool = False, strip_private: bool = False):
+             raw: bool = False, strip_private: str | None = None):
     """Read hardware diagnostics for a selected interface or all Ethernet ports."""
     if view not in {'offload', 'queues', 'hardware-statistics', 'transceiver'}:
         raise OperationalError('Unknown interface diagnostic view.')
@@ -322,7 +323,7 @@ def hardware(view: str, intf_name: str | None = None, intf_type: str | None = No
         name = interface['ifname']
         data = _hardware_data(name, view)
         if strip_private and view == 'transceiver' and data is not None:
-            data = _mask_transceiver(data)
+            data = _mask_transceiver(data, strip_private)
         records[name] = data
         if not raw:
             _hardware_output(name, view, data)
@@ -330,23 +331,23 @@ def hardware(view: str, intf_name: str | None = None, intf_type: str | None = No
         return json.dumps(records)
 
 
-def _mask_transceiver(value):
+def _mask_transceiver(value, mode='all'):
     """Hide module serial identifiers in shared diagnostic reports."""
     if isinstance(value, list):
-        return [_mask_transceiver(item) for item in value]
+        return [_mask_transceiver(item, mode) for item in value]
     if isinstance(value, dict):
         result = {}
         for key, item in value.items():
             if 'serial' in key.lower() or key.lower() == 'vendor_sn':
-                result[key] = strip_value(str(item), True)
+                result[key] = strip_value(str(item), mode)
             else:
-                result[key] = _mask_transceiver(item)
+                result[key] = _mask_transceiver(item, mode)
         return result
     return value
 
 
 @opmode.command
-def show(raw: bool = False, intf_name: str | None = None, intf_type: str | None = None, detail: bool = False, statistics: bool = False, strip_private: bool = False):
+def show(raw: bool = False, intf_name: str | None = None, intf_type: str | None = None, detail: bool = False, statistics: bool = False, strip_private: str | None = None):
     raw_data, data = _get_kernel_data(raw, intf_name, intf_type, detail, statistics, strip_private)
 
     # Return early if raw

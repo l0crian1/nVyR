@@ -92,8 +92,8 @@ nVyR CLI still uses the invoking account's privileges.
 ## Private output
 
 `| strip-private` requests masking before formatting. For an operational script,
-configd supplies `--strip-private` to the selected function through the existing
-signature-based argument parser. Add `strip_private: bool = False` to functions
+configd supplies `--strip-private MODE` to the selected function through the existing
+signature-based argument parser. Add `strip_private: str | None = None` to functions
 that support it, and mask values before building tables or other output:
 
 ```python
@@ -101,7 +101,7 @@ from nvyr.helpers.strip_private import strip_ip, strip_mac
 
 
 @opmode.command
-def show(strip_private: bool = False):
+def show(strip_private: str | None = None):
     address = strip_ip('192.0.2.1/24', strip_private)
     mac = strip_mac('00:11:22:33:44:55', strip_private)
 
@@ -109,10 +109,15 @@ def show(strip_private: bool = False):
 ```
 
 Helpers also include `strip_ipv4`, `strip_ipv6`, `strip_password`, and
-`strip_value` (other sensitive text). False returns the original value; true
-returns an opaque marker such as `<ipv4>` or `<password>`. IP helpers retain
+`strip_value` (other sensitive text). `None` returns the original value; `all`
+returns an opaque marker such as `<ipv4>` or `<password>`. Bare `strip-private`
+selects `all`. `partial` retains the first two IPv4 octets or IPv6 hextets and
+the first three MAC octets; descriptions and credentials remain fully masked.
+`public` masks globally routable unicast IP addresses and credentials, retaining
+other values. These choices and their validation live in `schemas/pipelines.yaml`.
+Pass the selected mode through to each helper. IP helpers retain
 non-address choices such as `dhcp` and interface names, and support prefixes
-and address ranges. They mask public as well as private addresses.
+and address ranges. `all` and `partial` mask public as well as private addresses.
 
 The framework never rewrites operational text. `interfaces.py` masks a copy of
 its kernel data before table layout, including detail and raw displays. Functions

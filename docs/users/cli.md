@@ -284,6 +284,21 @@ expressions containing spaces or `|`. `count` counts output lines.
 commands that support it. Apply `commands` before text filters if command-form output is
 needed; text filters discard configuration structure.
 
+Choose how much to mask:
+
+- `strip-private` or `strip-private all`: fully mask designated private values.
+- `strip-private partial`: retain the first two IPv4 octets or IPv6 hextets and
+  the first three MAC octets. Prefix lengths remain visible. Other private text,
+  including descriptions, stays fully masked.
+- `strip-private public`: mask globally routable unicast IP addresses. Non-public
+  addresses, MACs, names, and descriptions remain visible. This uses address
+  classification, not just an RFC1918 check.
+
+Credentials remain fully masked in every mode. Partial output deliberately reveals
+part of your addressing; review output before sharing. Configuration displays add
+unique aliases to masked values so distinct entries and changes remain distinguishable.
+These choices affect display only and do not modify configuration.
+
 ### Paging command output
 
 Long captured output pages automatically in an interactive terminal. Short output

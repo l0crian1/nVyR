@@ -2,8 +2,25 @@
   "kind": "node",
   "children": {
     "strip-private": {
-      "kind": "node",
+      "kind": "leaf_node",
       "description": "Mask schema-marked configuration values or request script masking",
+      "optional_value": true,
+      "choices": {
+        "all": "Fully mask all designated private values (default)",
+        "partial": "Partially mask IP and MAC addresses; fully mask other private values",
+        "public": "Mask globally routable IP addresses; retain non-public addresses, MACs and descriptions"
+      },
+      "validators": {
+        "mode": "AND",
+        "checks": {
+          "list": {
+            "name": "list",
+            "args": {
+              "values": "all partial public"
+            }
+          }
+        }
+      },
       "command": "strip-private"
     },
     "commands": {
