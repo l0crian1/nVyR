@@ -12,6 +12,8 @@ The project is under active development and has not yet reached a production rel
 Browse the [documentation](docs/README.md), start with [using the CLI](docs/users/cli.md),
 or consult the complete [command tree](docs/users/command-tree.md).
 
+[Join the nVyR Discord](https://discord.gg/pjqy5Q6mmg)
+
 ## Current features
 
 - Candidate configuration, validation, commit-confirm, rollback, and revision history
