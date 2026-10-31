@@ -38,9 +38,8 @@ def published_port(settings):
 
 
 def capabilities(configuration):
+    """Format explicit additions; Podman supplies defaults unless none is selected."""
     selected = set(configuration.get('capability', ()))
-    if 'none' not in selected:
-        selected.add('net-bind-service')
     return [value.upper().replace('-', '_') for value in sorted(selected - {'none'})]
 
 

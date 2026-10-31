@@ -47,6 +47,28 @@ def run_apply(payload, *, recovery=False, report=print):
     return None
 
 
+def image_accounts(image):
+    """Read image account databases without executing its entrypoint or programs."""
+    root = cmd(['podman', 'image', 'mount', image]).strip()
+    try:
+        accounts = {}
+        for kind, filename in (('user', 'etc/passwd'), ('group', 'etc/group')):
+            try:
+                contents = filesystem.read_text(root, filename)
+            except FileNotFoundError:
+                contents = ''
+            accounts[kind] = {}
+            for line in contents.splitlines():
+                fields = line.split(':')
+                if len(fields) >= 3 and fields[2].isascii() and fields[2].isdigit():
+                    identifier = int(fields[2])
+                    if identifier <= 4294967294:
+                        accounts[kind][fields[0]] = identifier
+        return accounts
+    finally:
+        cmd(['podman', 'image', 'unmount', image])
+
+
 def main():
     from nvyr.config_scripts import container
     from nvyr.helpers import container_operations
@@ -57,6 +79,9 @@ def main():
         filesystem.protected_directory(config.RUNTIME)
         if sys.argv[1:] == ['images']:
             print(cmd(['podman', 'images', '--format=json']), end='')
+            return
+        if len(sys.argv) == 3 and sys.argv[1] == 'accounts':
+            print(json.dumps(image_accounts(sys.argv[2])))
             return
         if len(sys.argv) == 3 and sys.argv[1] == 'connect':
             # Resolve an immutable ID; an interactive shell must not hold the apply lock.

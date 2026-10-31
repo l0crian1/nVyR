@@ -183,6 +183,11 @@ container:
           suggestors:
             container-capabilities: {}
 
+        no-new-privileges:
+          kind: leaf_node
+          description: Prevent gaining privileges through setuid, setgid or file capabilities when executing programs
+          valueless: true
+
         privileged:
           kind: leaf_node
           description: Grant privileged host access, including all capabilities and devices
@@ -385,7 +390,7 @@ container:
 
         volume:
           kind: tag_node
-          description: Persistent bind mount below /config/containers
+          description: Host file or directory bind mount
           hints:
             name: Name identifying this bind mount, up to 48 characters; for example DATA
           validators:
@@ -394,17 +399,17 @@ container:
 
             source:
               kind: leaf_node
-              description: Relative directory below /config/containers
+              description: Absolute host path or relative path below /config/containers
               hints:
-                path: Directory relative to /config/containers; for example alpine/data
+                path: Host file or directory; for example /etc/hosts or alpine/data
               validators:
-                container-source: {}
+                container-volume-source: {}
 
             destination:
               kind: leaf_node
-              description: Absolute directory inside the container
+              description: Absolute file or directory path inside the container
               hints:
-                /path: Absolute mount directory inside the container; for example /var/lib/app
+                /path: Absolute mount destination; for example /etc/hosts or /var/lib/app
               validators:
                 container-destination: {}
 
@@ -412,3 +417,38 @@ container:
               kind: leaf_node
               description: Mount without write access
               valueless: true
+
+            mode:
+              kind: leaf_node
+              description: Octal permissions on the source file or top-level directory only
+              hints:
+                octal: Three or four octal digits; for example 0700 or 0750
+              validators:
+                regex: {pattern: '[0-7]{3,4}'}
+
+            owner:
+              kind: node
+              description: Ownership of the persistent host source, using image accounts or numeric IDs
+              anchor: true
+              children:
+
+                user:
+                  kind: leaf_node
+                  description: Source owner; resolve names in the container image
+                  hints:
+                    user: Image user name or numeric UID; for example redis or 1000
+                  validators:
+                    container-volume-owner: {}
+
+                group:
+                  kind: leaf_node
+                  description: Source group; resolve names in the container image
+                  hints:
+                    group: Image group name or numeric GID; for example redis or 1000
+                  validators:
+                    container-volume-owner: {}
+
+                recursive:
+                  kind: leaf_node
+                  description: Apply configured ownership to directory contents without following symlinks
+                  valueless: true

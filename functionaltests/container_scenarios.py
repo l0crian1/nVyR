@@ -50,11 +50,15 @@ def batch_containers(config, request, image, filenames):
     volume.mkdir()
     environment = directory / 'values.env'
     environment.write_text('SMOKE_FILE=from-file\nSMOKE_OVERRIDE=file\n')
+    external = Path(tempfile.mkdtemp(prefix='nvyr-functional-', dir='/run'))
+    hostfile = external / 'host-file'
+    hostfile.write_text('absolute host file\n')
     text = '\n'.join((Path(__file__).with_name('configs') / filename).read_text()
                      for filename in filenames)
     replacements = {
         '@IMAGE@': shlex.quote(image), '@ENV@': str(environment.relative_to(root)),
         '@VOLUME@': str(volume.relative_to(root)),
+        '@HOSTFILE@': str(hostfile),
         '@TCP_PORT@': available_port(socket.SOCK_STREAM),
         '@UDP_PORT@': available_port(socket.SOCK_DGRAM),
     }
@@ -99,10 +103,12 @@ def batch_containers(config, request, image, filenames):
             config.set(f'set container name {name} command sh')
             config.set(f'set container name {name} argument ' + shlex.quote(shlex.join(['-c', IDLE_SCRIPT])))
         config.commit()
-        yield {'volume': volume, 'directory': directory,
+        yield {'volume': volume, 'directory': directory, 'hostfile': hostfile,
                'tcp_port': replacements['@TCP_PORT@'], 'udp_port': replacements['@UDP_PORT@']}
 
     environment.unlink()
+    hostfile.unlink()
+    external.rmdir()
     for file in volume.iterdir():
         file.unlink()
     volume.rmdir()

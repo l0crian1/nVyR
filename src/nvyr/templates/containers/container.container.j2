@@ -25,8 +25,12 @@ User={{ container_image_user(image_user) }}
 {% if 'privileged' in configuration -%}
 PodmanArgs=--privileged
 {% else -%}
+{% if 'none' in configuration.get('capability', ()) -%}
 DropCapability=all
+{% endif -%}
+{% if 'no-new-privileges' in configuration -%}
 NoNewPrivileges=true
+{% endif -%}
 {% for capability in container_capabilities(configuration) -%}
 AddCapability={{ capability }}
 {% endfor -%}

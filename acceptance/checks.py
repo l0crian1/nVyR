@@ -373,6 +373,7 @@ def check_container_workload(options):
     assert_equal(container['HostConfig']['Dns'], ['1.1.1.1'])
     assert_equal(cmd(['podman', 'exec', 'BOOTBOX', 'hostname']).strip(), 'boot-box')
     assert_in('CAP_NET_ADMIN', container['EffectiveCaps'])
+    assert_in('no-new-privileges', container['HostConfig']['SecurityOpt'])
 
 
 def check_container_network_ipv4(options):
@@ -395,6 +396,8 @@ def check_container_network_ipv6(options):
 def check_container_persistence(options):
     """Read the preboot sentinel through the mount; verification never creates it."""
     assert_equal(cmd(['podman', 'exec', 'BOOTBOX', 'cat', '/data/sentinel']).strip(), options['assets'])
+    assert_equal(cmd(['podman', 'exec', 'BOOTBOX', 'stat', '-c', '%u:%g:%a', '/data']).strip(), '0:0:750')
+    assert_equal(cmd(['podman', 'exec', 'BOOTBOX', 'cat', '/host-name']), Path('/etc/hostname').read_text())
     environment = cmd(['podman', 'exec', 'BOOTBOX', 'env']).splitlines()
     assert_in('BOOT_FILE=from-file', environment)
     assert_in('BOOT_OVERRIDE=explicit', environment)

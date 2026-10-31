@@ -71,6 +71,7 @@ set container name BOOTBOX image @image
 set container name BOOTBOX entrypoint sleep argument infinity host-name boot-box
 set container name BOOTBOX memory 128m cpus 0.5 process-limit 64 restart-policy always
 set container name BOOTBOX capability net-admin
+set container name BOOTBOX no-new-privileges
 set container name BOOTBOX interactive disable
 set container name BOOTBOX tty disable
 set container name BOOTBOX network BOOTNET id 0
@@ -85,6 +86,13 @@ set container name BOOTBOX environment-file @assets/environment
 set container name BOOTBOX environment BOOT_OVERRIDE value explicit
 set container name BOOTBOX volume DATA source @assets/data
 set container name BOOTBOX volume DATA destination /data
+set container name BOOTBOX volume DATA owner user root group 0 recursive
+set container name BOOTBOX volume DATA mode 0750
+
+set container name BOOTBOX volume HOSTFILE source /etc/hostname
+set container name BOOTBOX volume HOSTFILE destination /host-name
+set container name BOOTBOX volume HOSTFILE read-only
+
 set container name BOOTBOX tmpfs /scratch size 8m mode 1777
 set container name BOOTBOX device /dev/null destination /dev/boot-null permissions rw
 set container name BOOTBOX port WEB protocol tcp

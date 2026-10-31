@@ -50,16 +50,61 @@ def open_directory(root, relative='', *, create=False):
         raise
 
 
-def bind_directory(root, relative, target):
-    """Bind a pinned source directory and prevent propagation back to its source."""
-    descriptor = open_directory(root, relative, create=True)
+def open_source(root, relative, *, create=False):
+    """Open a regular file or directory without following symlinks or FIFOs."""
+    parts = relative.split('/')
+    if any(part in ('', '.', '..') for part in parts):
+        raise ValueError('Source must be relative without empty or parent components')
+    parent = open_directory(root, '/'.join(parts[:-1]), create=create)
     try:
+        if create:
+            try:
+                os.mkdir(parts[-1], mode=0o700, dir_fd=parent)
+            except FileExistsError:
+                pass
+        descriptor = os.open(parts[-1], os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=parent)
+        metadata = os.fstat(descriptor)
+        if not (stat.S_ISDIR(metadata.st_mode) or stat.S_ISREG(metadata.st_mode)):
+            os.close(descriptor)
+            raise RouterError('Bind source must be a regular file or directory')
+        return descriptor
+    finally:
+        os.close(parent)
+
+
+def source_permissions(descriptor, *, uid=-1, gid=-1, mode=None, recursive=False):
+    """Prepare persistent metadata; recursion never follows symbolic links."""
+    def traversal_error(error):
+        raise error
+
+    if uid != -1 or gid != -1:
+        os.fchown(descriptor, uid, gid)
+        if recursive and stat.S_ISDIR(os.fstat(descriptor).st_mode):
+            for _, directories, files, directory in os.fwalk(
+                    '.', dir_fd=descriptor, follow_symlinks=False, onerror=traversal_error):
+                os.fchown(directory, uid, gid)
+                for name in directories + files:
+                    os.chown(name, uid, gid, dir_fd=directory, follow_symlinks=False)
+    # Apply permissions after chown, which can clear set-ID bits. Never chmod children.
+    if mode is not None:
+        os.fchmod(descriptor, mode)
+
+
+def bind_path(root, relative, target, *, create=False, uid=-1, gid=-1, mode=None, recursive=False):
+    """Bind a pinned file/directory after preparing its requested persistent metadata."""
+    descriptor = open_source(root, relative, create=create)
+    try:
+        source_permissions(descriptor, uid=uid, gid=gid, mode=mode, recursive=recursive)
         target = Path(target)
-        target.mkdir(parents=True, exist_ok=True, mode=0o700)
+        target.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+        if stat.S_ISDIR(os.fstat(descriptor).st_mode):
+            target.mkdir(exist_ok=True, mode=0o700)
+        else:
+            target.touch(mode=0o600, exist_ok=True)
         result = subprocess.run(['mount', '--bind', f'/proc/self/fd/{descriptor}', str(target)],
                                 pass_fds=(descriptor,), capture_output=True, text=True, check=False)
         if result.returncode:
-            raise RouterError(result.stderr.strip() or f'Cannot bind directory {relative}')
+            raise RouterError(result.stderr.strip() or f'Cannot bind source {relative}')
         cmd(['mount', '--make-private', str(target)])
     finally:
         os.close(descriptor)

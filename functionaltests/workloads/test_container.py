@@ -112,6 +112,9 @@ def test_network_edit_recreates_attached_workload(config):
 def test_persistent_volume_survives_recreation(config, container_scenario):
     """Persistent contents survive replacement; a read-only remount rejects writes."""
     directory = container_scenario["volume"]
+    assert_equal(directory.stat().st_uid, 0)
+    assert_equal(directory.stat().st_gid, 0)
+    assert_equal(directory.stat().st_mode & 0o777, 0o750)
     cmd(['podman', 'exec', 'CTVOLUME', 'sh', '-c', 'echo persistent >/data/value'])
     assert_equal((Path(directory) / 'value').read_text().strip(), 'persistent')
     config.set('set container name CTVOLUME volume DATA read-only')
@@ -121,6 +124,13 @@ def test_persistent_volume_survives_recreation(config, container_scenario):
     status, output = rc_cmd(['podman', 'exec', 'CTVOLUME', 'sh', '-c', 'echo changed >/data/value'])
     assert_not_equal(status, 0, msg=output)
     assert_equal((Path(directory) / 'value').read_text().strip(), 'persistent')
+
+
+def test_absolute_file_mount(container_scenario):
+    """The shared scenario mounts a host file read-only without a separate workload."""
+    assert_equal(cmd(['podman', 'exec', 'CTVOLUME', 'cat', '/host-name']), container_scenario['hostfile'].read_text())
+    status, output = rc_cmd(['podman', 'exec', 'CTVOLUME', 'sh', '-c', 'echo changed >/host-name'])
+    assert_not_equal(status, 0, msg=output)
 
 
 def test_show_containers():
@@ -195,10 +205,12 @@ def test_restart_disabled_container_rejected():
 
 
 def test_container_capability():
-    """NET_ADMIN permits network administration inside the container namespace."""
+    """No-new-privileges preserves explicitly granted network administration rights."""
     cmd(['podman', 'exec', 'CTCAP', 'ip', 'link', 'add', 'test0', 'type', 'dummy'])
     link = json.loads(cmd(['podman', 'inspect', 'CTCAP']))[0]
     assert_in('CAP_NET_ADMIN', link['EffectiveCaps'])
+    status = cmd(['podman', 'exec', 'CTCAP', 'cat', '/proc/1/status'])
+    assert_in('NoNewPrivs:\t1', status)
 
 
 def test_ipv6_static_attachment():

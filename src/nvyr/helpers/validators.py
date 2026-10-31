@@ -1014,7 +1014,19 @@ def container_source(value):
                                and part not in ('.', '..') for part in parts)
 
 
-@register('container-destination', 'an absolute container directory without traversal')
+@register('container-volume-source', 'a host file or directory: an absolute path, or a relative path below /config/containers, without traversal')
+def container_volume_source(value):
+    return container_source(value[1:] if value.startswith('/') else value)
+
+
+@register('container-volume-owner', 'an account name in the image or a numeric ID from 0 through 4294967294')
+def container_volume_owner(value):
+    if value.isascii() and value.isdigit():
+        return len(value) <= 10 and int(value) <= 4294967294
+    return bool(re.fullmatch(r'[a-zA-Z_][a-zA-Z0-9_.-]*\$?', value))
+
+
+@register('container-destination', 'an absolute container path without traversal')
 def container_destination(value):
     return value.startswith('/') and value != '/' and container_source(value[1:])
 

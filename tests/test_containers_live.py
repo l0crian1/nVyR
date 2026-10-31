@@ -101,7 +101,10 @@ def test_native_limits_namespace_and_noop(runtime):
     assert before['HostConfig']['CpuQuota'] == before['HostConfig']['CpuPeriod']
     assert before['HostConfig']['NetworkMode'] == 'none'
     status = cmd(['podman', 'exec', 'LIVE', 'cat', '/proc/1/status'])
-    assert 'CapEff:\t0000000000000400' in status
+    baseline = cmd(['podman', 'run', '--rm', '--network=none', IMAGE, 'cat', '/proc/self/status'])
+    effective = next(line for line in status.splitlines() if line.startswith('CapEff:'))
+    expected = next(line for line in baseline.splitlines() if line.startswith('CapEff:'))
+    assert effective == expected
     runtime.apply(runtime.generate(desired))
     assert inspect()['Id'] == before['Id']
 

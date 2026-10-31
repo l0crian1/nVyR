@@ -64,7 +64,7 @@ def test_bind_uses_pinned_descriptor_and_private_propagation(tmp_path, monkeypat
     monkeypatch.setattr(filesystem.subprocess, 'run', mount)
     monkeypatch.setattr(filesystem, 'cmd', lambda argv: calls.append(argv))
     target = tmp_path / 'mount'
-    filesystem.bind_directory(tmp_path / 'root', 'data', target)
+    filesystem.bind_path(tmp_path / 'root', 'data', target, create=True)
 
     assert calls[-1] == ['mount', '--make-private', str(target)]
     with pytest.raises(OSError):
@@ -80,6 +80,6 @@ def test_failed_bind_closes_source_descriptor(tmp_path, monkeypatch):
 
     monkeypatch.setattr(filesystem.subprocess, 'run', mount)
     with pytest.raises(RouterError, match='mount denied'):
-        filesystem.bind_directory(tmp_path / 'root', 'data', tmp_path / 'mount')
+        filesystem.bind_path(tmp_path / 'root', 'data', tmp_path / 'mount', create=True)
     with pytest.raises(OSError):
         os.fstat(descriptors[0])

@@ -37,7 +37,7 @@ def test_functional_helpers_are_defined():
 def test_container_batch_commands_parse(local_session, filename):
     """Exercise the actual CLI parser against every batch command, with short valid inputs."""
     text = (ROOT / 'functionaltests/configs' / filename).read_text()
-    for token, value in {'@IMAGE@': 'alpine', '@ENV@': 'test.env', '@VOLUME@': 'volume',
+    for token, value in {'@IMAGE@': 'alpine', '@ENV@': 'test.env', '@VOLUME@': 'volume', '@HOSTFILE@': '/run/test-file',
                          '@TCP_PORT@': '18200', '@UDP_PORT@': '18201'}.items():
         text = text.replace(token, value)
     for command in text.splitlines():
@@ -52,7 +52,7 @@ def test_containers_and_pods_can_coexist(local_session):
     """Combined workloads must pass real cross-network and attachment verification."""
     for filename in ('containers.conf', 'pods.conf'):
         text = (ROOT / 'functionaltests/configs' / filename).read_text()
-        for token, value in {'@IMAGE@': 'alpine', '@ENV@': 'test.env', '@VOLUME@': 'volume',
+        for token, value in {'@IMAGE@': 'alpine', '@ENV@': 'test.env', '@VOLUME@': 'volume', '@HOSTFILE@': '/run/test-file',
                              '@TCP_PORT@': '18200', '@UDP_PORT@': '18201'}.items():
             text = text.replace(token, value)
         for command in text.splitlines():

@@ -198,6 +198,10 @@ def verify(configuration, context):
         for volume, settings in lookup(container, ('volume',), {}).items():
             location = f'{path} volume {volume}'
             require_fields(settings, ('source', 'destination'), location)
+            owner = lookup(settings, ('owner',), None)
+            # An owner node (especially recursive) must specify what ownership to change.
+            if owner is not None and not ('user' in owner or 'group' in owner):
+                raise ValidationError(f'{location} owner: specify user or group')
 
         attachment_ids = {}
         for network, settings in lookup(container, ('network',), {}).items():
@@ -304,12 +308,36 @@ def validate_units(prepared):
                 raise RouterError(f'Podman could not generate {unit}: {output.strip()}')
 
 
-def volume_mounts(name, section):
-    return [[settings['source'], config.mount_path(name, volume)]
-            for volume, settings in sorted(lookup(section, ('volume',), {}).items())]
+def volume_mounts(name, section, image=None):
+    mounts = []
+    accounts = None
+    for volume, settings in sorted(lookup(section, ('volume',), {}).items()):
+        source = Path(settings['source'])
+        if not source.is_absolute():
+            source = Path(config.VOLUME_ROOT) / source
+        internal = source.is_relative_to(config.VOLUME_ROOT)
+        mount = {'source': str(source), 'target': config.mount_path(name, volume), 'create': internal}
+        owner = lookup(settings, ('owner',), {})
+        for kind, key in (('user', 'uid'), ('group', 'gid')):
+            value = lookup(owner, (kind,), None)
+            if value is None:
+                continue
+            if value.isascii() and value.isdigit():
+                mount[key] = int(value)
+            else:
+                if accounts is None:
+                    accounts = json.loads(cmd(worker.worker_command('accounts', image)))
+                if value not in accounts[kind]:
+                    raise RouterError(f'Container {name} volume {volume}: {kind} {value!r} does not exist in image {image}')
+                mount[key] = accounts[kind][value]
+        mount['recursive'] = 'recursive' in owner
+        if 'mode' in settings:
+            mount['mode'] = int(settings['mode'], 8)
+        mounts.append(mount)
+    return mounts
 
 
-def installed_files(previous, changed):
+def installed_files(previous, changed, images):
     """Snapshot exact installed definitions for compensation, without re-rendering."""
     snapshot = {'registry': REGISTRIES.read_text() if REGISTRIES.exists() else registry_text(previous),
                 'networks': {}, 'pods': {}, 'containers': {}}
@@ -326,7 +354,7 @@ def installed_files(previous, changed):
                 environment = Path(config.environment_path(name))
                 value = {'text': value,
                          'environment': environment.read_text() if environment.exists() else None,
-                         'mounts': volume_mounts(name, lookup(previous, ('name', name), {}))}
+                         'mounts': volume_mounts(name, lookup(previous, ('name', name), {}), lookup(images, (name,), None))}
             snapshot[destination][name] = value
     return snapshot
 
@@ -396,9 +424,14 @@ def generate(configuration, context):
     for name in changed['name']:
         section = lookup(configuration, ('name', name), None)
         if section is not None and config.enabled(section, configuration):
-            forward['containers'][name] = {'text': render_container(name, section, images[name]),
-                                          'environment': environment.get(name),
-                                          'mounts': volume_mounts(name, section)}
+            try:
+                forward['containers'][name] = {'text': render_container(name, section, images[name]),
+                                              'environment': environment.get(name),
+                                              'mounts': volume_mounts(name, section, images[name])}
+            except RouterError as error:
+                if not recovery:
+                    raise
+                context.report(f'Container unavailable: {name}: {error}')
 
     record = inventory(configuration)
     record.update(images=images, inputs=inputs)
@@ -408,7 +441,7 @@ def generate(configuration, context):
         return None
 
     validate_units(forward)
-    rollback = installed_files(previous, changed) if not recovery else None
+    rollback = installed_files(previous, changed, old['images']) if not recovery else None
     if rollback is not None:
         rollback['inventory'] = json_text(old)
 
@@ -514,7 +547,10 @@ def unmount(name):
         for path in directory.iterdir():
             if os.path.ismount(path):
                 cmd(['umount', str(path)])
-            path.rmdir()
+            if path.is_dir():
+                path.rmdir()
+            else:
+                path.unlink()
         directory.rmdir()
 
 
@@ -554,8 +590,10 @@ def prepare(name, prepared):
         path = Path(config.environment_path(name))
         filesystem.protected_directory(path.parent)
         write(path, prepared['environment'])
-    for source, target in prepared['mounts']:
-        filesystem.bind_directory(config.VOLUME_ROOT, source, target)
+    for mount in prepared['mounts']:
+        filesystem.bind_path('/', mount['source'].lstrip('/'), mount['target'],
+                             create=mount['create'], uid=lookup(mount, ('uid',), -1), gid=lookup(mount, ('gid',), -1),
+                             mode=lookup(mount, ('mode',), None), recursive=mount['recursive'])
     write(QUADLETS / (config.unit_name(name) + '.container'), prepared['text'])
 
 
@@ -597,6 +635,19 @@ def execute_change(prepared, changed, *, recovery=False, report=print):
             report(f'Container unavailable: {error}')
 
 
+def check_mount_sources(prepared):
+    """Check existing host sources before stopping any workload, in the host namespace."""
+    for settings in prepared['containers'].values():
+        for mount in settings['mounts']:
+            try:
+                descriptor = filesystem.open_source('/', mount['source'].lstrip('/'))
+            except FileNotFoundError:
+                if mount['create']:
+                    continue
+                raise RouterError(f'Container bind source does not exist: {mount["source"]}') from None
+            os.close(descriptor)
+
+
 def apply(generated, context=None, *, report=print):
     """Apply prepared files, or transport them to the host when called by configd.
 
@@ -621,6 +672,8 @@ def apply(generated, context=None, *, report=print):
             previous['objects'][kind] = sorted(set(previous['objects'].get(kind, ())) | set(names))
     validate_ownership(previous, json.loads(generated['forward']['inventory']), generated['changed'])
     recovery = generated['recovery']
+    if not recovery:
+        check_mount_sources(generated['forward'])
     STATE.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
     write(pending_path, generated['cleanup'])
 

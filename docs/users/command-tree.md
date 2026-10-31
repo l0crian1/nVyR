@@ -54,6 +54,7 @@ set
 │   │   │   ├── address <address>
 │   │   │   ├── alias <hostname>
 │   │   │   └── id <0-9>
+│   │   ├── no-new-privileges
 │   │   ├── pod <name>
 │   │   ├── port <name>
 │   │   │   ├── destination-port <1-65535>
@@ -71,6 +72,11 @@ set
 │   │   ├── uid <auto|0-4294967294>
 │   │   └── volume <name>
 │   │       ├── destination </path>
+│   │       ├── mode <octal>
+│   │       ├── owner
+│   │       │   ├── group <group>
+│   │       │   ├── recursive
+│   │       │   └── user <user>
 │   │       ├── read-only
 │   │       └── source <path>
 │   ├── network <name>

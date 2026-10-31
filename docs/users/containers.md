@@ -165,12 +165,50 @@ where relevant. Host-networked applications share the router's sockets and ports
 
 ## Persistence and resource limits
 
-Only relative bind-mount sources below `/config/containers/` are allowed. Missing
-source directories are created with mode 0700. Symlinks in any source path are
-rejected. Container destinations are absolute and cannot overlap. Add `read-only`
-under a volume to prohibit writes. Image-declared anonymous volumes are disabled;
-configure the persistent directories explicitly. Images that run as a non-root user
-may need an administrator to prepare data-directory ownership for that image.
+Relative bind sources resolve beneath `/config/containers/`. Absolute sources can
+select existing host files or directories elsewhere. Missing directories beneath
+`/config/containers/` are created with mode 0700, including when specified by their
+absolute path. External sources must already exist. Symlinks in source paths are
+rejected; use the actual path, such as `/run/` instead of a `/var/run/` symlink.
+Destinations are absolute file or directory paths and cannot overlap. Add
+`read-only` to prohibit container writes. Image-declared anonymous volumes are
+disabled; configure persistent directories explicitly.
+
+```text
+set container name DNS volume DATA source DNS/data
+set container name DNS volume DATA destination /data
+
+set container name DNS volume HOSTS source /etc/hosts
+set container name DNS volume HOSTS destination /etc/hosts
+set container name DNS volume HOSTS read-only
+```
+
+Only `/config/containers/` data participates in its existing image-upgrade transfer.
+Mounting an external path does not add it to that transfer.
+
+Set ownership and permissions explicitly when the image's services need them:
+
+```text
+set container name APP volume DATA owner user redis group redis
+set container name APP volume DATA mode 0700
+
+set container name APP volume DATA owner recursive
+```
+
+`owner user` and `owner group` accept image account names or numeric UID/GID values.
+Names resolve from `/etc/passwd` and `/etc/group` in the selected image without
+running its programs. Specify either or both; omitted ownership fields remain
+unchanged. Numeric IDs do not require matching image accounts. These settings
+change the host source, not the container process identity or host account databases.
+
+`owner recursive` also changes ownership of existing directory contents, without
+following symlinks. `mode` accepts three or four octal digits and affects only the
+mounted file or top-level directory, never its children. Omitting these settings
+preserves existing metadata. Removing them does not reset previous permissions.
+Ownership and mode changes are persistent data preparation, including on read-only
+mounts; they are not undone when a later container startup fails. Recursive ownership
+can take time for large directories. Verify account names against the image you use;
+the `redis` example requires that account in the image.
 
 Deleting, disabling, or recreating a container preserves its persistent directories.
 The Podman image cache and writable container layers are separately stored in
@@ -190,9 +228,8 @@ set container name TEST memory 1g cpus 0.5 process-limit 512 restart-policy alwa
 Memory accepts whole bytes or binary k/m/g suffixes, from 6 MiB through 1 TiB.
 CPU limits accept 0.01–1024 CPUs; process-limit accepts 1–65536. Restart policies
 are `no`, `on-failure`, and `always`. Containers retain the image's configured user;
-capabilities default to binding service ports, and no-new-privileges is set unless
-privileged mode is explicitly enabled. Arbitrary host mounts and Podman arguments
-are not exposed.
+capabilities use Podman's default set. nVyR does not force no-new-privileges;
+it can be enabled explicitly. Arbitrary Podman arguments are not exposed.
 
 ## Additional container and network options
 
@@ -259,12 +296,15 @@ noexec, nosuid and nodev. Tmpfs, persistent volumes and device destinations cann
 overlap.
 
 `set container name APP privileged` enables Podman's privileged mode, including
-all capabilities and broad device access. It intentionally removes the default
-capability drops and no-new-privileges restriction. Net-admins can configure
+all capabilities and broad device access. It overrides configured
+capability restrictions and ignores a configured `no-new-privileges` restriction. Net-admins can configure
 this option, so they can grant a container host-root-equivalent access. Prefer
 specific capabilities and devices when they satisfy the application.
 
-Use `capability none` to drop the default service-port capability and all other
+Named `capability` values add to Podman's default capability set. nVyR does not
+maintain a separate list of default capabilities.
+
+Use `capability none` to drop Podman's default set and all other
 capabilities. Named capabilities on the same container are then added explicitly:
 
 ```text
@@ -274,9 +314,22 @@ set container name APP capability net-admin
 ```
 
 With just the first command, the container has no capabilities. With both, it has
-only `NET_ADMIN`. Deleting `capability none` restores the default `NET_BIND_SERVICE`
+only `NET_ADMIN`. Deleting `capability none` restores Podman's default capability set
 alongside any explicitly named capabilities. Privileged mode still grants all
 capabilities and overrides these restrictions.
+
+Use `no-new-privileges` to prevent programs from gaining privileges through setuid,
+setgid or executable file capabilities. This can prevent `sudo` and similar helpers
+inside an image from working; it does not remove capabilities already held by a process.
+
+```text
+set container name APP no-new-privileges
+
+delete container name APP no-new-privileges
+```
+
+Deleting the option restores Podman's default behavior when the container is recreated
+on commit. Privileged mode overrides this option.
 
 ## Pods
 

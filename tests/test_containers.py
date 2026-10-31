@@ -230,7 +230,7 @@ def test_displays_can_share_the_operation_lock(tmp_path, monkeypatch):
 
 @pytest.mark.parametrize('command', [
     'image --help', 'image docker-archive:/etc/shadow',
-    'volume DATA source ../secrets', 'volume DATA source /etc',
+    'volume DATA source ../secrets', 'volume DATA source /etc/../secrets',
     'volume DATA destination relative', 'memory 1m', 'cpus 0', 'process-limit 0',
 ])
 def test_schema_rejects_unsafe_values(controller, session, command):
@@ -335,7 +335,7 @@ def test_unit_quoting_limits_and_network_settings():
     assert '"two words" "$${HOSTNAME}" "%%n" "same" "same"' in text
     assert 'Environment="TEST=$${HOSTNAME}%%n"' in text
     assert 'DefaultDependencies=false' in text
-    assert 'NoNewPrivileges=true' in text and 'DropCapability=all' in text
+    assert 'NoNewPrivileges=' not in text and 'DropCapability=' not in text
     assert '--image-volume=ignore' in text and '--memory=536870912' in text
     assert ':ro\n' in text and 'PidsLimit=256' in text
 

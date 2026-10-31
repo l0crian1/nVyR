@@ -55,7 +55,27 @@ def test_capability_none_drops_default_and_all_other_capabilities(controller, en
     unit = container_unit('APP', configuration['name']['APP'], IMAGE_ID)
     assert 'DropCapability=all' in unit
     assert 'AddCapability=' not in unit
+    assert 'NoNewPrivileges=' not in unit
+
+
+def test_default_capabilities_are_left_to_podman():
+    unit = container_unit('APP', {}, IMAGE_ID)
+    assert 'DropCapability=' not in unit
+    assert 'AddCapability=' not in unit
+    assert 'NoNewPrivileges=' not in unit
+
+
+def test_no_new_privileges_is_explicit_and_removable(controller, engine, session):
+    controller.execute('set container name APP image alpine no-new-privileges', session)
+    section = engine.view(session)['container']
+    verify_container(section)
+    unit = container_unit('APP', section['name']['APP'], IMAGE_ID)
     assert 'NoNewPrivileges=true' in unit
+    assert 'DropCapability=' not in unit
+
+    controller.execute('delete container name APP no-new-privileges', session)
+    unit = container_unit('APP', engine.view(session)['container']['name']['APP'], IMAGE_ID)
+    assert 'NoNewPrivileges=' not in unit
 
 
 def test_capability_none_allows_only_explicit_additions(controller, engine, session):
@@ -68,12 +88,12 @@ def test_capability_none_allows_only_explicit_additions(controller, engine, sess
 
     controller.execute('delete container name APP capability none', session)
     unit = container_unit('APP', engine.view(session)['container']['name']['APP'], IMAGE_ID)
-    assert 'AddCapability=NET_BIND_SERVICE' in unit
-    assert 'AddCapability=NET_ADMIN' in unit
+    assert 'DropCapability=' not in unit
+    assert [line for line in unit.splitlines() if line.startswith('AddCapability=')] == ['AddCapability=NET_ADMIN']
 
 
 def test_privileged_removes_contradictory_security_defaults():
-    unit = container_unit('APP', {'privileged': True}, IMAGE_ID)
+    unit = container_unit('APP', {'privileged': True, 'no-new-privileges': True}, IMAGE_ID)
     assert 'PodmanArgs=--privileged' in unit
     assert 'DropCapability=' not in unit
     assert 'NoNewPrivileges=' not in unit

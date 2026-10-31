@@ -77,9 +77,21 @@ independent member changes, pod disable/restart, and reference/conflict validati
 
 ## Bind-mount isolation
 
-The worker pins each opened source directory as a private bind mount before
-Podman receives it. This prevents path replacement from redirecting a mount
-outside `/config/containers/`. Shared filesystem helpers enforce the allowed root.
+The worker pins each opened source file or directory as a private bind mount before
+Podman receives it. Descriptor-based traversal rejects symlinks and parent traversal.
+Relative sources resolve below `/config/containers/`; absolute sources remain host
+paths. Only missing directories below `/config/containers/` are created. External
+sources are checked in the host namespace before stopping workloads, then reopened
+and pinned during apply. Staging targets and cleanup support both files and directories.
+
+Generation resolves named volume owners from the pinned image's account files via
+a read-only inspection operation in the host worker. Podman mounts the image, the
+worker reads its account databases, and the image is unmounted in a finally block.
+No image entrypoint executes. Numeric IDs, source resolution, recursion and mode are
+captured in the prepared mount records. Apply performs the requested ownership and
+permission changes before binding the sources. These persistent metadata changes,
+like application writes to a volume, are not a transactional filesystem snapshot;
+compensation restores runtime definitions, not arbitrary previous volume metadata.
 
 ## Runtime units and execution
 

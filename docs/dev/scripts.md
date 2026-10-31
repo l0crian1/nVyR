@@ -310,7 +310,8 @@ applies it and `save` makes it the boot configuration.
   See [NTP](ntp.md).
 - [container.py](../../src/nvyr/config_scripts/container.py): reconciles managed
   Podman containers, Netavark networks and generated service units, with persistent
-  mounts restricted to `/config/containers/`. See [containers](containers.md).
+  relative mounts beneath `/config/containers/` and explicit absolute host mounts.
+  See [containers](containers.md).
 
 ## Shared helpers
 

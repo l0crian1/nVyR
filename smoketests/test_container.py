@@ -72,11 +72,30 @@ def test_container_capability_none(config, image):
     assert_equal(container['BoundingCaps'] or [], [])
 
 
+def test_no_new_privileges(config, image):
+    """The opt-in security option reaches Podman and is removed when deleted."""
+    config.set(f'set container name NVYRSMOKE image {image}')
+    idle_container(config)
+    config.set('set container name NVYRSMOKE no-new-privileges')
+    config.commit()
+    native = json.loads(cmd(['podman', 'inspect', 'NVYRSMOKE']))[0]
+    assert_in('no-new-privileges', native['HostConfig']['SecurityOpt'])
+
+    config.delete('delete container name NVYRSMOKE no-new-privileges')
+    config.commit()
+    native = json.loads(cmd(['podman', 'inspect', 'NVYRSMOKE']))[0]
+    assert_not_in('no-new-privileges', native['HostConfig']['SecurityOpt'] or [])
+
+
 def test_container_capability_none_with_explicit_addition(config, image):
     """Named capabilities are added after defaults are dropped; deleting none restores defaults."""
     config.set(f'set container name NVYRSMOKE image {image}')
     idle_container(config)
-    config.set('set container name NVYRSMOKE capability none capability net-admin')
+    config.set('set container name NVYRSMOKE capability net-admin')
+    config.commit()
+    original = json.loads(cmd(['podman', 'inspect', 'NVYRSMOKE']))[0]
+
+    config.set('set container name NVYRSMOKE capability none')
     config.commit()
 
     container = json.loads(cmd(['podman', 'inspect', 'NVYRSMOKE']))[0]
@@ -87,7 +106,8 @@ def test_container_capability_none_with_explicit_addition(config, image):
     config.commit()
 
     container = json.loads(cmd(['podman', 'inspect', 'NVYRSMOKE']))[0]
-    assert_equal(set(container['EffectiveCaps']), {'CAP_NET_ADMIN', 'CAP_NET_BIND_SERVICE'})
+    assert_equal(set(container['EffectiveCaps']), set(original['EffectiveCaps']))
+    assert_equal(set(container['BoundingCaps']), set(original['BoundingCaps']))
 
 
 def test_container_uid_gid_and_restore_image_identity(config, image):
@@ -201,6 +221,29 @@ def test_container_mount_overlap_rejected(config):
     config.set('set container name NVYRSMOKE volume DATA destination /data')
     config.set('set container name NVYRSMOKE tmpfs /data/cache size 1m')
     assert_config_commit_rejected(config, 'destinations must not overlap')
+
+
+def test_volume_sources_and_ownership(config, image, volume_directory):
+    """Host file mounts and image-resolved volume metadata reach Podman."""
+    config.set(f'set container name NVYRSMOKE image {image}')
+    idle_container(config)
+    config.set(f'set container name NVYRSMOKE volume DATA source {volume_directory}')
+    config.set('set container name NVYRSMOKE volume DATA destination /data')
+    config.set('set container name NVYRSMOKE volume DATA owner user root group 0 recursive')
+    config.set('set container name NVYRSMOKE volume DATA mode 0750')
+
+    config.set('set container name NVYRSMOKE volume HOSTS source /etc/hosts')
+    config.set('set container name NVYRSMOKE volume HOSTS destination /etc/hosts')
+    config.set('set container name NVYRSMOKE volume HOSTS read-only')
+    config.commit()
+
+    native = json.loads(cmd(['podman', 'inspect', 'NVYRSMOKE']))[0]
+    mounts = {mount['Destination']: mount for mount in native['Mounts']}
+    assert_equal(mounts['/etc/hosts']['RW'], False)
+    assert_equal(mounts['/data']['RW'], True)
+    assert_equal(volume_directory.stat().st_uid, 0)
+    assert_equal(volume_directory.stat().st_gid, 0)
+    assert_equal(volume_directory.stat().st_mode & 0o777, 0o750)
 
 
 def test_ipv6_network(config):
