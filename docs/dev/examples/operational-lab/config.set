@@ -1,0 +1,189 @@
+set vrf name OPSA table 160
+set vrf name OPSB table 161
+set interfaces ethernet eth1 description "Operational lab LAN A" vrf OPSA link-group 60 address 10.60.10.1/24 address 2001:db8:60:10::1/64
+set interfaces ethernet eth1 vif 100 description "Operational lab VLAN 100" vrf OPSA address 10.60.110.1/24 address 2001:db8:60:110::1/64
+set interfaces ethernet eth2 description "Operational lab LAN B" vrf OPSB link-group 61 address 10.60.20.1/24 address 2001:db8:60:20::1/64
+set interfaces loopback lo address 192.0.2.60/32 address 2001:db8:60::60/128
+set interfaces virtual-ethernet veth60 peer-name veth61 vrf OPSA address 10.60.0.1/30 address 2001:db8:60::1/64
+set interfaces virtual-ethernet veth61 peer-name veth60 vrf OPSB address 10.60.0.2/30 address 2001:db8:60::2/64
+set interfaces virtual-ethernet veth62 peer-name veth63
+set interfaces virtual-ethernet veth63 peer-name veth62 vrf OPSB address 10.60.30.2/24
+set interfaces bridge br60 description "Operational lab bridge" address 10.60.30.1/24 address 2001:db8:60:30::1/64
+set interfaces bridge br60 member interface veth62
+set interfaces bridge br60 spanning-tree
+set interfaces bridge br60 static-mac 02:00:00:60:30:02 interface veth62
+set interfaces virtual-ethernet veth64 peer-name veth65 address 10.60.31.1/24 address 2001:db8:60:31::1/64
+set interfaces virtual-ethernet veth65 peer-name veth64
+set interfaces bridge br61 member interface veth65 vrf OPSB address dhcp
+set interfaces bridge br61 dhcp-options host-name ops-client no-default-route default-route-distance 210
+set interfaces dummy dum60 description "Operational lab dummy" address 192.0.2.61/32
+
+set service dhcp-server listen-interface veth64
+set service dhcp-server shared-network OPSCLIENT interface veth64
+set service dhcp-server shared-network OPSCLIENT option default-router 10.60.31.1 name-server 9.9.9.9
+set service dhcp-server shared-network OPSCLIENT subnet 10.60.31.0/24 range 10.60.31.100-10.60.31.120
+set service dhcp-server shared-network OPSCLIENT subnet 10.60.31.0/24 lease-time 1h
+set service dhcpv6-server listen-interface veth64
+set service dhcpv6-server shared-network OPSCLIENT interface veth64
+set service dhcpv6-server shared-network OPSCLIENT subnet 2001:db8:60:31::/64 range 2001:db8:60:31::100-2001:db8:60:31::120
+set vrf name OPSA service dhcp-server listen-interface eth1
+set vrf name OPSA service dhcp-server shared-network OPSLAN interface eth1
+set vrf name OPSA service dhcp-server shared-network OPSLAN option default-router 10.60.10.1 name-server 9.9.9.9
+set vrf name OPSA service dhcp-server shared-network OPSLAN subnet 10.60.10.0/24 range 10.60.10.100-10.60.10.150
+set vrf name OPSA service dhcp-server shared-network OPSLAN subnet 10.60.10.0/24 reservation PRINTER mac-address 02:00:00:60:10:50 address 10.60.10.50
+set vrf name OPSA service dhcpv6-server listen-interface eth1
+set vrf name OPSA service dhcpv6-server shared-network OPSLAN interface eth1
+set vrf name OPSA service dhcpv6-server shared-network OPSLAN option name-server 2620:fe::fe
+set vrf name OPSA service dhcpv6-server shared-network OPSLAN subnet 2001:db8:60:10::/64 range 2001:db8:60:10::100-2001:db8:60:10::150
+
+set system name-server 9.9.9.9
+set system ntp pool pool.ntp.org
+set system ntp listen-address ipv4 10.60.30.1
+set system ntp listen-address ipv6 2001:db8:60:30::1
+set system ntp allow-client 10.60.30.0/24
+set system ntp allow-client 2001:db8:60:30::/64
+set service ssh
+
+set protocols static route 198.51.100.0/24 blackhole
+set protocols static route6 2001:db8:60:99::/64 reject
+set vrf name OPSA protocols static route 198.51.101.0/24 blackhole
+set vrf name OPSB protocols static route6 2001:db8:60:98::/64 blackhole
+set policy access-list ipv4 OPSACL rule 10 action permit address 10.60.0.0 wildcard-mask 0.0.255.255
+set policy access-list ipv6 OPSACL rule 10 action permit prefix 2001:db8:60::/48
+set policy prefix-list ipv4 OPSPREFIX rule 10 action permit prefix 10.60.0.0/16 ge 24 le 32
+set policy prefix-list ipv6 OPSPREFIX rule 10 action permit prefix 2001:db8:60::/48 ge 64 le 128
+set policy as-path-list OPSAS rule 10 action permit regex "_65060_"
+set policy community-list standard OPSCOMM rule 10 action permit community 65060:100
+set policy community-list expanded OPSREGEX rule 10 action permit regex "65060:"
+set policy large-community-list standard OPSLARGE rule 10 action permit community 65060:100:200
+set policy large-community-list expanded OPSLREGEX rule 10 action permit regex "65060:100:"
+set policy route-map OPSEXPORT rule 10 action permit set community 65060:100 large-community 65060:100:200 metric 50 origin igp
+set policy route-map OPSIMPORT rule 10 action permit match community-list OPSCOMM
+set policy route-map OPSIMPORT rule 10 set local-preference 150 weight 50
+set vrf name OPSA protocols bgp local-as 65060 parameters router-id 10.60.0.1
+set vrf name OPSB protocols bgp local-as 65061 parameters router-id 10.60.0.2
+set vrf name OPSA protocols bgp neighbor 10.60.0.2 remote-as 65061 update-source veth60
+set vrf name OPSA protocols bgp neighbor 10.60.0.2 address-family ipv4-unicast route-map export OPSEXPORT
+set vrf name OPSB protocols bgp neighbor 10.60.0.1 remote-as 65060 update-source veth61
+set vrf name OPSB protocols bgp neighbor 10.60.0.1 address-family ipv4-unicast route-map import OPSIMPORT export OPSEXPORT
+set vrf name OPSA protocols bgp neighbor 2001:db8:60::2 remote-as 65061
+set vrf name OPSA protocols bgp neighbor 2001:db8:60::2 address-family ipv6-unicast route-map export OPSEXPORT
+set vrf name OPSB protocols bgp neighbor 2001:db8:60::1 remote-as 65060
+set vrf name OPSB protocols bgp neighbor 2001:db8:60::1 address-family ipv6-unicast route-map import OPSIMPORT export OPSEXPORT
+set vrf name OPSA protocols bgp address-family ipv4-unicast network 10.60.10.0/24
+set vrf name OPSA protocols bgp address-family ipv6-unicast network 2001:db8:60:10::/64
+set vrf name OPSB protocols bgp address-family ipv4-unicast network 10.60.20.0/24
+set vrf name OPSB protocols bgp address-family ipv6-unicast network 2001:db8:60:20::/64
+
+set container network OPSNET subnet 10.60.40.0/24 gateway 10.60.40.1
+set container network OPSNET vrf OPSA disable-dns mtu 1400
+set container name OPSWEB image alpine
+set container name OPSWEB entrypoint /bin/sh
+set container name OPSWEB argument "-c 'mkdir -p /www; echo Operational-lab > /www/index.html; exec httpd -f -p 8080 -h /www'"
+set container name OPSWEB network OPSNET id 0
+set container name OPSWEB network OPSNET address 10.60.40.10
+set container name OPSWEB host-name ops-web name-server 9.9.9.9
+set container name OPSWEB interactive disable
+set container name OPSWEB tty disable
+set container name OPSWEB memory 128m cpus 0.5 process-limit 64
+set container name OPSWEB tmpfs /www size 8m mode 755
+set container name OPSOFF image alpine disable
+set container name OPSOFF network OPSNET id 0
+
+set firewall global-options counter
+set firewall global-options last-used
+set firewall global-options connection-accounting
+set firewall global-options state-policy invalid action drop
+set firewall group counter-group OPSCOUNT description "Lab traffic across rules"
+set firewall group quota-group OPSQUOTA bytes 10m until description "Shared lab allowance"
+set firewall group interface-group OPSIF interface eth1 vrf counter last-used
+set firewall group port-group OPSPORT port 80 port 443 port 8080 counter last-used
+set firewall group mac-group OPSMAC address 02:00:00:60:10:50 counter last-used
+set firewall group address-group ipv4 OPSADDR address 10.60.0.0/16 counter last-used
+set firewall group address-group ipv6 OPSADDR address 2001:db8:60::/48 counter last-used
+set firewall group address-group ipv4 OPSLEARN dynamic timeout 10m size 1024 gc-interval 30s
+set firewall group address-group ipv6 OPSLEARN dynamic timeout 10m size 1024 gc-interval 30s
+set firewall group match-group ipv4 OPSMATCH match protocol destination-port
+set firewall group match-group ipv4 OPSMATCH entry web protocol tcp destination-port 8080 description "Web service"
+set firewall group match-group ipv6 OPSMATCH match protocol destination-port
+set firewall group match-group ipv6 OPSMATCH entry web protocol tcp destination-port 8080 description "Web service"
+set firewall group match-group ipv4 OPSDYNAMIC match source-address protocol destination-port
+set firewall group match-group ipv4 OPSDYNAMIC dynamic timeout 10m size 1024
+set firewall group match-group ipv6 OPSDYNAMIC match source-address protocol destination-port
+set firewall group match-group ipv6 OPSDYNAMIC dynamic timeout 10m size 1024
+set firewall group map ipv4 OPSMAP match protocol destination-port
+set firewall group map ipv4 OPSMAP result-type verdict
+set firewall group map ipv4 OPSMAP description "Service verdicts"
+set firewall group map ipv4 OPSMAP counter
+set firewall group map ipv4 OPSMAP last-used
+set firewall group map ipv4 OPSMAP entry web protocol tcp destination-port 8080 result action continue
+set firewall group map ipv6 OPSMAP match protocol destination-port
+set firewall group map ipv6 OPSMAP result-type verdict
+set firewall group map ipv6 OPSMAP description "Service verdicts"
+set firewall group map ipv6 OPSMAP counter
+set firewall group map ipv6 OPSMAP last-used
+set firewall group map ipv6 OPSMAP entry web protocol tcp destination-port 8080 result action continue
+set firewall group icmp-group ipv4 OPSPING match type-code
+set firewall group icmp-group ipv4 OPSPING type echo-request code 0
+set firewall group icmp-group ipv6 OPSPING match type-code
+set firewall group icmp-group ipv6 OPSPING type echo-request code 0
+set firewall group limit-group ipv4 OPSRATE rate packets 100/s burst packets 20
+set firewall group limit-group ipv6 OPSRATE rate packets 100/s burst packets 20
+set firewall group limit-group ipv4 OPSPER rate packets 50/s burst packets 10 per source-address timeout 1m size 1024
+set firewall group limit-group ipv6 OPSPER rate packets 50/s burst packets 10 per source-address timeout 1m size 1024
+set firewall flowtable OPSFT interface veth60 interface veth61 offload software
+
+set firewall ipv4 input filter default-action accept
+set firewall ipv4 input filter rule 50000 source-address 10.60.0.0/16 action continue limit rate packets 100/s per source-address timeout 1m size 1024
+set firewall ipv4 input filter rule 50010 source-address 10.60.0.0/16 action continue quota bytes 1m until
+set firewall ipv4 input filter rule 50020 source-address 10.60.0.0/16 action continue quota group OPSQUOTA counter group OPSCOUNT
+set firewall ipv4 input filter rule 50030 source-address 10.60.0.0/16 action continue add-to-group source-address OPSLEARN
+set firewall ipv4 input filter rule 50040 source-address 10.60.0.0/16 protocol udp action continue add-to-group match-group OPSDYNAMIC
+set firewall ipv4 input filter rule 50050 map OPSMAP
+set firewall ipv4 input filter rule 50060 protocol icmp icmp-group OPSPING action continue
+set firewall ipv4 input filter rule 50070 source-address 10.60.0.0/16 action continue limit group OPSPER
+set firewall ipv4 forward filter default-action accept
+set firewall ipv4 forward filter rule 50000 source-address 10.60.0.0/16 action continue limit rate packets 100/s per source-address timeout 1m size 1024
+set firewall ipv4 forward filter rule 50010 source-address 10.60.0.0/16 action continue quota bytes 1m until
+set firewall ipv4 forward filter rule 50020 source-address 10.60.0.0/16 action continue counter group OPSCOUNT
+set firewall ipv4 forward filter rule 50030 source-address 10.60.0.0/16 action continue add-to-group source-address OPSLEARN
+set firewall ipv4 output filter default-action accept
+set firewall ipv4 prerouting raw rule 50000 protocol udp destination-port 56000 notrack action continue
+set firewall ipv4 output raw rule 50000 protocol udp destination-port 56000 notrack action continue
+set firewall ipv6 input filter default-action accept
+set firewall ipv6 input filter rule 50000 source-address 2001:db8:60::/48 action continue limit rate packets 100/s per source-address timeout 1m size 1024
+set firewall ipv6 input filter rule 50010 source-address 2001:db8:60::/48 action continue quota bytes 1m until
+set firewall ipv6 input filter rule 50020 source-address 2001:db8:60::/48 action continue quota group OPSQUOTA counter group OPSCOUNT
+set firewall ipv6 input filter rule 50030 source-address 2001:db8:60::/48 action continue add-to-group source-address OPSLEARN
+set firewall ipv6 input filter rule 50040 source-address 2001:db8:60::/48 protocol udp action continue add-to-group match-group OPSDYNAMIC
+set firewall ipv6 input filter rule 50050 map OPSMAP
+set firewall ipv6 input filter rule 50060 protocol ipv6-icmp icmp-group OPSPING action continue
+set firewall ipv6 input filter rule 50070 source-address 2001:db8:60::/48 action continue limit group OPSPER
+set firewall ipv6 forward filter default-action accept
+set firewall ipv6 forward filter rule 50000 source-address 2001:db8:60::/48 action continue limit rate packets 100/s per source-address timeout 1m size 1024
+set firewall ipv6 forward filter rule 50010 source-address 2001:db8:60::/48 action continue quota bytes 1m until
+set firewall ipv6 output filter default-action accept
+set firewall ipv6 prerouting raw rule 50000 protocol udp destination-port 56000 notrack action continue
+set firewall ipv6 output raw rule 50000 protocol udp destination-port 56000 notrack action continue
+
+set firewall ipv4 name OPSPASS default-action accept
+set firewall ipv6 name OPSPASS default-action accept
+set firewall zone OPSLAN interface eth1 default-action accept
+set firewall zone OPSWAN interface eth2 default-action accept
+set firewall zone OPSLOCAL local-zone
+set firewall zone-policy from-zone OPSLAN to-zone OPSWAN ipv4-policy OPSPASS ipv6-policy OPSPASS
+set firewall zone-policy from-zone OPSWAN to-zone OPSLAN ipv4-policy OPSPASS ipv6-policy OPSPASS
+set firewall zone-policy from-zone OPSLAN to-zone OPSLOCAL ipv4-policy OPSPASS ipv6-policy OPSPASS
+set firewall zone-policy from-zone OPSLOCAL to-zone OPSLAN ipv4-policy OPSPASS ipv6-policy OPSPASS
+
+set nat destination rule 50000 inbound-interface veth60 protocol tcp destination-address 10.60.10.1 destination-port 8080 translation address 10.60.40.10 translation port 8080
+set nat source rule 50000 outbound-interface pd-OPSNET source-address 10.60.0.0/16 destination-address 10.60.40.10 translation address masquerade
+
+set firewall fail-safe ipv4 input filter default-action drop
+set firewall fail-safe ipv4 input filter rule 10 inbound-interface lo action accept
+set firewall fail-safe ipv4 input filter rule 20 protocol tcp destination-port 22 action accept
+set firewall fail-safe ipv4 input filter rule 30 protocol udp source-port 67 destination-port 68 action accept
+set firewall fail-safe ipv6 input filter default-action drop
+set firewall fail-safe ipv6 input filter rule 10 inbound-interface lo action accept
+set firewall fail-safe ipv6 input filter rule 20 protocol tcp destination-port 22 action accept
+set firewall fail-safe ipv6 input filter rule 30 protocol ipv6-icmp action accept

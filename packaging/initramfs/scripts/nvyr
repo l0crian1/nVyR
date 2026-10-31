@@ -1,0 +1,43 @@
+# nVyR installed-image root, sourced by initramfs-tools for boot=nvyr.
+mount_top() { local_top; }
+mount_premount() { local_premount; }
+mount_bottom() { local_bottom; }
+
+mountroot()
+{
+    local_top
+    local_premount
+    local_device_setup "$ROOT" root
+
+    nvyr_image=
+    for option in $(cat /proc/cmdline); do
+        case "$option" in nvyr.image=*) nvyr_image=${option#nvyr.image=} ;; esac
+    done
+
+    case "$nvyr_image" in ''|*[!0-9a-f]*) panic 'Invalid nVyR image ID'; return 1 ;; esac
+    [ "${#nvyr_image}" = 32 ] || { panic 'Invalid nVyR image ID'; return 1; }
+
+    modprobe loop
+    modprobe squashfs
+    modprobe overlay
+
+    mkdir -p /run/nvyr-storage /run/nvyr-lower /run/nvyr
+    mount -t ext4 -o rw "$DEV" /run/nvyr-storage || { panic 'Cannot mount nVyR storage'; return 1; }
+
+    image=/run/nvyr-storage/images/$nvyr_image
+    [ -f "$image/image.json" ] && [ -d "$image/config/.nvyr" ] || { panic 'Incomplete nVyR image'; return 1; }
+
+    # Each image has its own immutable root and writable overlay. Switching images
+    # must not reuse another image's upper/work directories.
+    mount -t squashfs -o loop,ro "$image/filesystem.squashfs" /run/nvyr-lower || { panic 'Cannot mount nVyR root'; return 1; }
+    mount -t overlay overlay -o "lowerdir=/run/nvyr-lower,upperdir=$image/overlay/upper,workdir=$image/overlay/work" "$rootmnt" || { panic 'Cannot mount nVyR overlay'; return 1; }
+
+    mkdir -p "$rootmnt/config" "$rootmnt/var/lib/nvyr" "$rootmnt/run"
+    # Keep user configuration and configd's durable state outside the root overlay;
+    # both refer to the selected image's persistent configuration directory.
+    mount --bind "$image/config" "$rootmnt/config" || { panic 'Cannot mount nVyR config'; return 1; }
+    mount --bind "$image/config/.nvyr" "$rootmnt/var/lib/nvyr" || { panic 'Cannot mount nVyR state'; return 1; }
+
+    printf '%s\n' "$nvyr_image" > /run/nvyr-image-id
+    # initramfs-tools moves /run (including these backing mounts) into rootmnt.
+}

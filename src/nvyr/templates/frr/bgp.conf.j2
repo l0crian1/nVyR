@@ -1,0 +1,71 @@
+{% set global_parameters = configuration.get('default', {}).get('parameters', {}) -%}
+{% set delay = global_parameters.get('route-map', {}).get('delay-timer', 5) | int -%}
+{% if delay != 5 -%}
+bgp route-map delay-timer {{ delay }}
+{% endif -%}
+
+{% for vrf, instance in configuration.items() | sort(case_sensitive=true) -%}
+router bgp {{ instance['local-as'] | int }}{{ ' vrf ' ~ vrf if vrf != 'default' else '' }}
+{% set parameters = instance.get('parameters', {}) -%}
+{% for command in bgp_parameter_commands(parameters) -%}
+{{ command }}
+{% endfor -%}
+{% set defaults = parameters.get('timers', {}) -%}
+{% set keepalive, holdtime = bgp_timer_pair(defaults, {}) -%}
+{% if (keepalive, holdtime) != (60, 180) %} timers bgp {{ keepalive }} {{ holdtime }}
+{% endif -%}
+
+{% set groups = instance.get('peer-group', {}) -%}
+{% set shutdown_default = bgp_enabled(parameters, 'default shutdown') -%}
+{% for name, options in groups.items() %} neighbor {{ name }} peer-group
+{% for command in bgp_peer_commands(name, options, defaults, shutdown_default=shutdown_default) -%}
+{{ command }}
+{% endfor -%}
+{% endfor -%}
+
+{% for address, options in instance.get('neighbor', {}).items() -%}
+{% set name = bgp_peer_name(address) -%}
+{% set interface_peer = bgp_peer_address(address) is none -%}
+{% if 'peer-group' in options %} neighbor {{ name }}{{ ' interface' if interface_peer else '' }}{{ ' v6only' if interface_peer and 'ipv6-only' in options else '' }} peer-group {{ options['peer-group'] }}
+{% endif -%}
+{% for command in bgp_peer_commands(name, options, bgp_peer_timer_defaults(defaults, groups, options), shutdown_default=shutdown_default, interface_peer=(interface_peer and 'peer-group' not in options)) -%}
+{{ command }}
+{% endfor -%}
+{% endfor -%}
+
+{% for prefix, options in parameters.get('listen', {}).get('range', {}).items() %} bgp listen range {{ ip_network(prefix) }} peer-group {{ options['peer-group'] }}
+{% endfor -%}
+
+{% for family in ('ipv4-unicast', 'ipv6-unicast') -%}
+{% set body -%}
+{% for command in bgp_family_commands(instance.get('address-family', {}).get(family, {})) -%}
+{{ command }}
+{% endfor -%}
+{% set dampening = bgp_dampening_command(parameters) -%}
+{% if family == 'ipv4-unicast' and dampening -%}
+{{ dampening }}
+{% endif -%}
+{% for name, group in groups.items() -%}
+{% set settings = bgp_families(parameters, group) -%}
+{% if family in settings -%}
+{% for command in bgp_peer_family_commands(name, settings[family], {}) -%}
+{{ command }}
+{% endfor -%}
+{% endif -%}
+{% endfor -%}
+{% for address, options in instance.get('neighbor', {}).items() -%}
+{% set settings = bgp_families(parameters, options) -%}
+{% if family in settings -%}
+{% set group = groups.get(options.get('peer-group'), {}).get('address-family', {}).get(family, {}) -%}
+{% for command in bgp_peer_family_commands(bgp_peer_name(address), settings[family], group) -%}
+{{ command }}
+{% endfor -%}
+{% endif -%}
+{% endfor -%}
+{% endset -%}
+{% if body %} address-family {{ family.replace('-', ' ') }}
+{{ body }} exit-address-family
+{% endif -%}
+{% endfor -%}
+exit
+{% endfor -%}

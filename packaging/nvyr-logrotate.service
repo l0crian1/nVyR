@@ -1,0 +1,8 @@
+[Unit]
+Description=Rotate nVyR log files and reopen their writers
+After=rsyslog.service
+Requires=nvyr-logging-prepare.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/logrotate --state /var/lib/nvyr/logging/logrotate.state /run/nvyr-logging/logrotate.conf

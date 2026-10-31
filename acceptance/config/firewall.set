@@ -1,0 +1,273 @@
+# Boot protection is removed atomically when the full firewall is ready.
+set firewall fail-safe ipv4 input filter default-action drop
+set firewall fail-safe ipv4 input filter rule 10 action accept inbound-interface lo
+set firewall fail-safe ipv4 input filter rule 20 action accept protocol tcp destination-port 22
+set firewall fail-safe ipv4 input filter rule 30 action accept protocol udp source-port 67 destination-port 68
+set firewall fail-safe ipv4 forward filter default-action drop
+set firewall fail-safe ipv6 input filter default-action drop
+set firewall fail-safe ipv6 input filter rule 10 action accept inbound-interface lo
+set firewall fail-safe ipv6 input filter rule 20 action accept protocol tcp destination-port 22
+set firewall fail-safe ipv6 input filter rule 30 action accept protocol ipv6-icmp
+set firewall fail-safe ipv6 forward filter default-action drop
+set firewall fail-safe inet source-validation interface dum995 mode strict
+set firewall fail-safe inet source-validation interface dum996 mode loose
+
+# Global behavior, flow enrollment, named state and interface identity.
+set firewall global-options counter
+set firewall global-options last-used
+set firewall global-options connection-accounting
+set firewall global-options state-policy established action accept
+set firewall global-options state-policy related action accept
+set firewall global-options state-policy invalid action drop
+set firewall global-options reject-response admin-prohibited
+set firewall global-options ipv4 arp cache-timeout 40s
+set firewall global-options ipv4 arp ignore 1
+set firewall global-options connection-tracking timeout udp stream 3m
+set firewall global-options flowtable-timeout tcp 45s
+set firewall global-options flowtable-timeout udp 45s
+set firewall global-options connection-tracking helper ftp tftp sip
+set firewall flowtable BOOTFAST interface veth995* interface veth997* offload software
+set firewall flowtable BOOTFAST counter
+set firewall global-options flowtable BOOTFAST
+set firewall group interface-group BOOTIF interface dum995* counter last-used
+set firewall group interface-group BOOTVRFIF interface veth995 interface veth997 vrf
+set firewall group mac-group BOOTMAC address 02:00:00:19:95:01 counter last-used
+set firewall group port-group BOOTPORT port 80 port 443 port 8000-8100 counter last-used
+set firewall group counter-group BOOTTOTAL description "Shared boot counter"
+set firewall group quota-group BOOTQUOTA bytes 1m until description "Shared boot quota"
+
+# Included objects are flattened into the consuming set, including nested inclusions.
+set firewall group interface-group BOOTIFCHILD interface dum997*
+set firewall group interface-group BOOTIF include-group BOOTIFCHILD
+set firewall group mac-group BOOTMACCHILD address 02:00:00:19:95:02
+set firewall group mac-group BOOTMAC include-group BOOTMACCHILD
+set firewall group port-group BOOTPORTCHILD port 8443
+set firewall group port-group BOOTPORT include-group BOOTPORTCHILD
+
+# Distinct collectors test family-specific NFLOG delivery after each boot.
+set firewall group log-group BOOTLOG4 snaplen 128 queue-threshold 1
+set firewall group log-group BOOTLOG6 snaplen 256 queue-threshold 1
+
+# ipv4: sets, maps, dynamics, and consumers all coexist in the saved configuration.
+set firewall group address-group ipv4 BOOTADDR address 198.18.195.0/24 counter last-used description "Boot address set"
+set firewall group address-group ipv4 BOOTADDRCHILD address 198.18.196.0/24
+set firewall group address-group ipv4 BOOTADDRMIDDLE include-group BOOTADDRCHILD
+set firewall group address-group ipv4 BOOTADDR include-group BOOTADDRMIDDLE
+set firewall group address-group ipv4 BOOTLEARN dynamic timeout 10m size 1024 gc-interval 30s
+set firewall group match-group ipv4 BOOTMATCH match protocol destination-port
+set firewall group match-group ipv4 BOOTMATCH entry web protocol tcp destination-port 443 description "HTTPS"
+set firewall group match-group ipv4 BOOTDYNAMIC match source-address protocol destination-port
+set firewall group match-group ipv4 BOOTDYNAMIC dynamic timeout 10m size 1024 gc-interval 30s
+set firewall group map ipv4 BOOTMAP match source-address destination-address
+set firewall group map ipv4 BOOTMAP result-type verdict
+set firewall group map ipv4 BOOTMAP description "Boot verdict map"
+set firewall group map ipv4 BOOTMAP entry allow source-address 198.18.195.1 destination-address 198.18.195.1 result action accept
+set firewall group map ipv4 BOOTMAP entry allow description "Same address"
+set firewall group icmp-group ipv4 BOOTICMP match type-code
+set firewall group icmp-group ipv4 BOOTICMP type destination-unreachable code 0 code 1
+set firewall group icmp-group ipv4 BOOTICMP type echo-request code 0
+set firewall group limit-group ipv4 BOOTLIMIT rate packets 10/s burst packets 5
+set firewall group limit-group ipv4 BOOTPER rate packets 100/s burst packets 10 per source-address and destination-port size 1024 timeout 1m
+set firewall ipv4 name BOOTPASS default-action accept
+set firewall ipv4 name BOOTINNER rule 10 map BOOTMAP match-group BOOTMATCH
+set firewall ipv4 name BOOTOUTER rule 10 action jump jump-target BOOTINNER
+set firewall ipv4 name BOOTFILTER rule 10 action continue source-address 198.18.195.0/24 source-address not 198.18.195.1
+set firewall ipv4 name BOOTFILTER rule 20 action continue protocol tcp source-address-group BOOTADDR destination-port-group BOOTPORT
+set firewall ipv4 name BOOTFILTER rule 30 action continue source-mac-group BOOTMAC inbound-interface-group BOOTIF
+set firewall ipv4 name BOOTFILTER rule 40 action continue protocol tcp tcp-flags syn and not ack and not fin and not rst
+set firewall ipv4 name BOOTFILTER rule 50 action continue packet-length 64-1500 ttl gt 10 ttl lt 200
+set firewall ipv4 name BOOTFILTER rule 60 action continue packet-type multicast dscp 46 packet-mark 10
+set firewall ipv4 name BOOTFILTER rule 70 action continue protocol icmp icmp-group BOOTICMP
+set firewall ipv4 name BOOTFILTER rule 80 action continue protocol icmp icmp-type echo-request icmp-code 0
+set firewall ipv4 name BOOTFILTER rule 90 action reject protocol tcp reject-response tcp-reset
+set firewall ipv4 name BOOTFILTER rule 100 action continue protocol tcp tcp-mss 1200-1400
+set firewall ipv4 name BOOTFILTER rule 110 action continue connection state established status confirmed and seen-reply and assured
+set firewall ipv4 name BOOTFILTER rule 120 action continue connection direction reply mark 10 zone 2 id 100
+set firewall ipv4 name BOOTFILTER rule 130 action continue connection helper ftp label 1 and 2 expiration gt 10s
+set firewall ipv4 name BOOTFILTER rule 140 action continue connection family ipv4 protocol tcp original source-address 198.18.195.0/24 destination-port 443
+set firewall ipv4 name BOOTFILTER rule 150 action continue connection protocol udp reply source-port 53
+set firewall ipv4 name BOOTFILTER rule 160 action continue connection original packets gt 10 bytes gt 1k average-packet-size gt 100
+set firewall ipv4 name BOOTFILTER rule 170 action continue connection reply packets gt 10 total bytes gt 1k
+set firewall ipv4 name BOOTFILTER rule 180 action continue limit rate bytes 1m/s burst bytes 64k over
+set firewall ipv4 name BOOTFILTER rule 190 action continue limit rate packets 100/s burst packets 10 per source-address and destination-address size 1024 timeout 1m
+set firewall ipv4 name BOOTFILTER rule 190 limit source-prefix-length 24 destination-prefix-length 24
+set firewall ipv4 name BOOTFILTER rule 200 action continue limit group BOOTLIMIT
+set firewall ipv4 name BOOTFILTER rule 210 action continue protocol tcp limit group BOOTPER
+set firewall ipv4 name BOOTFILTER rule 220 action continue connection limit over 20 per source-address size 1024
+set firewall ipv4 name BOOTFILTER rule 230 action continue quota group BOOTQUOTA counter group BOOTTOTAL
+set firewall ipv4 name BOOTFILTER rule 240 action continue quota bytes 64k over
+set firewall ipv4 name BOOTFILTER rule 250 action continue protocol tcp log level notice flags tcp-sequence and tcp-options and ip-options
+set firewall ipv4 name BOOTFILTER rule 260 action continue add-to-group source-address BOOTLEARN timeout 5m
+set firewall ipv4 name BOOTFILTER rule 270 action continue protocol udp add-to-group match-group BOOTDYNAMIC
+set firewall ipv4 name BOOTFILTER rule 280 action continue fib lookup source-address inbound-interface
+set firewall ipv4 name BOOTFILTER rule 280 fib result outbound-interface exists
+set firewall ipv4 name BOOTFILTER rule 290 action continue inbound-link-group 195 outbound-link-group 197
+set firewall ipv4 name BOOTFILTER rule 300 action jump jump-target BOOTOUTER
+set firewall ipv4 name BOOTFILTER rule 310 action drop disable description "Disabled rule stays absent"
+set firewall ipv4 name BOOTFILTER rule 320 action return
+set firewall ipv4 name BOOTINPUT rule 10 action continue inbound-interface-group BOOTVRFIF
+set firewall ipv4 input filter rule 41990 action jump jump-target BOOTINPUT
+set firewall ipv4 forward filter rule 41990 inbound-interface dum995* action jump jump-target BOOTFILTER
+set firewall ipv4 forward filter rule 41991 inbound-interface dum995 action offload offload-target BOOTFAST
+set firewall ipv4 prerouting raw rule 41990 inbound-interface dum995 protocol udp destination-port 41995 notrack action continue
+set firewall ipv4 output raw rule 41990 outbound-interface dum995 protocol udp destination-port 41995 notrack action continue
+set firewall ipv4 output filter rule 41980 outbound-interface lo protocol udp destination-port 53098 add-to-group source-address BOOTLEARN action accept log group BOOTLOG4
+set firewall ipv4 input filter default-action accept
+set firewall ipv4 output filter default-action accept
+set firewall ipv4 forward filter default-action accept
+
+# ipv6: sets, maps, dynamics, and consumers all coexist in the saved configuration.
+set firewall group address-group ipv6 BOOTADDR address 2001:db8:195::/64 counter last-used description "Boot address set"
+set firewall group address-group ipv6 BOOTADDRCHILD address 2001:db8:196::/64
+set firewall group address-group ipv6 BOOTADDRMIDDLE include-group BOOTADDRCHILD
+set firewall group address-group ipv6 BOOTADDR include-group BOOTADDRMIDDLE
+set firewall group address-group ipv6 BOOTLEARN dynamic timeout 10m size 1024 gc-interval 30s
+set firewall group match-group ipv6 BOOTMATCH match protocol destination-port
+set firewall group match-group ipv6 BOOTMATCH entry web protocol tcp destination-port 443 description "HTTPS"
+set firewall group match-group ipv6 BOOTDYNAMIC match source-address protocol destination-port
+set firewall group match-group ipv6 BOOTDYNAMIC dynamic timeout 10m size 1024 gc-interval 30s
+set firewall group map ipv6 BOOTMAP match source-address destination-address
+set firewall group map ipv6 BOOTMAP result-type verdict
+set firewall group map ipv6 BOOTMAP description "Boot verdict map"
+set firewall group map ipv6 BOOTMAP entry allow source-address 2001:db8:195::1 destination-address 2001:db8:195::1 result action accept
+set firewall group map ipv6 BOOTMAP entry allow description "Same address"
+set firewall group icmp-group ipv6 BOOTICMP match type-code
+set firewall group icmp-group ipv6 BOOTICMP type destination-unreachable code 0 code 1
+set firewall group icmp-group ipv6 BOOTICMP type echo-request code 0
+set firewall group limit-group ipv6 BOOTLIMIT rate packets 10/s burst packets 5
+set firewall group limit-group ipv6 BOOTPER rate packets 100/s burst packets 10 per source-address and destination-port size 1024 timeout 1m
+set firewall ipv6 name BOOTPASS default-action accept
+set firewall ipv6 name BOOTINNER rule 10 map BOOTMAP match-group BOOTMATCH
+set firewall ipv6 name BOOTOUTER rule 10 action jump jump-target BOOTINNER
+set firewall ipv6 name BOOTFILTER rule 10 action continue source-address 2001:db8:195::/64 source-address not 2001:db8:195::1
+set firewall ipv6 name BOOTFILTER rule 20 action continue protocol tcp source-address-group BOOTADDR destination-port-group BOOTPORT
+set firewall ipv6 name BOOTFILTER rule 30 action continue source-mac-group BOOTMAC inbound-interface-group BOOTIF
+set firewall ipv6 name BOOTFILTER rule 40 action continue protocol tcp tcp-flags syn and not ack and not fin and not rst
+set firewall ipv6 name BOOTFILTER rule 50 action continue packet-length 64-1500 ttl gt 10 ttl lt 200
+set firewall ipv6 name BOOTFILTER rule 60 action continue packet-type multicast dscp 46 packet-mark 10
+set firewall ipv6 name BOOTFILTER rule 70 action continue protocol ipv6-icmp icmp-group BOOTICMP
+set firewall ipv6 name BOOTFILTER rule 80 action continue protocol ipv6-icmp icmp-type echo-request icmp-code 0
+set firewall ipv6 name BOOTFILTER rule 90 action reject protocol tcp reject-response tcp-reset
+set firewall ipv6 name BOOTFILTER rule 100 action continue protocol tcp tcp-mss 1200-1400
+set firewall ipv6 name BOOTFILTER rule 110 action continue connection state established status confirmed and seen-reply and assured
+set firewall ipv6 name BOOTFILTER rule 120 action continue connection direction reply mark 10 zone 2 id 100
+set firewall ipv6 name BOOTFILTER rule 130 action continue connection helper ftp label 1 and 2 expiration gt 10s
+set firewall ipv6 name BOOTFILTER rule 140 action continue connection family ipv6 protocol tcp original source-address 2001:db8:195::/64 destination-port 443
+set firewall ipv6 name BOOTFILTER rule 150 action continue connection protocol udp reply source-port 53
+set firewall ipv6 name BOOTFILTER rule 160 action continue connection original packets gt 10 bytes gt 1k average-packet-size gt 100
+set firewall ipv6 name BOOTFILTER rule 170 action continue connection reply packets gt 10 total bytes gt 1k
+set firewall ipv6 name BOOTFILTER rule 180 action continue limit rate bytes 1m/s burst bytes 64k over
+set firewall ipv6 name BOOTFILTER rule 190 action continue limit rate packets 100/s burst packets 10 per source-address and destination-address size 1024 timeout 1m
+set firewall ipv6 name BOOTFILTER rule 190 limit source-prefix-length 64 destination-prefix-length 64
+set firewall ipv6 name BOOTFILTER rule 200 action continue limit group BOOTLIMIT
+set firewall ipv6 name BOOTFILTER rule 210 action continue protocol tcp limit group BOOTPER
+set firewall ipv6 name BOOTFILTER rule 220 action continue connection limit over 20 per source-address size 1024
+set firewall ipv6 name BOOTFILTER rule 230 action continue quota group BOOTQUOTA counter group BOOTTOTAL
+set firewall ipv6 name BOOTFILTER rule 240 action continue quota bytes 64k over
+set firewall ipv6 name BOOTFILTER rule 250 action continue protocol tcp log level notice flags tcp-sequence and tcp-options and ip-options
+set firewall ipv6 name BOOTFILTER rule 260 action continue add-to-group source-address BOOTLEARN timeout 5m
+set firewall ipv6 name BOOTFILTER rule 270 action continue protocol udp add-to-group match-group BOOTDYNAMIC
+set firewall ipv6 name BOOTFILTER rule 280 action continue fib lookup source-address inbound-interface
+set firewall ipv6 name BOOTFILTER rule 280 fib result outbound-interface exists
+set firewall ipv6 name BOOTFILTER rule 290 action continue inbound-link-group 195 outbound-link-group 197
+set firewall ipv6 name BOOTFILTER rule 300 action jump jump-target BOOTOUTER
+set firewall ipv6 name BOOTFILTER rule 310 action drop disable description "Disabled rule stays absent"
+set firewall ipv6 name BOOTFILTER rule 320 action return
+set firewall ipv6 name BOOTINPUT rule 10 action continue inbound-interface-group BOOTVRFIF
+set firewall ipv6 input filter rule 41990 action jump jump-target BOOTINPUT
+set firewall ipv6 forward filter rule 41990 inbound-interface dum995* action jump jump-target BOOTFILTER
+set firewall ipv6 forward filter rule 41991 inbound-interface dum995 action offload offload-target BOOTFAST
+set firewall ipv6 prerouting raw rule 41990 inbound-interface dum995 protocol udp destination-port 41995 notrack action continue
+set firewall ipv6 output raw rule 41990 outbound-interface dum995 protocol udp destination-port 41995 notrack action continue
+set firewall ipv6 output filter rule 41980 outbound-interface lo protocol udp destination-port 53098 add-to-group source-address BOOTLEARN action accept log group BOOTLOG6
+set firewall ipv6 input filter default-action accept
+set firewall ipv6 output filter default-action accept
+set firewall ipv6 forward filter default-action accept
+
+# Zone dispatch coexists with ordinary rules and uses VRF member identities.
+set firewall zone BOOTUSERS interface veth995* default-action drop
+set firewall zone BOOTWAN interface veth997* default-action drop
+set firewall zone BOOTLOCAL local-zone
+set firewall zone BOOTUSERS intra-zone default-action drop ipv4-policy BOOTPASS ipv6-policy BOOTPASS
+set firewall zone-policy from-zone BOOTUSERS to-zone BOOTWAN ipv4-policy BOOTPASS ipv6-policy BOOTPASS
+set firewall zone-policy from-zone BOOTWAN to-zone BOOTUSERS ipv4-policy BOOTPASS ipv6-policy BOOTPASS
+set firewall zone-policy from-zone BOOTUSERS to-zone BOOTLOCAL ipv4-policy BOOTPASS ipv6-policy BOOTPASS
+set firewall zone-policy from-zone BOOTWAN to-zone BOOTLOCAL ipv4-policy BOOTPASS ipv6-policy BOOTPASS
+set firewall zone-policy from-zone BOOTLOCAL to-zone BOOTUSERS ipv4-policy BOOTPASS ipv6-policy BOOTPASS
+set firewall zone-policy from-zone BOOTLOCAL to-zone BOOTWAN ipv4-policy BOOTPASS ipv6-policy BOOTPASS
+
+# NAT shares the same transaction as its map providers.
+set firewall group map ipv4 BOOTNAT match protocol destination-port
+set firewall group map ipv4 BOOTNAT result-type address-port
+set firewall group map ipv4 BOOTNAT entry web protocol tcp destination-port 8080 result address 198.18.195.10 result port 80
+set nat destination rule 41990 inbound-interface dum995 map BOOTNAT
+set nat source rule 41990 outbound-interface dum995 source-address 198.18.196.0/24 translation address masquerade
+
+# Missing keys use native catch-all results, including a non-verdict NAT result.
+set firewall group map ipv4 BOOTMAP default-result action continue
+set firewall group map ipv6 BOOTMAP default-result action continue
+set firewall group map ipv4 BOOTNAT default-result address 198.18.195.11 port 8081
+
+# Shared family-neutral rules still fall through to family dispatch on a miss.
+set firewall group match-group inet BOOTNEUTRAL match protocol destination-port
+set firewall group match-group inet BOOTNEUTRAL entry web protocol tcp destination-port 8443
+set firewall group map inet BOOTNEUTRAL match inbound-interface
+set firewall group map inet BOOTNEUTRAL result-type verdict
+set firewall group map inet BOOTNEUTRAL entry inside inbound-interface dum995 result action continue
+set firewall group map inet BOOTNEUTRAL default-result action continue
+set firewall group limit-group inet BOOTNEUTRAL rate packets 100/s burst packets 10 per inbound-interface size 1024 timeout 1m
+
+set firewall inet name BOOTNEUTRAL rule 10 map BOOTNEUTRAL match-group BOOTNEUTRAL
+set firewall inet name BOOTNEUTRAL rule 20 protocol tcp tcp-flags syn modify packet-mark 32 connection-mark 64 tcp-mss 1360 action continue
+set firewall inet name BOOTNEUTRAL rule 30 limit group BOOTNEUTRAL action continue
+set firewall inet name BOOTNEUTRAL rule 40 action reject reject-response admin-prohibited
+set firewall inet forward filter rule 41970 inbound-interface dum995 action jump jump-target BOOTNEUTRAL
+set firewall inet input filter rule 41970 inbound-interface dum995 protocol udp destination-port 41994 action continue
+set firewall inet output filter rule 41970 outbound-interface dum995 protocol udp destination-port 41994 action continue
+set firewall inet prerouting raw rule 41970 inbound-interface dum995 protocol udp destination-port 41994 notrack action continue
+set firewall inet output raw rule 41970 outbound-interface dum995 protocol udp destination-port 41994 notrack action continue
+
+# Source validation is scoped to lab interfaces; management retains disabled mode.
+set firewall ipv4 source-validation default disabled
+set firewall ipv6 source-validation default disabled
+set firewall ipv4 source-validation interface dum995 mode strict
+set firewall ipv4 source-validation interface dum996 mode loose
+set firewall ipv6 source-validation interface dum995 mode strict
+set firewall ipv6 source-validation interface dum996 mode loose
+
+# Ingress is deliberately attached to recreated veths and a future device prefix.
+set firewall group match-group ipv4 BOOTVLAN match vlan id priority
+set firewall group match-group ipv4 BOOTVLAN entry tagged vlan id 195 priority 0
+set firewall group map ipv6 BOOTVLAN match vlan id priority
+set firewall group map ipv6 BOOTVLAN result-type verdict
+set firewall group map ipv6 BOOTVLAN entry tagged vlan id 195 priority 0 result action continue
+set firewall group map ipv6 BOOTVLAN default-result action continue
+
+set firewall ipv4 ingress filter interface veth995* interface veth997* interface bootfuture*
+set firewall ipv4 ingress filter rule 10 match-group BOOTVLAN action continue
+set firewall ipv4 ingress filter rule 20 protocol udp destination-port 41993 notrack action continue
+set firewall ipv4 ingress filter default-action accept
+set firewall ipv6 ingress filter interface veth995* interface veth997* interface bootfuture*
+set firewall ipv6 ingress filter rule 10 map BOOTVLAN
+set firewall ipv6 ingress filter rule 20 protocol udp destination-port 41993 notrack action continue
+set firewall ipv6 ingress filter default-action accept
+set firewall inet ingress filter interface veth995* interface veth997* interface bootfuture*
+set firewall inet ingress filter rule 41970 protocol udp destination-port 41991 action continue
+
+# Service timeout policies exercise TCP/UDP, family-specific and inet assignments.
+set firewall group timeout-group ipv4 BOOTTCP protocol tcp timeout established 1d close 20s
+set firewall group timeout-group ipv4 BOOTTCP description "TCP recovery policy"
+set firewall group timeout-group ipv4 BOOTTCP timeout syn-sent 90s syn-received 45s fin-wait 90s close-wait 45s last-ack 20s time-wait 90s unacknowledged 4m max-retransmissions 4m
+set firewall group timeout-group ipv6 BOOTTCP protocol tcp timeout established 1d close 20s
+set firewall group timeout-group inet BOOTUDP protocol udp timeout unreplied 10s replied 40s
+set firewall ipv4 name BOOTFILTER rule 305 protocol tcp connection timeout-group BOOTTCP action continue
+set firewall ipv6 name BOOTFILTER rule 305 protocol tcp connection timeout-group BOOTTCP action continue
+set firewall inet output filter rule 41971 outbound-interface dum995 protocol udp destination-port 41992 connection timeout-group BOOTUDP action continue
+
+# Tracing and packet setters are scoped to test traffic and evaluated before verdicts.
+set firewall ipv4 forward filter rule 41989 inbound-interface dum995 protocol tcp tcp-flags syn nftrace action continue
+set firewall ipv4 forward filter rule 41989 modify packet-mark 32 connection-mark 64 dscp ef ttl 63 tcp-mss 1360
+set firewall ipv6 forward filter rule 41989 inbound-interface dum995 protocol tcp tcp-flags syn nftrace action continue
+set firewall ipv6 forward filter rule 41989 modify packet-mark 32 connection-mark 64 dscp ef ttl 63 tcp-mss 1360
+set firewall ipv4 output raw rule 41989 outbound-interface dum995 protocol tcp tcp-flags syn modify tcp-mss clamp-to-pmtu action continue
+set firewall ipv6 output raw rule 41989 outbound-interface dum995 protocol tcp tcp-flags syn modify tcp-mss clamp-to-pmtu action continue

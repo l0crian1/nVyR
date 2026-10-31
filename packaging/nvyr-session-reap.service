@@ -1,0 +1,8 @@
+[Unit]
+Description=Remove abandoned nVyR CLI session containers
+After=nvyr-session-images.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/nvyr-session reap
+UMask=0077

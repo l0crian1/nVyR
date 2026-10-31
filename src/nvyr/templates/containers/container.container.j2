@@ -1,0 +1,72 @@
+{# Configd starts containers before network-online.target; waiting there would deadlock boot. -#}
+[Quadlet]
+DefaultDependencies=false
+
+[Unit]
+Description=nVyR container {{ name }}
+After=network.target
+
+[Container]
+Image={{ image }}
+ContainerName={{ name }}
+Pull=never
+Label=nvyr.managed=true
+LogDriver=k8s-file
+LogOpt=path=/var/log/nvyr/containers/{{ name }}.log
+PidsLimit={{ configuration.get('process-limit', '256') }}
+{% if configuration.get('gid', 'auto') != 'auto' and configuration.get('uid', 'auto') == 'auto' -%}
+User={{ container_image_user(image_user) }}
+{% endif -%}
+{% for option, directive in [('uid', 'User'), ('gid', 'Group')] -%}
+{% if configuration.get(option, 'auto') != 'auto' -%}
+{{ directive }}={{ configuration[option] }}
+{% endif -%}
+{% endfor -%}
+{% if 'privileged' in configuration -%}
+PodmanArgs=--privileged
+{% else -%}
+DropCapability=all
+NoNewPrivileges=true
+{% for capability in container_capabilities(configuration) -%}
+AddCapability={{ capability }}
+{% endfor -%}
+{% endif -%}
+{% if 'pod' in configuration -%}
+Pod={{ container_pod_unit_name(configuration['pod']) }}.pod
+{% else -%}
+{% include 'containers/network.inc.j2' -%}
+{% endif -%}
+{% if 'entrypoint' in configuration -%}
+Entrypoint={{ container_entrypoint(configuration['entrypoint']) }}
+{% endif -%}
+{% if 'environment-file' in configuration -%}
+EnvironmentFile={{ container_environment_path(name) }}
+{% endif -%}
+{% for source, settings in configuration.get('device', {}).items() | sort -%}
+AddDevice={{ source }}:{{ settings.get('destination', source) }}:{{ settings.get('permissions', 'rwm') }}
+{% endfor -%}
+{% for destination, settings in configuration.get('tmpfs', {}).items() | sort -%}
+Tmpfs={{ destination }}:{{ container_tmpfs_options(settings) }}
+{% endfor -%}
+{% for variable, settings in configuration.get('environment', {}).items() | sort -%}
+Environment={{ container_quoted(variable + '=' + settings['value'].replace('$', '$$')) }}
+{% endfor -%}
+{% for volume, settings in configuration.get('volume', {}).items() | sort -%}
+Volume={{ container_mount_path(name, volume) }}:{{ settings['destination'] }}:{{ 'ro' if 'read-only' in settings else 'rw' }}
+{% endfor -%}
+{% set command = container_arguments(configuration) -%}
+{% if command -%}
+Exec={{ command }}
+{% endif -%}
+{# Keep image-provided shells alive by default; stream settings are independent. -#}
+PodmanArgs=--interactive={{ 'false' if 'disable' in configuration.get('interactive', {}) else 'true' }} --tty={{ 'false' if 'disable' in configuration.get('tty', {}) else 'true' }}
+{% set memory = container_memory_bytes(configuration.get('memory', '512m')) -%}
+PodmanArgs=--image-volume=ignore --memory={{ memory }} --memory-swap={{ memory }} --cpus={{ configuration.get('cpus', '1') }}
+
+[Service]
+SyslogIdentifier={{ container_unit_name(name) }}
+Restart={{ configuration.get('restart-policy', 'on-failure') }}
+RestartSec=5
+TimeoutStartSec=60
+TimeoutStopSec=30
+UMask=0077

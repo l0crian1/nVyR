@@ -1,0 +1,68 @@
+Package: nvyr-router
+Version: @VERSION@
+Section: net
+Priority: optional
+Architecture: all
+Maintainer: nVyR Router Contributors <maintainers@example.invalid>
+Depends: python3 (>= 3.11),
+ python3-prompt-toolkit (>= 3.0.43),
+ python3-tabulate (>= 0.9),
+ python3-dnspython (>= 2.6),
+ python3-jinja2 (>= 3.1),
+ python3-pyudev (>= 0.24),
+ python3-pyroute2 (>= 0.7.7),
+ python3-pytest (>= 8),
+ udhcpc,
+ adduser,
+ passwd,
+ libcrypt1,
+ sudo,
+ procps,
+ util-linux,
+ conntrack,
+ rsyslog,
+ ulogd2,
+ logrotate,
+ traceroute,
+ less (>= 668),
+ pciutils,
+ ethtool (>= 1:6.14.2),
+ ca-certificates,
+ tzdata,
+ systemd (>= 257),
+ udev,
+ kmod,
+ dbus,
+ iproute2,
+ iputils-ping,
+ frr (= 10.7.1-0~deb13u1+nvyr1),
+ frr-pythontools (= 10.7.1-0~deb13u1+nvyr1),
+ nftables (>= 1.1.7),
+ openssh-server,
+ chrony (>= 4.6),
+ isc-kea-dhcp4 (>= 3.0.4),
+ isc-kea-dhcp6 (>= 3.0.4),
+ isc-kea-hooks (>= 3.0.4),
+ podman (>= 6.1.4),
+ podman (<< 7),
+ fuse-overlayfs,
+ catatonit,
+ netavark (>= 2.1.0),
+ netavark (<< 3),
+ aardvark-dns (>= 2.1.0),
+ aardvark-dns (<< 3),
+ crun,
+ grub2-common,
+ grub-pc-bin,
+ grub-efi-amd64-bin,
+ initramfs-tools,
+ rsync,
+ fdisk,
+ e2fsprogs,
+ dosfstools,
+ squashfs-tools
+Description: Clean-sheet router configuration framework
+ Authoritative configuration daemon and interactive CLI with isolated candidate
+ journals, independent commit units, recovery and persistence. Ethernet and dummy interfaces
+ are applied through the nVyR Netlink daemon. Static routing uses FRR configuration reloads
+ with verified recovery and IPv4/IPv6 filtering uses atomic nftables loads.

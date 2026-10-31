@@ -1,0 +1,59 @@
+global(workDirectory="/run/nvyr-logging")
+module(load="imuxsock" SysSock.RateLimit.Interval="0")
+module(load="imklog")
+template(name="nvyr" type="string" string="%timereported:::date-rfc3339% %syslogseverity-text% %programname%: %msg:::drop-last-lf%\n")
+template(name="nvyrfile" type="string" string="/var/log/nvyr/%$!nvyrpath%")
+$FileOwner root
+$FileGroup nvyr-access
+$FileCreateMode 0640
+$DirOwner root
+$DirGroup nvyr-access
+$DirCreateMode 0750
+
+# Explicit firewall logging must not be discarded by the system threshold.
+if $syslogfacility-text == "kern" and re_match($msg, "\\[(ipv[46]|inet)-") then {
+    action(type="omfile" file="{{ logging_root }}/firewall/default.log" template="nvyr")
+    stop
+}
+if $syslogfacility-text == "kern" then {
+    if $syslogseverity <= {{ logging_severity(configuration, 'kernel') }} then action(type="omfile" file="{{ logging_root }}/kernel.log" template="nvyr")
+    stop
+}
+{% for service, identifiers in logging_services.items() if not service.startswith('dhcp') %}
+if ({{ logging_program_condition(identifiers) }}) then {
+    if $syslogseverity <= {{ logging_severity(configuration, service) }} then action(type="omfile" file="{{ logging_root }}/{{ service }}.log" template="nvyr")
+    stop
+}
+{% endfor %}
+# Only hexadecimal instance identifiers enter dynamic paths, never message text.
+{% for family, service in [(4, 'dhcp-server'), (6, 'dhcpv6-server')] %}
+if ($programname == "kea-dhcp{{ family }}" and re_match($msg, "nvyr-kea-{{ family }}-([0-9a-f]+)")) then {
+    set $!nvyrpath = "{{ service }}/" & re_extract($msg, "nvyr-kea-{{ family }}-([0-9a-f]+)", 0, 1, "") & ".log";
+    if $syslogseverity <= {{ logging_severity(configuration, service) }} then action(type="omfile" dynaFile="nvyrfile" template="nvyr")
+    stop
+}
+if (1 == 1 and re_match($programname, "nvyr-kea-{{ family }}-([0-9a-f]+)")) then {
+    set $!nvyrpath = "{{ service }}/" & re_extract($programname, "nvyr-kea-{{ family }}-([0-9a-f]+)", 0, 1, "") & ".log";
+    if $syslogseverity <= {{ logging_severity(configuration, service) }} then action(type="omfile" dynaFile="nvyrfile" template="nvyr")
+    stop
+}
+{% endfor %}
+if re_match($programname, "^nvyr-container-([0-9a-f]+)\$") then {
+    set $!nvyrpath = "containers/" & re_extract($programname, "nvyr-container-([0-9a-f]+)", 0, 1, "") & ".service.log";
+    action(type="omfile" dynaFile="nvyrfile" template="nvyr")
+    stop
+}
+if $programname == "systemd" and re_match($msg, "nvyr-container-([0-9a-f]+)\\.service") then {
+    set $!nvyrpath = "containers/" & re_extract($msg, "nvyr-container-([0-9a-f]+)", 0, 1, "") & ".service.log";
+    action(type="omfile" dynaFile="nvyrfile" template="nvyr")
+    stop
+}
+
+if $syslogfacility-text == "auth" or $syslogfacility-text == "authpriv" then {
+    if $syslogseverity <= {{ logging_severity(configuration, 'authentication') }} then action(type="omfile" file="{{ logging_root }}/authentication.log" template="nvyr")
+    stop
+}
+if 1 == 1 then {
+    if $syslogseverity <= {{ logging_severity(configuration, 'system') }} then action(type="omfile" file="{{ logging_root }}/system.log" template="nvyr")
+    stop
+}

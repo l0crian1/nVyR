@@ -1,0 +1,15 @@
+# Physical Ethernet only; logical interfaces retain their configured names.
+SUBSYSTEM!="net", GOTO="nvyr_ethernet_end"
+ACTION!="add|change|move", GOTO="nvyr_ethernet_end"
+ATTR{type}!="1", GOTO="nvyr_ethernet_end"
+TEST!="device", GOTO="nvyr_ethernet_end"
+TEST=="wireless", GOTO="nvyr_ethernet_end"
+ENV{DEVTYPE}=="wlan|wwan", GOTO="nvyr_ethernet_end"
+
+ENV{NVYR_ETHERNET}="1"
+IMPORT{builtin}="path_id"
+ENV{NVYR_NAME_READY}="0", ENV{ID_NET_MANAGED_BY}="io.nvyr.Naming"
+IMPORT{program}="/usr/bin/nvyr-interface-naming --udev-properties /sys%p"
+# Leave the kernel ethN namespace before the coordinator assigns final names.
+ACTION=="add", ENV{NVYR_NAME_READY}!="1", NAME:="nvn$attr{ifindex}"
+LABEL="nvyr_ethernet_end"

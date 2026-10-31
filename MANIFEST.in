@@ -1,0 +1,12 @@
+recursive-include docs *.md
+include LICENSE THIRD_PARTY.md README.md
+recursive-include packaging *
+recursive-include images *
+recursive-include scripts *.sh *.ps1
+recursive-include tests *.py
+recursive-include smoketests *.py *.md *.ini
+recursive-include acceptance *.py *.md *.set
+include acceptance/requirements.txt
+recursive-include build_tools *.py
+recursive-include schemas *.yaml *.yaml.i
+recursive-include vendor/frr *

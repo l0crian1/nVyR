@@ -1,0 +1,40 @@
+[Unit]
+Description=nVyR persistent physical Ethernet naming
+DefaultDependencies=no
+Requires=systemd-udevd.service
+Wants=systemd-udev-trigger.service
+After=local-fs.target systemd-udevd.service systemd-udev-trigger.service
+Before=nvyr-netlinkd.service nvyr-configd.service shutdown.target
+Conflicts=shutdown.target
+RequiresMountsFor=/var/lib/nvyr
+# Keep retrying transient discovery failures, at the bounded rate below.
+StartLimitIntervalSec=0
+
+[Service]
+Type=notify
+NotifyAccess=main
+ExecStart=/usr/bin/nvyr-interface-naming
+StateDirectory=nvyr
+StateDirectoryMode=0700
+RuntimeDirectory=nvyr-naming
+RuntimeDirectoryMode=0700
+RuntimeDirectoryPreserve=restart
+UMask=0077
+TimeoutStartSec=100
+Restart=on-failure
+# Keep ordered startup jobs waiting until naming reports READY, even after a crash.
+RestartMode=direct
+RestartSec=5
+RestartSteps=3
+RestartMaxDelaySec=30
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+# Naming writes per-device sysfs uevent files for discovery and handoff.
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_UNIX AF_NETLINK
+
+[Install]
+WantedBy=multi-user.target

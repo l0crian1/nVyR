@@ -1,0 +1,17 @@
+---
+description: Keep the generated Markdown command tree synchronized with every CLI change.
+alwaysApply: true
+---
+
+# Command tree documentation
+
+- Whenever commands are added, changed, or removed, update `docs/users/command-tree.md`
+  in the same change. This includes configuration paths, operational and control
+  commands, pipe modifiers, choices, hints, and argument syntax.
+- Generate the document from the schemas with `python -m build_tools.command_tree`.
+  Do not edit the generated tree by hand or maintain a separate command inventory.
+- Run `python -m build_tools.command_tree --check` before committing command changes.
+- Preserve Linux `tree` connectors and explicitly wrapped inline choices. Wrap
+  between complete choices, align continuation lines, and do not rely on editor wrapping.
+- When shared parser syntax changes outside the schemas, update the generator's
+  parser-entry descriptions and tests so the document remains accurate.

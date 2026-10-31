@@ -1,0 +1,19 @@
+---
+description: Prefer Python formatters in template.py over complex Jinja formatting logic.
+alwaysApply: true
+---
+
+# Template formatters
+
+- Prefer reusable formatting functions in `src/nvyr/helpers/template.py` over
+  Jinja macros or complex inline formatting logic.
+- Keep large formatter families in focused modules such as
+  `src/nvyr/helpers/nftables_formatters.py`, imported and registered by `template.py`.
+  Prefer stateless functions unless shared state genuinely requires a class.
+- Register formatters with the existing renderer and call them from templates,
+  following the nftables helpers. Keep templates readable and declarative.
+- Pass the configuration dictionary directly from `generate()` to the template;
+  do not build a second intermediate configuration model in the config script.
+- Keep formatting free of host mutations and redundant schema validation.
+- For structured output, return structured values and use the template's native
+  serialization filter, for example `frr_static_routes(configuration, vrf) | tojson`.

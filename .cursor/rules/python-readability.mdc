@@ -1,0 +1,26 @@
+---
+description: Prefer readability over compactness in Python code and examples.
+alwaysApply: true
+---
+
+# Python readability
+
+- Prefer readable Python over fewer lines, including tests and code examples.
+- Use descriptive names and explicit intermediate steps when they make intent
+  easier to follow. Avoid dense expressions and nested comprehensions.
+- Keep short expressions when they are clear; do not expand code mechanically.
+- Prefer literal CLI commands in smoketests when their values are fixed. Repeating
+  a readable command is preferable to variables and interpolation that hide its path.
+- Separate logical steps with blank lines, following the logical-spacing rule.
+- Use small, clearly named helpers for repeated mechanics so callers show their
+  intent. Do not hide important behavior or introduce abstractions just to save lines.
+- In tests, make setup, actions, and assertions easy to distinguish. Keep polling
+  mechanics in readable helpers when repeating them obscures the test's purpose.
+
+```python
+running_config = config.get_config()
+route_path = ('protocols', 'static', 'route', prefix)
+route = lookup(running_config, route_path)
+
+assert_in('disable', route)
+```

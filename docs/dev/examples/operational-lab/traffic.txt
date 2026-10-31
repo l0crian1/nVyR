@@ -1,0 +1,31 @@
+# Run these in operational mode after commit. Allow roughly a minute for DHCP/BGP/STP.
+# IPv4/IPv6 neighbor discovery, learned groups, rule counters, quota and limit keys.
+shellcmd ip vrf exec OPSB ping -c 5 10.60.0.1
+shellcmd ip vrf exec OPSB ping -6 -c 5 2001:db8:60::1
+shellcmd ip vrf exec OPSB python3 -c "import socket; s=socket.socket(socket.AF_INET6,socket.SOCK_DGRAM); s.sendto(b'operational-lab',('2001:db8:60::1',53099))"
+
+# Send an NTP request from the bridge's peer; this populates the client activity view.
+# An unsynchronized upstream can still leave the router unable to serve usable time.
+shellcmd ip vrf exec OPSB python3 -c "import socket; s=socket.socket(socket.AF_INET,socket.SOCK_DGRAM); s.bind(('10.60.30.2',0)); s.settimeout(5); s.sendto(bytes([35])+bytes(47),('10.60.30.1',123)); print(s.recvfrom(512))"
+
+# Through the BGP-learned route, DNAT sends HTTP to OPSWEB and SNAT rewrites the source.
+# Inspect translations immediately afterwards; completed connections eventually expire.
+shellcmd ip vrf exec OPSB python3 -c "import http.client; c=http.client.HTTPConnection('10.60.10.1',8080,timeout=10); c.request('GET','/'); r=c.getresponse(); print(r.status,r.read().decode())"
+
+# Inspect the resulting runtime state.
+show nat translations
+show nat source translations
+show nat destination translations
+show conntrack ipv4 protocol tcp detail
+show ntp clients
+show ntp server statistics
+show firewall ipv4 input filter limits
+show firewall ipv4 input filter quotas
+show firewall ipv6 input filter limits
+show firewall ipv6 input filter quotas
+show firewall group address-group ipv4 OPSLEARN
+show firewall group address-group ipv6 OPSLEARN
+show firewall group match-group ipv4 OPSDYNAMIC
+show firewall group match-group ipv6 OPSDYNAMIC
+show firewall group counter-group OPSCOUNT
+show firewall group quota-group OPSQUOTA

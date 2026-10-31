@@ -1,0 +1,24 @@
+---
+description: Fix root causes; never hide broken behavior behind hacks or silent workarounds.
+alwaysApply: true
+---
+
+# Root-cause fixes
+
+- When behavior fails, reproduce it and identify the failing layer before changing
+  the implementation. Do not add hacks to make the failure appear resolved.
+- Fix the underlying implementation. If the defect is in a dependency, prefer an
+  upstream fix or a verified upstream release that resolves it.
+- Do not silently substitute different semantics, suppress meaningful errors or
+  exit status, bypass validation, fabricate success, or add compatibility branches
+  to conceal a defect. Do not weaken tests to obtain a passing result.
+- If a proper fix is unavailable or outside the authorized scope, report the
+  limitation and supporting evidence explicitly. Leave it visible rather than
+  introducing an unrequested workaround.
+- Keep necessary recovery, rollback, protocol handling, and supported platform
+  behavior explicit. These must preserve correctness and report unresolved
+  failures; they are not permission to hide errors.
+- Tests and test doubles must follow the production contract. Do not weaken
+  production behavior merely to accommodate incomplete test doubles.
+- Respect the existing unreleased-development policy: do not introduce legacy
+  compatibility or migrations without an explicit requirement.

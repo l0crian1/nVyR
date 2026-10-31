@@ -1,0 +1,20 @@
+---
+description: Explain the purpose of every configuration verification check.
+alwaysApply: true
+---
+
+# Verification comments
+
+- Every check in `verify()` and its verification helpers must have an adjacent
+  comment explaining what it checks and why the restriction is needed.
+- Apply this to all configuration scripts and shared verification helpers,
+  including functions such as `verify_rule()` and `verify_map()`.
+- Keep comments concise and specific to the check. A function docstring or error
+  message does not replace the comment for an individual check.
+- Update the comment when the check's behavior changes.
+
+```python
+# Pairing type and code is unambiguous only with one value of each.
+if type_count and code_count and (type_count != 1 or code_count != 1):
+    raise ValidationError('Specify exactly one ICMP type and code when using both.')
+```

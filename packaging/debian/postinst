@@ -1,0 +1,41 @@
+#!/bin/sh
+set -eu
+
+if [ "$1" = configure ]; then
+    for group in nvyr-access nvyr-users nvyr-dev-admin nvyr-sys-admin nvyr-net-admin nvyr-read-only; do
+        if ! getent group "$group" >/dev/null; then
+            addgroup --system "$group"
+        fi
+    done
+
+    if ! grep -qxF /usr/bin/nvyr-login /etc/shells; then
+        printf '%s\n' /usr/bin/nvyr-login >> /etc/shells
+    fi
+
+    systemd-tmpfiles --create /usr/lib/tmpfiles.d/nvyr-network.conf
+    python3 -I /usr/lib/nvyr/build-session-images.py
+
+    # Image management owns GRUB's menu; update-grub must not replace its catalog.
+    if command -v systemctl >/dev/null && [ -d /run/systemd/system ]; then
+        systemctl daemon-reload
+        systemctl enable nvyr-developer-access.service nvyr-session-images.service nvyr-session-reap.timer
+        systemctl restart nvyr-session-images.service
+        systemctl start nvyr-session-reap.timer
+        # Only the configured nVyR instance may own the system clock.
+        # Masking also works on upgrades where the stock service is already masked.
+        systemctl mask --now chrony.service
+        systemctl mask chronyd.service systemd-timesyncd.service
+        udevadm control --reload || true
+
+        # Enable scheduled maintenance on package upgrades without starting configd.
+        systemctl enable nvyr-geoip-update.timer
+        systemctl enable nvyr-dhcp-hosts.timer nvyr-logrotate.timer rsyslog.service
+        systemctl mask --now ulogd2.service
+        if systemctl is-active --quiet nvyr-configd.service; then
+            systemctl start nvyr-geoip-update.timer
+            systemctl start nvyr-dhcp-hosts.timer nvyr-logrotate.timer rsyslog.service
+        fi
+    fi
+fi
+
+# Do not start a newly installed configuration daemon automatically.

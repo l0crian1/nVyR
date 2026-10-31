@@ -1,0 +1,14 @@
+[Unit]
+Description=nVyR connection tracking module initialization
+Before=nvyr-configd.service nvyr-netlinkd.service
+After=systemd-sysctl.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+# Load before the daemon sandboxes: conntrack sysctls must already exist when
+# systemd sets up configd/netlinkd ReadWritePaths mounts.
+ExecStart=/usr/sbin/modprobe nf_conntrack
+# Conntrack diagnostics need a logger even when no nftables log rule is present.
+ExecStart=/usr/sbin/modprobe nf_log_syslog
+ExecStart=/usr/bin/nvyr-kernel-settings

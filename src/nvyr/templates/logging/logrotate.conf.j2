@@ -1,0 +1,14 @@
+{% set rotation = configuration.get('rotation', {}) -%}
+{{ logging_root }}/*.log {{ logging_root }}/firewall/*.log {{ logging_root }}/dhcp-server/*.log {{ logging_root }}/dhcpv6-server/*.log {{ logging_root }}/containers/*.log {
+    size {{ rotation.get('size', '25m') | upper }}
+    rotate {{ rotation.get('count', '10') | int }}
+    missingok
+    notifempty
+    compress
+    delaycompress
+    create 0640 root nvyr-access
+    sharedscripts
+    postrotate
+        /usr/bin/nvyr-logging reopen
+    endscript
+}

@@ -1,0 +1,134 @@
+{%- set firewall = configuration.get('firewall', {}) -%}
+{%- set hooks = nft_filter_hooks -%}
+{%- set families = ['ipv4', 'ipv6', 'inet'] -%}
+{%- set global_options = firewall.get('global-options', {}) -%}
+{%- set policies = global_options.get('state-policy', {}) -%}
+{%- set group_config = firewall.get('group', {}).get('match-group', {}) -%}
+{%- set rebuild = lifecycle['rebuild'] -%}
+{%- set map_config = firewall.get('group', {}).get('map', {}) -%}
+{%- set icmp_config = firewall.get('group', {}).get('icmp-group', {}) -%}
+{%- set limit_config = firewall.get('group', {}).get('limit-group', {}) -%}
+{%- set table = table | default('nvyr_filter') -%}
+{%- set log_groups = log_groups | default({}) -%}
+
+# nVyR managed filtering chains; loaded as one nftables transaction.
+{% if replace_table | default(false) %}
+destroy table inet {{ table }}
+{% endif %}
+add table inet {{ table }}
+
+{#- Selection and reference ordering belong to the Python lifecycle planner. #}
+{{ nft_cleanup(lifecycle, table) }}
+
+{{ nft_chain_declarations(lifecycle, table) }}
+
+
+table inet {{ table }} {
+
+    {{ nft_source_validation_sets(configuration, rebuild) | indent(4) }}
+
+    {{ nft_zone_maps(firewall, rebuild) | indent(4) }}
+
+    {{ nft_named_state(firewall.get('group', {}), rebuild, global_options) | indent(4) }}
+
+    {{ nft_helper_objects(firewall, rebuild) | indent(4) }}
+
+    {#- Per-rule limits are declared before the rules that consume them. #}
+    {{ nft_limit_sets(objects, configuration, rebuild) | indent(4) }}
+
+    {#- Flowtable definitions. #}
+    {%- for name, flowtable in firewall.get('flowtable', {}).items() | sort if ('flowtable', nft_flowtable_name(name)) in rebuild %}
+    {{ nft_flowtable(name, flowtable) }}
+    {%- endfor %}
+
+    {#- Singleton groups can be reused for source or destination matches. #}
+    {%- for kind, family, name, definition in singleton_groups(firewall.get('group', {})) if ('set', nft_singleton_name(kind, family, name)) in rebuild %}
+    {{ nft_singleton_group(kind, family, name, definition, global_options, firewall.get('group', {})) | indent(4) }}
+    {%- endfor %}
+
+    {#- Declare match-groups before any consuming firewall or NAT rules. #}
+    {%- for family in families %}
+        {%- for name, definition in group_config.get(family, {}).items() | sort if ('set', nft_match_group_name(family, name)) in rebuild %}
+    {{ nft_match_group(family, name, definition, global_options) | indent(4) }}
+        {%- endfor %}
+    {%- endfor %}
+
+    {#- ICMP groups keep each type paired with its own optional code interval. #}
+    {%- for family in families %}
+        {%- for name, definition in icmp_config.get(family, {}).items() | sort if ('set', nft_icmp_group_name(family, name)) in rebuild %}
+    {{ nft_icmp_group(family, name, definition, global_options) | indent(4) }}
+        {%- endfor %}
+    {%- endfor %}
+
+    {#- Maps may refer to named chains declared above. Rules follow their maps. #}
+    {%- for family in families %}
+        {%- for name, definition in map_config.get(family, {}).items() | sort if ('map', nft_map_name(family, name)) in rebuild %}
+    {{ nft_map(family, name, definition, global_options) | indent(4) }}
+        {%- endfor %}
+    {%- endfor %}
+
+    {#- Named chains have rules and defaults, but no hooks. #}
+    {%- for family in families %}
+        {%- for name, chain in firewall.get(family, {}).get('name', {}).items() | sort if ('chain', nft_named_chain(family, name)) in rebuild %}
+    chain {{ nft_named_chain(family, name) }} {
+        {{ nft_chain_body(
+            family, 'name_' + name, chain, global_options,
+            map_config.get(family, {}), group_config.get(family, {}),
+            limit_config.get(family, {}), icmp_config.get(family, {}),
+            interface_contexts.get((family, 'name_' + name)), log_groups=log_groups
+        ) | indent(8) }}
+    }
+        {%- endfor %}
+    {%- endfor %}
+
+    {#- Family chains and their hooked entrypoints. #}
+    {%- for entrypoint in nft_active_hooks(firewall) %}
+        {%- set hook, stage = hooks[entrypoint] %}
+
+        {%- for family in nft_hook_families(firewall, entrypoint) if ('chain', family + '_' + entrypoint) in rebuild %}
+            {%- set chain = firewall.get(family, {}).get(hook, {}).get(stage, {}) %}
+    chain {{ family }}_{{ entrypoint }} {
+        {{ nft_source_validation_rules(configuration, family, entrypoint) | indent(8) }}
+
+        {{ nft_chain_body(
+            family, entrypoint, chain, global_options,
+            map_config.get(family, {}), group_config.get(family, {}),
+            limit_config.get(family, {}), icmp_config.get(family, {}),
+            interface_contexts.get((family, entrypoint)),
+            nft_zone_dispatch(firewall, family, entrypoint), log_groups=log_groups
+        ) | indent(8) }}
+    }
+        {%- endfor %}
+
+        {%- if ('chain', entrypoint) in rebuild %}
+    chain {{ entrypoint }} {
+        {{ nft_hook_declaration(firewall, entrypoint) }}
+
+        {{ nft_source_validation_rules(configuration, 'inet', entrypoint) | indent(8) }}
+
+        {%- if policies and stage == 'filter' and hook != 'ingress' %}
+        {{ nft_state_policy(policies, global_options, hook) | indent(8) }}
+        {%- endif %}
+
+        {{ nft_helper_assignment(firewall, entrypoint) | indent(8) }}
+
+        {{ nft_chain_body(
+            'inet', entrypoint, firewall.get('inet', {}).get(hook, {}).get(stage, {}), global_options,
+            map_config.get('inet', {}), group_config.get('inet', {}),
+            limit_config.get('inet', {}), {},
+            interface_contexts.get(('inet', entrypoint)), log_groups=log_groups, default=false
+        ) | indent(8) }}
+
+        {{ nft_family_dispatch(firewall, entrypoint) | indent(8) }}
+    }
+        {%- endif %}
+    {%- endfor %}
+
+    {#- NAT uses the same maps and is installed in this transaction. #}
+    {% include 'nat/ipv4.nft.j2' %}
+}
+
+{% if table == 'nvyr_filter' %}
+{#- Main rules and removal of startup protection share one kernel transaction. #}
+destroy table inet nvyr_filter_failsafe
+{% endif %}

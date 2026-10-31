@@ -1,0 +1,13 @@
+[Unit]
+Description=Load bundled nVyR CLI session images
+After=local-fs.target
+Before=nvyr-configd.service getty.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/nvyr-session prepare
+RemainAfterExit=yes
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

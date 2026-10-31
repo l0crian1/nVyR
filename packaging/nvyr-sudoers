@@ -1,0 +1,7 @@
+# Only developer administrators have host access. Other logins can launch only
+# the fixed, isolated session command, with no user-supplied Podman arguments.
+%nvyr-dev-admin ALL=(ALL:ALL) ALL
+%nvyr-sys-admin ALL=(root) NOPASSWD: /usr/bin/nvyr-session launch
+%nvyr-net-admin ALL=(root) NOPASSWD: /usr/bin/nvyr-session launch
+%nvyr-read-only ALL=(root) NOPASSWD: /usr/bin/nvyr-session launch
+Defaults!/usr/bin/nvyr-session env_keep += "TERM SSH_CONNECTION"

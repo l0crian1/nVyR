@@ -1,0 +1,10 @@
+---
+description: Commit completed nVyR changes locally; push only with explicit user authorization.
+alwaysApply: true
+---
+
+# Version control
+
+- Create a local Git commit after completing each new user request that changes the project, including its relevant checks.
+- Keep commits focused on the completed work and preserve unrelated user edits.
+- Do not push commits, branches, or tags unless the user explicitly requests a push.

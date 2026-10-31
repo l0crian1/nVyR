@@ -1,0 +1,3 @@
+# Startup baseline only. Configuration scripts own all feature chains.
+flush ruleset
+add table inet nvyr_filter

@@ -1,0 +1,50 @@
+{
+  "empty-and-unmatched": {
+    "chains": [
+      {
+        "family": "inet",
+        "table": "nvyr_filter",
+        "name": "ipv4_name_EMPTY",
+        "handle": 1
+      },
+      {
+        "family": "inet",
+        "table": "nvyr_filter",
+        "name": "ipv4_name_MISS",
+        "handle": 2
+      },
+      {
+        "family": "inet",
+        "table": "nvyr_filter",
+        "name": "output",
+        "hook": "output",
+        "prio": 0,
+        "type": "filter",
+        "policy": "accept",
+        "handle": 3
+      }
+    ],
+    "events": [
+      "trace id 172ba2f3 inet nvyr_filter output packet: oif \"lo\" ip saddr 127.0.0.1 ip daddr 127.0.0.1 ip dscp 0x00 ip ecn 0x0 ip ttl 64 ip id 54472 ip protocol 1 ip length 84 icmp type 8 icmp code 0 icmp id 25149 icmp sequence 1 ",
+      "trace id 172ba2f3 inet nvyr_filter output rule meta nftrace set 1 # handle 5 (verdict continue)",
+      "trace id 172ba2f3 inet nvyr_filter output rule jump ipv4_name_EMPTY comment \"10|empty chain\" # handle 6 (verdict jump ipv4_name_EMPTY)",
+      "trace id 172ba2f3 inet nvyr_filter output rule jump ipv4_name_MISS comment \"20|unmatched chain\" # handle 7 (verdict jump ipv4_name_MISS)",
+      "trace id 172ba2f3 inet nvyr_filter output rule accept comment \"30|after returns\" # handle 8 (verdict accept)",
+      "trace id 3042377f inet nvyr_filter output packet: oif \"lo\" ip saddr 127.0.0.1 ip daddr 127.0.0.1 ip dscp 0x00 ip ecn 0x0 ip ttl 64 ip id 54473 ip protocol 1 ip length 84 icmp type 0 icmp code 0 icmp id 25149 icmp sequence 1 ",
+      "trace id 3042377f inet nvyr_filter output rule meta nftrace set 1 # handle 5 (verdict continue)",
+      "trace id 3042377f inet nvyr_filter output rule jump ipv4_name_EMPTY comment \"10|empty chain\" # handle 6 (verdict jump ipv4_name_EMPTY)",
+      "trace id 3042377f inet nvyr_filter output rule jump ipv4_name_MISS comment \"20|unmatched chain\" # handle 7 (verdict jump ipv4_name_MISS)",
+      "trace id 3042377f inet nvyr_filter output rule accept comment \"30|after returns\" # handle 8 (verdict accept)",
+      "trace id e883f9dc inet nvyr_filter output packet: oif \"lo\" ip saddr 127.0.0.1 ip daddr 127.0.0.1 ip dscp 0x00 ip ecn 0x0 ip ttl 64 ip id 54500 ip protocol 1 ip length 84 icmp type 8 icmp code 0 icmp id 25149 icmp sequence 2 ",
+      "trace id e883f9dc inet nvyr_filter output rule meta nftrace set 1 # handle 5 (verdict continue)",
+      "trace id e883f9dc inet nvyr_filter output rule jump ipv4_name_EMPTY comment \"10|empty chain\" # handle 6 (verdict jump ipv4_name_EMPTY)",
+      "trace id e883f9dc inet nvyr_filter output rule jump ipv4_name_MISS comment \"20|unmatched chain\" # handle 7 (verdict jump ipv4_name_MISS)",
+      "trace id e883f9dc inet nvyr_filter output rule accept comment \"30|after returns\" # handle 8 (verdict accept)",
+      "trace id 98c7693e inet nvyr_filter output packet: oif \"lo\" ip saddr 127.0.0.1 ip daddr 127.0.0.1 ip dscp 0x00 ip ecn 0x0 ip ttl 64 ip id 54501 ip protocol 1 ip length 84 icmp type 0 icmp code 0 icmp id 25149 icmp sequence 2 ",
+      "trace id 98c7693e inet nvyr_filter output rule meta nftrace set 1 # handle 5 (verdict continue)",
+      "trace id 98c7693e inet nvyr_filter output rule jump ipv4_name_EMPTY comment \"10|empty chain\" # handle 6 (verdict jump ipv4_name_EMPTY)",
+      "trace id 98c7693e inet nvyr_filter output rule jump ipv4_name_MISS comment \"20|unmatched chain\" # handle 7 (verdict jump ipv4_name_MISS)",
+      "trace id 98c7693e inet nvyr_filter output rule accept comment \"30|after returns\" # handle 8 (verdict accept)"
+    ]
+  }
+}

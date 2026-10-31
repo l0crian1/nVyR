@@ -1,0 +1,15 @@
+[Unit]
+Description=nVyR NFLOG collector %i
+After=nvyr-logging-prepare.service
+
+[Service]
+Type=simple
+ExecStart=/usr/sbin/ulogd -c /run/nvyr-logging/nflog-%i.conf -p /run/nvyr-logging/nflog-%i.pid
+Restart=on-failure
+UMask=0027
+Group=nvyr-access
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/run/nvyr-logging /var/log/nvyr/firewall
+RestrictAddressFamilies=AF_NETLINK AF_UNIX AF_INET AF_INET6

@@ -1,0 +1,300 @@
+{
+  "kind": "node",
+  "children": {
+    "set": {
+      "kind": "node",
+      "description": "Stage a configuration value",
+      "path": "configuration"
+    },
+    "delete": {
+      "kind": "node",
+      "description": "Stage deletion of a subtree or value",
+      "path": "configuration"
+    },
+    "edit": {
+      "kind": "node",
+      "description": "Work inside a configuration section or named object",
+      "path": "configuration"
+    },
+    "rename": {
+      "kind": "node",
+      "description": "Rename a tag instance: <source> to <destination>",
+      "path": "rename"
+    },
+    "copy": {
+      "kind": "node",
+      "description": "Copy a tag instance: <source path> to <destination path>",
+      "path": "copy"
+    },
+    "up": {
+      "kind": "node",
+      "description": "Move to the parent configuration section or object",
+      "command": "up"
+    },
+    "top": {
+      "kind": "node",
+      "description": "Return to the configuration root",
+      "command": "top"
+    },
+    "show": {
+      "kind": "node",
+      "description": "Running configuration with pending changes marked",
+      "command": "show",
+      "children": {
+        "all": {
+          "kind": "node",
+          "description": "Complete candidate configuration including defaults",
+          "command": "show"
+        },
+        "running-configuration": {
+          "kind": "node",
+          "description": "Explicit running configuration",
+          "command": "running",
+          "children": {
+            "all": {
+              "kind": "node",
+              "description": "Include applicable default values",
+              "command": "running"
+            }
+          }
+        },
+        "candidate-configuration": {
+          "kind": "node",
+          "description": "This session's pending changes",
+          "command": "candidate",
+          "children": {
+            "all": {
+              "kind": "node",
+              "description": "Pending configuration sections including defaults",
+              "command": "candidate"
+            }
+          }
+        },
+        "config-sessions": {
+          "kind": "node",
+          "description": "Configuration sessions, current session and lock owner",
+          "command": "config-sessions"
+        },
+        "config-status": {
+          "kind": "node",
+          "description": "Candidate, saved configuration, commit activity and session status",
+          "command": "config-status"
+        },
+        "commit-history": {
+          "kind": "node",
+          "description": "Retained commit revisions, authors and comments",
+          "command": "commit-history"
+        },
+        "references": {
+          "kind": "node",
+          "description": "References to a configured dependency provider",
+          "command": "references",
+          "path": "configuration"
+        }
+      }
+    },
+    "compare": {
+      "kind": "leaf_node",
+      "description": "Compare candidate, saved, or N commits ago",
+      "hints": {
+        "revisions": "Number of commits back; 0 selects the current running revision"
+      },
+      "command": "compare",
+      "optional_value": true,
+      "choices_hint": [
+        "saved"
+      ],
+      "suggestors": [
+        {
+          "name": "commit-history"
+        }
+      ],
+      "list_on_empty_tab": true
+    },
+    "rollback": {
+      "kind": "leaf_node",
+      "description": "Stage configuration from N commits ago",
+      "hints": {
+        "revisions": "Number of commits back; 0 selects the current running revision"
+      },
+      "command": "rollback",
+      "validators": {
+        "mode": "AND",
+        "checks": {
+          "nonnegative-integer": {
+            "name": "nonnegative-integer"
+          }
+        }
+      },
+      "suggestors": [
+        {
+          "name": "commit-history"
+        }
+      ],
+      "list_on_empty_tab": true
+    },
+    "commit": {
+      "kind": "node",
+      "description": "Apply independent configuration units",
+      "command": "commit",
+      "children": {
+        "check": {
+          "kind": "node",
+          "description": "Verify pending configuration without applying changes",
+          "command": "commit-check"
+        },
+        "delay": {
+          "kind": "tag_node",
+          "description": "Schedule this candidate after a delay in minutes",
+          "command": "commit",
+          "hints": {
+            "minutes": "Decimal minutes greater than 0 and at most 1440"
+          },
+          "children": {
+            "comment": {
+              "kind": "leaf_node",
+              "description": "Comment recorded with this commit",
+              "command": "commit",
+              "validators": {
+                "mode": "AND",
+                "checks": {
+                  "text": {
+                    "name": "text"
+                  }
+                }
+              },
+              "hints": {
+                "text": "Commit comment; quote spaces"
+              }
+            }
+          }
+        },
+        "comment": {
+          "kind": "leaf_node",
+          "description": "Comment recorded with this commit",
+          "command": "commit",
+          "validators": {
+            "mode": "AND",
+            "checks": {
+              "text": {
+                "name": "text"
+              }
+            }
+          },
+          "hints": {
+            "text": "Commit comment; quote spaces"
+          }
+        }
+      }
+    },
+    "commit-confirm": {
+      "kind": "tag_node",
+      "description": "Apply with a rollback deadline in minutes",
+      "command": "commit-confirm",
+      "hints": {
+        "minutes": "Rollback timeout greater than 0 and at most 1440 minutes"
+      },
+      "children": {
+        "delay": {
+          "kind": "tag_node",
+          "description": "Delay application; the rollback timer starts after completion",
+          "command": "commit-confirm",
+          "hints": {
+            "minutes": "Decimal minutes greater than 0 and at most 1440"
+          },
+          "children": {
+            "comment": {
+              "kind": "leaf_node",
+              "description": "Comment recorded with this commit",
+              "command": "commit-confirm",
+              "validators": {
+                "mode": "AND",
+                "checks": {
+                  "text": {
+                    "name": "text"
+                  }
+                }
+              },
+              "hints": {
+                "text": "Commit comment; quote spaces"
+              }
+            }
+          }
+        },
+        "comment": {
+          "kind": "leaf_node",
+          "description": "Comment recorded with this commit",
+          "command": "commit-confirm",
+          "validators": {
+            "mode": "AND",
+            "checks": {
+              "text": {
+                "name": "text"
+              }
+            }
+          },
+          "hints": {
+            "text": "Commit comment; quote spaces"
+          }
+        }
+      }
+    },
+    "confirm": {
+      "kind": "node",
+      "description": "Confirm the pending commit",
+      "command": "confirm"
+    },
+    "cancel": {
+      "kind": "node",
+      "description": "Cancel a scheduled commit before application starts",
+      "command": "cancel"
+    },
+    "discard": {
+      "kind": "node",
+      "description": "Discard only this candidate",
+      "command": "discard"
+    },
+    "save": {
+      "kind": "node",
+      "description": "Persist explicit running configuration for boot",
+      "command": "save"
+    },
+    "request-session-lock": {
+      "kind": "node",
+      "description": "Request the commit lock",
+      "command": "lock"
+    },
+    "release-session-lock": {
+      "kind": "node",
+      "description": "Release the commit lock without discarding candidate changes",
+      "command": "release-lock"
+    },
+    "load": {
+      "kind": "node",
+      "description": "load [replace] [set] <client-local file>",
+      "path": "load"
+    },
+    "run": {
+      "kind": "node",
+      "description": "Execute an operational command",
+      "path": "operational"
+    },
+    "shellcmd": {
+      "access": "dev-admin",
+      "kind": "node",
+      "description": "Execute a system command as root (dev-admin only)",
+      "path": "operational"
+    },
+    "exit": {
+      "kind": "node",
+      "description": "Leave configuration mode",
+      "command": "exit"
+    },
+    "shell": {
+      "access": "dev-admin",
+      "description": "Open an interactive host shell",
+      "command": "shell",
+      "kind": "node"
+    }
+  }
+}

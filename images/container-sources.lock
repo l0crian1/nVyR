@@ -1,0 +1,35 @@
+{
+  "source_date_epoch": 1791763200,
+  "packages": {
+    "podman": "6.1.4-1nvyr1",
+    "netavark": "2.1.0-1nvyr1",
+    "aardvark-dns": "2.1.0-1nvyr1",
+    "golang-github-containers-common": "0.69.2-1nvyr1"
+  },
+  "archives": {
+    "go.tar.gz": {
+      "url": "https://go.dev/dl/go1.26.0.linux-amd64.tar.gz",
+      "sha256": "aac1b08a0fb0c4e0a7c1555beb7b59180b05dfc5a3d62e40e9de90cd42f88235"
+    },
+    "podman.tar.gz": {
+      "url": "https://codeload.github.com/containers/podman/tar.gz/refs/tags/v6.1.4",
+      "sha256": "200fd9b4b6d820cae24fc99d8e290ec945512365cf3cda8283b3905c0c284ea8"
+    },
+    "netavark.gz": {
+      "url": "https://github.com/containers/netavark/releases/download/v2.1.0/netavark.gz",
+      "sha256": "39fb540daf7578a793510b27b592b10f17b5d9aa3b07bc5c3f40881f12d590bd"
+    },
+    "aardvark-dns.gz": {
+      "url": "https://github.com/containers/aardvark-dns/releases/download/v2.1.0/aardvark-dns.gz",
+      "sha256": "a7bc5252ee0e083f3f46d5bb9dc5f0abdbaa31a70a5a19012412dc8055ac2976"
+    },
+    "netavark-source.tar.gz": {
+      "url": "https://codeload.github.com/containers/netavark/tar.gz/refs/tags/v2.1.0",
+      "sha256": "96677048168ddd1abe313e4c2e17f1cace72b60ee1bac8ca12a4bd7dfcadfbbb"
+    },
+    "aardvark-source.tar.gz": {
+      "url": "https://codeload.github.com/containers/aardvark-dns/tar.gz/refs/tags/v2.1.0",
+      "sha256": "daf871488603e659b0501224cf0731ac317809b1d1701fc061cb4f6ae39a894f"
+    }
+  }
+}

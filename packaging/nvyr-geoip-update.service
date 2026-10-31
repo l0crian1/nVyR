@@ -1,0 +1,15 @@
+[Unit]
+Description=Update DB-IP country address-groups
+After=nvyr-configd.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/geoip.nvyr.op update
+User=root
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+RestrictAddressFamilies=AF_UNIX

@@ -1,0 +1,22 @@
+{%- set nat = configuration.get('nat', {}) -%}
+{%- set nat_groups = configuration.get('firewall', {}).get('group', {}).get('match-group', {}).get('ipv4', {}) -%}
+{%- set nat_maps = configuration.get('firewall', {}).get('group', {}).get('map', {}).get('ipv4', {}) -%}
+
+{%- for direction, hook, priority in [('source', 'postrouting', 'srcnat'), ('destination', 'prerouting', 'dstnat')] %}
+    {%- if direction in nat %}
+        {%- if ('chain', 'ipv4_nat_' + hook) in rebuild %}
+    chain ipv4_nat_{{ hook }} {
+        {%- for number, rule in numeric_items(nat[direction].get('rule', {})) if not rule.get('disable') %}
+        {{ nft_nat_rule(direction, number, rule, nat_maps, nat_groups, log_groups) }}
+        {%- endfor %}
+    }
+        {%- endif %}
+
+        {%- if ('chain', 'nat_' + hook) in rebuild %}
+    chain nat_{{ hook }} {
+        type nat hook {{ hook }} priority {{ priority }}; policy accept;
+        {{ nft_nat_dispatch(nat, hook) }}
+    }
+        {%- endif %}
+    {%- endif %}
+{%- endfor %}

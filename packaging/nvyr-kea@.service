@@ -1,0 +1,18 @@
+[Unit]
+Description=nVyR Kea DHCP instance (%i)
+After=network.target nvyr-netlinkd.service
+
+[Service]
+Type=simple
+SyslogIdentifier=nvyr-kea-%i
+ExecStart=/usr/bin/nvyr-kea %i
+Restart=on-failure
+RestartSec=2
+TimeoutStopSec=15
+UMask=0077
+Environment=KEA_CONTROL_SOCKET_DIR=/run/nvyr-kea
+Environment=KEA_PIDFILE_DIR=/run/nvyr-kea
+# ip vrf exec needs cgroup/BPF access before launching the per-VRF daemon.
+# Configd checks service sockets, accepting explicit carrier waits. Kea's bounded
+# socket retries exit on exhaustion; Restart=on-failure continues waiting.
+# No Install section: saved configuration controls instance startup.

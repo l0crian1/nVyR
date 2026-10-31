@@ -1,0 +1,21 @@
+{% if 'host-name' in configuration -%}
+HostName={{ configuration['host-name'] }}
+{% endif -%}
+{% if 'disable-dns' in configuration -%}
+DNS=none
+{% endif -%}
+{% for address in configuration.get('name-server', ()) -%}
+DNS={{ address }}
+{% endfor -%}
+{# An omitted attachment is isolated, never attached to Podman's default bridge. -#}
+{% if 'allow-host-networking' in configuration -%}
+Network=host
+{% elif not configuration.get('network') -%}
+Network=none
+{% endif -%}
+{% for network, settings in configuration.get('network', {}).items() | sort -%}
+Network={{ container_attachment(name, network, settings) }}
+{% endfor -%}
+{% for settings in configuration.get('port', {}).values() -%}
+PublishPort={{ container_published_port(settings) }}
+{% endfor -%}

@@ -1,0 +1,20 @@
+[Unit]
+Description=nVyR time synchronization and NTP service
+After=network.target nvyr-netlinkd.service
+Conflicts=chrony.service systemd-timesyncd.service ntp.service ntpsec.service
+
+[Service]
+Type=forking
+User=_chrony
+PIDFile=/run/nvyr-chrony/chronyd.pid
+RuntimeDirectory=nvyr-chrony
+RuntimeDirectoryMode=0700
+ExecStart=!/usr/bin/nvyr-ntp
+Restart=on-failure
+RestartSec=2
+TimeoutStartSec=15
+TimeoutStopSec=15
+UMask=0077
+# The root launcher uses ip vrf exec for DNS and NTS as well as NTP sockets.
+# Chronyd then drops privileges to _chrony, retaining clock/socket capabilities.
+# No Install section: configd starts this service from saved configuration.

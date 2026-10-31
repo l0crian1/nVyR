@@ -1,0 +1,22 @@
+destroy table inet nvyr_vrf_conntrack
+{%- if zones %}
+
+table inet nvyr_vrf_conntrack {
+    map interfaces {
+        typeof meta iifname : ct zone
+        elements = { {{ vrf_conntrack_elements(members, zones) }} }
+    }
+
+    chain prerouting {
+        type filter hook prerouting priority -250; policy accept;
+        ct state untracked return
+        ct zone set meta iifname map @interfaces
+    }
+
+    chain output {
+        type filter hook output priority -250; policy accept;
+        ct state untracked return
+        ct zone set meta oifname map @interfaces
+    }
+}
+{%- endif %}

@@ -1,0 +1,4 @@
+#!/usr/bin/python3
+from nvyr.helpers.dhcp_hosts import hook_main
+
+hook_main()

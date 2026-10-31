@@ -1,0 +1,21 @@
+{% for family, keyword in (('route', 'ip'), ('route6', 'ipv6')) -%}
+{% for prefix, route in configuration.get(family, {}).items() if 'disable' not in route -%}
+{% set sources = route.get('source-specific', {}).get('from', {}) -%}
+{% for source, values in [(none, route)] + (sources.items() | list) if 'disable' not in values -%}
+{% set base = frr_static_prefix(keyword, prefix, source) -%}
+
+{% for kind in ('next-hop', 'interface', 'blackhole', 'reject') -%}
+{% if kind in ('next-hop', 'interface') -%}
+{% set paths = values.get(kind, {}) -%}
+{% elif kind in values -%}
+{% set paths = {kind: values[kind]} -%}
+{% else -%}
+{% set paths = {} -%}
+{% endif -%}
+{% for name, hop in paths.items() if 'disable' not in hop -%}
+{{ base }} {{ frr_static_path(kind, name, hop, vrf) }}
+{% endfor -%}
+{% endfor -%}
+{% endfor -%}
+{% endfor -%}
+{% endfor -%}

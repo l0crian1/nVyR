@@ -1,0 +1,15 @@
+{
+  "version": "6.18.59",
+  "package_version": "6.18.59-1nvyr1",
+  "local_version": "-nvyr-amd64",
+  "source_date_epoch": 1793027368,
+  "source": {
+    "url": "https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.18.59.tar.xz",
+    "sha256": "53a55ac9863a5547e292b8e381d4e4c2240dd1127d5428a7c44dbc550be23963"
+  },
+  "configuration": {
+    "url": "https://deb.debian.org/debian/pool/main/l/linux-signed-amd64/linux-image-6.18.15+deb13-amd64_6.18.15-1~bpo13+1_amd64.deb",
+    "sha256": "d38a7af6260782a47cd615ad717347a528b45f076245b4deabb3f1ecf8459186",
+    "path": "boot/config-6.18.15+deb13-amd64"
+  }
+}

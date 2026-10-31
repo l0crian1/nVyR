@@ -1,0 +1,12 @@
+[Unit]
+Description=Reconcile DHCP hostnames and expired leases
+After=nvyr-configd.service
+
+[Timer]
+OnBootSec=1min
+OnUnitInactiveSec=1min
+AccuracySec=1s
+Unit=nvyr-dhcp-hosts.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,169 @@
+# Default and VRF routes, multipath, preferences, disabled paths and IPv6 source selection.
+set protocols static route 198.18.197.0/24 blackhole
+set protocols static route6 2001:db8:197::/64 reject
+set protocols static route 198.18.198.0/24 next-hop 198.18.195.2 interface dum995
+set protocols static route 198.18.198.0/24 next-hop 198.18.195.2 distance 10
+set protocols static route 198.18.198.0/24 next-hop 198.18.195.2 tag 195
+set protocols static route 198.18.198.0/24 next-hop 198.18.195.2 metric 20
+set protocols static route 198.18.198.0/24 blackhole distance 200
+set protocols static route6 2001:db8:198::/64 next-hop 2001:db8:195::2 interface dum995
+set protocols static route6 2001:db8:198::/64 next-hop 2001:db8:195::2 distance 10
+set protocols static route6 2001:db8:198::/64 next-hop 2001:db8:195::2 tag 195
+set protocols static route6 2001:db8:198::/64 next-hop 2001:db8:195::2 metric 20
+set protocols static route6 2001:db8:198::/64 blackhole distance 200
+set protocols static route 198.18.199.0/24 next-hop 198.18.195.2 weight 2
+set protocols static route 198.18.199.0/24 next-hop 198.18.195.3 weight 3
+set protocols static route6 2001:db8:199::/64 next-hop 2001:db8:195::2 weight 2
+set protocols static route6 2001:db8:199::/64 next-hop 2001:db8:195::3 weight 3
+set protocols static route 198.18.200.0/24 blackhole
+set protocols static route 198.18.200.0/24 disable
+set protocols static route 198.18.200.0/24 description "Must stay withdrawn"
+set protocols static route6 2001:db8:200::/64 blackhole
+set protocols static route6 2001:db8:200::/64 disable
+set protocols static route 198.18.201.0/24 interface dum995
+set protocols static route6 2001:db8:201::/64 source-specific from 2001:db8:195::/64 interface dum995
+set vrf name BOOTLEFT protocols static route 198.18.202.0/24 next-hop 198.18.196.2
+set vrf name BOOTLEFT protocols static route6 2001:db8:202::/64 next-hop 2001:db8:196::2
+set vrf name BOOTRIGHT protocols static route 198.18.210.0/24 next-hop 198.18.195.2 vrf default
+set vrf name BOOTRIGHT protocols static route6 2001:db8:210::/64 next-hop 2001:db8:195::2 vrf default
+
+# Policies with references used by actual BGP sessions, not just unused objects.
+set policy access-list ipv4 BOOTACL rule 10 action permit address 198.18.0.0 wildcard-mask 0.0.255.255
+set policy access-list ipv6 BOOTACL rule 10 action permit prefix 2001:db8::/32
+set policy prefix-list ipv4 BOOTPREFIX rule 10 action permit prefix 198.18.0.0/15 ge 24 le 32
+set policy prefix-list ipv6 BOOTPREFIX rule 10 action permit prefix 2001:db8::/32 ge 48 le 128
+set policy as-path-list BOOTAS rule 10 action permit regex "_65095_"
+set policy community-list standard BOOTCOMM rule 10 action permit community 65095:100
+set policy community-list expanded BOOTREGEX rule 10 action permit regex "65095:"
+set policy large-community-list standard BOOTLARGE rule 10 action permit community 65095:100:200
+set policy large-community-list expanded BOOTLREGEX rule 10 action permit regex "65095:100:"
+set policy route-map BOOTOUT rule 10 action permit set community 65095:100 large-community 65095:100:200 metric 50 origin igp
+set policy route-map BOOTIN rule 10 action permit match community-list BOOTCOMM
+set policy route-map BOOTIN rule 10 match as-path-list BOOTAS
+set policy route-map BOOTIN rule 10 set local-preference 250 weight 100
+set policy route-map BOOTIN rule 10 call BOOTCALL
+set policy route-map BOOTCALL rule 10 action permit set weight 100
+set policy route-map BOOTACL4 rule 10 action permit match ipv4 access-list BOOTACL
+set policy route-map BOOTACL6 rule 10 action permit match ipv6 access-list BOOTACL
+
+set vrf name BOOTLEFT protocols bgp local-as 65095 parameters router-id 198.18.192.1
+set vrf name BOOTRIGHT protocols bgp local-as 65096 parameters router-id 198.18.192.2
+set vrf name BOOTLEFT protocols bgp parameters ebgp-requires-policy enable reject-as-sets enable network import-check enable
+set vrf name BOOTLEFT protocols bgp parameters log-neighbor-changes enable
+set vrf name BOOTRIGHT protocols bgp parameters log-neighbor-changes enable
+set vrf name BOOTLEFT protocols bgp neighbor 198.18.192.2 remote-as 65096 update-source veth995 timers connect 1
+set vrf name BOOTLEFT protocols bgp neighbor 198.18.192.2 address-family ipv4-unicast route-map import BOOTACL4 export BOOTOUT
+set vrf name BOOTRIGHT protocols bgp neighbor 198.18.192.1 remote-as 65095 update-source veth997 timers connect 1
+set vrf name BOOTRIGHT protocols bgp neighbor 198.18.192.1 address-family ipv4-unicast route-map import BOOTIN export BOOTACL4
+set vrf name BOOTRIGHT protocols bgp neighbor 198.18.192.1 address-family ipv4-unicast prefix-list in BOOTPREFIX
+set vrf name BOOTLEFT protocols bgp peer-group BOOTPEER remote-as 65096 timers connect 1
+set vrf name BOOTLEFT protocols bgp peer-group BOOTPEER address-family ipv6-unicast route-map import BOOTACL6 export BOOTOUT
+set vrf name BOOTLEFT protocols bgp neighbor 2001:db8:192::2 peer-group BOOTPEER
+set vrf name BOOTRIGHT protocols bgp neighbor 2001:db8:192::1 remote-as 65095 timers connect 1
+set vrf name BOOTRIGHT protocols bgp neighbor 2001:db8:192::1 address-family ipv6-unicast route-map import BOOTIN export BOOTACL6
+set vrf name BOOTRIGHT protocols bgp neighbor 2001:db8:192::1 address-family ipv6-unicast prefix-list in BOOTPREFIX
+set vrf name BOOTLEFT protocols bgp address-family ipv4-unicast network 198.18.208.0/24
+set vrf name BOOTLEFT protocols bgp address-family ipv6-unicast network 2001:db8:208::/64
+
+# Active unicast options must survive reboot and still exchange both route families.
+set vrf name BOOTLEFT protocols bgp neighbor 198.18.192.2 passive tcp-mss 1200 graceful-restart helper
+set vrf name BOOTLEFT protocols bgp neighbor 198.18.192.2 role type provider strict
+set vrf name BOOTRIGHT protocols bgp neighbor 198.18.192.1 role type customer strict
+set vrf name BOOTLEFT protocols bgp neighbor 198.18.192.2 capability dynamic software-version
+set vrf name BOOTRIGHT protocols bgp neighbor 198.18.192.1 capability dynamic software-version
+set vrf name BOOTRIGHT protocols bgp neighbor 198.18.192.1 address-family ipv4-unicast soft-reconfiguration inbound
+set vrf name BOOTRIGHT protocols bgp neighbor 198.18.192.1 address-family ipv4-unicast maximum-prefix limit 1000 threshold 90 warning-only force
+set vrf name BOOTLEFT protocols bgp neighbor 198.18.192.2 address-family ipv4-unicast maximum-prefix-out 1000 next-hop-self force
+set vrf name BOOTLEFT protocols bgp neighbor 198.18.192.2 address-family ipv4-unicast addpath transmit all
+set vrf name BOOTRIGHT protocols bgp neighbor 198.18.192.1 address-family ipv4-unicast addpath receive-limit 4
+set vrf name BOOTRIGHT protocols bgp neighbor 198.18.192.1 address-family ipv4-unicast as-path-list import BOOTAS
+
+set vrf name BOOTLEFT protocols bgp peer-group BOOTPEER passive tcp-mss 1200 graceful-restart helper
+set vrf name BOOTLEFT protocols bgp peer-group BOOTPEER role type provider strict
+set vrf name BOOTRIGHT protocols bgp neighbor 2001:db8:192::1 role type customer strict
+set vrf name BOOTLEFT protocols bgp peer-group BOOTPEER capability extended-nexthop dynamic link-local
+set vrf name BOOTRIGHT protocols bgp neighbor 2001:db8:192::1 capability extended-nexthop dynamic link-local
+set vrf name BOOTRIGHT protocols bgp neighbor 2001:db8:192::1 address-family ipv6-unicast soft-reconfiguration inbound
+set vrf name BOOTRIGHT protocols bgp neighbor 2001:db8:192::1 address-family ipv6-unicast maximum-prefix limit 1000 threshold 90 warning-only force
+set vrf name BOOTLEFT protocols bgp peer-group BOOTPEER address-family ipv6-unicast maximum-prefix-out 1000 next-hop-self force
+set vrf name BOOTLEFT protocols bgp peer-group BOOTPEER address-family ipv6-unicast addpath transmit all
+set vrf name BOOTRIGHT protocols bgp neighbor 2001:db8:192::1 address-family ipv6-unicast addpath receive-limit 4
+set vrf name BOOTRIGHT protocols bgp neighbor 2001:db8:192::1 address-family ipv6-unicast as-path-list import BOOTAS
+set vrf name BOOTRIGHT protocols bgp address-family ipv6-unicast next-hop prefer-global
+
+# Incompatible maintenance and AS transformations are persisted on shut-down test peers.
+# They share the default instance and never replace the active routing pair.
+set protocols bgp neighbor 198.18.207.2 remote-as external shutdown passive graceful-shutdown graceful-restart restart
+set protocols bgp neighbor 198.18.207.2 local-as number 65197
+set protocols bgp neighbor 198.18.207.2 local-as no-prepend replace-as dual-as
+set protocols bgp neighbor 198.18.207.2 port 1179 tcp-mss 1200 disable-enforce-first-as disable-connected-route-check
+set protocols bgp neighbor 198.18.207.2 timers advertisement-interval 5 delay-open 3
+set protocols bgp neighbor 198.18.207.2 capability extended-nexthop dynamic link-local software-version disable-fqdn strict-match
+set protocols bgp neighbor 198.18.207.2 role type rs-server strict
+
+set protocols bgp neighbor 198.18.207.2 address-family ipv4-unicast route-server-client
+set protocols bgp neighbor 198.18.207.2 address-family ipv4-unicast allowas-in count 2 route-map BOOTACL4
+set protocols bgp neighbor 198.18.207.2 address-family ipv4-unicast as-override remove-private-as all replace
+set protocols bgp neighbor 198.18.207.2 address-family ipv4-unicast soft-reconfiguration inbound
+set protocols bgp neighbor 198.18.207.2 address-family ipv4-unicast maximum-prefix limit 200 threshold 80 restart 2 force
+set protocols bgp neighbor 198.18.207.2 address-family ipv4-unicast maximum-prefix-out 250 weight 200
+set protocols bgp neighbor 198.18.207.2 address-family ipv4-unicast addpath transmit best-selected 2
+set protocols bgp neighbor 198.18.207.2 address-family ipv4-unicast addpath disable-receive
+set protocols bgp neighbor 198.18.207.2 address-family ipv4-unicast attribute-unchanged as-path next-hop med
+set protocols bgp neighbor 198.18.207.2 address-family ipv4-unicast conditional-advertisement advertise-map BOOTOUT exist-map BOOTACL4
+set protocols bgp neighbor 198.18.207.2 address-family ipv4-unicast unsuppress-map BOOTACL4 as-path-list export BOOTAS
+
+set protocols bgp neighbor 198.18.207.2 address-family ipv6-unicast route-server-client
+set protocols bgp neighbor 198.18.207.2 address-family ipv6-unicast allowas-in origin route-map BOOTACL6
+set protocols bgp neighbor 198.18.207.2 address-family ipv6-unicast remove-private-as replace
+set protocols bgp neighbor 198.18.207.2 address-family ipv6-unicast conditional-advertisement advertise-map BOOTOUT non-exist-map BOOTACL6
+set protocols bgp neighbor 198.18.207.2 address-family ipv6-unicast unsuppress-map BOOTACL6
+
+set protocols bgp neighbor 198.18.207.3 remote-as auto shutdown graceful-restart disable capability override
+set protocols bgp neighbor 198.18.207.3 address-family ipv4-unicast disable
+set protocols bgp neighbor 198.18.207.4 remote-as internal shutdown capability disable-negotiation
+set protocols bgp neighbor dum995 remote-as external ipv6-only shutdown address-family ipv6-unicast
+set protocols bgp neighbor fe80::995 interface dum995 remote-as external shutdown address-family ipv6-unicast
+
+set protocols bgp address-family ipv4-unicast aggregate-address 198.18.0.0/15 route-map BOOTOUT origin incomplete matching-med-only suppress-map BOOTACL4
+set protocols bgp address-family ipv4-unicast redistribute kernel metric 50 route-map BOOTACL4
+set protocols bgp address-family ipv4-unicast redistribute connected metric 100 route-map BOOTACL4
+set protocols bgp address-family ipv4-unicast redistribute static metric 200 route-map BOOTACL4
+set protocols bgp address-family ipv4-unicast distance external 30 internal 210 local 220
+
+set protocols bgp address-family ipv6-unicast aggregate-address 2001:db8::/32 route-map BOOTOUT origin igp matching-med-only suppress-map BOOTACL6
+set protocols bgp address-family ipv6-unicast redistribute kernel metric 50 route-map BOOTACL6
+set protocols bgp address-family ipv6-unicast redistribute connected metric 100 route-map BOOTACL6
+set protocols bgp address-family ipv6-unicast redistribute static metric 200 route-map BOOTACL6
+set protocols bgp address-family ipv6-unicast distance external 30 internal 210 local 220
+set protocols bgp address-family ipv6-unicast next-hop prefer-global
+
+# Default-instance behavior is persisted alongside both functioning VRF peers.
+set protocols bgp local-as 65097 parameters router-id 198.18.207.1
+set protocols bgp parameters timers keepalive 10 holdtime 30
+set protocols bgp parameters dampening state enable half-life 10 reuse 500 suppress 1500 max-suppress-time 40
+set protocols bgp parameters route-map delay-timer 10
+set protocols bgp parameters bestpath as-path multipath-relax enable
+set protocols bgp parameters bestpath med confed enable missing-as-worst enable
+set protocols bgp parameters bestpath bandwidth skip-missing compare-routerid enable
+set protocols bgp parameters graceful-restart mode restart restart-time 90 stalepath-time 240 select-defer-time 60 rib-stale-time 300
+set protocols bgp parameters long-lived-graceful-restart stale-time 300
+set protocols bgp parameters tcp-keepalive idle 10 interval 5 probes 3
+set protocols bgp parameters minimum-holdtime 30
+set protocols bgp parameters client-to-client reflection disable
+set protocols bgp parameters fast-external-failover disable
+set protocols bgp parameters hard-administrative-reset disable
+set protocols bgp parameters ipv6-auto-ra disable
+set protocols bgp parameters log-neighbor-changes enable
+set protocols bgp peer-group BOOTDYNAMIC remote-as 65098
+set protocols bgp peer-group BOOTDYNAMIC address-family ipv4-unicast
+set protocols bgp parameters listen limit 25 range 198.18.207.0/24 peer-group BOOTDYNAMIC
+
+# Additional policy control flow and setters are retained without altering the live peer assertions.
+set policy route-map BOOTEXTRA rule 10 action permit match community-list BOOTREGEX
+set policy route-map BOOTEXTRA rule 10 set community-delete BOOTCOMM large-community-delete BOOTLARGE
+set policy route-map BOOTEXTRA rule 10 on-match next
+set policy route-map BOOTEXTRA rule 20 action permit match large-community-list BOOTLREGEX
+set policy route-map BOOTEXTRA rule 20 set as-path prepend "64501 64502"
+set policy route-map BOOTEXTRA rule 20 on-match goto 100
+set policy route-map BOOTEXTRA rule 100 action permit set metric +20

@@ -1,0 +1,3 @@
+# Operational scripts are executed directly on Linux, including from bind mounts.
+[src/nvyr/op_scripts/*.py]
+end_of_line = lf

@@ -1,0 +1,175 @@
+[
+  {
+    "script": "time-zone",
+    "priority": 0,
+    "paths": [
+      "system time-zone"
+    ]
+  },
+  {
+    "script": "logging",
+    "priority": 1,
+    "paths": [
+      "system logging"
+    ]
+  },
+  {
+    "script": "login",
+    "priority": 1,
+    "paths": [
+      "system login"
+    ]
+  },
+  {
+    "script": "cpu",
+    "priority": 2,
+    "paths": [
+      "system cpu"
+    ]
+  },
+  {
+    "script": "firewall_failsafe",
+    "priority": 2,
+    "paths": [
+      "firewall fail-safe"
+    ]
+  },
+  {
+    "script": "vrf_conntrack",
+    "priority": 4,
+    "paths": [
+      "vrf"
+    ]
+  },
+  {
+    "script": "vrf",
+    "priority": 5,
+    "paths": [
+      "vrf name <name>"
+    ]
+  },
+  {
+    "script": "dummy",
+    "priority": 10,
+    "paths": [
+      "interfaces dummy <name>"
+    ]
+  },
+  {
+    "script": "ethernet",
+    "priority": 10,
+    "paths": [
+      "interfaces ethernet <name>"
+    ]
+  },
+  {
+    "script": "loopback",
+    "priority": 10,
+    "paths": [
+      "interfaces loopback <name>"
+    ]
+  },
+  {
+    "script": "virtual-ethernet",
+    "priority": 10,
+    "paths": [
+      "interfaces virtual-ethernet <name>"
+    ]
+  },
+  {
+    "script": "bridge",
+    "priority": 12,
+    "paths": [
+      "interfaces bridge <name>"
+    ]
+  },
+  {
+    "script": "dns",
+    "priority": 14,
+    "paths": [
+      "system name-server"
+    ]
+  },
+  {
+    "script": "firewall",
+    "priority": 15,
+    "paths": [
+      "firewall",
+      "nat"
+    ]
+  },
+  {
+    "script": "configuration",
+    "priority": 30,
+    "paths": [
+      "system configuration"
+    ]
+  },
+  {
+    "script": "system",
+    "priority": 30,
+    "paths": [
+      "system host-name"
+    ]
+  },
+  {
+    "script": "policy",
+    "priority": 35,
+    "paths": [
+      "policy"
+    ]
+  },
+  {
+    "script": "static",
+    "priority": 40,
+    "paths": [
+      "protocols static",
+      "vrf name <name> protocols static"
+    ]
+  },
+  {
+    "script": "bgp",
+    "priority": 45,
+    "paths": [
+      "protocols bgp",
+      "vrf name <name> protocols bgp"
+    ]
+  },
+  {
+    "script": "ssh",
+    "priority": 50,
+    "paths": [
+      "service ssh"
+    ]
+  },
+  {
+    "script": "dhcp-server",
+    "priority": 55,
+    "paths": [
+      "service dhcp-server",
+      "vrf name <name> service dhcp-server"
+    ]
+  },
+  {
+    "script": "dhcpv6-server",
+    "priority": 55,
+    "paths": [
+      "service dhcpv6-server",
+      "vrf name <name> service dhcpv6-server"
+    ]
+  },
+  {
+    "script": "ntp",
+    "priority": 56,
+    "paths": [
+      "system ntp"
+    ]
+  },
+  {
+    "script": "container",
+    "priority": 70,
+    "paths": [
+      "container"
+    ]
+  }
+]

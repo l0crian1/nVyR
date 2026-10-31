@@ -1,0 +1,14 @@
+{
+  "source_date_epoch": 1787644800,
+  "version": "10.7.1-0~deb13u1+nvyr1",
+  "upstream_version": "10.7.1",
+  "profiles": ["pkg.frr.lua"],
+  "source": {
+    "url": "https://codeload.github.com/FRRouting/frr/tar.gz/refs/tags/frr-10.7.1",
+    "sha256": "6aaf9d89deb94eeda6acceaa6fe48d8cd365d0908231e58f628538ff49696fc4"
+  },
+  "packages": {
+    "frr": "amd64",
+    "frr-pythontools": "all"
+  }
+}

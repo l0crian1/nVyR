@@ -1,0 +1,11 @@
+#!/bin/sh
+set -e
+
+PREREQ=""
+case "$1" in prereqs) echo "$PREREQ"; exit 0 ;; esac
+
+. /usr/share/initramfs-tools/hook-functions
+
+for module in overlay squashfs loop ext4; do
+    manual_add_modules "$module"
+done

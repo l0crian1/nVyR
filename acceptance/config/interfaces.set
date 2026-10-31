@@ -1,0 +1,67 @@
+# A complete dependency graph: physical port/VIF, loopback, VRFs, veths, bridge/VLANs.
+set vrf name BOOTLEFT table 41995
+set vrf name BOOTRIGHT table 41996
+set interfaces ethernet @ethernet description "Boot acceptance spare port" mtu 1400 link-group 195
+set interfaces ethernet @ethernet vrf BOOTRIGHT address 198.18.205.1/24 address 2001:db8:205::1/64
+set interfaces ethernet @ethernet vif 195 description "Boot acceptance Ethernet VLAN" vrf BOOTRIGHT link-group 196 address 198.18.206.1/24 address 2001:db8:206::1/64
+set interfaces loopback lo description "Boot acceptance router identity" address 198.18.207.1/32 address 2001:db8:207::1/128
+
+# Keep wildcard prefixes nonadjacent to avoid nftables listing defect NFT-IFNAME-001.
+set interfaces virtual-ethernet veth995 peer-name veth997 vrf BOOTLEFT mtu 1400 address 198.18.192.1/30 address 2001:db8:192::1/64
+set interfaces virtual-ethernet veth997 peer-name veth995 vrf BOOTRIGHT mtu 1400 address 198.18.192.2/30 address 2001:db8:192::2/64
+set interfaces virtual-ethernet veth995 vif 195 vrf BOOTLEFT address 198.18.209.1/30 address 2001:db8:209::1/64
+set interfaces virtual-ethernet veth997 vif 195 vrf BOOTRIGHT address 198.18.209.2/30 address 2001:db8:209::2/64
+
+# A DHCP client/server pair across VRFs supplies a real lease after every boot.
+set interfaces virtual-ethernet veth993 peer-name veth994 vrf BOOTLEFT address 198.18.193.1/24 address 2001:db8:193::1/64
+set interfaces virtual-ethernet veth994 peer-name veth993
+set interfaces bridge br994 member interface veth994
+set interfaces bridge br994 vrf BOOTRIGHT mac 02:00:00:19:94:01 address dhcp
+set interfaces bridge br994 dhcp-options client-id text boot-client
+set interfaces bridge br994 dhcp-options host-name boot-client vendor-class-id nvyr-acceptance user-class boot-lab default-route-distance 210
+
+set interfaces dummy dum995 description "Boot acceptance default VRF" address 198.18.195.1/24 address 2001:db8:195::1/64
+set interfaces dummy dum996 vrf BOOTLEFT address 198.18.196.1/24 address 2001:db8:196::1/64
+set interfaces dummy dum997 vrf BOOTLEFT address 198.18.208.1/24 address 2001:db8:208::1/64
+set interfaces dummy dum998 mtu 1400
+set interfaces dummy dum999 mtu 1400
+set interfaces dummy dum992 disable description "Disabled at boot"
+
+set interfaces bridge br995 description "Boot acceptance bridge" mtu 1400 vrf BOOTLEFT link-group 197 mac 02:00:00:19:95:01
+set interfaces bridge br995 vlan-filtering default-pvid 0
+set interfaces bridge br995 member interface dum998 vlan 195 pvid untagged
+set interfaces bridge br995 member interface dum999 vlan 195
+set interfaces bridge br995 member interface dum998 hairpin isolated learning disable
+set interfaces bridge br995 member interface dum999 flood unknown-unicast disable
+set interfaces bridge br995 spanning-tree priority 4096 hello-time 2s forward-delay 10s max-age 12s
+set interfaces bridge br995 member interface dum998 spanning-tree cost 500 priority 16 bpdu-guard root-guard
+set interfaces bridge br995 mac-learning ageing-time 10m maximum-entries 100 link-local disable
+set interfaces bridge br995 static-mac 02:00:00:19:95:10 vlan 195 interface dum999
+set interfaces bridge br995 multicast querier igmp-version 3 mld-version 2 statistics router permanent
+set interfaces bridge br995 member interface dum999 multicast fast-leave to-unicast maximum-groups 100
+set interfaces bridge br995 link-local-forward lldp
+set interfaces bridge br995 vif 195 vrf BOOTLEFT address 198.18.194.1/24 address 2001:db8:194::1/64
+
+# Per-link policy overrides survive creation, VRF attachment and global inheritance.
+set interfaces ethernet @ethernet ip receive-redirects disable send-redirects disable source-route disable
+set interfaces ethernet @ethernet ip directed-broadcast disable log-martians enable
+set interfaces ethernet @ethernet ip arp-cache-timeout 45s arp-filter enable arp-announce best-local arp-ignore 2
+set interfaces ethernet @ethernet ip arp-accept same-subnet arp-notify enable arp-proxy enable arp-proxy-pvlan enable
+set interfaces ethernet @ethernet ip accept-local route-localnet promote-secondaries
+set interfaces ethernet @ethernet ip arp-retransmit-interval 1500ms arp-stale-time 90s
+set interfaces ethernet @ethernet ipv6 receive-redirects disable source-route disable proxy-ndp hop-limit 65
+set interfaces ethernet @ethernet ipv6 duplicate-address-detection probes 2
+set interfaces ethernet @ethernet ipv6 neighbor-reachable-time 45s neighbor-retransmit-interval 1500ms neighbor-stale-time 90s
+set interfaces ethernet @ethernet vif 195 ip arp-ignore 1
+set interfaces bridge br995 ip arp-notify enable
+set interfaces bridge br995 vif 195 ipv6 hop-limit 66
+
+# Mutually exclusive address modes use separate links, away from management.
+set interfaces virtual-ethernet veth995 ipv6 autoconf no-default-route no-ra-mtu
+set interfaces virtual-ethernet veth995 ipv6 interface-identifier ::195 temporary-addresses prefer-public maximum-autoconf-addresses 8
+set interfaces virtual-ethernet veth997 ipv6 accept-router-advertisements address-generation stable-privacy
+set interfaces dummy dum996 mac 02:00:00:19:96:01
+set interfaces dummy dum996 ipv6 eui64 2001:db8:210::/64 link-local-address fe80::1996 address-generation eui64
+set interfaces dummy dum997 ipv6 no-default-link-local duplicate-address-detection disable
+set interfaces dummy dum992 ip disable-forwarding
+set interfaces dummy dum992 ipv6 disable

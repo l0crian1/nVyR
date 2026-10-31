@@ -1,0 +1,43 @@
+--- a/tools/frr-reload.py
++++ b/tools/frr-reload.py
+@@ -1294,6 +1294,7 @@
+     lines_to_add_to_del = []
+     lines_to_del_to_del = []
+     lines_to_add_vrf_no_static_route = []
++    lines_to_remove_bgp_lists = []
+ 
+     index = -1
+     for ctx_keys, line in lines_to_del:
+@@ -1641,7 +1642,7 @@
+                     found = True
+             if found is False:
+                 add_cmd = ("no " + ctx_keys[0],)
+-                lines_to_add.append((add_cmd, None))
++                lines_to_remove_bgp_lists.append((add_cmd, None))
+                 lines_to_del_to_del.append((ctx_keys, None))
+ 
+         # bgp as-path access-list can be specified without a seq number.
+@@ -1670,7 +1671,7 @@
+                     found = True
+             if found is False:
+                 add_cmd = ("no " + ctx_keys[0],)
+-                lines_to_add.append((add_cmd, None))
++                lines_to_remove_bgp_lists.append((add_cmd, None))
+                 lines_to_del_to_del.append((ctx_keys, None))
+ 
+         if (
+@@ -1754,7 +1755,13 @@
+                         lines_to_del_to_del.append((ctx_keys, line))
+                         lines_to_add_to_del.append((tmp_ctx_keys, line))
+ 
+-    lines_to_add = lines_to_add_vrf_no_static_route + lines_to_add
++    # Remove old BGP list entries before replacing a sequence or list type.
++    # Keep these commands in the bulk update, but never after their additions:
++    # AS-path replacement overwrites the old regex, while community-list type
++    # changes require removing the old list before creating the new type.
++    lines_to_add = (
++        lines_to_add_vrf_no_static_route + lines_to_remove_bgp_lists + lines_to_add
++    )
+ 
+     for ctx_keys, line in lines_to_del_to_del:
+         try:

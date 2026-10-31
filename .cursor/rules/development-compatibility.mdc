@@ -1,0 +1,17 @@
+---
+description: nVyR is unreleased; do not add backward compatibility without an explicit request
+alwaysApply: true
+---
+
+# Development compatibility policy
+
+nVyR is not a production or released product. Until the user explicitly changes
+this policy, do not add backward-compatibility shims, legacy formats, version
+fallbacks, or migration paths for previous development implementations.
+
+Implement the current design directly. For example, a saved-file format change
+does not need a compatibility flag to accommodate an older development ISO.
+
+Preserve requested functionality, transaction safety, recovery, and per-image
+isolation. These are current product requirements, not backward compatibility.
+Do not expand a focused task into a repository-wide cleanup unless requested.

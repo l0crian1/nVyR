@@ -1,0 +1,9 @@
+[Unit]
+Description=Clean up CLI sessions after supervisor failure
+
+[Timer]
+OnBootSec=30
+OnUnitActiveSec=30
+
+[Install]
+WantedBy=timers.target

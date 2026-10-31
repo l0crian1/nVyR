@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=77.0.3", "PyYAML>=6,<7"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nvyr-router"
+version = "0.1.0"
+description = "Clean-sheet router configuration framework"
+dynamic = ["license"]
+license-files = ["LICENSE", "THIRD_PARTY.md", "vendor/frr/COPYING", "vendor/frr/README.md"]
+requires-python = ">=3.11"
+dependencies = ["prompt-toolkit>=3.0.43,<4", "tabulate>=0.9,<1", "Jinja2>=3.1,<4", "dnspython>=2.6,<3", "pyroute2>=0.7.7,<1; sys_platform == 'linux'", "pyudev>=0.24,<1; sys_platform == 'linux'"]
+
+[project.optional-dependencies]
+test = ["pytest>=8,<10", "pytest-xdist>=3.6,<4", "PyYAML>=6,<7"]
+
+[project.scripts]
+configd = "nvyr.daemon:main"
+nvyr = "nvyr.cli:main"
+nvyr-login = "nvyr.login:main"
+nvyr-netlinkd = "nvyr.netlink_daemon:main"
+nvyr-kernel-settings = "nvyr.helpers.kernel_settings:main"
+nvyr-dhcp4 = "nvyr.helpers.dhcp:client_main"
+nvyr-dhcp4-hook = "nvyr.helpers.dhcp:hook_main"
+nvyr-kea = "nvyr.helpers.kea:main"
+nvyr-dhcp-hosts = "nvyr.helpers.dhcp_hosts:main"
+nvyr-ntp = "nvyr.helpers.ntp:main"
+nvyr-logging = "nvyr.helpers.logging_runtime:main"
+nvyr-interface-naming = "nvyr.interface_naming:main"
+
+[tool.setuptools.package-data]
+nvyr = ["schemas/*.json", "templates/**/*.j2"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra"

@@ -1,0 +1,13 @@
+[Unit]
+Description=nVyR developer policy and one-boot recovery account
+After=local-fs.target
+Before=nvyr-configd.service getty.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/nvyr-developer-boot
+RemainAfterExit=yes
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

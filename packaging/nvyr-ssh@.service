@@ -1,0 +1,15 @@
+[Unit]
+Description=nVyR SSH listener (%i)
+After=network.target
+
+[Service]
+Type=notify
+ExecStartPre=/usr/sbin/sshd -t -f /run/nvyr-ssh/%i.conf
+ExecStart=/usr/sbin/sshd -D -f /run/nvyr-ssh/%i.conf
+KillMode=process
+Restart=on-failure
+RestartPreventExitStatus=255
+RestartSec=2
+TimeoutStartSec=10
+TimeoutStopSec=10
+# No Install section: configd restores enabled instances from saved configuration.

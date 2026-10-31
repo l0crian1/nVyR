@@ -1,0 +1,282 @@
+# Operational mode. In configuration mode, prefix each command with "run".
+# Sessions, general system information and diagnostics.
+show users
+show date
+show version
+show license
+show system uptime
+show system cpu
+show system cpu usage
+show system memory
+show system storage
+show system processes
+show system processes cpu
+show system processes memory
+show system image
+
+# Managed service health, including disabled containers and scoped instances.
+show system services
+show system services configd
+show system services configd detail
+show system services netlinkd detail
+show system services frr detail
+show system services ssh detail
+show system services ssh vrf default
+show system services ntp detail
+show system services ntp vrf default
+show system services dhcp-server
+show system services dhcp-server detail
+show system services dhcp-server vrf OPSA
+show system services dhcpv6-server
+show system services dhcpv6-server detail
+show system services dhcpv6-server vrf OPSA
+show system services container
+show system services container detail
+show system services container vrf OPSA
+show system services container name OPSWEB
+show system services container name OPSOFF
+
+# Interface details, hardware views, VRFs and bridge state.
+show interfaces
+show interfaces detail
+show interfaces statistics
+show interfaces eth1 detail
+show interfaces eth2 detail
+show interfaces eth1.100 detail
+show interfaces veth60 detail
+show interfaces veth65 detail
+show interfaces dum60 detail
+show interfaces lo detail
+show interfaces pd-OPSNET detail
+show interfaces pd-OPSWEB-0 detail
+show interfaces ethernet
+show interfaces ethernet eth1 detail
+show interfaces ethernet eth1 statistics
+show interfaces ethernet eth1 offload
+show interfaces ethernet eth1 queues
+show interfaces ethernet eth1 hardware-statistics
+show interfaces ethernet eth1 transceiver
+show interfaces ethernet eth2 offload
+show interfaces ethernet eth2 queues
+show interfaces ethernet eth2 hardware-statistics
+show interfaces ethernet eth2 transceiver
+show vrf
+show vrf OPSA
+show vrf OPSB
+show interfaces bridge
+show interfaces bridge br60
+show interfaces bridge br60 member
+show interfaces bridge br60 member veth62
+show interfaces bridge br60 vlan
+show interfaces bridge br60 spanning-tree
+show interfaces bridge br60 mac
+show interfaces bridge br60 multicast
+
+# DHCPv4 and DHCPv6 pools, lease records, listeners and the local DHCP client.
+show dhcp-server leases
+show dhcp-server pools
+show dhcp-server listeners
+show dhcp-server shared-network OPSCLIENT leases
+show dhcp-server shared-network OPSCLIENT pools
+show dhcp-server shared-network OPSCLIENT listeners
+show dhcp-server vrf OPSA leases
+show dhcp-server vrf OPSA pools
+show dhcp-server vrf OPSA listeners
+show dhcp-server vrf OPSA shared-network OPSLAN leases
+show dhcp-server vrf OPSA shared-network OPSLAN pools
+show dhcp-server vrf OPSA shared-network OPSLAN listeners
+show dhcpv6-server leases
+show dhcpv6-server pools
+show dhcpv6-server listeners
+show dhcpv6-server shared-network OPSCLIENT leases
+show dhcpv6-server shared-network OPSCLIENT pools
+show dhcpv6-server shared-network OPSCLIENT listeners
+show dhcpv6-server vrf OPSA leases
+show dhcpv6-server vrf OPSA pools
+show dhcpv6-server vrf OPSA listeners
+show dhcpv6-server vrf OPSA shared-network OPSLAN leases
+show dhcpv6-server vrf OPSA shared-network OPSLAN pools
+show dhcpv6-server vrf OPSA shared-network OPSLAN listeners
+show dhcp-client
+show dhcp-client detail
+show dhcp-client interface br61
+show dhcp-client interface br61 detail
+
+# Containers, networks and images.
+show containers
+show containers name OPSWEB
+show containers name OPSWEB detail
+show containers name OPSOFF detail
+show containers statistics
+show containers statistics name OPSWEB
+show containers networks
+show containers networks name OPSNET
+show containers images
+
+# NTP client-facing activity and upstream synchronization.
+show ntp
+show ntp sources
+show ntp sources no-resolve
+show ntp clients
+show ntp server statistics
+show ntp server statistics detail
+
+# Neighbor and resolver views.
+show arp
+show arp vrf OPSA
+show arp interface veth60
+show arp vrf OPSB interface veth61
+show ipv6 neighbors
+show ipv6 neighbors vrf OPSA
+show ipv6 neighbors interface veth60
+show ipv6 neighbors vrf OPSB interface veth61
+show system name-server
+lookup example.com
+lookup example.com type a
+lookup example.com type aaaa
+lookup example.com type mx server 9.9.9.9
+lookup 9.9.9.9
+
+# Installed policies, including FRR's native detail/summary syntax.
+show route-map
+show route-map OPSEXPORT
+show route-map OPSIMPORT
+show ip access-list
+show ip access-list OPSACL
+show ipv6 access-list
+show ipv6 access-list OPSACL
+show ip prefix-list
+show ip prefix-list OPSPREFIX
+show ip prefix-list OPSPREFIX seq 10
+show ip prefix-list summary OPSPREFIX
+show ip prefix-list detail OPSPREFIX
+show ip prefix-list OPSPREFIX 10.60.10.0/24 first-match
+show ipv6 prefix-list
+show ipv6 prefix-list OPSPREFIX
+show ipv6 prefix-list OPSPREFIX seq 10
+show ipv6 prefix-list summary OPSPREFIX
+show ipv6 prefix-list detail OPSPREFIX
+show ipv6 prefix-list OPSPREFIX 2001:db8:60:10::/64 first-match
+show ip as-path-access-list
+show ip as-path-access-list OPSAS
+show bgp as-path-access-list OPSAS
+show bgp community-list
+show bgp community-list OPSCOMM detail
+show bgp community-list OPSREGEX detail
+show bgp large-community-list
+show bgp large-community-list OPSLARGE detail
+show bgp large-community-list OPSLREGEX detail
+
+# BGP and installed routes supplied by the two local peers.
+show bgp vrfs
+show bgp vrf OPSA summary
+show bgp vrf OPSB summary
+show bgp vrf OPSA ipv4 unicast
+show bgp vrf OPSB ipv4 unicast
+show bgp vrf OPSA ipv6 unicast
+show bgp vrf OPSB ipv6 unicast
+show bgp vrf OPSA neighbors 10.60.0.2
+show bgp vrf OPSB neighbors 10.60.0.1
+show ip route vrf OPSA
+show ip route vrf OPSB
+show ipv6 route vrf OPSA
+show ipv6 route vrf OPSB
+show static routes
+show static routes vrf OPSA
+show static routes vrf OPSB
+
+# Firewall overview and individual rule detail.
+show firewall
+show firewall detail
+show firewall ipv4 input filter
+show firewall ipv4 input filter detail
+show firewall ipv4 input filter rule 50000
+show firewall ipv4 input filter rule 50000 detail
+show firewall ipv4 forward filter
+show firewall ipv4 output filter
+show firewall ipv4 prerouting raw
+show firewall ipv4 output raw
+show firewall ipv6 input filter
+show firewall ipv6 input filter rule 50000 detail
+show firewall ipv6 forward filter
+show firewall ipv6 output filter
+show firewall ipv6 prerouting raw
+show firewall ipv6 output raw
+show firewall ipv4 name OPSPASS
+show firewall ipv6 name OPSPASS
+show firewall state-policy
+show firewall state-policy input
+show firewall state-policy forward
+show firewall state-policy output
+show firewall flowtable OPSFT
+show firewall zone
+show firewall zone ipv4 OPSLAN
+show firewall zone ipv6 OPSLAN
+
+# Runtime per-key limits and quotas, at hook and individual-rule scope.
+show firewall ipv4 input filter limits
+show firewall ipv4 input filter rule 50000 limit
+show firewall ipv4 input filter rule 50070 limit
+show firewall ipv4 input filter quotas
+show firewall ipv4 input filter rule 50010 quota
+show firewall ipv4 input filter rule 50020 quota
+show firewall ipv4 forward filter limits
+show firewall ipv4 forward filter rule 50000 limit
+show firewall ipv4 forward filter quotas
+show firewall ipv4 forward filter rule 50010 quota
+show firewall ipv6 input filter limits
+show firewall ipv6 input filter rule 50000 limit
+show firewall ipv6 input filter quotas
+show firewall ipv6 input filter rule 50010 quota
+show firewall ipv6 forward filter limits
+show firewall ipv6 forward filter quotas
+
+# Group tables, dynamic members and shared accounting.
+show firewall group
+show firewall group counter-group OPSCOUNT
+show firewall group quota-group OPSQUOTA
+show firewall group interface-group OPSIF
+show firewall group port-group OPSPORT
+show firewall group mac-group OPSMAC
+show firewall group address-group ipv4 OPSADDR
+show firewall group address-group ipv6 OPSADDR
+show firewall group address-group ipv4 OPSLEARN
+show firewall group address-group ipv6 OPSLEARN
+show firewall group match-group ipv4 OPSMATCH
+show firewall group match-group ipv6 OPSMATCH
+show firewall group match-group ipv4 OPSDYNAMIC
+show firewall group match-group ipv6 OPSDYNAMIC
+show firewall group map ipv4 OPSMAP
+show firewall group map ipv4 OPSMAP detail
+show firewall group map ipv6 OPSMAP
+show firewall group icmp-group ipv4 OPSPING
+show firewall group icmp-group ipv6 OPSPING
+show firewall group limit-group ipv4 OPSRATE
+show firewall group limit-group ipv4 OPSPER
+show firewall group limit-group ipv6 OPSRATE
+show firewall group limit-group ipv6 OPSPER
+
+# NAT rule display, active translations and conntrack filtering.
+show nat source
+show nat source detail
+show nat source rule 50000
+show nat source rule 50000 detail
+show nat destination
+show nat destination detail
+show nat destination rule 50000
+show nat destination rule 50000 detail
+show nat translations
+show nat source translations
+show nat destination translations
+show nat destination translations ipv4 protocol tcp detail
+show conntrack
+show conntrack ipv4
+show conntrack ipv6
+show conntrack ipv4 protocol tcp state established
+show conntrack ipv6 protocol tcp state established detail
+show conntrack ipv4 destination-address 10.60.10.1 detail
+show conntrack statistics
+
+# Normally inactive after the main firewall has loaded: that is the expected result.
+show firewall fail-safe
+show firewall fail-safe detail

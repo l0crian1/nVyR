@@ -1,0 +1,106 @@
+#!/bin/sh
+set -eu
+
+# Metadata belongs to this image, and must already exist before it can boot.
+test -s /usr/share/nvyr/build.json
+python3 -c 'from nvyr.helpers.build_metadata import read; read()'
+
+# Fail the image build if APT selected anything other than the reviewed packages.
+while read -r package version architecture checksum url; do
+    case "$package" in ''|'#'*) continue ;; esac
+    test "$(dpkg-query -W -f='${Version}' "$package")" = "$version"
+    test "$(dpkg-query -W -f='${Architecture}' "$package")" = "$architecture"
+done < /usr/share/nvyr/packages.lock
+
+# The locally built container stack must also match the builder's pinned manifest.
+python3 - <<'PY'
+import json
+from pathlib import Path
+import subprocess
+
+# There must be exactly one bootable kernel, and it must be the pinned LTS build.
+with open('/usr/share/nvyr/kernel-sources.lock') as stream:
+    kernel = json.load(stream)
+release = kernel['version'] + kernel['local_version']
+images = sorted(path.name for path in Path('/boot').glob('vmlinuz-*'))
+if images != ['vmlinuz-' + release]:
+    raise SystemExit(f'Unexpected installed kernels: {images}; expected {release}')
+version = subprocess.check_output(
+    ['dpkg-query', '-W', '-f=${Version}', 'linux-image-' + release], text=True)
+if version != kernel['package_version']:
+    raise SystemExit(f'Unexpected kernel package version: {version}')
+
+with open('/usr/share/nvyr/container-packages.json') as stream:
+    versions = json.load(stream)['versions']
+for package, expected in versions.items():
+    actual = subprocess.check_output(['dpkg-query', '-W', '-f=${Version}', package], text=True)
+    if actual != expected:
+        raise SystemExit(f'{package}: expected {expected}, installed {actual}')
+
+# FRR's Lua-enabled package revision and architecture must match the source lock.
+with open('/usr/share/nvyr/frr-sources.lock') as stream:
+    frr = json.load(stream)
+for package, architecture in frr['packages'].items():
+    for field, expected in (('Version', frr['version']), ('Architecture', architecture)):
+        actual = subprocess.check_output(['dpkg-query', '-W', '-f=${' + field + '}', package], text=True)
+        if actual != expected:
+            raise SystemExit(f'{package}: expected {field} {expected}, installed {actual}')
+version = subprocess.check_output(['/usr/lib/frr/zebra', '--version'], text=True)
+if '--enable-scripting' not in version:
+    raise SystemExit('FRR was installed without Lua scripting support')
+PY
+
+# User creation and passwords are owned by nVyR; live-config must not reset them.
+test -x /usr/bin/nvyr-login
+
+# FRR starts watchfrr, zebra and staticd itself. Enable the common router protocols.
+for daemon in bgpd ospfd ospf6d ripd ripngd isisd ldpd pbrd bfdd vrrpd; do
+    test -x "/usr/lib/frr/$daemon"
+    grep -q "^$daemon=" /etc/frr/daemons
+    sed -i "s/^$daemon=.*/$daemon=yes/" /etc/frr/daemons
+done
+
+# PIM is not supported yet; keep its daemons and register interfaces inactive.
+for daemon in pimd pim6d; do
+    grep -q "^$daemon=" /etc/frr/daemons
+    sed -i "s/^$daemon=.*/$daemon=no/" /etc/frr/daemons
+done
+
+systemctl enable nvyr-interface-naming.service nvyr-configd.service frr.service nftables.service nvyr-netlinkd.service
+systemctl enable nvyr-developer-access.service nvyr-session-images.service nvyr-session-reap.timer
+systemctl enable nvyr-geoip-update.timer
+systemctl enable nvyr-dhcp-hosts.timer nvyr-logrotate.timer rsyslog.service
+systemctl disable ulogd2.service
+systemctl mask ulogd2.service
+
+# SSH listeners are started only by a committed/saved nVyR service configuration.
+systemctl disable ssh.service ssh.socket
+systemctl mask ssh.service ssh.socket
+systemctl disable chrony.service
+systemctl mask chrony.service chronyd.service systemd-timesyncd.service
+systemctl mask isc-kea-dhcp4-server.service isc-kea-dhcp6-server.service
+
+# Never distribute the stock package's build-time host identities either.
+rm -f /etc/ssh/ssh_host_*_key /etc/ssh/ssh_host_*_key.pub
+
+# DHCP or an unplugged configured port must not block the router console at boot.
+systemctl disable systemd-networkd.service systemd-networkd-wait-online.service
+systemctl mask systemd-networkd.service systemd-networkd-wait-online.service
+
+# netlinkd publishes the system resolver file; no competing DNS managers.
+systemctl mask systemd-resolved.service resolvconf.service resolvconf-pull-resolved.path
+
+# Installed and live systems are upgraded as nVyR images, not Debian packages.
+rm -f /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources
+systemctl mask apt-daily.service apt-daily.timer apt-daily-upgrade.service apt-daily-upgrade.timer
+
+# Include the installed-image root driver even if the kernel was unpacked before
+# initramfs-tools. Updating 'all' alone would skip a kernel with no initrd yet.
+for kernel in /boot/vmlinuz-*; do
+    release=${kernel#/boot/vmlinuz-}
+    if [ -f "/boot/initrd.img-$release" ]; then
+        update-initramfs -u -k "$release"
+    else
+        update-initramfs -c -k "$release"
+    fi
+done

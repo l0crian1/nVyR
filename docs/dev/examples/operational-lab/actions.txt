@@ -1,0 +1,22 @@
+# Operational commands that change state. Run individually after inspecting the views.
+renew dhcp interface br61
+release dhcp interface br61
+renew dhcp interface br61
+restart container OPSWEB
+clear route-map counters OPSEXPORT
+clear firewall counter OPSCOUNT
+clear firewall quota OPSQUOTA
+clear firewall group address-group ipv4 OPSLEARN learned
+clear firewall group address-group ipv6 OPSLEARN learned
+clear firewall group match-group ipv4 OPSDYNAMIC learned
+clear firewall group match-group ipv6 OPSDYNAMIC learned
+
+# This writes a diagnostic archive under /config/diagnostics.
+generate system diagnostics
+
+# Live refresh; Ctrl+C returns to the prompt.
+show containers statistics name OPSWEB follow
+
+# Run last: flushes ALL tracked connections/NAT state, including management flows.
+# The command asks for confirmation.
+clear conntrack

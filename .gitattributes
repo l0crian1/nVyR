@@ -1,0 +1,16 @@
+# Generated JSON is byte-for-byte reproducible on Windows and Linux.
+src/nvyr/schemas/*.json text eol=lf
+
+# Linux deployment files must be executable from Windows-mounted workspaces.
+*.sh text eol=lf
+*.chroot text eol=lf
+*.service text eol=lf
+*.timer text eol=lf
+images/packages.lock text eol=lf
+images/container-sources.lock text eol=lf
+packaging/debian/* text eol=lf
+packaging/nvyr-dhcp-hosts-hook text eol=lf
+src/nvyr/op_scripts/*.py text eol=lf
+vendor/frr/*.patch text eol=lf whitespace=-blank-at-eol
+packaging/initramfs/** text eol=lf
+images/bootloaders/**/*.cfg text eol=lf

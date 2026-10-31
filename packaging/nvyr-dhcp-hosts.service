@@ -1,0 +1,17 @@
+[Unit]
+Description=Publish current DHCPv4 lease hostnames
+After=nvyr-configd.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/nvyr-dhcp-hosts
+TimeoutStartSec=30
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/etc
+ProtectHome=true
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true

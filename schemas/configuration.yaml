@@ -1,0 +1,14 @@
+kind: node
+description: Router configuration
+children: # configuration
+
+  include_schema:
+  - file: interfaces.yaml.i
+  - file: vrf.yaml.i
+  - file: firewall.yaml.i
+  - file: system.yaml.i
+  - file: protocols.yaml.i
+  - file: policy.yaml.i
+  - file: service.yaml.i
+  - file: nat.yaml.i
+  - file: container.yaml.i

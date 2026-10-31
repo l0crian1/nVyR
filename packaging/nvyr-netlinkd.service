@@ -1,0 +1,40 @@
+[Unit]
+Description=nVyR Netlink interface manager
+Requires=nvyr-interface-naming.service nvyr-resolver-init.service nvyr-conntrack.service
+After=local-fs.target systemd-sysctl.service nvyr-interface-naming.service systemd-networkd.service nvyr-resolver-init.service nvyr-conntrack.service rsyslog.service
+Wants=rsyslog.service
+Before=nvyr-configd.service network-online.target
+Conflicts=systemd-networkd.service
+# Recovery must remain possible after a prolonged transient failure.
+StartLimitIntervalSec=0
+
+[Service]
+Type=notify
+NotifyAccess=main
+ExecStart=/usr/bin/nvyr-netlinkd
+RuntimeDirectory=nvyr-netlink
+RuntimeDirectoryMode=0700
+# DHCP clients are independent services and retain leases over daemon restarts.
+RuntimeDirectoryPreserve=yes
+StateDirectory=nvyr-netlink
+StateDirectoryMode=0700
+UMask=0077
+Restart=on-failure
+# Preserve pending configd startup while this daemon recovers before READY.
+RestartMode=direct
+RestartSec=2
+RestartSteps=3
+RestartMaxDelaySec=30
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/run/nvyr-resolver
+ReadWritePaths=/proc/sys/net/ipv4 /proc/sys/net/ipv6 /proc/sys/net/netfilter
+ReadWritePaths=/run/sysctl.d /run/nvyr-kernel-settings /config
+ProtectHome=true
+PrivateTmp=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_UNIX AF_NETLINK AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target

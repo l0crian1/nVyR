@@ -1,0 +1,20 @@
+[Quadlet]
+DefaultDependencies=false
+
+[Unit]
+Description=nVyR pod {{ name }}
+After=network.target
+
+[Pod]
+PodName={{ name }}
+ServiceName={{ container_pod_unit_name(name) }}
+Label=nvyr.managed=true
+ExitPolicy=continue
+{% include 'containers/network.inc.j2' -%}
+
+[Service]
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=60
+TimeoutStopSec=30
+UMask=0077

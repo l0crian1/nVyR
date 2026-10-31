@@ -1,0 +1,10 @@
+[Unit]
+Description=Prepare nVyR file logging
+After=local-fs.target systemd-tmpfiles-setup.service
+Before=rsyslog.service nvyr-configd.service nvyr-netlinkd.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/nvyr-logging prepare
+RemainAfterExit=yes
+StateDirectory=nvyr/logging

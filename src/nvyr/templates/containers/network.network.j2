@@ -1,0 +1,30 @@
+{# Configd configures networks before network-online.target. -#}
+[Quadlet]
+DefaultDependencies=false
+
+[Network]
+NetworkName={{ name }}
+Driver=bridge
+InterfaceName={{ container_bridge_name(name) }}
+Label=nvyr.managed=true
+{% if 'internal' in configuration -%}
+Internal=true
+{% endif -%}
+{% if 'disable-dns' in configuration -%}
+DisableDNS=true
+{% endif -%}
+{% if 'disable' in configuration.get('isolation', {}) -%}
+Options=isolate=false
+{% endif -%}
+{% for option in ['vrf', 'mtu'] -%}
+{% if option in configuration -%}
+Options={{ option }}={{ configuration[option] }}
+{% endif -%}
+{% endfor -%}
+{% if container_network_ipv6(configuration) -%}
+IPv6=true
+{% endif -%}
+{% for prefix, settings in configuration['subnet'].items() | sort -%}
+Subnet={{ prefix }}
+Gateway={{ container_network_gateway(prefix, settings) }}
+{% endfor -%}

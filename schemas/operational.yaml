@@ -1,0 +1,204 @@
+kind: node
+children: # operational
+
+  disable:
+    kind: node
+    description: Disable installation features
+    children:
+
+      system:
+        kind: node
+        description: System features
+        children:
+
+          developer-access:
+            kind: node
+            access: dev-admin
+            description: Disable permanent developer logins after reboot; requires a sys-admin account
+            command: ['developer.nvyr.op', 'disable']
+
+  include_schema:
+  - file: operational/firewall-trace.yaml.i
+  - file: operational/set.yaml.i
+  - file: operational/dhcp-client.yaml.i
+    as: null
+  - file: operational/containers.yaml.i
+  - file: operational/connect.yaml.i
+  - file: operational/restart.yaml.i
+  - file: operational/diagnostics.yaml.i
+  - file: operational/firewall_clear.yaml.i
+  - file: operational/ping.yaml.i
+  - file: operational/traceroute.yaml.i
+  - file: operational/lookup.yaml.i
+  - file: operational/shellcmd.yaml.i
+  - file: operational/shutdown.yaml.i
+    as: null
+  - file: operational/images.yaml.i
+    as: null
+
+  configure:
+    kind: node
+    access: net-admin
+    description: Enter configuration mode
+    command: ['configure']
+    children: # configure
+
+      draft:
+        kind: node
+        description: Enter a non-committing draft
+        command: ['configure-draft']
+
+  show:
+    kind: node
+    description: Show router state
+    children: # show
+
+      include_schema:
+      - file: operational/interfaces.yaml.i
+      - file: operational/system.yaml.i
+      - file: operational/logs.yaml.i
+      - file: operational/ntp.yaml.i
+      - file: operational/dhcp-show.yaml.i
+        as: null
+      - file: operational/vrf.yaml.i
+      - file: operational/firewall.yaml.i
+      - file: operational/nat.yaml.i
+      - file: operational/conntrack.yaml.i
+      - file: operational/static.yaml.i
+      - file: operational/bgp.yaml.i
+      - file: operational/policy-route-map.yaml.i
+      - file: operational/containers-show.yaml.i
+
+      arp:
+        kind: node
+        anchor: true
+        description: IPv4 ARP entries
+        command: ['neighbors.nvyr.op', 'show', '@line']
+        children:
+
+          include_schema:
+          - file: operational/neighbor-options.yaml.i
+            as: null
+
+      running-configuration:
+        kind: node
+        description: Explicit running configuration
+        command: ['running']
+        children: # running-configuration
+
+          all:
+            kind: node
+            description: Include applicable default values
+            command: ['running']
+
+      version:
+        kind: node
+        description: Version, build attribution and project information
+        command: ['version']
+
+      license:
+        kind: node
+        description: Display the nVyR MIT license
+        command: ['license']
+
+      users:
+        kind: node
+        description: Active SSH and console logins, including source and idle time
+        command: ['users.nvyr.op', 'show']
+
+      ip:
+        kind: node
+        children: # ip
+
+          include_schema:
+          - file: operational/policy-filters.yaml.i
+            as: null
+          - file: operational/policy-as-path.yaml.i
+          - file: operational/route-display.yaml.i
+            replace:
+              /description: IPv4 routing table from FRR
+        description: IPv4 state
+
+      ipv6:
+        kind: node
+        children: # ipv6
+
+          neighbors:
+            kind: node
+            anchor: true
+            description: IPv6 neighbor entries
+            command: ['neighbors.nvyr.op', 'show', '@line']
+            children:
+
+              include_schema:
+              - file: operational/neighbor-options.yaml.i
+                as: null
+
+          include_schema:
+          - file: operational/policy-filters.yaml.i
+            as: null
+            replace:
+              /access-list/children/name/suggestors/config-path/path: 'policy access-list ipv6'
+              /prefix-list/children/name/suggestors/config-path/path: 'policy prefix-list ipv6'
+              /prefix-list/children/summary/children/name/suggestors/config-path/path: 'policy prefix-list ipv6'
+              /prefix-list/children/detail/children/name/suggestors/config-path/path: 'policy prefix-list ipv6'
+              /prefix-list/children/name/children/prefix/validators:
+                ipv6-prefix: {}
+              /prefix-list/children/name/children/prefix/hints:
+                x:x:x:x:x:x/x: IPv6 prefix
+          - file: operational/route-display.yaml.i
+            replace:
+              /description: IPv6 routing table from FRR
+              /children/destination/validators:
+                mode: OR
+                ipv6-address: {}
+                ipv6-prefix: {}
+              /children/destination/hints:
+                x:x:x:x:x:x: IPv6 destination address
+                x:x:x:x:x:x/x: IPv6 destination prefix
+              /children/vrf/children/destination/validators:
+                mode: OR
+                ipv6-address: {}
+                ipv6-prefix: {}
+              /children/vrf/children/destination/hints:
+                x:x:x:x:x:x: IPv6 destination address
+                x:x:x:x:x:x/x: IPv6 destination prefix
+              /children/table/children/destination/validators:
+                mode: OR
+                ipv6-address: {}
+                ipv6-prefix: {}
+              /children/table/children/destination/hints:
+                x:x:x:x:x:x: IPv6 destination address
+                x:x:x:x:x:x/x: IPv6 destination prefix
+        description: IPv6 state
+
+      uptime:
+        kind: node
+        command: ['uptime']
+        description: System uptime
+
+      date:
+        kind: node
+        command: ['date']
+        description: Current system date, time and timezone
+
+      reboot:
+        kind: node
+        description: Scheduled reboot
+        command: ['shutdown.nvyr.op', 'show']
+
+      poweroff:
+        kind: node
+        description: Scheduled poweroff
+        command: ['shutdown.nvyr.op', 'show']
+
+  exit:
+    kind: node
+    description: Exit the CLI
+    command: ['exit']
+
+  shell:
+    access: dev-admin
+    description: Open an interactive host shell
+    command: ['shell']
+    kind: node

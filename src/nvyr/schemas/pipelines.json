@@ -1,0 +1,57 @@
+{
+  "kind": "node",
+  "children": {
+    "strip-private": {
+      "kind": "node",
+      "description": "Mask schema-marked configuration values or request script masking",
+      "command": "strip-private"
+    },
+    "commands": {
+      "kind": "node",
+      "description": "Render configuration or differences as CLI commands",
+      "command": "commands"
+    },
+    "match": {
+      "kind": "leaf_node",
+      "description": "Keep lines matching a regular expression",
+      "hints": {
+        "regex": "Regular expression to match against output lines; quote spaces"
+      },
+      "command": "match"
+    },
+    "except": {
+      "kind": "leaf_node",
+      "description": "Remove lines matching a regular expression",
+      "hints": {
+        "regex": "Regular expression to match against output lines; quote spaces"
+      },
+      "command": "except"
+    },
+    "count": {
+      "kind": "node",
+      "description": "Count output lines",
+      "command": "count"
+    },
+    "export": {
+      "kind": "leaf_node",
+      "description": "Write output to a client-local file",
+      "hints": {
+        "path": "Output filename on the CLI client; quote spaces"
+      },
+      "command": "export",
+      "sink": true
+    },
+    "more": {
+      "kind": "node",
+      "description": "View output in a searchable pager",
+      "command": "more",
+      "sink": true
+    },
+    "no-more": {
+      "kind": "node",
+      "description": "Print all output without paging",
+      "command": "no-more",
+      "sink": true
+    }
+  }
+}

@@ -1,0 +1,14 @@
+---
+description: Use absolute nvyr package imports in all Python code.
+alwaysApply: true
+---
+
+# Python imports
+
+- Import nVyR modules with absolute `nvyr` package paths throughout the project,
+  including CLI, daemons, helpers, configuration/operational scripts and tests.
+- Use `from nvyr.helpers import interfaces` and `from nvyr.tree import lookup`,
+  not relative imports such as `from ..helpers import interfaces`.
+- Apply this standard to all new Python code and documentation examples.
+- Preserve intentional function-local imports, aliases and import ordering when
+  cleaning up existing imports; do not add path manipulation or import fallbacks.

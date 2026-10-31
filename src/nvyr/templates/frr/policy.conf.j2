@@ -1,0 +1,47 @@
+{% for kind in ('access-list', 'prefix-list') -%}
+{% for family, lists in configuration.get(kind, {}).items() | sort(case_sensitive=true) -%}
+{% set prefix = 'ipv6 ' if family == 'ipv6' else 'ip ' if kind == 'prefix-list' else '' -%}
+{% for name, values in lists.items() | sort(case_sensitive=true) -%}
+{% set base = prefix ~ kind ~ ' ' ~ name -%}
+{% if values.get('description', '').strip() -%}
+{{ base }} {{ 'remark' if kind == 'access-list' else 'description' }} {{ values['description'].split() | join(' ') }}
+{% endif -%}
+{% for sequence, rule in numeric_items(values['rule']) -%}
+{{ base }} seq {{ sequence | int }} {{ rule['action'] }} {{ policy_filter_operand(rule) }}
+{% endfor -%}
+{% endfor -%}
+{% endfor -%}
+{% endfor -%}
+
+{% for name, values in configuration.get('as-path-list', {}).items() | sort(case_sensitive=true) -%}
+{% for sequence, rule in numeric_items(values['rule']) -%}
+bgp as-path access-list {{ name }} seq {{ sequence | int }} {{ rule['action'] }} {{ rule['regex'] }}
+{% endfor -%}
+{% endfor -%}
+
+{% for kind in ('community-list', 'large-community-list') -%}
+{% for mode, lists in configuration.get(kind, {}).items() | sort(case_sensitive=true) -%}
+{% for name, values in lists.items() | sort(case_sensitive=true) -%}
+{% for sequence, rule in numeric_items(values['rule']) -%}
+bgp {{ kind }} {{ mode }} {{ name }} seq {{ sequence | int }} {{ rule['action'] }} {{ rule['regex'] if mode == 'expanded' else policy_community_values(rule['community'], large=(kind == 'large-community-list')) }}
+{% endfor -%}
+{% endfor -%}
+{% endfor -%}
+{% endfor -%}
+
+{% for name, values in configuration.get('route-map', {}).items() | sort(case_sensitive=true) -%}
+{% for sequence, rule in numeric_items(values['rule']) -%}
+route-map {{ name }} {{ rule['action'] }} {{ sequence | int }}
+{% if rule.get('description', '').strip() %} description {{ rule['description'].split() | join(' ') }}
+{% endif -%}
+{% for command in policy_matches(rule.get('match', {})) %} {{ command }}
+{% endfor -%}
+{% for command in policy_actions(rule.get('set', {})) %} {{ command }}
+{% endfor -%}
+{% if 'call' in rule %} call {{ rule['call'] }}
+{% endif -%}
+{% for mode, value in rule.get('on-match', {}).items() %} on-match {{ 'next' if mode == 'next' else 'goto ' ~ (value | int) }}
+{% endfor -%}
+exit
+{% endfor -%}
+{% endfor -%}

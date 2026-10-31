@@ -1,0 +1,10 @@
+[Unit]
+Description=Check DB-IP country data daily at midnight
+
+[Timer]
+OnCalendar=*-*-* 00:00:00
+Persistent=true
+Unit=nvyr-geoip-update.service
+
+[Install]
+WantedBy=timers.target

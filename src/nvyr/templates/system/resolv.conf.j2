@@ -1,0 +1,4 @@
+# Managed by nVyR netlinkd. Configure system name-server through the CLI.
+{% for server in servers -%}
+nameserver {{ server }}
+{% endfor -%}

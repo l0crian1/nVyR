@@ -1,0 +1,22 @@
+pidfile /run/nvyr-chrony/chronyd.pid
+bindcmdaddress /run/nvyr-chrony/chronyd.sock
+cmdport 0
+driftfile /config/ntp/drift
+ntsdumpdir /config/ntp
+makestep 1.0 3
+rtcsync
+{% for kind in ('server', 'pool') -%}
+{% for name, options in configuration.get(kind, {}).items() -%}
+{{ kind }} {{ name }} iburst{% if 'prefer' in options %} prefer{% endif %}{% if 'nts' in options %} nts{% endif %}
+{% endfor -%}
+{% endfor -%}
+{% for address in configuration.get('listen-address', {}).values() -%}
+bindaddress {{ address }}
+{% endfor -%}
+{% for prefix in configuration.get('allow-client', ()) -%}
+allow {{ prefix }}
+{% endfor -%}
+{% if configuration.get('vrf') -%}
+binddevice {{ configuration['vrf'] }}
+bindacqdevice {{ configuration['vrf'] }}
+{% endif -%}

@@ -1,0 +1,14 @@
+[Unit]
+Description=nVyR system resolver ownership
+After=local-fs.target live-config.service systemd-resolved.service resolvconf.service
+Before=nvyr-netlinkd.service
+Conflicts=systemd-resolved.service resolvconf.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+RuntimeDirectory=nvyr-resolver
+RuntimeDirectoryMode=0755
+RuntimeDirectoryPreserve=yes
+# Only the pointer is installed here; netlinkd is the sole content writer.
+ExecStart=/usr/bin/ln -sfnT /run/nvyr-resolver/resolv.conf /etc/resolv.conf

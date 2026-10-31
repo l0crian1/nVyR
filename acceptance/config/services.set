@@ -1,0 +1,106 @@
+# Local-time selection must survive the saved-configuration reboot.
+set system time-zone America/New_York
+
+# Global file logging settings must be restored before packet collectors start.
+set system logging level info
+set system logging rotation size 64m count 3
+set system logging service bgp level debug
+
+# NTP starts in a VRF without requiring public DNS or an available time source.
+set system ntp vrf BOOTLEFT
+set system ntp server 198.18.196.123 prefer
+set system ntp server time.boot.example.invalid nts
+set system ntp pool pool.boot.example.invalid nts
+set system ntp listen-address ipv4 198.18.196.1
+set system ntp listen-address ipv6 2001:db8:196::1
+set system ntp allow-client 198.18.196.0/24
+set system ntp allow-client 2001:db8:196::/64
+
+# Default-VRF and VRF Kea instances, inheritance, disjoint pools and reservations.
+set service dhcp-server listen-interface dum995
+set service dhcp-server lease-time 12h
+set service dhcp-server update-hostfile
+
+set service dhcp-server ha name BOOT1 source-address 198.18.195.1 role primary
+set service dhcp-server ha peer BOOT2 address 198.18.195.2 role secondary
+
+set service dhcp-server option name-server 198.18.195.1 domain-search boot.example
+set service dhcp-server shared-network BOOTLAN interface dum995
+set service dhcp-server shared-network BOOTLAN option default-router 198.18.195.1
+set service dhcp-server shared-network BOOTLAN subnet 198.18.195.0/24 range 198.18.195.100-198.18.195.110
+set service dhcp-server shared-network BOOTLAN subnet 198.18.195.0/24 range 198.18.195.120-198.18.195.130
+set service dhcp-server shared-network BOOTLAN subnet 198.18.195.0/24 reservation BOOTPRINT mac-address 02:00:00:19:95:50 address 198.18.195.50
+set service dhcp-server shared-network BOOTLAN subnet 198.18.195.0/24 lease-time 6h
+set service dhcp-server shared-network BOOTLAN subnet 198.18.195.0/24 option domain-search subnet.boot.example
+set service dhcpv6-server listen-interface dum995
+set service dhcpv6-server preferred-lifetime 6h
+set service dhcpv6-server valid-lifetime 12h
+
+set service dhcpv6-server ha mode active-passive name BOOT1 source-address 2001:db8:195::1 port 9006 role primary
+set service dhcpv6-server ha peer BOOT2 address 2001:db8:195::2 port 9007 role standby
+
+set service dhcpv6-server shared-network BOOTLAN interface dum995
+set service dhcpv6-server shared-network BOOTLAN option name-server 2001:db8:195::1
+set service dhcpv6-server shared-network BOOTLAN subnet 2001:db8:195::/64 range 2001:db8:195::100-2001:db8:195::110
+set service dhcpv6-server shared-network BOOTLAN subnet 2001:db8:195::/64 reservation BOOTPRINT duid 00:03:00:01:02:00:00:19:95:50 address 2001:db8:195::50
+set service dhcpv6-server shared-network BOOTLAN subnet 2001:db8:195::/64 option domain-search subnet.boot.example
+set vrf name BOOTLEFT service dhcp-server listen-interface veth993
+set vrf name BOOTLEFT service dhcp-server lease-time 1h
+set vrf name BOOTLEFT service dhcp-server shared-network BOOTDHCP option default-router 198.18.193.1 name-server 198.18.193.1
+set vrf name BOOTLEFT service dhcp-server shared-network BOOTDHCP subnet 198.18.193.0/24 range 198.18.193.100-198.18.193.110
+set vrf name BOOTLEFT service dhcp-server shared-network BOOTDHCP subnet 198.18.193.0/24 reservation BOOTCLIENT mac-address 02:00:00:19:94:01 address 198.18.193.50
+set vrf name BOOTLEFT service dhcpv6-server listen-interface veth993
+set vrf name BOOTLEFT service dhcpv6-server preferred-lifetime 30m
+set vrf name BOOTLEFT service dhcpv6-server valid-lifetime 1h
+
+set vrf name BOOTLEFT service dhcpv6-server ha name BOOT2 source-address 2001:db8:193::1 role secondary
+set vrf name BOOTLEFT service dhcpv6-server ha peer BOOT1 address 2001:db8:193::2 role primary
+set vrf name BOOTLEFT service dhcpv6-server ha peer BOOTCOPY address 2001:db8:193::3 role backup
+
+set vrf name BOOTLEFT service dhcpv6-server shared-network BOOTDHCP subnet 2001:db8:193::/64 range 2001:db8:193::100-2001:db8:193::110
+
+# Persistent workload and two networks, one attached to a VRF.
+set container registry docker.io priority 10
+set container registry quay.io priority 20
+set container network BOOTNET subnet 198.18.203.0/24 gateway 198.18.203.1
+set container network BOOTNET subnet 2001:db8:203::/64 gateway 2001:db8:203::1
+set container network BOOTNET mtu 1400
+set container network BOOTVRF subnet 198.18.204.0/24 gateway 198.18.204.1
+set container network BOOTVRF vrf BOOTRIGHT disable-dns mtu 1400
+set container name BOOTBOX image @image
+set container name BOOTBOX entrypoint sleep argument infinity host-name boot-box
+set container name BOOTBOX memory 128m cpus 0.5 process-limit 64 restart-policy always
+set container name BOOTBOX capability net-admin
+set container name BOOTBOX interactive disable
+set container name BOOTBOX tty disable
+set container name BOOTBOX network BOOTNET id 0
+set container name BOOTBOX network BOOTNET address 198.18.203.10
+set container name BOOTBOX network BOOTNET address 2001:db8:203::10
+set container name BOOTBOX network BOOTNET alias boot-box
+set container name BOOTBOX network BOOTVRF id 1
+set container name BOOTBOX network BOOTVRF address 198.18.204.10
+# Aardvark forwards to this resolver; its own bridge gateway would cause a DNS loop.
+set container name BOOTBOX name-server 1.1.1.1
+set container name BOOTBOX environment-file @assets/environment
+set container name BOOTBOX environment BOOT_OVERRIDE value explicit
+set container name BOOTBOX volume DATA source @assets/data
+set container name BOOTBOX volume DATA destination /data
+set container name BOOTBOX tmpfs /scratch size 8m mode 1777
+set container name BOOTBOX device /dev/null destination /dev/boot-null permissions rw
+set container name BOOTBOX port WEB protocol tcp
+set container name BOOTBOX port WEB source-address 127.0.0.1
+set container name BOOTBOX port WEB source-port 41995
+set container name BOOTBOX port WEB destination-port 8080
+
+# Shared pod networking and two independently configured workload members.
+set container pod BOOTPOD description "Reboot pod coverage"
+set container pod BOOTPOD host-name boot-pod
+set container pod BOOTPOD network BOOTNET address 198.18.203.20
+set container pod BOOTPOD network BOOTNET address 2001:db8:203::20
+
+set container name BOOTAPP image @image
+set container name BOOTAPP pod BOOTPOD command sleep argument infinity
+set container name BOOTAPP memory 64m
+set container name BOOTCACHE image @image
+set container name BOOTCACHE pod BOOTPOD command sleep argument infinity
+set container name BOOTCACHE memory 64m

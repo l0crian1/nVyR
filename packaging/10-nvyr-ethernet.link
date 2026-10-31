@@ -1,0 +1,8 @@
+[Match]
+Property=NVYR_ETHERNET=1
+
+[Link]
+# The naming coordinator owns names; keep systemd's default policy out of the race.
+NamePolicy=
+AlternativeNamesPolicy=
+MACAddressPolicy=none

@@ -1,0 +1,57 @@
+[Unit]
+Description=nVyR authoritative configuration daemon
+After=local-fs.target live-config.service systemd-sysctl.service nvyr-interface-naming.service nvyr-netlinkd.service frr.service nftables.service nvyr-conntrack.service rsyslog.service
+Requires=systemd-sysctl.service nftables.service nvyr-interface-naming.service nvyr-conntrack.service
+# Engine recovery checks the control socket before serving clients. Wants allows
+# an independent netlinkd restart without stopping this daemon and its sessions.
+Wants=nvyr-netlinkd.service frr.service rsyslog.service
+PartOf=frr.service nftables.service systemd-sysctl.service
+Before=network-online.target
+After=nvyr-developer-access.service nvyr-session-images.service
+Wants=nvyr-developer-access.service nvyr-session-images.service
+# Keep recovery available without a remote administrator resetting a failed unit.
+StartLimitIntervalSec=0
+
+[Service]
+Type=notify
+NotifyAccess=main
+User=root
+Group=nvyr-access
+RuntimeDirectory=nvyr
+RuntimeDirectoryMode=0750
+StateDirectory=nvyr
+StateDirectoryMode=0700
+# Podman locks its short-name alias cache even during local image inspection.
+CacheDirectory=containers
+CacheDirectoryMode=0700
+UMask=0077
+LimitCORE=0
+# nvyr-conntrack creates the accounting sysctl before any configd process starts.
+# ExecStartPre is too late: ReadWritePaths also applies to pre-start commands.
+ExecStart=/usr/bin/configd --group nvyr-access
+Restart=on-failure
+RestartMode=direct
+RestartSec=5
+RestartSteps=3
+RestartMaxDelaySec=30
+NoNewPrivileges=true
+ProtectSystem=strict
+# shadow tools atomically replace account databases and create account homes.
+ReadWritePaths=/run/nvyr-logging /var/log/nvyr
+ReadWritePaths=/run/nvyr-frr /run/nvyr-ssh /run/nvyr-kea /run/nvyr-containers /run/nvyr-ntp /etc /home /config
+# Firewall owns registered networking tunables; unrelated kernel trees stay protected.
+ReadWritePaths=/proc/sys/net/ipv4 /proc/sys/net/ipv6 /proc/sys/net/netfilter
+ReadWritePaths=/run/sysctl.d /run/nvyr-kernel-settings
+# CPUFreq may be absent on virtual machines; only this CPU control subtree is writable.
+ReadWritePaths=-/sys/devices/system/cpu/cpufreq
+ProtectHome=false
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictNamespaces=true
+RestrictAddressFamilies=AF_UNIX AF_NETLINK AF_INET AF_INET6
+LockPersonality=true
+
+[Install]
+WantedBy=multi-user.target

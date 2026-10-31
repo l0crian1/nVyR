@@ -1,0 +1,15 @@
+---
+description: Ask the user before acting on unclear requirements or intended behavior.
+alwaysApply: true
+---
+
+# Clarify uncertainty
+
+- If anything about the user's request or intended behavior is unclear, ask first.
+  Do not implement an assumption in place of clarification.
+- Clarify API contracts, including return values, output, and failure behavior,
+  before changing implementations or callers that depend on those decisions.
+- Keep dependent work paused until the user answers. Read-only investigation and
+  clearly independent, authorized work may continue.
+- Apply corrections precisely; do not introduce additional behavior to fill gaps
+  in the request without asking.
