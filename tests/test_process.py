@@ -280,7 +280,7 @@ def test_failed_mount_never_enters_installation_body(tmp_path, monkeypatch):
 def test_failed_persistent_copy_is_reported_by_the_caller(tmp_path, monkeypatch):
     from nvyr.helpers import image_migration
 
-    monkeypatch.setattr(image_migration, 'run', lambda *args, **options: 23)
+    monkeypatch.setattr(image_migration, 'rc_cmd', lambda *args, **options: (23, 'copy failed'))
 
     with pytest.raises(RouterError, match='Could not copy persistent files'):
         image_migration.copy_directory(tmp_path/'source', tmp_path/'destination')

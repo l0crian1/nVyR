@@ -881,6 +881,131 @@ def test_migration_rejects_unreadable_recovery_records(tmp_path, monkeypatch, na
     assert not (stage/'config'/images.SAVED).exists()
 
 
+@pytest.mark.parametrize('status,output', [
+    (23, 'rsync: write failed: No space left on device (28)\n'),
+    (24, 'file has vanished: /config/containers/app/temporary\n'),
+    (12, ''),
+])
+def test_migration_copy_reports_rsync_failure(tmp_path, monkeypatch, status, output):
+    source = tmp_path / 'source'
+    destination = tmp_path / 'destination'
+
+    def copy(argv, **options):
+        assert argv == ['rsync', '-aHAX', '--numeric-ids', '--exclude=/nvyr-images/download.iso',
+                        '--', str(source) + '/', str(destination) + '/']
+        assert options == {'timeout': None, 'env': os.environ | {'LC_ALL': 'C'}}
+        return status, output
+
+    monkeypatch.setattr(image_migration, 'rc_cmd', copy)
+    with pytest.raises(RouterError) as failure:
+        image_migration.copy_directory(source, destination, exclude=('nvyr-images/download.iso',))
+
+    message = str(failure.value)
+    assert f'rsync exit {status}' in message
+    assert str(source) in message and str(destination) in message
+    if output:
+        assert output.strip() in message
+
+
+@pytest.mark.parametrize('status', [1, 12, 23, 30])
+def test_migration_override_does_not_accept_other_copy_errors(tmp_path, monkeypatch, status):
+    monkeypatch.setattr(image_migration, 'rc_cmd', lambda *a, **k: (status, 'copy failed'))
+    vanished = []
+    with pytest.raises(RouterError, match=f'rsync exit {status}'):
+        image_migration.copy_directory(tmp_path / 'source', tmp_path / 'target', vanished=vanished)
+    assert vanished == []
+
+
+@pytest.mark.parametrize('answer', ['', 'n', 'y'])
+def test_image_vanished_copy_confirmation(catalog, media, tmp_path, monkeypatch, capsys, answer):
+    """Only explicit consent publishes the staged image, after releasing the snapshot lock."""
+    source = tmp_path / 'source'
+    source.mkdir()
+    configuration = {'container': {'name': {'ntopng': {'volume': {
+        'DATA': {'source': 'ntopng/main', 'destination': '/var/lib/ntopng'},
+    }}}}}
+    atomic_json(source / images.SAVED, saved_document(configuration))
+    before = catalog.catalog()
+    locked = False
+
+    @contextmanager
+    def snapshot(state):
+        nonlocal locked
+        locked = True
+        try:
+            yield
+        finally:
+            locked = False
+
+    def copy(argv, **options):
+        assert locked
+        target = Path(argv[-1])
+        atomic_json(target / images.SAVED, saved_document(configuration))
+        atomic_json(target / '.nvyr/state.json', {'configuration': configuration})
+        return 24, f'file has vanished: "{source}/containers/ntopng/main/alerts.db-journal"\n'
+
+    def respond(prompt):
+        assert not locked
+        assert prompt == 'Continue with this copy anyway? [y/N] '
+        return answer
+
+    monkeypatch.setattr(image_migration, 'configuration_snapshot', snapshot)
+    monkeypatch.setattr(image_migration, 'rc_cmd', copy)
+    monkeypatch.setattr(image_migration, 'cmd', lambda *a, **k: 'nvyr-access:x:123:\n')
+    monkeypatch.setattr(image_migration.os, 'chown', lambda *a: None)
+    monkeypatch.setattr('builtins.input', respond)
+
+    def prepare(stage):
+        image_migration.prepare(stage, source=source, lock_state=source,
+                                confirm_vanished=installation.confirm_vanished)
+
+    with catalog.locked():
+        if answer == 'y':
+            installed = catalog.add(*media, 'second', prepare, make_default=True)
+            assert catalog.catalog()['default'] == installed
+            assert read_saved(catalog.path(installed) / 'config' / images.SAVED)[0] == configuration
+        else:
+            with pytest.raises(RouterError, match='Installation cancelled'):
+                catalog.add(*media, 'second', prepare, make_default=True)
+            assert catalog.catalog() == before
+
+    assert not list(catalog.root.glob('.install-*'))
+    assert read_saved(source / images.SAVED)[0] == configuration
+    output = capsys.readouterr().out
+    assert 'Affected container: ntopng; volume: DATA' in output
+    assert 'alerts.db-journal' in output
+    assert 'incomplete or inconsistent' in output
+    assert 'set container name ntopng disable' in output
+    assert 'Do not save the disabled state' in output
+
+
+def test_vanished_paths_match_exact_volume_boundaries_and_shared_owners(tmp_path):
+    source = Path('/config')
+    target = tmp_path / 'config'
+    configuration = {'container': {'name': {
+        'one': {'volume': {'DATA': {'source': '/config/containers/data'}}},
+        'two': {'volume': {'DATA': {'source': 'data'}}},
+        'other': {'volume': {'DATA': {'source': 'data-other'}}},
+    }}}
+    atomic_json(target / images.SAVED, saved_document(configuration))
+    issues = [(source, target, 'file has vanished: "/config/containers/data/file"\n')]
+
+    assert image_migration.affected_containers(issues, target) == [
+        ('one', 'DATA', '/config/containers/data'), ('two', 'DATA', '/config/containers/data'),
+    ]
+    issues = [(source, target, 'file has vanished: "/config/unrelated/file"\n')]
+    assert image_migration.affected_containers(issues, target) == []
+
+
+def test_unattributed_vanished_files_remain_visible(tmp_path, monkeypatch, capsys):
+    issues = [(Path('/config'), tmp_path, 'file has vanished: "/config/unrelated/file"\n')]
+    monkeypatch.setattr('builtins.input', lambda prompt: '')
+    assert not installation.confirm_vanished(issues, tmp_path)
+    output = capsys.readouterr().out
+    assert '/config/unrelated/file' in output
+    assert 'Affected container:' not in output
+
+
 @pytest.mark.skipif(os.geteuid() != 0 or shutil.which('rsync') is None, reason='root and rsync required')
 def test_migration_preserves_files_and_isolates_config(tmp_path, monkeypatch):
     source = tmp_path/'source'

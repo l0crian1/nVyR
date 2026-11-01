@@ -64,6 +64,45 @@ preserves user files but resets nVyR's configuration, journals and managed accou
 Factory credentials are `nvyr` / `nvyr`; replace them after boot. SSH host keys are
 transferred only when selected, otherwise generated on first use.
 
+### Files changing during an upgrade
+
+Running applications can change files under `/config` while the installer copies
+them. If rsync reports vanished source files (exit 24), the installer shows the
+diagnostics and identifies affected container volumes where possible. It recommends
+disabling those containers, committing, and retrying installation, then asks:
+
+```text
+Continue with this copy anyway? [y/N]
+```
+
+Press Enter or answer `n` to discard the staged image. The running image and boot
+selection remain unchanged. Answer `y` to continue with the copied data, accepting
+that application data may be incomplete or inconsistent. Other copy errors,
+including permission failures and disk exhaustion, remain fatal. Containers are
+never disabled automatically.
+
+For example, before retrying a copy affected by ntopng:
+
+```text
+set container name ntopng disable
+commit
+```
+
+Do not save this change unless you also want the container disabled after reboot.
+To enable it again on the running image when ready:
+
+```text
+delete container name ntopng disable
+commit
+```
+
+Even a successful live copy does not guarantee a consistent application database.
+Disable applications that require a consistent copy, or use their supported backup
+mechanism. If a container provides your remote access, arrange another access path
+before disabling it.
+
+### Manage installed images
+
 ```
 show system image
 

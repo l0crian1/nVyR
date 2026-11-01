@@ -6,11 +6,13 @@ import fcntl
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 
 from nvyr.errors import RouterError
 from nvyr.helpers.accounts import factory_configuration
-from nvyr.helpers.process import cmd, run
+from nvyr.helpers.container_config import VOLUME_ROOT
+from nvyr.helpers.process import cmd, rc_cmd
 from nvyr.storage import atomic_json, read_saved, saved_document
 from nvyr.helpers.images import SAVED
 
@@ -24,27 +26,71 @@ def configuration_snapshot(state):
         yield
 
 
-def copy_directory(source, destination, *, exclude=()):
+def copy_directory(source, destination, *, exclude=(), vanished=None):
     destination.mkdir(parents=True, exist_ok=True)
 
-    if run(['rsync', '-aHAX', '--numeric-ids', *[f'--exclude=/{name}' for name in exclude],
-               '--', str(source)+'/', str(destination)+'/'], timeout=None):
-        raise RouterError(f'Could not copy persistent files from {source} to {destination}')
+    status, output = rc_cmd(
+        ['rsync', '-aHAX', '--numeric-ids', *[f'--exclude=/{name}' for name in exclude],
+         '--', str(source)+'/', str(destination)+'/'], timeout=None, env=os.environ | {'LC_ALL': 'C'},
+    )
+    if status == 24 and vanished is not None:
+        vanished.append((Path(source), Path(destination), output))
+        return
+
+    if status:
+        message = f'Could not copy persistent files from {source} to {destination} (rsync exit {status})'
+        if output.strip():
+            message += ':\n' + output.strip()
+        raise RouterError(message)
 
 
 def persistent_files(destination, *, source, **options):
     if source is not None:
-        copy_directory(source, destination, exclude=options.get('exclude', ()))
+        copy_directory(source, destination, exclude=options.get('exclude', ()),
+                       vanished=options.get('vanished'))
 
 
 def daemon_state(destination, *, source, live_state=None, **options):
     if live_state is not None:
-        copy_directory(Path(live_state), destination/'.nvyr')
+        copy_directory(Path(live_state), destination/'.nvyr', vanished=options.get('vanished'))
 
 
 # Migration steps own separate parts of the target. Future persistent services
 # can add a provider here without changing image publication or boot selection.
 PROVIDERS = (persistent_files, daemon_state)
+
+
+def affected_containers(issues, destination):
+    """Attribute vanished paths to configured bind volumes without querying Podman."""
+    state = destination / '.nvyr/state.json'
+    saved = destination / SAVED
+    configuration = None
+    if state.is_file():
+        configuration = json.loads(state.read_text()).get('configuration')
+    if configuration is None and saved.is_file():
+        configuration, _ = read_saved(saved)
+    if configuration is None:
+        return []
+
+    paths = []
+    for source, target, output in issues:
+        for name in re.findall(r'^file has vanished: "(.*)"$', output, flags=re.MULTILINE):
+            path = Path(name)
+            if path.is_relative_to(source):
+                paths.append(Path('/config') / target.relative_to(destination) / path.relative_to(source))
+
+    affected = set()
+    for name, container in configuration.get('container', {}).get('name', {}).items():
+        for volume, settings in container.get('volume', {}).items():
+            location = settings.get('source')
+            if not location:
+                continue
+            location = Path(location)
+            if not location.is_absolute():
+                location = Path(VOLUME_ROOT) / location
+            if any(path == location or path.is_relative_to(location) for path in paths):
+                affected.add((name, volume, str(location)))
+    return sorted(affected)
 
 
 def validate_records(private):
@@ -70,7 +116,7 @@ def validate_records(private):
 
 
 def prepare(staging, *, source=None, retain=True, ssh_keys=True, administrator=None,
-            live_state=None, lock_state=None, exclude=(), developer=None):
+            live_state=None, lock_state=None, exclude=(), developer=None, confirm_vanished=None):
     """Populate a staged image's persistent configuration before publication.
 
     Providers copy durable files under the optional source snapshot lock. Retain,
@@ -88,10 +134,17 @@ def prepare(staging, *, source=None, retain=True, ssh_keys=True, administrator=N
                 raise RouterError(f'Reserved source path is not protected: {path}')
 
     guard = configuration_snapshot(lock_state) if lock_state else nullcontext()
+    vanished = [] if confirm_vanished is not None else None
 
     with guard:
         for provider in PROVIDERS:
-            provider(destination, source=source, live_state=live_state, exclude=exclude)
+            provider(destination, source=source, live_state=live_state, exclude=exclude, vanished=vanished)
+
+    # Never hold configd's snapshot lock while waiting for a human decision.
+    if vanished:
+        validate_records(destination / '.nvyr')
+        if not confirm_vanished(vanished, destination):
+            raise RouterError('Installation cancelled because persistent files vanished during copying')
 
     private = destination/'.nvyr'
     policy = private/'login/developer.json'

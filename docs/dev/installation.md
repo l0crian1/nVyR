@@ -52,6 +52,19 @@ are not supported.
 
 ## Verification
 
+Image migration preserves rsync diagnostics and treats nonzero exits as errors.
+The interactive installer supplies a confirmation callback for exit 24 only:
+copy providers collect vanished-file reports, release the configuration snapshot
+lock, and then ask for consent before publication. Without a callback, exit 24
+remains fatal. Declining raises an installation error so `Images.add()` removes
+the staging directory without updating the catalog or boot selection.
+
+Container attribution uses the copied committed configuration, or the saved
+configuration when no committed record exists. It matches vanished paths to
+relative or absolute bind-volume sources using directory boundaries; shared
+volumes can identify multiple containers. Unmatched paths remain in the displayed
+rsync diagnostics. This is advisory attribution, not a database consistency check.
+
 Unit tests: `pytest tests/test_images.py tests/test_build_metadata.py`.
 GRUB BIOS/UEFI serial and VGA tests: `NVYR_CONSOLE_BOOT_TEST=1 pytest tests/test_console_boot_live.py`.
 Full disposable VM installation/upgrade/rollback test:

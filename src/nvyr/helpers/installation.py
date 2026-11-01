@@ -44,6 +44,27 @@ def confirm(message):
     return input(message+' [y/N] ').strip().lower() == 'y'
 
 
+def confirm_vanished(issues, destination):
+    """Offer an explicit override only for rsync's vanished-source warning."""
+    print('\nFiles disappeared while copying persistent data.')
+    for source, _, output in issues:
+        print(f'\nSource: {source}')
+        print(output.strip() or 'rsync reported vanished source files (exit 24).')
+
+    affected = image_migration.affected_containers(issues, destination)
+    for name, volume, source in affected:
+        print(f'Affected container: {name}; volume: {volume}; source: {source}')
+
+    print('\nThe copied application data may be incomplete or inconsistent.')
+    print('Recommended: decline, disable the affected containers in configuration, commit, and retry installation.')
+    for name in sorted({name for name, _, _ in affected}):
+        print(f'  set container name {name} disable')
+    if affected:
+        print('  commit')
+    print('Do not save the disabled state unless you also want it disabled after reboot.')
+    return confirm('Continue with this copy anyway?')
+
+
 def choose(message, choices, default=0):
     print(message)
 
@@ -366,6 +387,7 @@ def _add(source):
 
             images.add(media, document, name, partial(image_migration.prepare, source=Path('/config'),
                        retain=retain, ssh_keys=ssh_keys, lock_state=Path('/var/lib/nvyr'),
+                       confirm_vanished=confirm_vanished,
                        exclude=('nvyr-images/'+iso.name,) if automatic else ()), make_default=make_default)
 
     if automatic:
@@ -458,6 +480,7 @@ def _install():
                            source=Path('/config') if retain else None, retain=retain, ssh_keys=False,
                            live_state=Path('/var/lib/nvyr') if retain else None,
                            lock_state=Path('/var/lib/nvyr') if retain else None,
+                           confirm_vanished=confirm_vanished,
                            administrator=administrator, developer=developer), make_default=True, filesystem_uuid=filesystem_uuid)
                 bootloader(root, esp, disk['name'])
     else:
@@ -473,7 +496,7 @@ def _install():
                     raise RouterError('Insufficient free space for the new image')
 
                 images.add(media, document, name, partial(image_migration.prepare, source=source,
-                           retain=retain, ssh_keys=ssh_keys), make_default=make_default)
+                           retain=retain, ssh_keys=ssh_keys, confirm_vanished=confirm_vanished), make_default=make_default)
 
     print(f'Installed {name}. Remove the live ISO before booting from disk.')
 
