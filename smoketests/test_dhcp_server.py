@@ -69,6 +69,27 @@ def dhcp_environment(config, request, dhcp_suite):
         yield
 
 
+def test_ipv4_socket_type_change_and_default_restoration(config):
+    """Kea receives each explicit socket type and restores raw when it is deleted."""
+    config.set('set vrf name NVYRDHCPSMOKE service dhcp-server listen-interface dum980')
+    config.set('set vrf name NVYRDHCPSMOKE service dhcp-server shared-network LAN subnet 198.18.210.0/24 range 198.18.210.10-198.18.210.20')
+    path = kea.RUNTIME / (kea.instance_name(4, 'NVYRDHCPSMOKE') + '.sock')
+
+    for command, expected in (
+        ('set vrf name NVYRDHCPSMOKE service dhcp-server socket-type raw', 'raw'),
+        ('set vrf name NVYRDHCPSMOKE service dhcp-server socket-type udp', 'udp'),
+        ('delete vrf name NVYRDHCPSMOKE service dhcp-server socket-type', 'raw'),
+    ):
+        if command.startswith('delete '):
+            config.delete(command)
+        else:
+            config.set(command)
+        config.commit()
+
+        native = kea.control(path, 'config-get')['arguments']['Dhcp4']
+        assert_equal(native['interfaces-config']['dhcp-socket-type'], expected)
+
+
 def test_ipv4_disjoint_ranges_and_reservation(config):
     """One subnet accepts disjoint ranges and a client reservation outside them."""
     config.set('set vrf name NVYRDHCPSMOKE service dhcp-server listen-interface dum980')

@@ -295,6 +295,7 @@ def check_dhcp4_server(options):
     """The default instance retains inherited options, disjoint pools and reservation."""
     server = server_configuration(4, 'default')
     assert_equal(server['valid-lifetime'], 43200)
+    assert_equal(server['interfaces-config']['dhcp-socket-type'], 'udp')
     subnet = server['shared-networks'][0]['subnet4'][0]
     assert_equal(len(subnet['pools']), 4)
     assert_equal([pool['client-classes'] for pool in subnet['pools']],
@@ -324,6 +325,7 @@ def check_dhcp6_server(options):
 def check_vrf_dhcp4_server(options):
     """A second IPv4 instance binds the recreated VRF member and its own lease scope."""
     server = server_configuration(4, 'BOOTLEFT')
+    assert_equal(server['interfaces-config']['dhcp-socket-type'], 'raw')
     assert_equal(server['shared-networks'][0]['subnet4'][0]['subnet'], '198.18.193.0/24')
 
 

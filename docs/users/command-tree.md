@@ -10499,6 +10499,7 @@ set
 │   │   │           ├── description <text>
 │   │   │           ├── hostname <hostname>
 │   │   │           └── mac-address <xx:xx:xx:xx:xx:xx>
+│   │   ├── socket-type <raw|udp>
 │   │   └── update-hostfile
 │   ├── dhcpv6-server
 │   │   ├── description <text>
@@ -11159,34 +11160,35 @@ set
         │   │   │   ├── domain-search <domain>
         │   │   │   ├── name-server <x.x.x.x>
         │   │   │   └── ntp-server <x.x.x.x>
-        │   │   └── shared-network <name>
-        │   │       ├── description <text>
-        │   │       ├── disable
-        │   │       ├── interface <interface>
-        │   │       ├── lease-time <duration>
-        │   │       ├── option
-        │   │       │   ├── default-router <x.x.x.x>
-        │   │       │   ├── domain-name <domain>
-        │   │       │   ├── domain-search <domain>
-        │   │       │   ├── name-server <x.x.x.x>
-        │   │       │   └── ntp-server <x.x.x.x>
-        │   │       └── subnet <prefix>
-        │   │           ├── description <text>
-        │   │           ├── disable
-        │   │           ├── lease-time <duration>
-        │   │           ├── option
-        │   │           │   ├── default-router <x.x.x.x>
-        │   │           │   ├── domain-name <domain>
-        │   │           │   ├── domain-search <domain>
-        │   │           │   ├── name-server <x.x.x.x>
-        │   │           │   └── ntp-server <x.x.x.x>
-        │   │           ├── range <start-end>
-        │   │           └── reservation <name>
-        │   │               ├── address <x.x.x.x>
-        │   │               ├── client-id <hex-bytes>
-        │   │               ├── description <text>
-        │   │               ├── hostname <hostname>
-        │   │               └── mac-address <xx:xx:xx:xx:xx:xx>
+        │   │   ├── shared-network <name>
+        │   │   │   ├── description <text>
+        │   │   │   ├── disable
+        │   │   │   ├── interface <interface>
+        │   │   │   ├── lease-time <duration>
+        │   │   │   ├── option
+        │   │   │   │   ├── default-router <x.x.x.x>
+        │   │   │   │   ├── domain-name <domain>
+        │   │   │   │   ├── domain-search <domain>
+        │   │   │   │   ├── name-server <x.x.x.x>
+        │   │   │   │   └── ntp-server <x.x.x.x>
+        │   │   │   └── subnet <prefix>
+        │   │   │       ├── description <text>
+        │   │   │       ├── disable
+        │   │   │       ├── lease-time <duration>
+        │   │   │       ├── option
+        │   │   │       │   ├── default-router <x.x.x.x>
+        │   │   │       │   ├── domain-name <domain>
+        │   │   │       │   ├── domain-search <domain>
+        │   │   │       │   ├── name-server <x.x.x.x>
+        │   │   │       │   └── ntp-server <x.x.x.x>
+        │   │   │       ├── range <start-end>
+        │   │   │       └── reservation <name>
+        │   │   │           ├── address <x.x.x.x>
+        │   │   │           ├── client-id <hex-bytes>
+        │   │   │           ├── description <text>
+        │   │   │           ├── hostname <hostname>
+        │   │   │           └── mac-address <xx:xx:xx:xx:xx:xx>
+        │   │   └── socket-type <raw|udp>
         │   └── dhcpv6-server
         │       ├── description <text>
         │       ├── disable

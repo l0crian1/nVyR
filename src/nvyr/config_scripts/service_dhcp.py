@@ -427,6 +427,9 @@ def generate(configuration, context):
             'interfaces': listeners, 'service-sockets-require-all': True,
             'service-sockets-max-retries': 12, 'service-sockets-retry-wait-time': 1000,
         }
+        if family == 4:
+            server['interfaces-config']['dhcp-socket-type'] = lookup(section, ('socket-type',))
+
         server['lease-database'] = {'type': 'memfile', 'persist': True, 'name': str(lease_file)}
         server['control-sockets'] = [{'socket-type': 'unix', 'socket-name': str(kea.RUNTIME / f'{instance}.sock')}]
         # An explicit empty list unloads removed HA and hostfile hooks on config-set.

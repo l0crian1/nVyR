@@ -152,7 +152,7 @@ def test_disabled_and_unreachable_servers_are_visible(server, monkeypatch):
 def test_listener_readiness_and_pool_filter(server, monkeypatch):
     records = json.loads(dhcp_server.show(4, 'listeners', vrf='default', shared_network='LAN', raw=True))['records']
     assert records == [{'vrf': 'default', 'interface': 'eth1', 'address': '192.0.2.1',
-                        'state': 'Listening', 'detail': ''}]
+                        'socket_type': 'raw', 'state': 'Listening', 'detail': ''}]
     original = dhcp_server.kea.control
 
     def waiting(path, command, **kwargs):
@@ -170,8 +170,17 @@ def test_ipv6_unicast_listener_also_shows_link_local_socket(server, monkeypatch)
     server.native['interfaces-config']['interfaces'] = ['eth1/2001:db8::1']
     monkeypatch.setattr(dhcp_server.kea, 'inventory', lambda: {
         'eth1': {'addresses': ['2001:db8::1', 'fe80::1']}})
-    rows = dhcp_server.listener_rows('BLUE', 'control.sock', server.native, None)
+    rows = dhcp_server.listener_rows('BLUE', 'control.sock', server.native, None, 6)
     assert [row['address'] for row in rows] == ['2001:db8::1', 'fe80::1']
+    assert all(row['socket_type'] == 'udp' for row in rows)
+
+
+def test_listener_reports_applied_socket_type(server):
+    server.native['interfaces-config']['dhcp-socket-type'] = 'udp'
+    record, = json.loads(dhcp_server.show(4, 'listeners', vrf='default', raw=True))['records']
+    assert record['socket_type'] == 'udp'
+    output = dhcp_server.show(4, 'listeners', vrf='default')
+    assert 'Socket type' in output and 'udp' in output
 
 
 def test_client_retains_received_information_without_changing_route_policy():
@@ -265,6 +274,22 @@ def test_dhcp_views_are_read_only_operator_commands(controller, session, monkeyp
         access.role.reset(role)
     controller.execute('run ' + line, session)
     assert calls == [argv, argv]
+
+
+@pytest.mark.parametrize('scope', ['empty', 'default', 'vrf'])
+@pytest.mark.parametrize('service', ['dhcp-server', 'dhcpv6-server'])
+def test_pool_completion_with_missing_configuration_sections(controller, scope, service):
+    pools = {service: {'shared-network': {'LAN': {}}}}
+    configurations = {
+        'empty': {},
+        'default': {'service': pools},
+        'vrf': {'vrf': {'name': {'BLUE': {'service': pools}}}},
+    }
+    controller.engine.running = configurations[scope]
+
+    candidates = dict(controller.completion(f'show {service} shared-network ', explicit=True)['candidates'])
+
+    assert ('LAN' in candidates) == (scope != 'empty')
 
 
 def test_pool_suggestions_include_routing_instances():

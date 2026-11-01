@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 
 from nvyr.lexer import lex
 from nvyr.helpers.process import cmd
-from nvyr.tree import lookup
+from nvyr.tree import MISSING, lookup
 
 REGISTRY = {}
 
@@ -24,6 +24,14 @@ class Context:
     store: object = None
     commit_id: int = 0
     configuration: object = None
+
+
+def configuration_section(context, path):
+    """Read an optional section from a tree or a lazy completion projection."""
+    configuration = context.configuration
+    value = configuration(path) if callable(configuration) else lookup(configuration, path)
+    # Missing projections use a truthy sentinel, so `value or {}` cannot handle them.
+    return {} if value is MISSING else value
 
 
 def register(name):
@@ -155,16 +163,9 @@ def container_instances(context):
 @register('dhcp-pools')
 def dhcp_pools(context, family=4):
     """Include shared-network names from default and named routing instances."""
-    configuration = context.configuration
-
-    def section(path):
-        if callable(configuration):
-            return configuration(path) or {}
-        return lookup(configuration, path, {})
-
     service = 'dhcp-server' if family == 4 else 'dhcpv6-server'
-    names = set(section(('service', service, 'shared-network')))
-    for scope in section(('vrf', 'name')).values():
+    names = set(configuration_section(context, ('service', service, 'shared-network')))
+    for scope in configuration_section(context, ('vrf', 'name')).values():
         names.update(scope.get('service', {}).get(service, {}).get('shared-network', {}))
     return [Suggestion(name, '') for name in sorted(names)]
 
@@ -182,13 +183,8 @@ def policy_community_lists(context, large=False):
 
 def bgp_names(context, kind):
     """Suggest configured peers across instances, identifying their VRF ownership."""
-    configuration = context.configuration
-    if callable(configuration):
-        protocols = configuration(('protocols',)) or {}
-        vrfs = configuration(('vrf', 'name')) or {}
-    else:
-        protocols = lookup(configuration or {}, ('protocols',), {})
-        vrfs = lookup(configuration or {}, ('vrf', 'name'), {})
+    protocols = configuration_section(context, ('protocols',))
+    vrfs = configuration_section(context, ('vrf', 'name'))
 
     instances = {'default': protocols.get('bgp', {})}
     for vrf, values in vrfs.items():

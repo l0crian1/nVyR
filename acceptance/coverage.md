@@ -12,6 +12,10 @@ IPv4 addresses and virtual-network traffic checks still run without a cable.
 
 ## Recent configuration additions
 
+DHCPv4 socket selection covers explicit `udp` on the default instance and the
+implicit `raw` default in BOOTLEFT. Both native settings are checked before and
+after reboot; real relayed packet exchange is covered by the isolated Kea suite.
+
 DHCP HA in `services.set` covers active-active IPv4 alongside hostfile updates,
 active-passive IPv6 with independent listener ports, and VRF-scoped IPv6 secondary
 and backup roles. `check_dhcp_ha` and the native configuration snapshots verify

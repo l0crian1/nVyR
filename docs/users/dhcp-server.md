@@ -5,8 +5,9 @@ For implementation and testing, see the [developer guide](../dev/dhcp-server.md)
 nVyR manages Kea DHCPv4 and DHCPv6 as separate instances in the default and named
 VRFs. Each instance has its own sockets, control endpoint, and persistent lease
 database. This initial implementation covers address allocation and reservations;
-DHCP relay, prefix delegation, dynamic DNS, and router advertisements are separate
-features.
+Running a DHCP relay, prefix delegation, dynamic DNS, and router advertisements
+are separate features. The DHCP server can serve requests forwarded by an external
+relay.
 
 ## Configuration
 
@@ -34,12 +35,56 @@ on that interface.
 Use `listen-address 192.168.10.1` instead of `listen-interface eth1` to select a
 particular local address. nVyR resolves it within the server's VRF. Do not configure
 both selectors for the same interface. One address-qualified listener per interface
-is supported. An IPv4 interface listener chooses its first IPv4 address and opens
-one broadcast socket, avoiding duplicate replies on interfaces with secondary
-addresses. DHCPv6 address listeners add a unicast socket alongside link-local and
-multicast reception. Their values must be non-link-local unicast IPv6 addresses;
+is supported. An IPv4 interface listener chooses its first IPv4 address and, in
+the default raw mode, opens one broadcast socket, avoiding duplicate replies on
+interfaces with secondary addresses. DHCPv6 address listeners add a unicast socket
+alongside link-local and multicast reception. Their values must be non-link-local unicast IPv6 addresses;
 unspecified, multicast and link-local values are rejected at CLI entry and when
 loading configuration.
+
+### DHCPv4 socket type
+
+`socket-type` selects how all DHCPv4 listeners in an instance receive requests:
+
+- `raw` (default) receives direct client broadcasts and relayed requests on the
+  listening interface. For relayed unicast traffic, target the address selected
+  on the interface where the packets arrive.
+- `udp` receives relayed requests through normal IP routing, including packets
+  addressed to a dummy or loopback interface that arrive through another port.
+  It does **not** receive direct client broadcasts.
+
+For a relay targeting a local dummy address:
+
+```text
+set interfaces dummy dum0 address 10.0.0.1/32
+
+set service dhcp-server socket-type udp
+set service dhcp-server listen-address 10.0.0.1
+set service dhcp-server listen-interface eth1
+
+set service dhcp-server shared-network CLIENTS subnet 10.0.101.0/24 range 10.0.101.100-10.0.101.200
+set service dhcp-server shared-network CLIENTS subnet 10.0.101.0/24 option default-router 10.0.101.1
+```
+
+Configure the relay to forward to `10.0.0.1`. Kea uses the relay's gateway address
+to select the client subnet. Ensure the router can route replies to that relay.
+Include the interface used to reach the relay (`eth1` in this example) among the
+listeners so Kea has a suitable IPv4 socket for its replies.
+
+Selecting `listen-address` does not automatically select UDP. For an instance
+serving both direct and relayed clients, keep `raw` and target the receiving
+interface's selected address from the relay. Socket type is per instance, not
+per listener; it cannot be mixed within an instance. DHCPv6 always uses UDP and
+does not have this setting.
+
+```text
+set service dhcp-server socket-type raw
+
+show dhcp-server listeners
+```
+
+Deleting `socket-type` restores `raw`. The same setting is available under
+`vrf name <name> service dhcp-server`.
 
 ### VRF instances
 

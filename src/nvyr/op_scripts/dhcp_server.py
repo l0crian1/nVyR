@@ -80,10 +80,11 @@ def pool_rows(vrf, leases, subnets):
     return rows
 
 
-def listener_rows(vrf, native, server, shared_network):
+def listener_rows(vrf, native, server, shared_network, family):
     status = kea.control(native, 'status-get', timeout=2)
     sockets = status.get('arguments', {}).get('sockets', {})
     listeners = server['interfaces-config']['interfaces']
+    socket_type = server['interfaces-config'].get('dhcp-socket-type', 'raw') if family == 4 else 'udp'
     waiting = kea.waiting_for_carrier(status, listeners)
     devices = kea.inventory()
     selected_interface = None
@@ -116,6 +117,7 @@ def listener_rows(vrf, native, server, shared_network):
                              and ipaddress.ip_address(value).is_link_local and value not in addresses)
         for bound_address in addresses or [None]:
             rows.append({'vrf': vrf, 'interface': interface, 'address': bound_address,
+                         'socket_type': socket_type,
                          'state': state, 'detail': '; '.join(str(value) for value in sockets.get('errors', []))})
     return rows
 
@@ -132,7 +134,7 @@ def display(records, view, family):
                   ('Assigned', 'assigned'), ('Declined', 'declined'), ('Total', 'total'), ('Used', 'used_percent')]
     else:
         fields = [('VRF', 'vrf'), ('Interface', 'interface'), ('Address', 'address'),
-                  ('State', 'state'), ('Detail', 'detail')]
+                  ('Socket type', 'socket_type'), ('State', 'state'), ('Detail', 'detail')]
     rows = []
     for record in records:
         row = []
@@ -164,7 +166,7 @@ def show(family: int, view: str, vrf: str | None = None, shared_network: str | N
         try:
             server = kea.control(native, 'config-get', timeout=2)['arguments'][f'Dhcp{family}']
             if view == 'listeners':
-                records.extend(listener_rows(name, native, server, shared_network))
+                records.extend(listener_rows(name, native, server, shared_network, family))
                 continue
             subnets = subnet_index(server, family, shared_network)
             leases = current_leases(server['lease-database']['name'], family, now)

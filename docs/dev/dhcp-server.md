@@ -10,6 +10,12 @@ before starting replacements. Failure compensates previously changed instances.
 Disabling or deleting a server stops its unit and removes runtime configuration;
 lease files remain under the configd state directory's `kea/` subtree.
 
+The DHCPv4 schema supplies a direct `socket-type` default of `raw`. Generation
+copies it to `interfaces-config.dhcp-socket-type`; listener selectors never infer
+the mode. DHCPv6 omits the IPv4-only native setting. The manager compares the full
+`interfaces-config`, so changing socket type stops the old listener before
+installing its replacement, with the existing compensation on failure.
+
 Administratively enabled ports without carrier are accepted at commit and boot.
 The commit reports that DHCP is waiting for carrier. Kea retries opening its
 service sockets once per second; after 12 retries, systemd restarts the instance
@@ -28,6 +34,9 @@ and `/usr/lib/nvyr/smoketests/test_dhcp_hosts.py`.
 Packet allocation/renewal and overlapping-VRF checks are opt-in development tests
 in `tests/test_kea_live.py`, requiring an isolated privileged container with Kea,
 Scapy, iproute2, and `NVYR_KEA_TEST=1`. They must not run on a production LAN.
+The UDP relay regression sends DISCOVER and REQUEST from a separate namespace to
+a dummy /32 through a veth, and requires OFFER and ACK replies. Existing direct
+broadcast tests retain raw sockets.
 The hostfile packet test also needs the run-script hook and an installed/importable
 `nvyr` package. Its disposable container must have no systemd installation: the
 test substitutes the systemctl dispatch while exercising the packaged hook and

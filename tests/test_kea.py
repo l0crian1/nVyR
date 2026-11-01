@@ -20,7 +20,7 @@ def devices():
 
 
 def server4():
-    return {'listen-interface': ['eth1'], 'lease-time': '1d', 'shared-network': {
+    return {'socket-type': 'raw', 'listen-interface': ['eth1'], 'lease-time': '1d', 'shared-network': {
         'OFFICE': {'subnet': {'192.0.2.0/24': {'range': ['192.0.2.20-192.0.2.30', '192.0.2.50-192.0.2.60']}}}}}
 
 
@@ -41,8 +41,20 @@ def test_default_vrf_schema_and_inherited_defaults(controller, engine, session, 
     assert result['results']['dhcp-server']['success']
     native = json.loads(next(iter(plans[-1].desired.values())))['Dhcp4']
     assert native['valid-lifetime'] == 86400
+    assert native['interfaces-config']['dhcp-socket-type'] == 'raw'
     assert len(native['shared-networks'][0]['subnet4'][0]['pools']) == 2
     assert 'lease-time' not in engine.running['service']['dhcp-server']
+    assert 'socket-type' not in engine.running['service']['dhcp-server']
+
+    controller.execute('set service dhcp-server socket-type udp', session)
+    assert engine.commit(session)['results']['dhcp-server']['success']
+    native = json.loads(next(iter(plans[-1].desired.values())))['Dhcp4']
+    assert native['interfaces-config']['dhcp-socket-type'] == 'udp'
+
+    controller.execute('delete service dhcp-server socket-type', session)
+    assert engine.commit(session)['results']['dhcp-server']['success']
+    native = json.loads(next(iter(plans[-1].desired.values())))['Dhcp4']
+    assert native['interfaces-config']['dhcp-socket-type'] == 'raw'
 
     controller.execute('delete service dhcp-server', session)
     assert engine.commit(session)['results']['dhcp-server']['success']
@@ -62,6 +74,26 @@ def test_vrf_dhcpv6_registration(controller, engine, session, monkeypatch):
     assert native['interfaces-config']['interfaces'] == ['eth2/2001:db8::1']
     assert native['preferred-lifetime'] == 43200
     assert native['valid-lifetime'] == 86400
+    assert 'dhcp-socket-type' not in native['interfaces-config']
+
+
+def test_vrf_ipv4_socket_selection(controller, engine, session, monkeypatch):
+    monkeypatch.setattr(kea, 'inventory', devices)
+    plans = []
+    monkeypatch.setattr(kea.manager, 'apply', lambda plan, *args, **kwargs: plans.append(plan))
+    controller.execute('set vrf name BLUE table 40101', session)
+    controller.execute('set vrf name BLUE service dhcp-server listen-address 192.0.2.1', session)
+    controller.execute('set vrf name BLUE service dhcp-server shared-network LAN subnet 192.0.2.0/24 range 192.0.2.10-192.0.2.20', session)
+
+    for mode in ('raw', 'udp'):
+        controller.execute(f'set vrf name BLUE service dhcp-server socket-type {mode}', session)
+        assert engine.commit(session)['results']['dhcp-server']['success']
+        native = json.loads(plans[-1].desired[kea.instance_name(4, 'BLUE')])['Dhcp4']
+        assert native['interfaces-config']['dhcp-socket-type'] == mode
+        assert native['interfaces-config']['interfaces'] == ['eth2/192.0.2.1']
+
+    with pytest.raises(ValidationError):
+        controller.execute('set vrf name BLUE service dhcp-server socket-type tcp', session)
 
 
 def test_logging_reapply_changes_severity_without_unnecessary_rebind(controller, engine, session, monkeypatch):

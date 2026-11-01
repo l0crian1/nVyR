@@ -34,6 +34,7 @@ def test_ipv4_operational_views(config):
     assert_equal(listeners[0]['interface'], 'dum980')
     assert_equal(listeners[0]['state'], 'Listening')
     assert_equal(listeners[0]['address'], '198.18.210.1')
+    assert_equal(listeners[0]['socket_type'], 'raw')
     result = json.loads(dhcp_server.show(4, 'leases', vrf='NVYRDHCPSMOKE', shared_network='LAN', raw=True))
     assert_equal(result['disabled_servers'], [])
 
@@ -53,6 +54,7 @@ def test_ipv6_operational_views(config):
     assert_equal(listeners[0]['interface'], 'dum980')
     assert_equal(listeners[0]['state'], 'Listening')
     assert_in('fe80:', listeners[0]['address'])
+    assert_equal(listeners[0]['socket_type'], 'udp')
     result = json.loads(dhcp_server.show(6, 'leases', vrf='NVYRDHCPSMOKE', shared_network='LAN', raw=True))
     assert_equal(result['disabled_servers'], [])
 

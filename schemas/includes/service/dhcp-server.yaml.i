@@ -22,6 +22,18 @@ dhcp-server:
           mode: direct
           value: 1d
 
+    socket-type:
+      kind: leaf_node
+      description: Socket type for all DHCPv4 listeners in this routing instance
+      choices:
+        raw: Receive direct broadcasts and relayed requests on the listening interface
+        udp: Receive relayed requests through normal IP routing; no direct broadcasts
+      validators:
+        list: {values: raw udp}
+      default:
+        mode: direct
+        value: raw
+
     update-hostfile:
       kind: leaf_node
       description: Publish active DHCPv4 lease hostnames in the local hosts file

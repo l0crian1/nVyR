@@ -143,6 +143,29 @@ def test_completion_keeps_frr_keywords_and_hides_schema_placeholders(controller)
     assert '<Enter>' not in candidates
 
 
+@pytest.mark.parametrize('scope', ['empty', 'default', 'vrf'])
+@pytest.mark.parametrize('configuration_mode', [False, True])
+def test_peer_completion_with_missing_configuration_sections(controller, session, scope, configuration_mode):
+    instance = {'neighbor': {'192.0.2.2': {}}, 'peer-group': {'CORE': {}}}
+    configurations = {
+        'empty': {},
+        'default': {'protocols': {'bgp': instance}},
+        'vrf': {'vrf': {'name': {'BLUE': {'protocols': {'bgp': instance}}}}},
+    }
+    controller.engine.running = configurations[scope]
+    prefix = 'run ' if configuration_mode else ''
+    active_session = session if configuration_mode else None
+
+    for command, value in [('clear bgp ', '192.0.2.2'),
+                           ('clear bgp peer-group ', 'CORE'),
+                           ('show bgp neighbors ', '192.0.2.2')]:
+        candidates = dict(controller.completion(prefix + command, active_session, explicit=True)['candidates'])
+        if scope == 'empty':
+            assert value not in candidates
+        else:
+            assert candidates[value] == 'VRF: ' + ('default' if scope == 'default' else 'BLUE')
+
+
 def test_peer_suggestors_include_vrf_ownership(controller):
     configuration = {
         'protocols': {'bgp': {'neighbor': {'192.0.2.2': {}}, 'peer-group': {'CORE': {}}}},

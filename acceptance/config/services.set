@@ -18,6 +18,7 @@ set system ntp allow-client 2001:db8:196::/64
 
 # Default-VRF and VRF Kea instances, inheritance, disjoint pools and reservations.
 set service dhcp-server listen-interface dum995
+set service dhcp-server socket-type udp
 set service dhcp-server lease-time 12h
 set service dhcp-server update-hostfile
 

@@ -21,6 +21,10 @@ def verify_servers(servers, context, family):
 
 
 def generated_server(server, family, devices, *, vrf='default', state_directory='/state'):
+    # Direct lifecycle fixtures supply the effective default normally added by the schema.
+    if family == 4:
+        server = {'socket-type': 'raw'} | server
+
     plan = service_dhcp.generate({
         'family': family, 'servers': {vrf: server}, 'devices': devices,
         'log-level': 'info', 'rebind': False,

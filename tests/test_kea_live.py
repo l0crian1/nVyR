@@ -115,7 +115,8 @@ def native(tmp_path):
         folder = tmp_path / f'{family}-{index}'
         folder.mkdir(mode=0o700)
         devices = kea.inventory()
-        configuration = configuration | {'listen-interface': [f'ksrv{index}']}
+        if not configuration.get('listen-interface') and not configuration.get('listen-address'):
+            configuration = configuration | {'listen-interface': [f'ksrv{index}']}
         vrf = devices[f'ksrv{index}']['vrf']
         listeners = service_dhcp.verify_listeners(configuration, family, vrf, devices)
         service_dhcp.verify_shared_interfaces(configuration, family, listeners, devices)
@@ -124,6 +125,7 @@ def native(tmp_path):
         # Each manually launched fixture has isolated lease and control paths.
         native_config[f'Dhcp{family}']['lease-database']['name'] = str(folder / 'leases.csv')
         native_config[f'Dhcp{family}']['control-sockets'][0]['socket-name'] = str(folder / 'control.sock')
+        native_config[f'Dhcp{family}']['loggers'][0]['output-options'] = [{'output': 'stdout'}]
         path = folder / 'config.json'
         path.write_text(json.dumps(native_config))
         env = os.environ | {'KEA_CONTROL_SOCKET_DIR': str(folder), 'KEA_PIDFILE_DIR': str(folder),
@@ -239,6 +241,61 @@ def test_ipv4_hostfile_native_events(native, tmp_path):
     finally:
         systemctl.unlink()
         hook.unlink()
+
+
+def relay4(server):
+    """Relay a complete exchange over UDP to a server address on a different interface."""
+    import socket
+
+    from scapy.all import BOOTP, DHCP
+
+    hardware = bytes.fromhex('020000000099')
+    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as relay:
+        relay.bind(('192.0.2.100', 67))
+        relay.settimeout(4)
+
+        def exchange(options, expected):
+            packet = BOOTP(chaddr=hardware, xid=0x12345678, giaddr='192.0.2.100', hops=1)
+            packet /= DHCP(options=options + ['end'])
+            relay.sendto(bytes(packet), (server, 67))
+            reply = BOOTP(relay.recv(4096))
+            values = dict(item for item in reply[DHCP].options if isinstance(item, tuple))
+            assert reply.op == 2 and reply.xid == packet.xid
+            assert values['message-type'] == expected
+            return reply, values
+
+        offer, options = exchange([('message-type', 'discover')], 2)
+        reply, _ = exchange([('message-type', 'request'), ('requested_addr', offer.yiaddr),
+                             ('server_id', options['server_id'])], 5)
+        return reply.yiaddr
+
+
+def test_udp_relay_to_dummy_address(native):
+    """UDP accepts routed relays arriving on a veth but addressed to a dummy /32."""
+    run('ip', 'link', 'add', 'kdummy', 'type', 'dummy')
+    try:
+        run('ip', 'address', 'add', '198.51.100.1/32', 'dev', 'kdummy')
+        run('ip', 'link', 'set', 'kdummy', 'up')
+        run('ip', '-n', 'kclient1', 'address', 'add', '192.0.2.100/24', 'dev', 'kcli1')
+        run('ip', '-n', 'kclient1', 'route', 'add', '198.51.100.1/32', 'via', '192.0.2.1')
+        section = {'socket-type': 'udp', 'listen-address': ['198.51.100.1'],
+                   'listen-interface': ['ksrv1'],
+                   'lease-time': '1d', 'shared-network': {'LAN': {'subnet': {
+                       '192.0.2.0/24': {'range': ['192.0.2.10-192.0.2.20']}}}}}
+        folder, _ = native(4, 1, section)
+
+        code = "from tests.test_kea_live import relay4; print(relay4('198.51.100.1'))"
+        try:
+            address = run('ip', 'netns', 'exec', 'kclient1', 'python3', '-c', code).strip()
+        except subprocess.CalledProcessError as error:
+            pytest.fail(error.stderr + '\n' + (folder / 'log').read_text())
+
+        assert address == '192.0.2.10'
+        applied = kea.control(folder / 'control.sock', 'config-get')['arguments']['Dhcp4']
+        assert applied['interfaces-config']['dhcp-socket-type'] == 'udp'
+        assert applied['interfaces-config']['interfaces'] == ['kdummy/198.51.100.1', 'ksrv1/192.0.2.1']
+    finally:
+        run('ip', 'link', 'delete', 'kdummy')
 
 
 def test_ipv4_operational_leases_pools_and_listeners(native, monkeypatch):

@@ -51,6 +51,10 @@ Leases belonging to a removed subnet retain their address and identifiers, with
 `—` for the no-longer-known pool/subnet; a pool-scoped view excludes them.
 
 Listener readiness comes from Kea, not merely from the existence of a process.
+The `Socket type` column shows the applied DHCPv4 mode (`raw` or `udp`); DHCPv6
+listeners always show `udp`. See [socket selection](dhcp-server.md#dhcpv4-socket-type)
+for direct and relayed clients.
+
 An enabled port without carrier reports `Waiting for carrier`. For DHCPv6 the
 interface listener uses its link-local address; an explicitly selected unicast
 address adds another row. Pool-scoped listener views require an explicit
