@@ -4,6 +4,7 @@ recursive-include packaging *
 recursive-include images *
 recursive-include scripts *.sh *.ps1
 recursive-include tests *.py
+recursive-include tests/container Dockerfile Dockerfile.dockerignore *.txt
 recursive-include smoketests *.py *.md *.ini
 recursive-include acceptance *.py *.md *.set
 include acceptance/requirements.txt

@@ -1,0 +1,6 @@
+# Only dependency metadata is needed to build the test environment.
+**
+!pyproject.toml
+!tests/
+!tests/container/
+!tests/container/constraints.txt

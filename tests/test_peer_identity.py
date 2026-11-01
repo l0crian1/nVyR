@@ -1,6 +1,7 @@
 """Lock-owner labels use kernel credentials and optional SSH origin metadata."""
 
 from pathlib import Path
+import os
 import socket
 import struct
 from types import SimpleNamespace
@@ -13,6 +14,8 @@ from nvyr.errors import ConfirmationRequired, LockError
 
 @pytest.fixture
 def peer(monkeypatch):
+    readlink = os.readlink
+
     def credentials(level, option, length):
         assert (level, option, length) == (socket.SOL_SOCKET, socket.SO_PEERCRED, 12)
         return struct.pack('3i', 1234, 1000, 1000)
@@ -22,7 +25,13 @@ def peer(monkeypatch):
         return SimpleNamespace(pw_name='nvyr')
 
     monkeypatch.setattr('nvyr.daemon.pwd.getpwuid', account)
-    monkeypatch.setattr('nvyr.daemon.os.readlink', lambda path: '/dev/pts/0')
+    def terminal(path, *args, **kwargs):
+        # Mock only the peer terminal; timezone validation also resolves symlinks.
+        if str(path) == '/proc/1234/fd/0':
+            return '/dev/pts/0'
+        return readlink(path, *args, **kwargs)
+
+    monkeypatch.setattr('nvyr.daemon.os.readlink', terminal)
     return SimpleNamespace(get_extra_info=lambda name: SimpleNamespace(getsockopt=credentials))
 
 

@@ -1,0 +1,3 @@
+# Match python3-pyroute2 shipped by Debian trixie in the router image.
+# Newer pyroute2 releases changed the Netlink codec API used by conntrack.
+pyroute2==0.7.7

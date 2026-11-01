@@ -103,7 +103,7 @@ finally:
 
         try:
             process = await asyncio.create_subprocess_exec(
-                '/usr/bin/python3', '-c', code, user=user.pw_uid, group=user.pw_gid,
+                sys.executable, '-c', code, user=user.pw_uid, group=user.pw_gid,
                 extra_groups=[], cwd='/', env={'PATH': '/usr/bin:/bin',
                     'PYTHONPATH': str(Path(__file__).resolve().parents[1] / 'src')},
                 stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)

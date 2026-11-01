@@ -10,6 +10,7 @@ import signal
 import stat
 import subprocess
 import struct
+import tempfile
 import threading
 from unittest.mock import Mock
 
@@ -1006,9 +1007,19 @@ def test_unattributed_vanished_files_remain_visible(tmp_path, monkeypatch, capsy
     assert 'Affected container:' not in output
 
 
+@pytest.fixture
+def migration_directory():
+    # The unprivileged probe must reach the copied files without depending on
+    # pytest's private ancestor directories or xdist's additional worker level.
+    with tempfile.TemporaryDirectory(prefix='nvyr-migration-', dir='/tmp') as directory:
+        path = Path(directory)
+        path.chmod(0o755)
+        yield path
+
+
 @pytest.mark.skipif(os.geteuid() != 0 or shutil.which('rsync') is None, reason='root and rsync required')
-def test_migration_preserves_files_and_isolates_config(tmp_path, monkeypatch):
-    source = tmp_path/'source'
+def test_migration_preserves_files_and_isolates_config(migration_directory, monkeypatch):
+    source = migration_directory/'source'
     source.mkdir()
     (source/'user-files').mkdir()
     (source/'user-files/custom').write_text('persistent')
@@ -1025,7 +1036,7 @@ def test_migration_preserves_files_and_isolates_config(tmp_path, monkeypatch):
     atomic_json(source/'.nvyr/login/developer.json', {'enabled': True})
     (source/'.nvyr/ssh').mkdir()
     (source/'.nvyr/ssh/key').write_text('identity')
-    stage = tmp_path/'stage'
+    stage = migration_directory/'stage'
     stage.mkdir()
     (stage/'config').mkdir()
     real_cmd = image_migration.cmd
@@ -1055,11 +1066,7 @@ def test_migration_preserves_files_and_isolates_config(tmp_path, monkeypatch):
     assert stat.S_IMODE((target/'.nvyr').stat().st_mode) == 0o700
 
     # A directory writer can create user files but cannot replace the saved file.
-    for parent in (tmp_path, stage):
-        parent.chmod(0o755)
-
-    tmp_path.parent.chmod(0o755)
-    tmp_path.parent.parent.chmod(0o755)
+    stage.chmod(0o755)
 
     def unprivileged():
         os.setgroups([123])
@@ -1069,7 +1076,6 @@ def test_migration_preserves_files_and_isolates_config(tmp_path, monkeypatch):
     result = subprocess.run(['/bin/sh', '-c', 'cp "$1/nvyr-saved-config" "$1/user-copy" && touch "$1/user-owned" && ! echo overwrite >"$1/nvyr-saved-config" && ! rm "$1/nvyr-saved-config" && ! mv "$1/user-copy" "$1/nvyr-saved-config"', 'test', str(target)],
                             preexec_fn=unprivileged, capture_output=True)
 
-    # pytest's ancestor directory may be private; explicitly make it traversable.
     if result.returncode:
         pytest.fail(result.stderr.decode())
 

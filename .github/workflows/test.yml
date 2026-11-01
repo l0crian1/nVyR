@@ -16,20 +16,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
-      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
-        with:
-          python-version: '3.13'
-          cache: pip
-          cache-dependency-path: pyproject.toml
-      - name: Install schema build dependency
-        run: python -m pip install 'PyYAML>=6,<7'
-      - name: Check generated schemas
-        run: python -m build_tools.schema_builder --check
-      - name: Install test and packaging dependencies
-        run: python -m pip install -e '.[test]' build
-      # Parallelize isolated framework tests only, never the live router suite.
-      - name: Run framework tests
-        run: python -m pytest -q -n 2 --dist loadfile --durations=30 --junitxml=test-results/framework.xml
+      - name: Build test container
+        run: docker build -t nvyr-test -f tests/container/Dockerfile .
+      - name: Run tests and package builds
+        run: docker run --rm -v "$PWD:/workspace" nvyr-test
       - name: Preserve test results
         if: always()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
@@ -37,7 +27,3 @@ jobs:
           name: framework-python-3.13
           path: test-results/framework.xml
           if-no-files-found: ignore
-      - name: Build Python distributions
-        run: python -m build
-      - name: Build Debian package
-        run: sh scripts/build-deb.sh
