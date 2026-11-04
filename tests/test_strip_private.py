@@ -38,10 +38,10 @@ def test_reusable_masks(function, value, masked):
 
 @pytest.mark.parametrize('function,value,mode,expected', [
     (strip_ip, '10.5.12.34/24', 'partial', 'xxx.xxx.12.34/24'),
-    (strip_ip, '2001:db8::1234/64', 'partial', 'x:x:x:x:0:0:0:1234/64'),
-    (strip_ip, '2001:db8:abcd:1234:5678:9abc:def0:0012/56', 'partial', 'x:x:x:x:5678:9abc:def0:12/56'),
-    (strip_ip, 'fe80::1234%eth0', 'partial', 'x:x:x:x:0:0:0:1234'),
-    (strip_ip, '::1', 'partial', 'x:x:x:x:0:0:0:1'),
+    (strip_ip, '2001:db8::1234/64', 'partial', 'x:x:x:x:x:x:0:1234/64'),
+    (strip_ip, '2001:db8:abcd:1234:5678:9abc:def0:0012/56', 'partial', 'x:x:x:x:x:x:def0:12/56'),
+    (strip_ip, 'fe80::1234%eth0', 'partial', 'x:x:x:x:x:x:0:1234'),
+    (strip_ip, '::1', 'partial', 'x:x:x:x:x:x:0:1'),
     (strip_ip, '10.5.1.1-10.6.1.10', 'partial', 'xxx.xxx.1.1-xxx.xxx.1.10'),
     (strip_ip, '8.8.8.8/32', 'public', '<ipv4>'),
     (strip_ip, '2606:4700::1111', 'public', '<ipv6>'),
@@ -104,7 +104,7 @@ def test_interface_public_and_partial_modes_preserve_field_types():
                                  {'local': '<ipv4>'}, {'local': '<ipv6>'}]
     assert partial['address'] == 'xx:xx:xx:xx:44:55'
     assert partial['ifalias'] == '<private>'
-    assert partial['addr_info'][2]['local'] == 'x:x:x:x:0:0:0:1111'
+    assert partial['addr_info'][2]['local'] == 'x:x:x:x:x:x:0:1111'
     assert kernel == original
     assert interfaces._mask_transceiver({'serial': 'secret'}, 'partial') == {'serial': '<private>'}
 
@@ -207,7 +207,7 @@ def test_configuration_mode_selection(configured_private):
     public = controller.execute('show running-configuration | strip-private public | commands', session)['text']
 
     assert 'xxx.xxx.2.10/24' in partial
-    assert 'x:x:x:x:0:0:0:10/64' in partial
+    assert 'x:x:x:x:x:x:0:10/64' in partial
     assert 'xx:xx:xx:xx:44:55' in partial
     assert 'Customer location' not in partial
     assert '192.0.2.10/24' in public

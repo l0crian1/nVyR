@@ -33,9 +33,11 @@ def strip_ip(value, strip_private=False):
         if address.version == 4:
             masked = 'xxx.xxx.' + '.'.join(str(address.ip).split('.')[2:])
         else:
-            # Use the low 64 bits regardless of compression or scope identifier.
-            suffix = address.ip.packed[8:].hex(':', 2).split(':')
-            masked = 'x:x:x:x:' + ':'.join(part.lstrip('0') or '0' for part in suffix)
+            # Read the final two hextets regardless of compression or scope identifier.
+            packed = address.ip.packed
+            high = int.from_bytes(packed[-4:-2], 'big')
+            low = int.from_bytes(packed[-2:], 'big')
+            masked = f'x:x:x:x:x:x:{high:x}:{low:x}'
 
         if '/' in value:
             masked += f'/{address.network.prefixlen}'

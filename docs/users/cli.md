@@ -287,7 +287,7 @@ needed; text filters discard configuration structure.
 Choose how much to mask:
 
 - `strip-private` or `strip-private all`: fully mask designated private values.
-- `strip-private partial`: retain the last two IPv4 octets or last four IPv6 hextets and
+- `strip-private partial`: retain the last two IPv4 octets or last two IPv6 hextets and
   the last two MAC octets. Prefix lengths remain visible. Other private text,
   including descriptions, stays fully masked.
 - `strip-private public`: mask globally routable unicast IP addresses. Non-public

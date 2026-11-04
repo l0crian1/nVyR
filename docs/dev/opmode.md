@@ -111,7 +111,7 @@ def show(strip_private: str | None = None):
 Helpers also include `strip_ipv4`, `strip_ipv6`, `strip_password`, and
 `strip_value` (other sensitive text). `None` returns the original value; `all`
 returns an opaque marker such as `<ipv4>` or `<password>`. Bare `strip-private`
-selects `all`. `partial` retains the last two IPv4 octets or last four IPv6 hextets and
+selects `all`. `partial` retains the last two IPv4 octets or last two IPv6 hextets and
 the last two MAC octets. Descriptions and credentials remain fully masked.
 `public` masks globally routable unicast IP addresses and credentials, retaining
 other values. These choices and their validation live in `schemas/pipelines.yaml`.

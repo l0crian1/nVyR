@@ -55,7 +55,7 @@ show interfaces | strip-private public
 ```
 
 `partial` displays addresses such as `xxx.xxx.12.34/24` and
-`x:x:x:x:0:0:0:1234/64`, and MACs such as `xx:xx:xx:xx:44:55`.
+`x:x:x:x:x:x:0:1234/64`, and MACs such as `xx:xx:xx:xx:44:55`.
 Descriptions remain fully masked. `public` masks only globally routable unicast
 IP addresses, retaining non-public addresses, MACs, descriptions, and serials.
 Bare `strip-private` and `strip-private all` retain full masking.
