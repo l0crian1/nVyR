@@ -23,6 +23,10 @@ restored hooks, roles, URLs and role-based pool portions. Those remote peers are
 deliberately absent; actual allocation, replication and failover are covered by
 the isolated HA functional suite rather than the reboot fixture.
 
+The default DHCPv6 instance includes a /48 delegation pool and a reservation
+with both an address and a fixed /56. `check_dhcp6_server` checks the applied
+aggregate, delegated length, and reservation after configuration and reboot.
+
 BGP unicast additions in `routing.set` exercise negotiated capabilities and roles,
 prefix limits, AS-path filters and next-hop selection on the existing active
 IPv4/IPv6 pair. Separate shut-down peers retain alternate local AS, transport

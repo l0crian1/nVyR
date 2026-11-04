@@ -1,5 +1,6 @@
 """Opt-in packet tests in a disposable privileged container, never a router LAN."""
 
+import ipaddress
 import json
 import os
 from pathlib import Path
@@ -63,11 +64,12 @@ def client4(interface, requested=None, hostname=None):
     return {'address': reply[BOOTP].yiaddr, 'server': server}
 
 
-def client6(interface):
-    """Solicit and request an IA_NA address, including the server-selected DUID."""
+def client6(interface, association='address'):
+    """Solicit and request addresses and/or prefixes from the selected server."""
     from scapy.all import AsyncSniffer, Ether, IPv6, UDP, get_if_hwaddr, sendp
     from scapy.layers.dhcp6 import (DHCP6_Solicit, DHCP6_Advertise, DHCP6_Request, DHCP6_Reply,
-                                   DHCP6OptClientId, DHCP6OptServerId, DHCP6OptIA_NA, DHCP6OptIAAddress, DUID_LL)
+                                   DHCP6OptClientId, DHCP6OptServerId, DHCP6OptIA_NA, DHCP6OptIAAddress,
+                                   DHCP6OptIA_PD, DHCP6OptIAPrefix, DUID_LL)
 
     mac = get_if_hwaddr(interface)
     addresses = json.loads(run('ip', '-j', '-6', 'address', 'show', 'dev', interface))[0]['addr_info']
@@ -86,11 +88,21 @@ def client6(interface):
         assert capture.results, 'No DHCPv6 reply'
         return capture.results[0]
 
-    offer = exchange(DHCP6_Solicit(trid=1234) / identifier / DHCP6OptIA_NA(iaid=1), DHCP6_Advertise)
+    options = b''
+    if association in ('address', 'both'):
+        options += bytes(DHCP6OptIA_NA(iaid=1))
+    if association in ('prefix', 'both'):
+        options += bytes(DHCP6OptIA_PD(iaid=2))
+    offer = exchange(DHCP6_Solicit(trid=1234) / identifier / options, DHCP6_Advertise)
     request = DHCP6_Request(trid=1235) / identifier / DHCP6OptServerId(duid=offer[DHCP6OptServerId].duid)
-    reply = exchange(request / DHCP6OptIA_NA(iaid=1), DHCP6_Reply)
-    assert DHCP6OptIAAddress in reply, reply.summary()
-    return {'address': reply[DHCP6OptIAAddress].addr}
+    reply = exchange(request / options, DHCP6_Reply)
+    result = {}
+    if association in ('address', 'both'):
+        result['address'] = reply[DHCP6OptIAAddress].addr
+    if association in ('prefix', 'both'):
+        delegated = reply[DHCP6OptIAPrefix]
+        result['prefix'] = f'{delegated.prefix}/{delegated.plen}'
+    return result
 
 
 @pytest.fixture
@@ -322,24 +334,39 @@ def test_ipv4_operational_leases_pools_and_listeners(native, monkeypatch):
 
 
 def test_ipv6_operational_leases_pools_and_listeners(native, monkeypatch):
-    """Real IA_NA leases retain their DUID/IAID and count against the IPv6 range."""
+    """An IA_NA and IA_PD on one link consume one address and one delegation."""
     section = {'preferred-lifetime': '12h', 'valid-lifetime': '1d', 'shared-network': {'LAN': {
         'subnet': {'2001:db8::/64': {'range': ['2001:db8::10-2001:db8::20']}}}}}
-    folder, _ = native(6, 1, section)
-    lease = request(6, 1)
+    subnet = section['shared-network']['LAN']['subnet']['2001:db8::/64']
+    subnet['prefix-pool'] = {'2001:db8:100::/48': {'delegated-length': '56'}}
+    folder, current = native(6, 1, section)
+    lease = request(6, 1, 'both')
+    delegated = ipaddress.IPv6Network(lease['prefix'])
+    assert delegated.prefixlen == 56 and delegated.subnet_of(ipaddress.IPv6Network('2001:db8:100::/48'))
 
     control = kea.control
     monkeypatch.setattr(dhcp_server.services, 'running_configuration', lambda: {'service': {'dhcpv6-server': section}})
     monkeypatch.setattr(kea, 'control', lambda path, command, **kwargs: control(folder / 'control.sock', command, **kwargs))
     records = json.loads(dhcp_server.show(6, 'leases', raw=True))['records']
-    assert len(records) == 1
-    assert records[0]['address'] == lease['address']
-    assert records[0]['duid'] and records[0]['iaid'] is not None
+    assert {(row['type'], row['address'], row['iaid']) for row in records} == {
+        ('IA_NA', lease['address'], 1), ('IA_PD', lease['prefix'], 2)}
+    assert all(row['duid'] for row in records)
+    output = dhcp_server.show(6, 'leases')
+    assert 'Address / prefix' in output and lease['prefix'] in output
     pools = json.loads(dhcp_server.show(6, 'pools', raw=True))['records']
     assert pools[0]['assigned'] == 1 and pools[0]['total'] == 17
+    assert pools[1]['assigned'] == 1 and pools[1]['total'] == 256 and pools[1]['delegated_length'] == 56
     listeners = json.loads(dhcp_server.show(6, 'listeners', raw=True))['records']
     assert listeners[0]['state'] == 'Listening'
     assert listeners[0]['address'].startswith('fe80:')
+
+    # Reuse the link and server to verify a fixed delegation with no address or dynamic pool.
+    subnet.clear()
+    subnet['reservation'] = {'branch': {'duid': records[0]['duid'], 'prefix': ['2001:db8:200::/60']}}
+    updated = generated_server(section | {'listen-interface': ['ksrv1']}, 6, kea.inventory())['Dhcp6']
+    current['Dhcp6']['shared-networks'] = updated['shared-networks']
+    control(folder / 'control.sock', 'config-set', current)
+    assert request(6, 1, 'prefix') == {'prefix': '2001:db8:200::/60'}
 
 
 def test_ipv4_vrf_isolation_renewal_and_reconfiguration(native):

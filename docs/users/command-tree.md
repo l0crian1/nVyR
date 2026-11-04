@@ -10672,12 +10672,15 @@ set
 │   │   │   │   │   ├── domain-search <domain>
 │   │   │   │   │   └── name-server <IPv6-address>
 │   │   │   │   ├── preferred-lifetime <duration>
+│   │   │   │   ├── prefix-pool <aggregate/length>
+│   │   │   │   │   └── delegated-length <1-128>
 │   │   │   │   ├── range <start-end>
 │   │   │   │   ├── reservation <name>
 │   │   │   │   │   ├── address <IPv6-address>
 │   │   │   │   │   ├── description <text>
 │   │   │   │   │   ├── duid <hex-bytes>
-│   │   │   │   │   └── hostname <hostname>
+│   │   │   │   │   ├── hostname <hostname>
+│   │   │   │   │   └── prefix <prefix/length>
 │   │   │   │   └── valid-lifetime <duration>
 │   │   │   └── valid-lifetime <duration>
 │   │   └── valid-lifetime <duration>
@@ -11360,12 +11363,15 @@ set
         │       │   │   │   ├── domain-search <domain>
         │       │   │   │   └── name-server <IPv6-address>
         │       │   │   ├── preferred-lifetime <duration>
+        │       │   │   ├── prefix-pool <aggregate/length>
+        │       │   │   │   └── delegated-length <1-128>
         │       │   │   ├── range <start-end>
         │       │   │   ├── reservation <name>
         │       │   │   │   ├── address <IPv6-address>
         │       │   │   │   ├── description <text>
         │       │   │   │   ├── duid <hex-bytes>
-        │       │   │   │   └── hostname <hostname>
+        │       │   │   │   ├── hostname <hostname>
+        │       │   │   │   └── prefix <prefix/length>
         │       │   │   └── valid-lifetime <duration>
         │       │   └── valid-lifetime <duration>
         │       └── valid-lifetime <duration>

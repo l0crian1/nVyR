@@ -76,6 +76,10 @@ Appending a range leaves existing ownership boundaries untouched. Singleton
 ranges produce one primary-owned pool; reservation-only subnets need no split.
 Active-passive and non-HA instances retain their original pools.
 
+IPv6 delegation pools use the same HA classes. Each half is represented by
+one CIDR in Kea's `pd-pools`, retaining the configured `delegated-len` on both
+members. Reservations render as `prefixes` and can coexist with `ip-addresses`.
+
 `tests/test_kea_ha.py` checks CLI defaults/anchoring, completeness, endpoint and
 VRF validation, warning delivery, deterministic splits and hook removal. Installed
 smoketests inspect native config-get output without waiting for a partner.

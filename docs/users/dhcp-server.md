@@ -4,10 +4,9 @@ For implementation and testing, see the [developer guide](../dev/dhcp-server.md)
 
 nVyR manages Kea DHCPv4 and DHCPv6 as separate instances in the default and named
 VRFs. Each instance has its own sockets, control endpoint, and persistent lease
-database. This initial implementation covers address allocation and reservations;
-Running a DHCP relay, prefix delegation, dynamic DNS, and router advertisements
-are separate features. The DHCP server can serve requests forwarded by an external
-relay.
+database. Both servers allocate addresses and support reservations. The DHCPv6
+server also delegates prefixes to downstream routers. Both servers can serve
+requests forwarded by an external relay.
 
 ## Configuration
 
@@ -242,6 +241,31 @@ shared network. nVyR derives it when exactly one listening interface has a local
 address inside its active subnets; otherwise configure `shared-network OFFICE
 interface eth1` explicitly. This also permits a link-local-only server interface.
 
+### DHCPv6 prefix delegation
+
+Use `subnet` for the link on which the downstream routers request service.
+Use `prefix-pool` for the aggregate routed through those routers. In this example,
+clients on the `/64` can each receive a `/56` from the separate `/48`, giving
+the pool capacity for 256 routers.
+
+```text
+set service dhcpv6-server shared-network ACCESS interface eth1
+
+set service dhcpv6-server shared-network ACCESS subnet 2001:db8:10::/64 prefix-pool 2001:db8:100::/48 delegated-length 56
+
+set service dhcpv6-server shared-network ACCESS subnet 2001:db8:10::/64 reservation BRANCH duid 00:03:00:01:02:00:00:00:00:02
+set service dhcpv6-server shared-network ACCESS subnet 2001:db8:10::/64 reservation BRANCH prefix 2001:db8:200::/56
+```
+
+The example serves prefix-only clients. Add a `range` to also offer WAN addresses.
+A DUID reservation can include an address and multiple fixed prefixes. To carry
+traffic to a delegated LAN, the forwarding router also needs a route to that
+prefix through the downstream router. Configuring a lease does not install that route.
+
+Configure identical prefix pools on HA peers. In active-active mode the primary
+serves the lower half and the secondary serves the upper half. A pool containing
+one delegation belongs to the primary. Active-passive uses the entire pool.
+
 ## Inheritance and validation
 
 Server, shared-network and subnet scopes support `description`, `disable`, timers,
@@ -253,8 +277,9 @@ Durations accept positive whole values with `s`, `m`, `h`, or `d`, up to
 
 IPv4 options are `default-router`, `name-server`, `domain-name`, `domain-search`,
 and `ntp-server`. IPv6 offers `name-server` and `domain-search`. DNS servers, search
-domains and IPv4 NTP servers are multi-value settings. Reservations require an
-address and one identifier: `mac-address` or `client-id` for IPv4; `duid` for IPv6.
+domains and IPv4 NTP servers are multi-value settings. IPv4 reservations require
+an address and either `mac-address` or `client-id`. IPv6 reservations require a
+`duid` and at least one address or prefix.
 They also accept `hostname` and `description`.
 
 The `option` node is anchored at server, shared-network and subnet scope, including

@@ -64,6 +64,8 @@ def read_journal(filename, family):
                     if family == 6:
                         record['lease_type'] = int(row['lease_type'])
                         record['iaid'] = int(row['iaid'])
+                        if record['lease_type'] == 2:
+                            record['prefix_len'] = int(row['prefix_len'])
                     key = (str(address), record.get('lease_type', 0))
                     records[key] = record
         except (ValueError, KeyError, csv.Error) as error:

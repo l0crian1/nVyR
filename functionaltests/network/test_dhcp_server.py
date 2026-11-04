@@ -49,6 +49,9 @@ def test_ipv6_operational_views(config):
     result = json.loads(cmd(['dhcp_server.nvyr.op', 'show', '6', 'pools', '--vrf', 'NVYRDHCPSMOKE', '--raw']))
     assert_equal(result['records'][0]['pool'], 'LAN')
     assert_equal(result['records'][0]['total'], 17)
+    prefix_pool = result['records'][1]
+    assert_equal((prefix_pool['range'], prefix_pool['delegated_length'], prefix_pool['total']),
+                 ('2001:db8:211::/48', 56, 256))
     assert_in('Pool', dhcp_server.show(6, 'pools', vrf='NVYRDHCPSMOKE'))
     listeners = json.loads(dhcp_server.show(6, 'listeners', vrf='NVYRDHCPSMOKE', raw=True))['records']
     assert_equal(listeners[0]['interface'], 'dum980')

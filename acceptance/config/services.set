@@ -45,6 +45,9 @@ set service dhcpv6-server shared-network BOOTLAN option name-server 2001:db8:195
 set service dhcpv6-server shared-network BOOTLAN subnet 2001:db8:195::/64 range 2001:db8:195::100-2001:db8:195::110
 set service dhcpv6-server shared-network BOOTLAN subnet 2001:db8:195::/64 reservation BOOTPRINT duid 00:03:00:01:02:00:00:19:95:50 address 2001:db8:195::50
 set service dhcpv6-server shared-network BOOTLAN subnet 2001:db8:195::/64 option domain-search subnet.boot.example
+
+set service dhcpv6-server shared-network BOOTLAN subnet 2001:db8:195::/64 prefix-pool 2001:db8:600::/48 delegated-length 56
+set service dhcpv6-server shared-network BOOTLAN subnet 2001:db8:195::/64 reservation BOOTPRINT prefix 2001:db8:601::/56
 set vrf name BOOTLEFT service dhcp-server listen-interface veth993
 set vrf name BOOTLEFT service dhcp-server lease-time 1h
 set vrf name BOOTLEFT service dhcp-server shared-network BOOTDHCP option default-router 198.18.193.1 name-server 198.18.193.1

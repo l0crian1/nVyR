@@ -320,6 +320,9 @@ def check_dhcp6_server(options):
     assert_equal(server['shared-networks'][0]['interface'], 'dum995')
     subnet = server['shared-networks'][0]['subnet6'][0]
     assert_in('2001:db8:195::50', subnet['reservations'][0]['ip-addresses'])
+    assert_in('2001:db8:601::/56', subnet['reservations'][0]['prefixes'])
+    pool, = subnet['pd-pools']
+    assert_equal((pool['prefix'], pool['prefix-len'], pool['delegated-len']), ('2001:db8:600::', 48, 56))
 
 
 def check_vrf_dhcp4_server(options):

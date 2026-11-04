@@ -28,6 +28,37 @@ def context(check_only=True):
     return SimpleNamespace(check_only=check_only, report=lambda message: None)
 
 
+@pytest.mark.parametrize('subnet, message', [
+    ({'prefix-pool': {'2001:db8:100::/48': {}}}, 'requires delegated-length'),
+    ({'prefix-pool': {'2001:db8:100::/64': {'delegated-length': '56'}}}, 'must be at least 64'),
+    ({'prefix-pool': {'2001:db8:100::/48': {'delegated-length': '56'},
+                      '2001:db8:100:100::/56': {'delegated-length': '60'}}}, 'overlaps'),
+    ({'reservation': {'R1': {'duid': '00:03:00:01:02:00:00:00:00:01',
+                             'prefix': ['2001:db8:100::/56', '2001:db8:100:10::/60']}}}, 'overlaps'),
+])
+def test_invalid_delegation(subnet, message):
+    server = {'listen-interface': ['eth1'], 'preferred-lifetime': '1h', 'valid-lifetime': '1d',
+              'shared-network': {'ACCESS': {'subnet': {'2001:db8:10::/64': subnet}}}}
+    with pytest.raises(ValidationError, match=message):
+        verify_servers({'default': server}, context(), 6)
+
+
+def test_in_pool_reservation_must_match_link_and_allocation_size():
+    pool = {'prefix-pool': {'2001:db8:100::/48': {'delegated-length': '56'}}}
+    branch = {'duid': '00:03:00:01:02:00:00:00:00:01', 'prefix': ['2001:db8:100:100::/56']}
+    subnets = {'2001:db8:10::/64': pool, '2001:db8:20::/64': {'reservation': {'BRANCH': branch}}}
+    server = {'listen-interface': ['eth1'], 'preferred-lifetime': '1h', 'valid-lifetime': '1d',
+              'shared-network': {'ACCESS': {'subnet': subnets}}}
+    with pytest.raises(ValidationError, match='another subnet'):
+        verify_servers({'default': server}, context(), 6)
+
+    pool.update(subnets.pop('2001:db8:20::/64'))
+    verify_servers({'default': server}, context(), 6)
+    branch['prefix'] = ['2001:db8:100:100::/60']
+    with pytest.raises(ValidationError, match='different delegated-length'):
+        verify_servers({'default': server}, context(), 6)
+
+
 def test_default_vrf_schema_and_inherited_defaults(controller, engine, session, monkeypatch):
     monkeypatch.setattr(kea, 'inventory', devices)
     plans = []

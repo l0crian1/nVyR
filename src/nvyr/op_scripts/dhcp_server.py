@@ -48,35 +48,57 @@ def lease_rows(vrf, leases, subnets, shared_network):
         if scope is None and shared_network is not None:
             continue
         pool, subnet = scope if scope else (None, {})
-        rows.append({
+        row = {
             'vrf': vrf, 'pool': pool, 'subnet': subnet.get('subnet'),
             'address': lease['address'], 'mac': lease.get('hwaddr') or None,
             'hostname': lease.get('hostname') or None, 'duid': lease.get('duid') or None,
             'iaid': lease.get('iaid'), 'status': lease['status'],
             'expires_in': lease['expires_in'], 'infinite': lease['infinite'],
-        })
+        }
+        if 'lease_type' in lease:
+            row['type'] = {0: 'IA_NA', 1: 'IA_TA', 2: 'IA_PD'}[lease['lease_type']]
+            if lease['lease_type'] == 2:
+                row['address'] = f"{lease['address']}/{lease['prefix_len']}"
+        rows.append(row)
     return rows
 
 
+def pool_sizes(subnet):
+    for allocation in subnet.get('pools', []):
+        value = allocation['pool']
+        first, last = pool_bounds(value)
+        yield value, first, last, last - first + 1, None
+
+    for allocation in subnet.get('pd-pools', []):
+        value = f"{allocation['prefix']}/{allocation['prefix-len']}"
+        first, last = pool_bounds(value)
+        length = allocation['delegated-len']
+        yield value, first, last, 1 << (length - allocation['prefix-len']), length
+
+
 def pool_rows(vrf, leases, subnets):
-    """Count active and declined addresses separately; reservations outside ranges do not consume them."""
+    """Measure PD capacity in delegations and address capacity in individual addresses."""
     rows = []
     for subnet_id, (pool, subnet) in subnets.items():
-        for allocation in subnet.get('pools', []):
-            first, last = pool_bounds(allocation['pool'])
+        for value, first, last, total, length in pool_sizes(subnet):
+            lease_type = 0 if length is None else 2
             assigned = declined = 0
             for lease in leases:
-                if lease['subnet_id'] != subnet_id or lease.get('lease_type', 0) != 0:
+                if lease['subnet_id'] != subnet_id or lease.get('lease_type', 0) != lease_type:
+                    continue
+                if length is not None and lease['prefix_len'] != length:
                     continue
                 if first <= int(ipaddress.ip_address(lease['address'])) <= last:
                     if lease['status'] == 'Declined':
                         declined += 1
                     else:
                         assigned += 1
-            total = last - first + 1
-            rows.append({'vrf': vrf, 'pool': pool, 'subnet': subnet['subnet'],
-                         'range': allocation['pool'], 'assigned': assigned, 'declined': declined,
-                         'total': total, 'used_percent': 100 * (assigned + declined) / total})
+            row = {'vrf': vrf, 'pool': pool, 'subnet': subnet['subnet'], 'range': value,
+                   'assigned': assigned, 'declined': declined, 'total': total,
+                   'used_percent': 100 * (assigned + declined) / total}
+            if length is not None:
+                row['delegated_length'] = length
+            rows.append(row)
     return rows
 
 
@@ -126,12 +148,16 @@ def display(records, view, family):
     if not records:
         return f'No DHCP {view} found.\n'
     if view == 'leases':
-        fields = [('VRF', 'vrf'), ('Pool', 'pool'), ('Subnet', 'subnet'), ('Address', 'address')]
-        fields += [('MAC address', 'mac'), ('Hostname', 'hostname')] if family == 4 else [('DUID', 'duid'), ('IAID', 'iaid')]
+        resource = 'Address' if family == 4 else 'Address / prefix'
+        fields = [('VRF', 'vrf'), ('Pool', 'pool'), ('Subnet', 'subnet'), (resource, 'address')]
+        fields += [('MAC address', 'mac'), ('Hostname', 'hostname')] if family == 4 else [
+            ('Type', 'type'), ('DUID', 'duid'), ('IAID', 'iaid')]
         fields += [('State', 'status'), ('Expires in', 'expires_in')]
     elif view == 'pools':
-        fields = [('VRF', 'vrf'), ('Pool', 'pool'), ('Subnet', 'subnet'), ('Range', 'range'),
-                  ('Assigned', 'assigned'), ('Declined', 'declined'), ('Total', 'total'), ('Used', 'used_percent')]
+        fields = [('VRF', 'vrf'), ('Pool', 'pool'), ('Subnet', 'subnet'), ('Range', 'range')]
+        if any('delegated_length' in row for row in records):
+            fields.append(('Delegated length', 'delegated_length'))
+        fields += [('Assigned', 'assigned'), ('Declined', 'declined'), ('Total', 'total'), ('Used', 'used_percent')]
     else:
         fields = [('VRF', 'vrf'), ('Interface', 'interface'), ('Address', 'address'),
                   ('Socket type', 'socket_type'), ('State', 'state'), ('Detail', 'detail')]

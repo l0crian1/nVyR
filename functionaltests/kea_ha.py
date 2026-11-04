@@ -65,6 +65,7 @@ def client_packet(family, identifier, relay, seconds, offer=None):
         message += option(2, offer['server-id'], 6)
     message += option(8, struct.pack('!H', seconds * 100), 6)
     message += option(3, struct.pack('!III', 1, 0, 0), 6)
+    message += option(25, struct.pack('!III', 2, 0, 0), 6)
     header = bytes([12, 0]) + socket.inet_pton(socket.AF_INET6, relay)
     header += socket.inet_pton(socket.AF_INET6, 'fe80::abcd')
     return header + option(9, message, 6)
@@ -82,8 +83,11 @@ def decode_reply(family, data):
     fields = options(message[4:], 6)
     association = fields.get(3, b'')
     addresses = options(association[12:], 6) if len(association) >= 12 else {}
+    prefixes = options(fields.get(25, b'')[12:], 6)
+    delegated = prefixes.get(26)
     return {'type': message[0], 'client': int.from_bytes(message[1:4], 'big'),
             'server-id': fields[2],
+            'prefix': f'{socket.inet_ntop(socket.AF_INET6, delegated[9:25])}/{delegated[8]}' if delegated else None,
             'address': socket.inet_ntop(socket.AF_INET6, addresses[5][:16]) if 5 in addresses else None}
 
 
@@ -128,7 +132,8 @@ def exchange(family, subnet, count, offset=0, seconds=0):
             if offers:
                 grants.extend(receive(connection))
 
-        return [{key: grant[key] for key in ('client', 'address', 'server')}
+        keys = ('client', 'address', 'server', 'prefix') if family == 6 else ('client', 'address', 'server')
+        return [{key: grant[key] for key in keys}
                 for grant in grants if grant['type'] == (5 if family == 4 else 7) and grant['address']]
 
 
@@ -188,6 +193,8 @@ class Topology:
                    'peer': {f'R{partner}': {'address': stem + str(partner), 'role': roles[partner]}}},
         }}}
         if family == 6:
+            client_subnet = explicit['service'][owner]['shared-network']['LAN']['subnet'][prefix]
+            client_subnet['prefix-pool'] = {'2001:db8:100::/48': {'delegated-length': '56'}}
             # Relays use unicast here; the ordinary interface listener receives
             # directly connected multicast clients instead.
             explicit['service'][owner].pop('listen-interface')

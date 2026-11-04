@@ -138,6 +138,7 @@ def test_ipv6_ha_active_active_secondary_and_backup(config):
     config.set('set vrf name NVYRDHCPSMOKE service dhcpv6-server ha peer ROUTER1 address 2001:db8:210::2 role primary port 9006')
     config.set('set vrf name NVYRDHCPSMOKE service dhcpv6-server ha peer COPY address 2001:db8:210::3 role backup')
     config.set('set vrf name NVYRDHCPSMOKE service dhcpv6-server shared-network LAN subnet 2001:db8:210::/64 range 2001:db8:210::10-2001:db8:210::1f')
+    config.set('set vrf name NVYRDHCPSMOKE service dhcpv6-server shared-network LAN subnet 2001:db8:210::/64 prefix-pool 2001:db8:211::/48 delegated-length 56')
     config.commit()
 
     path = kea.RUNTIME / (kea.instance_name(6, 'NVYRDHCPSMOKE') + '.sock')
@@ -150,6 +151,10 @@ def test_ipv6_ha_active_active_secondary_and_backup(config):
     pools = server['shared-networks'][0]['subnet6'][0]['pools']
     assert_equal(pools[0]['client-classes'], ['HA_ROUTER1'])
     assert_equal(pools[1]['client-classes'], ['HA_ROUTER2'])
+    delegations = server['shared-networks'][0]['subnet6'][0]['pd-pools']
+    assert_equal([(p['prefix'], p['prefix-len'], p['delegated-len'], p['client-classes']) for p in delegations], [
+        ('2001:db8:211::', 49, 56, ['HA_ROUTER1']), ('2001:db8:211:8000::', 49, 56, ['HA_ROUTER2']),
+    ])
 
 
 def test_ipv4_ha_active_passive_and_removal(config):

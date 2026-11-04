@@ -44,6 +44,8 @@ def reservation(name, values, family):
             result['hw-address'] = value
         elif key == 'address':
             result['ip-address' if family == 4 else 'ip-addresses'] = value if family == 4 else [value]
+        elif key == 'prefix':
+            result['prefixes'] = list(value)
         elif key in ('hostname', 'duid', 'client-id'):
             result[key] = value
     return result

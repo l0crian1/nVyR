@@ -43,7 +43,10 @@ generations. Renewals replace earlier records; released, reclaimed and expired
 leases are omitted. Declined leases remain visible and count toward utilization,
 but are shown separately from assigned addresses. Reservations outside a dynamic
 range appear in leases but do not consume that range's capacity. Usage is
-`(assigned + declined) / total`; IPv6 totals use integer address counts.
+`(assigned + declined) / total`. For a DHCPv6 prefix pool, the range shows
+the aggregate, delegated length shows the size of each lease, and total counts
+delegations. The lease view shows the full CIDR for an `IA_PD` lease and the
+individual address for an `IA_NA` lease.
 
 Disabled servers are explicitly listed as omitted. An unavailable enabled server
 or unreadable database produces an error, rather than a misleading empty table.

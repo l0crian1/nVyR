@@ -57,6 +57,13 @@ def test_ipv6_active_active_concurrent_exhaustion(ha):
     assert len(grants) == 20
     assert_unique(grants)
     assert {grant['server'] for grant in grants} == {'2001:db8:2::1', '2001:db8:2::2'}
+    prefixes = {ipaddress.IPv6Network(grant['prefix']) for grant in grants}
+    assert len(prefixes) == len(grants)
+    lower, upper = ipaddress.IPv6Network('2001:db8:100::/48').subnets()
+    for grant in grants:
+        prefix = ipaddress.IPv6Network(grant['prefix'])
+        owner = lower if grant['server'] == '2001:db8:2::1' else upper
+        assert prefix.prefixlen == 56 and prefix.subnet_of(owner)
     assert_replicated(ha, 6, 2, grants)
 
 

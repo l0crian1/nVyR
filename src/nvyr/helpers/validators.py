@@ -566,6 +566,18 @@ def network(value, version):
         return False
 
 
+@register('dhcpv6-prefix', 'an IPv6 unicast network prefix with length 1 through 128 and no host bits')
+def dhcpv6_prefix(value):
+    if '/' not in value or '%' in value:
+        return False
+
+    try:
+        prefix = ipaddress.IPv6Network(value)
+    except ValueError:
+        return False
+    return prefix.prefixlen > 0 and not prefix.network_address.is_multicast
+
+
 @register('bgp-listen-prefix', 'an IPv4 or IPv6 network prefix without host bits')
 def bgp_listen_prefix(value):
     if '/' not in value or '%' in value:

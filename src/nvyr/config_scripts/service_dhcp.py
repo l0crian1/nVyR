@@ -64,9 +64,20 @@ def verify_reservations(section, network, family, path):
         keys = ('mac-address', 'client-id') if family == 4 else ('duid',)
         chosen = [key for key in keys if key in reservation]
 
-        # A reservation needs exactly one stable client identifier and an address.
-        if len(chosen) != 1 or 'address' not in reservation:
-            raise ValidationError(f'{location}: specify an address and exactly one of {", ".join(keys)}')
+        # A client needs one identifier and at least one resource to reserve.
+        if len(chosen) != 1 or ('address' not in reservation and not lookup(reservation, ('prefix',), ())):
+            resource = 'an address' if family == 4 else 'an address or prefix'
+            raise ValidationError(f'{location}: specify {resource} and exactly one of {", ".join(keys)}')
+
+        identifier = (chosen[0], reservation[chosen[0]].lower())
+        # A subnet can have only one reservation for a client identifier.
+        if identifier in identifiers:
+            raise ValidationError(f'{location}: duplicate client identifier')
+        identifiers.add(identifier)
+
+        # A prefix-only client does not need an address on the serving link.
+        if 'address' not in reservation:
+            continue
 
         address = ipaddress.ip_address(reservation['address'])
         # Reserved addresses must remain within their containing subnet.
@@ -77,13 +88,51 @@ def verify_reservations(section, network, family, path):
         if family == 4 and address in (network.network_address, network.broadcast_address):
             raise ValidationError(f'{location}: network and broadcast addresses cannot be reserved')
 
-        identifier = (chosen[0], reservation[chosen[0]].lower())
-        # Duplicate client or address assignments cannot be safely served.
-        if address in addresses or identifier in identifiers:
-            raise ValidationError(f'{location}: duplicate reserved address or client identifier')
+        # Two reservations cannot assign the same address.
+        if address in addresses:
+            raise ValidationError(f'{location}: duplicate reserved address')
 
         addresses.add(address)
-        identifiers.add(identifier)
+
+
+def verify_delegations(subnets):
+    pools = []
+    reservations = []
+    for client_link, (section, path) in subnets.items():
+        for value, settings in lookup(section, ('prefix-pool',), {}).items():
+            pool_path = f'{path} prefix-pool {value}'
+            # A dynamic pool needs the unit of allocation before Kea can serve it.
+            require_fields(settings, ('delegated-length',), pool_path)
+            aggregate = ipaddress.IPv6Network(value)
+            length = int(settings['delegated-length'])
+            # Each delegation must fit entirely inside its pool.
+            if length < aggregate.prefixlen:
+                raise ValidationError(f'{pool_path}: delegated-length must be at least {aggregate.prefixlen}')
+            pools.append((aggregate, client_link, pool_path, length))
+
+        for label, entry in lookup(section, ('reservation',), {}).items():
+            for value in lookup(entry, ('prefix',), ()):
+                reservations.append((ipaddress.IPv6Network(value), client_link, f'{path} reservation {label}'))
+
+    for entries in (pools, reservations):
+        entries.sort(key=lambda entry: entry[0])
+        for left, right in zip(entries, entries[1:]):
+            # Overlapping pools or fixed delegations can assign the same space to two routers.
+            if left[0].overlaps(right[0]):
+                raise ValidationError(f'{right[2]}: {right[0]} overlaps {left[0]} in this VRF')
+
+    # Both lists are disjoint and sorted. Advance past pools that end before this reservation.
+    index = 0
+    for fixed, subnet, path in reservations:
+        while index < len(pools) and pools[index][0].broadcast_address < fixed.network_address:
+            index += 1
+        if index == len(pools):
+            break
+        aggregate, owner, _, length = pools[index]
+        # Kea can protect an in-pool reservation when it occupies one delegation on this link.
+        if fixed.overlaps(aggregate) and (subnet != owner or fixed.prefixlen != length):
+            raise ValidationError(f'{path}: {fixed} overlaps pool {aggregate} on another subnet '
+                                  'or with a different delegated-length')
 
 
 def verify_subnet(prefix, section, inherited, family, path):
@@ -108,8 +157,9 @@ def verify_subnet(prefix, section, inherited, family, path):
             raise ValidationError(f'{path}: allocation ranges overlap')
 
     # Reservation-only subnets are valid, but empty allocation definitions are not useful.
-    if not intervals and not lookup(section, ('reservation',), None):
-        raise ValidationError(f'{path}: configure a range or reservation, or disable this subnet')
+    if not intervals and not lookup(section, ('reservation',), None) and not lookup(section, ('prefix-pool',), None):
+        resources = 'a range or reservation' if family == 4 else 'a range, prefix-pool or reservation'
+        raise ValidationError(f'{path}: configure {resources}, or disable this subnet')
 
     verify_reservations(section, network, family, path)
 
@@ -305,7 +355,7 @@ def verify(configuration, context):
             raise ValidationError(f'{path}: configure listen-interface, listen-address or a shared-network interface')
 
         verify_lifetimes(server, family, path)
-        networks = []
+        networks = {}
         ids = set()
         for name, shared in lookup(server, ('shared-network',), {}).items():
             # Disabled shared networks do not contribute active allocations.
@@ -335,8 +385,12 @@ def verify(configuration, context):
                     raise ValidationError(f'{location} subnet {prefix}: stable subnet ID collision')
 
                 ids.add(identifier)
-                networks.append(network)
-                verify_subnet(prefix, subnet, inherited, family, f'{location} subnet {prefix}')
+                subnet_path = f'{location} subnet {prefix}'
+                networks[network] = (subnet, subnet_path)
+                verify_subnet(prefix, subnet, inherited, family, subnet_path)
+
+        if family == 6:
+            verify_delegations(networks)
 
         # Commit checks cannot require interfaces that earlier owners have not created yet.
         if context.check_only:
@@ -385,13 +439,37 @@ def ha_hooks(ha):
     ]
 
 
-def allocation_pools(ranges, ha):
-    """Split each active-active range identically on every member, without enumerating it."""
+def ha_pool_owners(ha):
     if ha is None or ha['mode'] == 'active-passive':
-        return [{'pool': value} for value in ranges]
+        return ()
 
     members = {ha['role']: ha['name']}
     members.update({peer['role']: name for name, peer in lookup(ha, ('peer',), {}).items()})
+    return (f'HA_{members["primary"]}', f'HA_{members["secondary"]}')
+
+
+def delegation_pools(pools, ha):
+    owners = ha_pool_owners(ha)
+    result = []
+    for value, settings in pools.items():
+        aggregate = ipaddress.IPv6Network(value)
+        length = int(settings['delegated-length'])
+        # An indivisible pool belongs to the primary, like a single-address range.
+        portions = aggregate.subnets() if owners and aggregate.prefixlen < length else (aggregate,)
+        for index, portion in enumerate(portions):
+            pool = {'prefix': str(portion.network_address), 'prefix-len': portion.prefixlen, 'delegated-len': length}
+            if owners:
+                pool['client-classes'] = [owners[index]]
+            result.append(pool)
+    return result
+
+
+def allocation_pools(ranges, ha):
+    """Split each active-active range identically on every member, without enumerating it."""
+    owners = ha_pool_owners(ha)
+    if not owners:
+        return [{'pool': value} for value in ranges]
+
     result = []
     for value in ranges:
         first, last = (ipaddress.ip_address(part) for part in value.split('-'))
@@ -400,10 +478,10 @@ def allocation_pools(ranges, ha):
         # ownership boundary of an existing range. The primary takes an odd extra.
         primary_last = int(first) + (int(last) - int(first)) // 2
         result.append({'pool': f'{first}-{address_type(primary_last)}',
-                       'client-classes': [f'HA_{members["primary"]}']})
+                       'client-classes': [owners[0]]})
         if primary_last < int(last):
             result.append({'pool': f'{address_type(primary_last + 1)}-{last}',
-                           'client-classes': [f'HA_{members["secondary"]}']})
+                           'client-classes': [owners[1]]})
     return result
 
 
@@ -469,6 +547,8 @@ def generate(configuration, context):
                     'reservations': [reservation(label, item, family)
                                      for label, item in lookup(values, ('reservation',), {}).items()],
                 })
+                if 'prefix-pool' in values:
+                    subnet['pd-pools'] = delegation_pools(values['prefix-pool'], lookup(section, ('ha',), None))
                 subnets.append(subnet)
 
             # Fully disabled scopes must not leave an empty native shared network.

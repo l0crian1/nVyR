@@ -63,6 +63,11 @@ def test_ipv6_vrf_family_ports_and_explicit_peer_port(controller, engine, sessio
     controller.execute('set vrf name BLUE service dhcpv6-server listen-interface eth1', session)
     controller.execute('set vrf name BLUE service dhcpv6-server shared-network LAN interface eth1', session)
     controller.execute('set vrf name BLUE service dhcpv6-server shared-network LAN subnet 2001:db8::/64 range 2001:db8::100-2001:db8::109', session)
+    controller.execute('set vrf name BLUE service dhcpv6-server shared-network LAN subnet 2001:db8::/64 prefix-pool 2001:db8:100::/48 delegated-length 56', session)
+    reservation = 'set vrf name BLUE service dhcpv6-server shared-network LAN subnet 2001:db8::/64 reservation BRANCH'
+    controller.execute(reservation + ' duid 00:03:00:01:02:00:00:00:00:01 address 2001:db8::80', session)
+    controller.execute(reservation + ' prefix 2001:db8:200::/60', session)
+    controller.execute(reservation + ' prefix 2001:db8:300::/56', session)
     controller.execute('set vrf name BLUE service dhcpv6-server ha mode active-passive name R2 source-address 2001:db8::1 role standby', session)
     controller.execute('set vrf name BLUE service dhcpv6-server ha peer R1 address 2001:db8::2 role primary port 9006', session)
     assert engine.commit(session)['results']['dhcpv6-server']['success']
@@ -72,6 +77,10 @@ def test_ipv6_vrf_family_ports_and_explicit_peer_port(controller, engine, sessio
     assert ha['mode'] == 'hot-standby'
     assert [peer['url'] for peer in ha['peers']] == ['http://[2001:db8::1]:8006/', 'http://[2001:db8::2]:9006/']
     assert native['shared-networks'][0]['subnet6'][0]['pools'] == [{'pool': '2001:db8::100-2001:db8::109'}]
+    subnet = native['shared-networks'][0]['subnet6'][0]
+    assert subnet['pd-pools'] == [{'prefix': '2001:db8:100::', 'prefix-len': 48, 'delegated-len': 56}]
+    assert subnet['reservations'][0]['ip-addresses'] == ['2001:db8::80']
+    assert set(subnet['reservations'][0]['prefixes']) == {'2001:db8:200::/60', '2001:db8:300::/56'}
 
 
 def test_pool_split_identical_from_primary_secondary_and_backup():
@@ -104,6 +113,13 @@ def test_ipv6_huge_range_split_and_single_address():
     assert service_dhcp.allocation_pools(['192.0.2.100-192.0.2.100'], relationship()) == [
         {'pool': '192.0.2.100-192.0.2.100', 'client-classes': ['HA_R1']},
     ]
+
+
+def test_single_delegation_is_indivisible():
+    pools = {'2001:db8:100::/56': {'delegated-length': '56'}}
+    native = {'prefix': '2001:db8:100::', 'prefix-len': 56, 'delegated-len': 56}
+    assert service_dhcp.delegation_pools(pools, relationship()) == [native | {'client-classes': ['HA_R1']}]
+    assert service_dhcp.delegation_pools(pools, relationship('active-passive')) == [native]
 
 
 @pytest.mark.parametrize('change,message', [

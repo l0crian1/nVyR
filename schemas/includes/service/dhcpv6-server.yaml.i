@@ -113,6 +113,23 @@ dhcpv6-server:
               hints:
                 start-end: First and last address separated by a hyphen
 
+            prefix-pool:
+              kind: tag_node
+              description: Aggregate from which routers on this link receive delegated prefixes
+              validators:
+                dhcpv6-prefix: {}
+              hints:
+                aggregate/length: IPv6 delegation pool, for example 2001:db8:100::/48
+              children:
+
+                delegated-length:
+                  kind: leaf_node
+                  description: Prefix length assigned to each requesting router
+                  validators:
+                    integer-range: {minimum: 1, maximum: 128}
+                  hints:
+                    1-128: Delegated prefix length, for example 56
+
             reservation:
               kind: tag_node
               anchor: true
@@ -131,6 +148,15 @@ dhcpv6-server:
                     IPv6-address: Reserved client address (IPv6)
                   validators:
                     ipv6-address: {}
+
+                prefix:
+                  kind: leaf_node
+                  multi: true
+                  description: IPv6 prefix delegated to this router
+                  validators:
+                    dhcpv6-prefix: {}
+                  hints:
+                    prefix/length: Reserved delegated prefix, for example 2001:db8:200::/56
 
                 hostname:
                   kind: leaf_node
