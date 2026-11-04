@@ -41,6 +41,29 @@ def host_link(name):
     return json.loads(cmd(['ip', '-j', '-d', 'link', 'show', 'dev', name]))[0]
 
 
+def test_cleanup_same_filesystem_bind_mounts(tmp_path, monkeypatch):
+    """Unmount both kinds of volume before removing their staging paths."""
+    monkeypatch.setattr(containers.config, 'MOUNT_ROOT', str(tmp_path))
+    staging = tmp_path / b'LIVE'.hex()
+    staging.mkdir()
+    source = tmp_path / 'data'
+    source.mkdir()
+    (source / 'value').write_text('persistent')
+    (staging / 'directory').mkdir()
+    (staging / 'file').touch()
+
+    cmd(['mount', '--bind', str(source), str(staging / 'directory')])
+    try:
+        cmd(['mount', '--bind', str(source / 'value'), str(staging / 'file')])
+        containers.unmount('LIVE')
+        assert not staging.exists()
+        assert (source / 'value').read_text() == 'persistent'
+    finally:
+        for target in (staging / 'file', staging / 'directory'):
+            if target.exists() and rc_cmd(['mountpoint', '--', str(target)])[0] == 0:
+                cmd(['umount', str(target)])
+
+
 def test_native_network_and_attachment_names(runtime):
     """Netavark creates exact 15-byte names and keeps remaining attachment IDs stable."""
     desired = {

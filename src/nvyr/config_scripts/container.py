@@ -545,8 +545,12 @@ def unmount(name):
     directory = Path(config.MOUNT_ROOT) / name.encode().hex()
     if directory.exists():
         for path in directory.iterdir():
-            if os.path.ismount(path):
+            # A bind mount can have the same device as its staging directory.
+            status, message = rc_cmd(['mountpoint', '--', str(path)])
+            if status == 0:
                 cmd(['umount', str(path)])
+            elif status != 32:
+                raise RouterError(f'Cannot check container mount {path}: {message}')
             if path.is_dir():
                 path.rmdir()
             else:
