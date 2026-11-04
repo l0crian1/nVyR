@@ -9172,7 +9172,7 @@ set
 │               └── ipv6-policy <name>
 ├── interfaces
 │   ├── bridge <brN>
-│   │   ├── address <dhcp|x.x.x.x/x|x:x:x:x:x:x/x>
+│   │   ├── address <dhcpv6|dhcp|x.x.x.x/x|x:x:x:x:x:x/x>
 │   │   ├── default-pvid <0-4094>
 │   │   ├── description <text>
 │   │   ├── dhcp-options
@@ -9185,6 +9185,18 @@ set
 │   │   │   ├── no-default-route
 │   │   │   ├── user-class <text>
 │   │   │   └── vendor-class-id <text>
+│   │   ├── dhcpv6-options
+│   │   │   ├── duid <hex>
+│   │   │   ├── no-release
+│   │   │   ├── no-request-dns
+│   │   │   ├── no-request-domain-search
+│   │   │   ├── parameters-only
+│   │   │   └── rapid-commit
+│   │   ├── dhcpv6-pd <iaid>
+│   │   │   ├── interface <interface>
+│   │   │   │   ├── address <number>
+│   │   │   │   └── subnet-id <number>
+│   │   │   └── length <1-64>
 │   │   ├── disable
 │   │   ├── ip
 │   │   │   ├── accept-local
@@ -9306,7 +9318,7 @@ set
 │   │   │   └── vlan <1-4094>
 │   │   │       └── interface <interface>
 │   │   ├── vif <1-4094>
-│   │   │   ├── address <dhcp|x.x.x.x/x|x:x:x:x:x:x/x>
+│   │   │   ├── address <dhcpv6|dhcp|x.x.x.x/x|x:x:x:x:x:x/x>
 │   │   │   ├── description <text>
 │   │   │   ├── dhcp-options
 │   │   │   │   ├── client-id
@@ -9318,6 +9330,18 @@ set
 │   │   │   │   ├── no-default-route
 │   │   │   │   ├── user-class <text>
 │   │   │   │   └── vendor-class-id <text>
+│   │   │   ├── dhcpv6-options
+│   │   │   │   ├── duid <hex>
+│   │   │   │   ├── no-release
+│   │   │   │   ├── no-request-dns
+│   │   │   │   ├── no-request-domain-search
+│   │   │   │   ├── parameters-only
+│   │   │   │   └── rapid-commit
+│   │   │   ├── dhcpv6-pd <iaid>
+│   │   │   │   ├── interface <interface>
+│   │   │   │   │   ├── address <number>
+│   │   │   │   │   └── subnet-id <number>
+│   │   │   │   └── length <1-64>
 │   │   │   ├── disable
 │   │   │   ├── ip
 │   │   │   │   ├── accept-local
@@ -9440,7 +9464,7 @@ set
 │   │   ├── mtu <1280-65535>
 │   │   └── vrf <name>
 │   ├── ethernet <ethN>
-│   │   ├── address <dhcp|x.x.x.x/x|x:x:x:x:x:x/x>
+│   │   ├── address <dhcpv6|dhcp|x.x.x.x/x|x:x:x:x:x:x/x>
 │   │   ├── description <text>
 │   │   ├── dhcp-options
 │   │   │   ├── client-id
@@ -9452,6 +9476,18 @@ set
 │   │   │   ├── no-default-route
 │   │   │   ├── user-class <text>
 │   │   │   └── vendor-class-id <text>
+│   │   ├── dhcpv6-options
+│   │   │   ├── duid <hex>
+│   │   │   ├── no-release
+│   │   │   ├── no-request-dns
+│   │   │   ├── no-request-domain-search
+│   │   │   ├── parameters-only
+│   │   │   └── rapid-commit
+│   │   ├── dhcpv6-pd <iaid>
+│   │   │   ├── interface <interface>
+│   │   │   │   ├── address <number>
+│   │   │   │   └── subnet-id <number>
+│   │   │   └── length <1-64>
 │   │   ├── disable
 │   │   ├── ip
 │   │   │   ├── accept-local
@@ -9500,7 +9536,7 @@ set
 │   │   ├── mac <xx:xx:xx:xx:xx:xx>
 │   │   ├── mtu <1280-65535>
 │   │   ├── vif <1-4094>
-│   │   │   ├── address <dhcp|x.x.x.x/x|x:x:x:x:x:x/x>
+│   │   │   ├── address <dhcpv6|dhcp|x.x.x.x/x|x:x:x:x:x:x/x>
 │   │   │   ├── description <text>
 │   │   │   ├── dhcp-options
 │   │   │   │   ├── client-id
@@ -9512,6 +9548,18 @@ set
 │   │   │   │   ├── no-default-route
 │   │   │   │   ├── user-class <text>
 │   │   │   │   └── vendor-class-id <text>
+│   │   │   ├── dhcpv6-options
+│   │   │   │   ├── duid <hex>
+│   │   │   │   ├── no-release
+│   │   │   │   ├── no-request-dns
+│   │   │   │   ├── no-request-domain-search
+│   │   │   │   ├── parameters-only
+│   │   │   │   └── rapid-commit
+│   │   │   ├── dhcpv6-pd <iaid>
+│   │   │   │   ├── interface <interface>
+│   │   │   │   │   ├── address <number>
+│   │   │   │   │   └── subnet-id <number>
+│   │   │   │   └── length <1-64>
 │   │   │   ├── disable
 │   │   │   ├── ip
 │   │   │   │   ├── accept-local
@@ -9616,7 +9664,7 @@ set
 │       ├── mtu <1280-65535>
 │       ├── peer-name <vethN>
 │       ├── vif <1-4094>
-│       │   ├── address <dhcp|x.x.x.x/x|x:x:x:x:x:x/x>
+│       │   ├── address <dhcpv6|dhcp|x.x.x.x/x|x:x:x:x:x:x/x>
 │       │   ├── description <text>
 │       │   ├── dhcp-options
 │       │   │   ├── client-id
@@ -9628,6 +9676,18 @@ set
 │       │   │   ├── no-default-route
 │       │   │   ├── user-class <text>
 │       │   │   └── vendor-class-id <text>
+│       │   ├── dhcpv6-options
+│       │   │   ├── duid <hex>
+│       │   │   ├── no-release
+│       │   │   ├── no-request-dns
+│       │   │   ├── no-request-domain-search
+│       │   │   ├── parameters-only
+│       │   │   └── rapid-commit
+│       │   ├── dhcpv6-pd <iaid>
+│       │   │   ├── interface <interface>
+│       │   │   │   ├── address <number>
+│       │   │   │   └── subnet-id <number>
+│       │   │   └── length <1-64>
 │       │   ├── disable
 │       │   ├── ip
 │       │   │   ├── accept-local
@@ -11848,14 +11908,18 @@ operational mode
 │   ├── in <minutes>
 │   └── now
 ├── release
-│   └── dhcp
+│   ├── dhcp
+│   │   └── interface <interface>
+│   └── dhcpv6
 │       └── interface <interface>
 ├── rename
 │   └── system
 │       └── image <name>
 │           └── to <name>
 ├── renew
-│   └── dhcp
+│   ├── dhcp
+│   │   └── interface <interface>
+│   └── dhcpv6
 │       └── interface <interface>
 ├── restart
 │   └── container [<name>]
@@ -12751,6 +12815,10 @@ operational mode
 │   │           ├── leases
 │   │           ├── listeners
 │   │           └── pools
+│   ├── dhcpv6-client
+│   │   ├── detail
+│   │   └── interface <interface>
+│   │       └── detail
 │   ├── dhcpv6-server
 │   │   ├── leases
 │   │   ├── listeners

@@ -20,15 +20,16 @@ from nvyr.errors import RecoveryError, RouterError, ValidationError
 from nvyr.storage import atomic_json, sync_directory
 from nvyr.helpers.netlink import TYPES, interface_name, normalize, read_attributes
 from nvyr.helpers.dhcp_options import lease_routes, lease_spec
-from nvyr.helpers import interface_ip, kernel_settings
+from nvyr.helpers import interface_ip, ipv6_ra, kernel_settings
 from nvyr.helpers.kernel_settings_map import SETTINGS
 
 log = logging.getLogger(__name__)
 
 
 class Manager:
-    def __init__(self, kernel, dhcp, directory='/var/lib/nvyr-netlink', *, boot=None, naming=None, types=None):
+    def __init__(self, kernel, dhcp, directory='/var/lib/nvyr-netlink', *, boot=None, naming=None, types=None, dhcp6=None, ra=None):
         self.kernel, self.dhcp = kernel, dhcp
+        self.dhcp6, self.ra = dhcp6, ra
         self.types = TYPES if types is None else types
         self.path = Path(directory) / 'state.json'
         self.updates = self.path.with_name('records.jsonl')
@@ -131,6 +132,19 @@ class Manager:
         self.indices = {rec['index']: name for name, rec in self.state['records'].items()}
         self.dhcp_names = {name for owner, links in self.state['owners'].items() for name, spec in links.items()
                            if spec['dhcp4'] and not spec['disabled'] and owner not in self.state['pending']}
+        self.pd_sources = {}
+        for owner, links in self.state['owners'].items():
+            for wan, spec in links.items():
+                if not spec.get('dhcp6') or spec['disabled'] or owner in self.state['pending']:
+                    continue
+                self.dhcp_names.add(wan)
+                for request in spec['dhcp6']['requests'].values():
+                    for lan in request['interface']:
+                        self.pd_sources.setdefault(lan, set()).add(wan)
+                        self.dhcp_names.add(lan)
+        # Include former LANs until their last delegated address has been withdrawn.
+        self.dhcp_names.update(name for name, record in self.state['records'].items()
+                               if record.get('dhcp6-addresses') and name in self.claims)
         self.dependents = {}
 
         for owner, links in self.state['owners'].items():
@@ -160,6 +174,8 @@ class Manager:
             event = message.get('event', '')
             if event in ('RTM_NEWLINK', 'RTM_DELLINK'):
                 name = message.get_attr('IFLA_IFNAME')
+                if event == 'RTM_DELLINK' and self.ra:
+                    self.ra.forget(message['index'])
                 old_name = self.indices.get(message['index'])
                 if old_name and old_name != name:
                     names.add(old_name)  # Rename away from an owned name.
@@ -199,15 +215,15 @@ class Manager:
         if not isinstance(owner, str) or not re.fullmatch('[a-z][a-z0-9-]{0,63}', owner):
             raise ValidationError('Invalid interface configuration owner')
 
-    def dhcp_control(self, name, action):
+    def dhcp_control(self, name, action, *, family=4):
         """Serialize client signals with interface commits and recovery."""
         interface_name(name)
         if self.state['pending']:
             raise RouterError('Interface recovery is required before controlling DHCP clients')
 
         definition = next((links[name] for links in self.state['owners'].values() if name in links), None)
-        if not definition or not definition['dhcp4'] or definition['disabled']:
-            raise RouterError(f'{name}: DHCPv4 is not enabled on this interface')
+        if not definition or not definition.get(f'dhcp{family}') or definition['disabled']:
+            raise RouterError(f'{name}: DHCPv{family} is not enabled on this interface')
 
         with self.kernel.snapshot():
             device = self.kernel.device(name)
@@ -215,7 +231,10 @@ class Manager:
             if not device or not record or device['index'] != record['index']:
                 raise RouterError(f'{name}: managed interface is absent or has been replaced')
 
-            self.dhcp.control(name, action, device['index'], device['attributes']['mac'])
+            if family == 6:
+                self.dhcp6.control(name, action)
+            else:
+                self.dhcp.control(name, action, device['index'], device['attributes']['mac'])
 
     def validate(self, owner, links, *, recovery=False, require_external=True):
         self._owner(owner)
@@ -368,6 +387,9 @@ class Manager:
         for name in names:
             record = records[name]
             self.dhcp.stop(name)
+            if self.dhcp6:
+                self.dhcp6.stop(name)
+                ipv6_ra.advertise(name, [])
             device = self.kernel.device(name)
             if device:
                 if driver.virtual and (device['index'] != record['index'] or not driver.matches(device)):
@@ -450,11 +472,16 @@ class Manager:
         if missing:
             if allow_missing:
                 self.dhcp.stop(name)
+                if self.dhcp6:
+                    self.dhcp6.stop(name)
                 return
             raise ValidationError(f'{name}: missing dependency {missing[0]}')
 
         if device is None:
             self.dhcp.stop(name)
+            if self.dhcp6:
+                self.dhcp6.stop(name)
+                ipv6_ra.advertise(name, [])
 
             if not driver.virtual:
                 if allow_missing:
@@ -519,9 +546,38 @@ class Manager:
         # DHCP expiration merely because the lease uses another spelling.
         static_lease = lease and any(ipaddress.ip_interface(value) == ipaddress.ip_interface(lease['address'])
                                      for value in spec['addresses'])
+        lifetimes, advertised = {}, []
+        if self.dhcp6:
+            if spec.get('dhcp6') and not spec['disabled']:
+                self.kernel.state(name, True)
+                self.dhcp6.start(name, device['index'], spec['dhcp6'], spec['attributes'].get('vrf', ''))
+                current = self.dhcp6.observation(name, device['index'])
+                for entry in current.get('entries', ()):
+                    if entry['type'] == 'IA_NA':
+                        lifetimes[entry['prefix']] = entry
+            else:
+                self.dhcp6.stop(name)
+            if not spec['disabled']:
+                for wan in self.pd_sources.get(name, ()):
+                    source = self.kernel.device(wan)
+                    if source:
+                        status = self.dhcp6.observation(wan, source['index'])
+                        advertised.extend(item for item in status.get('lans', ()) if item['interface'] == name)
+            lifetimes.update({item['address']: item for item in advertised})
+            for static in addresses:
+                lifetimes.pop(static, None)
+            addresses.extend(lifetimes)
+
         self.kernel.set_addresses(name, addresses, disabled=spec['disabled'],
+                                  **({'lifetimes': lifetimes, 'previous6': record.get('dhcp6-addresses', ())}
+                                     if lifetimes or record.get('dhcp6-addresses') else {}),
                                   lease=lease if not static_lease else None, ip_options=spec['ip-options'])
         self.kernel.state(name, not spec['disabled'])
+        if self.dhcp6:
+            if sorted(lifetimes) != record.get('dhcp6-addresses', []):
+                record['dhcp6-addresses'] = sorted(lifetimes)
+                self.save_record(name)
+            ipv6_ra.advertise(name, advertised)
 
         if lease:
             routes = lease_routes(lease, spec['dhcp-options'])
@@ -720,6 +776,29 @@ class Manager:
                 self.failures['DNS'] = message
 
         self.error = '; '.join(sorted(set(self.failures.values()))) or None
+
+    def ipv6_dns(self, name):
+        owner = self.claims.get(name)
+        spec = self.state['owners'].get(owner, {}).get(name, {})
+        if not spec or spec['disabled'] or owner in self.state['pending']:
+            return []
+        device = self.kernel.device(name)
+        if not device or self.state['records'].get(name, {}).get('index') != device['index']:
+            return []
+        records = []
+        if self.dhcp6 and spec.get('dhcp6'):
+            lease = self.dhcp6.observation(name, device['index'])
+            options = spec['dhcp6']['options']
+            if 'no-request-dns' not in options:
+                for value in lease.get('dns', ()):
+                    address = ipaddress.IPv6Address(value)
+                    server = f'{address}%{name}' if address.is_link_local else str(address)
+                    records.append(dict(server=server, source='DHCPv6', interface=name))
+            if 'no-request-domain-search' not in options:
+                records.extend(dict(domain=value, source='DHCPv6', interface=name) for value in lease.get('search', ()))
+        if self.ra and {'autoconf', 'accept-router-advertisements'} & spec['ip-options'].get('ipv6', {}).keys():
+            records.extend(self.ra.records(device['index'], name))
+        return records
 
     def dns_servers(self, name):
         """Only current, enabled, owned DHCP interfaces contribute resolver data."""

@@ -179,7 +179,7 @@ def test_multicast_default_retains_native_quarter_interval():
 @pytest.mark.parametrize('command', [
     'set interfaces bridge br0 member interface dum1 spanning-tree priority 64',
     'set interfaces bridge br0 member interface dum1 spanning-tree cost 65536',
-    'set interfaces bridge br0 address dhcpv6',
+    'set interfaces bridge br0 address dhcpv7',
     'set interfaces bridge br0 spanning-tree forward-delay 1s',
     'set interfaces bridge br0 spanning-tree max-age 5s',
     'set interfaces bridge br0 static-mac ff:ff:ff:ff:ff:ff interface dum1',

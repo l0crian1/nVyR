@@ -227,3 +227,31 @@ children:
             kind: node
             description: Received lease information and local installation state
             command: ['dhcp.nvyr.op', 'show', '--interface', '@4', '--detail']
+
+  dhcpv6-client:
+    kind: node
+    description: DHCPv6 client leases and runtime state
+    command: ['dhcp6.nvyr.op', 'show']
+    children:
+
+      detail:
+        kind: node
+        description: Received lease information and local installation state
+        command: ['dhcp6.nvyr.op', 'show', '--detail']
+
+      interface:
+        kind: tag_node
+        description: Inspect a DHCPv6 client interface
+        validators:
+          regex: {pattern: '[a-zA-Z][a-zA-Z0-9_.-]{0,14}'}
+        suggestors:
+          interfaces: {}
+        hints:
+          interface: DHCPv6 client interface
+        command: ['dhcp6.nvyr.op', 'show', '--interface', '@4']
+        children:
+
+          detail:
+            kind: node
+            description: Received lease information and local installation state
+            command: ['dhcp6.nvyr.op', 'show', '--interface', '@4', '--detail']

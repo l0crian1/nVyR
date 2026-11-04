@@ -43,6 +43,11 @@ def servers(raw: bool = False):
         print(tabulate(rows, headers=['Server', 'Source', 'Interface', 'VRF'], disable_numparse=True))
     else:
         print('No system name servers published.')
+    if observation.get('search'):
+        print()
+        rows = [(r['domain'], r['source'], r['interface'], domains.get(r['interface']))
+                for r in observation['search']]
+        print(tabulate(rows, headers=['Search domain', 'Source', 'Interface', 'VRF']))
     if observation['pending']:
         print('Warning: DNS configuration recovery is pending; showing the published servers.')
     if observation['error']:
@@ -63,8 +68,8 @@ def query(name, record_type=None, server=None):
         types = ['PTR']
     else:
         try:
-            query_name = dns.name.from_text(name)
-            query_name.to_wire()
+            query_name = dns.name.from_text(name, origin=None if server is None and '.' not in name else dns.name.root)
+            query_name.to_wire(origin=dns.name.root)
         except (dns.exception.DNSException, UnicodeError, ValueError) as error:
             raise OperationalError(f'Invalid DNS name: {error}') from None
         types = [record_type.upper()] if record_type else ['A', 'AAAA']
@@ -87,7 +92,7 @@ def query(name, record_type=None, server=None):
     for selected in types:
         started = time.monotonic()
         try:
-            answer = client.resolve(query_name, selected, search=False, raise_on_no_answer=False)
+            answer = client.resolve(query_name, selected, search=not query_name.is_absolute(), raise_on_no_answer=False)
         except dns.resolver.NXDOMAIN:
             raise OperationalError(f'{name}: name does not exist (NXDOMAIN).') from None
         except dns.exception.Timeout:

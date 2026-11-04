@@ -82,13 +82,14 @@ def capture():
     conntrack = json.loads(cmd(['nft', '-s', '-n', '-j', 'list', 'table', 'inet', 'nvyr_vrf_conntrack']))
     vrfs = [link['ifname'] for link in json.loads(cmd(['ip', '-j', '-d', 'link', 'show', 'type', 'vrf']))]
     return {'firewall': firewall(nftables), 'vrf_conntrack': vrf_conntrack(conntrack, vrfs),
+            'dhcpv6_duid': json.loads(cmd(['dhcp6.nvyr.op', 'show', '--interface', 'br994', '--raw']))['br994']['duid'],
             'routing': routing(cmd(['vtysh', '-c', 'show running-config']))}
 
 
 def compare(before, after):
     """Produce separate failures and a bounded diff while retaining full snapshots on disk."""
     results = []
-    for subsystem in ('firewall', 'routing', 'vrf_conntrack'):
+    for subsystem in ('firewall', 'routing', 'vrf_conntrack', 'dhcpv6_duid'):
         previous = before[subsystem]
         current = after[subsystem]
         if subsystem == 'routing':

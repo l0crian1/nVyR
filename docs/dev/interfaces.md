@@ -121,6 +121,17 @@ Native behavior follows the [Linux IP sysctl documentation](https://docs.kernel.
 
 Live feature tests: `python3 /usr/lib/nvyr/smoketests/test_interface_ip.py`.
 
+## DHCPv6 and prefix delegation
+
+The DHCPv6 client runs one dhcpcd process per uplink. Its configuration disables
+native address installation and RA processing. netlinkd owns both the WAN
+addresses and delegated LAN addresses, and supplies their preferred and valid
+lifetimes to the kernel. Keep the original Reply when decoding associations:
+dhcpcd's flattened hook variables lose IAID ownership when an ISP returns
+multiple delegations. The hook fences each event against the client's generation.
+Each LAN receives a radvd configuration assembled from all current grants.
+Persist generated DUIDs below /config/dhcpv6 and keep lease state under /run.
+
 ## DHCPv4
 
 The image installs BusyBox `udhcpc`. It handles discovery, renewal, rebinding and

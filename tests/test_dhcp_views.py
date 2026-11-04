@@ -261,6 +261,7 @@ def test_client_observation_failure_is_an_operational_error(monkeypatch):
     ('show dhcp-server vrf BLUE listeners', ['dhcp_server.nvyr.op', 'show', '4', 'listeners', '--vrf', 'BLUE']),
     ('show dhcpv6-server vrf BLUE shared-network LAN leases',
      ['dhcp_server.nvyr.op', 'show', '6', 'leases', '--vrf', 'BLUE', '--shared-network', 'LAN']),
+    ('show dhcpv6-client interface eth1 detail', ['dhcp6.nvyr.op', 'show', '--interface', 'eth1', '--detail']),
     ('show dhcp-client', ['dhcp.nvyr.op', 'show']),
     ('show dhcp-client interface eth1 detail', ['dhcp.nvyr.op', 'show', '--interface', 'eth1', '--detail']),
 ])

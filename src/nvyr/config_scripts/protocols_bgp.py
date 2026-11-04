@@ -308,7 +308,7 @@ def verify(configuration, context):
     for values in configuration['interfaces'].values():
         vrf = lookup(values, ('vrf',), 'default')
         addresses = configured_addresses.setdefault(vrf, set())
-        addresses.update(ipaddress.ip_interface(value).ip for value in lookup(values, ('address',), ()) if value != 'dhcp')
+        addresses.update(ipaddress.ip_interface(value).ip for value in lookup(values, ('address',), ()) if value not in ('dhcp', 'dhcpv6'))
 
     skipped_host_check = False
     for vrf, instance in instances.items():

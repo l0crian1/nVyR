@@ -2,7 +2,7 @@ name-server:
   kind: leaf_node
   strip_kind: ip
   multi: true
-  description: System DNS server address or interface providing DHCP DNS
+  description: System DNS server address or interface providing learned DNS
   script:
     name: dns
     priority: 14
@@ -15,4 +15,4 @@ name-server:
   hints:
     x.x.x.x: Static IPv4 DNS server
     x:x:x:x:x:x: Static IPv6 DNS server
-    interface: Use DNS learned through DHCP on this interface
+    interface: Use servers and search domains learned through DHCP or IPv6 RA on this interface

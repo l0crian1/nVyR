@@ -27,6 +27,14 @@ bridge:
           as: null
     add:
 
+      /dhcpv6-options:
+        include_schema:
+        - file: interfaces/dhcpv6-options.yaml.i
+          as: null
+      /dhcpv6-pd:
+        include_schema:
+        - file: interfaces/dhcpv6-pd.yaml.i
+          as: null
       /dhcp-options:
         include_schema:
         - file: interfaces/dhcp-options.yaml.i

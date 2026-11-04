@@ -1,0 +1,8 @@
+[Unit]
+Description=nVyR delegated prefix advertisements on %I
+
+[Service]
+ExecStart=/usr/sbin/radvd -n -m stderr -C /run/nvyr-netlink/pd-ra/%I.conf -p /run/nvyr-netlink/pd-ra/%I.pid
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=2

@@ -67,6 +67,10 @@ def verify(configuration, context):
         if 'vrf' in values and values['vrf'] not in configuration['vrfs']:
             raise ValidationError(f"Interface {name}: VRF {values['vrf']!r} is not configured")
 
+    # A bridge membership or VRF change can invalidate a delegation owned by another script.
+    members = {member for br in bridges.values() for member in lookup(br, ('member', 'interface'), {})}
+    interfaces.verify_pd(inventory, members)
+
     # Child VLAN names and MTUs must fit their parent and kernel limits.
     interfaces.verify_vifs(bridges)
 
@@ -122,7 +126,7 @@ def verify(configuration, context):
 
             profile = inventory[name]
             # L3 configuration belongs on the bridge or its VIF, not on a switched port.
-            if lookup(profile, ('address',), None) or 'vrf' in profile:
+            if any(key in profile for key in ('address', 'vrf', 'dhcpv6-options', 'dhcpv6-pd')):
                 raise ValidationError(f'{member_path}: member cannot have addresses, DHCP or a direct VRF assignment')
 
             # A VLAN must not be handled both by a port VIF and bridge VLAN switching.

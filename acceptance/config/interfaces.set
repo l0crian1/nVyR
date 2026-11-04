@@ -17,6 +17,8 @@ set interfaces virtual-ethernet veth993 peer-name veth994 vrf BOOTLEFT address 1
 set interfaces virtual-ethernet veth994 peer-name veth993
 set interfaces bridge br994 member interface veth994
 set interfaces bridge br994 vrf BOOTRIGHT mac 02:00:00:19:94:01 address dhcp
+set interfaces bridge br994 address dhcpv6
+set interfaces bridge br994 dhcpv6-options rapid-commit
 set interfaces bridge br994 dhcp-options client-id text boot-client
 set interfaces bridge br994 dhcp-options host-name boot-client vendor-class-id nvyr-acceptance user-class boot-lab default-route-distance 210
 

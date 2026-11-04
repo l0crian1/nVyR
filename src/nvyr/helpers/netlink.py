@@ -17,7 +17,7 @@ import socket
 import time
 
 from nvyr.errors import RouterError, ValidationError
-from nvyr.helpers import dhcp_options, vrf_rules, interface_ip
+from nvyr.helpers import dhcp6, dhcp_options, vrf_rules, interface_ip
 
 log = logging.getLogger(__name__)
 
@@ -491,7 +491,7 @@ def normalize(links, types=None):
     for name, spec in links.items():
         interface_name(name)
 
-        if not isinstance(spec, dict) or set(spec) - {'kind', 'attributes', 'addresses', 'dhcp4', 'disabled', 'dhcp-options', 'ip-options'}:
+        if not isinstance(spec, dict) or set(spec) - {'kind', 'attributes', 'addresses', 'dhcp4', 'dhcp6', 'disabled', 'dhcp-options', 'ip-options'}:
             raise ValidationError(f'{name}: invalid link definition')
 
         kind = spec.get('kind')
@@ -530,6 +530,11 @@ def normalize(links, types=None):
                 'dhcp4': spec.get('dhcp4', False), 'disabled': spec.get('disabled', False),
                 'dhcp-options': dhcp_options.normalize(spec.get('dhcp-options', {})),
                 'ip-options': interface_ip.normalize(spec.get('ip-options', {}), addresses=addresses, kind=kind)}
+        if spec.get('dhcp6'):
+            if kind not in {'ethernet', 'bridge', 'vlan'}:
+                raise ValidationError(f'{name}: DHCPv6 requires Ethernet, a bridge or a VIF')
+            dhcp6.verify(name, spec['dhcp6'], item['ip-options'].get('ipv6', {}))
+            item['dhcp6'] = spec['dhcp6']
         result[name] = item
 
     for name, spec in result.items():
@@ -788,14 +793,15 @@ class Kernel:
             prefix = str(ipaddress.ip_interface(f"{value}/{addr['prefixlen']}"))
             cache = addr.get_attr('IFA_CACHEINFO') or {}
             result[prefix] = {'scope': addr['scope'], 'flags': addr.get_attr('IFA_FLAGS') or addr['flags'],
+                              'preferred_lft': cache.get('ifa_preferred', 0xffffffff),
                               'valid_lft': cache.get('ifa_valid', 0xffffffff)}
 
         return result
 
-    def set_addresses(self, name, desired, *, disabled=False, lease=None, ip_options=None):
+    def set_addresses(self, name, desired, *, disabled=False, lease=None, ip_options=None, lifetimes=None, previous6=()):
         """Reconcile a claimed link's addresses while preserving enabled IPv6 link-local.
 
-        Lease lifetimes apply only to the supplied DHCP address. Batched callers
+        Lease lifetimes apply only to addresses supplied with a lease. Batched callers
         record expected addresses here and verify them when flushing the batch.
         """
         # Conversion to kernel address/prefix fields, not CLI value validation.
@@ -820,6 +826,7 @@ class Kernel:
             dynamic = not state['flags'] & 128 or state['flags'] & 0x101
             temporary = state['flags'] & 1
             keep_dynamic = (is_ipv6 and dynamic and 'autoconf' in ipv6 and not disabled
+                            and prefix not in previous6
                             and (not temporary or ipv6.get('temporary-addresses', 'disable') != 'disable'))
             if prefix not in desired and not keep_local and not keep_dynamic:
                 value = ipaddress.ip_interface(prefix)
@@ -863,13 +870,21 @@ class Kernel:
             # pyroute2 encodes lifetimes through IFA_CACHEINFO. Top-level
             # valid_lft/preferred_lft are silently ignored, leaving a permanent
             # address and causing an endless replace/notification repair loop.
-            lifetime = {'cacheinfo': {'valid': seconds, 'preferred': seconds}}
+            preferred = seconds
+            if lifetimes and prefix in lifetimes:
+                expires = lifetimes[prefix]
+                now = time.monotonic()
+                seconds = max(1, int(expires['valid'] - now))
+                preferred = max(0, min(seconds, int(expires['preferred'] - now)))
+            lifetime = {'cacheinfo': {'valid': seconds, 'preferred': preferred}}
 
             if value.version == 4 and value.network.prefixlen < 31:
                 lifetime['broadcast'] = str(value.network.broadcast_address)
 
             # Refresh on lease renewal, not on our own address notifications.
-            if prefix not in current or abs(current[prefix]['valid_lft'] - seconds) > 2:
+            if (prefix not in current or abs(current[prefix]['valid_lft'] - seconds) > 2
+                    or (lifetimes and prefix in lifetimes and
+                        abs(current[prefix]['preferred_lft'] - preferred) > 2)):
                 log.debug('%s: install address %s (lifetime %s)', name, prefix, seconds)
 
                 if self._addresses is not None:

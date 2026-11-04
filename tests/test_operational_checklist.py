@@ -92,6 +92,8 @@ def test_all_command_permissions_follow_operational_contract(controller, role):
     ('update firewall geoip', ['geoip.nvyr.op', 'update'], True),
     ('restart container DNS', ['containers.nvyr.op', 'restart', 'DNS'], True),
     ('update container image container DNS', ['containers.nvyr.op', 'update_container', 'DNS'], True),
+    ('release dhcpv6 interface eth1', ['dhcp6.nvyr.op', 'release', 'eth1'], False),
+    ('renew dhcpv6 interface eth1', ['dhcp6.nvyr.op', 'renew', 'eth1'], False),
     ('release dhcp interface eth1', ['dhcp.nvyr.op', 'release', 'eth1'], False),
     ('renew dhcp interface eth1', ['dhcp.nvyr.op', 'renew', 'eth1'], False),
 ])

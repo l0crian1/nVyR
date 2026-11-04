@@ -8,7 +8,7 @@ import socket
 
 from nvyr.errors import RecoveryError, RouterError, ValidationError
 from nvyr.helpers.process import cmd
-from nvyr.helpers import dhcp_options, interface_ip
+from nvyr.helpers import dhcp6, dhcp_options, interface_ip
 from nvyr.tree import lookup
 
 
@@ -128,6 +128,7 @@ class Link:
     link_group: int = 0
     dhcp_options: dict = field(default_factory=dict)
     ip_options: dict = field(default_factory=dict)
+    dhcp6: dict = field(default_factory=dict)
 
 
 def settings(configuration):
@@ -136,13 +137,17 @@ def settings(configuration):
 
     for name, values in configuration.items():
         addresses = tuple(dict.fromkeys(str(ipaddress.ip_interface(value))
-                                       for value in values.get('address', ()) if value != 'dhcp'))
+                                       for value in values.get('address', ()) if value not in ('dhcp', 'dhcpv6')))
+        client6 = dhcp6.configuration(values)
+        ip_options = interface_ip.format_options({key: values[key] for key in ('ip', 'ipv6') if key in values})
+        if client6:
+            ip_options.setdefault('ipv6', {})['accept-router-advertisements'] = True
         result[name] = Link(name, addresses, 'dhcp' in values.get('address', ()), 'disable' in values,
                             values.get('mac', '').lower() or None,
                             int(values['mtu']) if 'mtu' in values else None, values.get('description'),
                             values.get('vrf', ''), int(values.get('link-group', 0)),
                             dhcp_options.format_options(values.get('dhcp-options', {})),
-                            interface_ip.format_options({key: values[key] for key in ('ip', 'ipv6') if key in values}))
+                            ip_options, client6)
 
     return result
 
@@ -154,6 +159,34 @@ def bridge_members(configuration):
         for member in lookup(bridge, ('member', 'interface'), {})}
 
 
+def verify_pd(inventory, bridge_members):
+    associations = {}
+    for wan, values in inventory.items():
+        duid = lookup(values, ('dhcpv6-options', 'duid'), '').lower()
+        if duid:
+            ids = [('PD', key) for key in lookup(values, ('dhcpv6-pd',), {})]
+            if 'dhcpv6' in lookup(values, ('address',), ()):
+                ids.append(('NA', '0'))
+            for kind, key in ids:
+                # An ISP indexes a binding by client identifier, IA type and IAID.
+                other = associations.setdefault((duid, kind, key), wan)
+                if other != wan:
+                    raise ValidationError(f'{wan} and {other} use the same DHCPv6 DUID and IA_{kind} {key}')
+        for key, pd in lookup(values, ('dhcpv6-pd',), {}).items():
+            for lan in lookup(pd, ('interface',), {}):
+                target = inventory.get(lan)
+                # Only managed L3 interfaces can advertise and withdraw a delegated LAN.
+                if target is None or lan == 'lo' or lan in bridge_members:
+                    raise ValidationError(f'{wan} PD {key}: {lan} must be a configured routed interface')
+                # A delegated prefix must route back through its requesting instance.
+                if lookup(target, ('vrf',), '') != lookup(values, ('vrf',), ''):
+                    raise ValidationError(f'{wan} PD {key}: {lan} must belong to the same VRF as {wan}')
+                # Advertisements require an IPv6 link-local source on the LAN.
+                ipv6 = lookup(target, ('ipv6',), {})
+                if 'disable' in ipv6 or ('no-default-link-local' in ipv6 and 'link-local-address' not in ipv6):
+                    raise ValidationError(f'{wan} PD {key}: {lan} needs IPv6 link-local addressing')
+
+
 def verify_membership(configuration, *, vrfs, bridge_members):
     for name, values in instances(configuration):
         # Membership must resolve in the proposed configuration, including new VRFs.
@@ -162,7 +195,8 @@ def verify_membership(configuration, *, vrfs, bridge_members):
 
         # A switched port cannot acquire L3 or child VLAN configuration through its own owner.
         if name in bridge_members and (values.get('address') or 'vrf' in values or values.get('vif')
-                                       or values.get('ip') or values.get('ipv6')):
+                                       or values.get('ip') or values.get('ipv6') or values.get('dhcpv6-pd')
+                                       or values.get('dhcpv6-options')):
             raise ValidationError(f'Interface {name}: bridge member cannot have addresses, DHCP, VRF, VIFs or IP options')
 
 
@@ -245,6 +279,7 @@ class NetlinkManager:
         return {name: {'kind': kind, 'addresses': list(link.addresses), 'dhcp4': link.dhcp,
                        'disabled': link.disabled, 'dhcp-options': link.dhcp_options,
                        'ip-options': link.ip_options,
+                       **({'dhcp6': link.dhcp6} if link.dhcp6 else {}),
                        'attributes': {'vrf': link.vrf, 'link-group': link.link_group}
                                      | {key: getattr(link, key) for key in ('mac', 'mtu', 'description')
                                         if getattr(link, key) is not None}}

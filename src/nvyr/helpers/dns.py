@@ -13,9 +13,10 @@ log = logging.getLogger(__name__)
 
 
 class Resolver:
-    def __init__(self, directory, learned, *, boot, path='/run/nvyr-resolver/resolv.conf'):
+    def __init__(self, directory, learned, *, boot, path='/run/nvyr-resolver/resolv.conf', ipv6=None):
         self.journal = Path(directory) / 'dns.json'
         self.path, self.learned = Path(path), learned
+        self.ipv6 = ipv6
         self.published = None
         self.state = json.loads(self.journal.read_text()) if self.journal.exists() else {}
 
@@ -41,20 +42,25 @@ class Resolver:
                 for value in self.learned(source):
                     learned.append({'server': str(ipaddress.ip_address(value)), 'source': 'DHCP', 'interface': source})
 
+                if self.ipv6:
+                    learned.extend(self.ipv6(source))
+
         # Keep static servers first, then interface/lease order. Canonical addresses
         # prevent alternate IPv6 spellings or shared leases from adding duplicates.
         unique = {}
         for record in static + learned:
-            unique.setdefault(record['server'], record)
+            key = ('server', record['server']) if 'server' in record else ('domain', record['domain'].lower())
+            unique.setdefault(key, record)
 
         return list(unique.values())
 
     def servers(self, sources):
-        return [record['server'] for record in self.records(sources)]
+        return [record['server'] for record in self.records(sources) if 'server' in record]
 
     def publish(self, sources):
         records = self.records(sources)
-        text = render('system/resolv.conf.j2', {'servers': [record['server'] for record in records]})
+        text = render('system/resolv.conf.j2', {'servers': [r['server'] for r in records if 'server' in r],
+                                               'search': [r['domain'] for r in records if 'domain' in r]})
         if not self.path.exists() or self.path.read_text() != text:
             write(self.path, text, mode=0o644)
 
@@ -65,16 +71,20 @@ class Resolver:
         records = self.published
         if records is None:
             records = self.records(self.state['sources'])
-        metadata = {record['server']: record for record in records}
+        metadata = {record['server']: record for record in records if 'server' in record}
+        domains = {record['domain']: record for record in records if 'domain' in record}
+        search = []
         result = []
 
         for line in self.path.read_text().splitlines():
             fields = line.split()
+            if fields and fields[0] == 'search':
+                search.extend(domains.get(value, dict(domain=value, source='Unknown', interface=None)) for value in fields[1:])
             if fields and fields[0] == 'nameserver':
                 server = str(ipaddress.ip_address(fields[1]))
                 result.append(metadata.get(server, {'server': server, 'source': 'Unknown', 'interface': None}))
 
-        return {'servers': result, 'pending': 'pending' in self.state}
+        return {'servers': result, 'pending': 'pending' in self.state, **({'search': search} if search else {})}
 
     def replace(self, sources, *, recovery=False):
         # IPC shape only; CLI values are validated before generate().

@@ -360,6 +360,9 @@ def check_dhcp_ha(options):
 
 def check_dhcp_client_lease(options):
     """A configured client must obtain its reservation from the configured server."""
+    client = json.loads(cmd(['dhcp6.nvyr.op', 'show', '--interface', 'br994', '--raw']))['br994']
+    assert_equal(client['vrf'], 'BOOTRIGHT')
+    assert client['duid'].startswith('00:04:')
     lease = assert_dhcp_lease('br994')
     assert_equal(lease['address'], '198.18.193.50/24')
     assert_dhcp_default_route('br994', distance=210)

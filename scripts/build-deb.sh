@@ -123,7 +123,7 @@ install -m 0644 "$repository/packaging/nvyr-interface-naming.service" "$stage/us
 install -D -m 0644 "$repository/packaging/70-nvyr-ethernet.rules" "$stage/usr/lib/udev/rules.d/70-nvyr-ethernet.rules"
 install -D -m 0644 "$repository/packaging/10-nvyr-ethernet.link" "$stage/usr/lib/systemd/network/10-nvyr-ethernet.link"
 
-for entry in 'nvyr-kernel-settings nvyr.helpers.kernel_settings main' 'nvyr-netlinkd nvyr.netlink_daemon main' 'nvyr-dhcp4 nvyr.helpers.dhcp client_main' 'nvyr-dhcp4-hook nvyr.helpers.dhcp hook_main' 'nvyr-kea nvyr.helpers.kea main' 'nvyr-dhcp-hosts nvyr.helpers.dhcp_hosts main' 'nvyr-logging nvyr.helpers.logging_runtime main'; do
+for entry in 'nvyr-kernel-settings nvyr.helpers.kernel_settings main' 'nvyr-netlinkd nvyr.netlink_daemon main' 'nvyr-dhcp6 nvyr.helpers.dhcp6 client_main' 'nvyr-dhcp6-hook nvyr.helpers.dhcp6 hook_main' 'nvyr-dhcp4 nvyr.helpers.dhcp client_main' 'nvyr-dhcp4-hook nvyr.helpers.dhcp hook_main' 'nvyr-kea nvyr.helpers.kea main' 'nvyr-dhcp-hosts nvyr.helpers.dhcp_hosts main' 'nvyr-logging nvyr.helpers.logging_runtime main'; do
     set -- $entry
     printf '%s\n' '#!/usr/bin/python3' "from $2 import $3" "$3()" > "$stage/usr/bin/$1"
     chmod 0755 "$stage/usr/bin/$1"
@@ -137,6 +137,9 @@ install -D -m 0644 "$repository/packaging/20-nvyr-journal.conf" "$stage/usr/lib/
 
 install -m 0644 "$repository/packaging/nvyr-netlinkd.service" "$stage/usr/lib/systemd/system/nvyr-netlinkd.service"
 install -m 0644 "$repository/packaging/nvyr-resolver-init.service" "$stage/usr/lib/systemd/system/nvyr-resolver-init.service"
+for unit in nvyr-dhcp6@.service nvyr-pd-ra@.service; do
+    install -m 0644 "$repository/packaging/$unit" "$stage/usr/lib/systemd/system/$unit"
+done
 install -m 0644 "$repository/packaging/nvyr-dhcp4@.service" "$stage/usr/lib/systemd/system/nvyr-dhcp4@.service"
 install -m 0644 "$repository/packaging/nvyr-configd.service" "$stage/usr/lib/systemd/system/nvyr-configd.service"
 install -m 0644 "$repository/packaging/nvyr-geoip-update.service" "$stage/usr/lib/systemd/system/nvyr-geoip-update.service"

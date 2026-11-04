@@ -13,6 +13,7 @@ import struct
 import time
 
 from nvyr.errors import RecoveryError, RouterError, ValidationError
+from nvyr.helpers import dhcp6, ipv6_ra
 from nvyr.helpers.dhcp import DHCP
 from nvyr.helpers.dns import Resolver
 from nvyr.helpers.interfaces import require_named
@@ -55,6 +56,8 @@ class Schedule:
 
         if now >= self.maintenance:
             names.update(manager.dhcp_names)
+            if getattr(manager, 'ra', None) and manager.ra.expire(now) and not names:
+                manager.reconcile_dns()
             self.maintenance = now + 2
 
         if retry:
@@ -104,6 +107,9 @@ def receive_events(events, marshal, manager, schedule):
             schedule.lost(time.monotonic())
             continue
 
+        if getattr(manager, 'ra', None) and manager.ra.receive(data):
+            manager.reconcile_dns()
+
         try:
             messages = list(marshal.parse(data))
             if any(m.get('header', {}).get('type') == 4 or m.get('header', {}).get('error') for m in messages):
@@ -132,6 +138,23 @@ def dispatch(manager, request):
         result = manager.resolver.observation()
         result['error'] = manager.failures.get('DNS')
         return result
+
+    if operation == 'dhcp6-status':
+        result = {}
+        for name, owner in manager.claims.items():
+            spec = manager.state['owners'][owner][name]
+            if spec.get('dhcp6'):
+                device = manager.kernel.device(name)
+                current = manager.dhcp6.observation(name, device['index']) if device and not spec['disabled'] else {}
+                result[name] = dict(current, vrf=spec['attributes'].get('vrf') or 'default',
+                                    disabled=spec['disabled'], address=spec['dhcp6']['address'],
+                                    requests=list(spec['dhcp6']['requests']),
+                                    released=dhcp6.read(dhcp6.ROOT / name / 'client.json').get('released', False))
+        return result
+
+    if operation in ('dhcp6-release', 'dhcp6-renew'):
+        manager.dhcp_control(request.get('interface'), operation.removeprefix('dhcp6-'), family=6)
+        return {}
 
     if operation in ('dhcp-release', 'dhcp-renew'):
         manager.dhcp_control(request.get('interface'), operation.removeprefix('dhcp-'))
@@ -214,7 +237,7 @@ class Server:
                 # Subscribe before the initial audit so changes during a dump
                 # remain queued. Do not suppress ENOBUFS notification loss.
                 events.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 4 * 1024 * 1024)
-                events.bind((0, 1 | 0x10 | 0x40 | 0x100 | 0x400))
+                events.bind((0, 1 | 0x10 | 0x40 | 0x100 | 0x400 | (1 << 19)))
                 events.setblocking(False)
                 selector.register(listener, selectors.EVENT_READ, 'client')
                 selector.register(events, selectors.EVENT_READ, 'kernel')
@@ -259,8 +282,10 @@ def main():
     logging.getLogger('pyroute2').setLevel(logging.WARNING)
 
     kernel = Kernel()
-    manager = Manager(kernel, DHCP(), args.state_dir, naming=require_named)
-    manager.resolver = Resolver(args.state_dir, manager.dns_servers, boot=manager.boot, path=args.resolver_file)
+    manager = Manager(kernel, DHCP(), args.state_dir, naming=require_named,
+                      dhcp6=dhcp6.Client(), ra=ipv6_ra.Learned(dhcp6.ROOT.parent / 'ra-dns.json'))
+    manager.resolver = Resolver(args.state_dir, manager.dns_servers, boot=manager.boot,
+                                path=args.resolver_file, ipv6=manager.ipv6_dns)
     server = Server(manager, args.socket)
 
     def stop(signum, frame):

@@ -13,6 +13,7 @@ def get_config(context):
         'previous': lookup(context.previous, ROOT, {}),
         'vrfs': lookup(context.effective, ('vrf', 'name'), {}),
         'bridge_members': interfaces.bridge_members(context.effective),
+        'inventory': dict(interfaces.configured(context.effective)),
     }
 
 
@@ -32,6 +33,9 @@ def verify(configuration, context):
     # VRFs must exist in the proposed configuration; switched ports cannot own L3 settings.
     interfaces.verify_membership(endpoints, vrfs=configuration['vrfs'],
                                  bridge_members=configuration['bridge_members'])
+
+    # Delegated LANs must be routable from the uplink in the candidate topology.
+    interfaces.verify_pd(configuration['inventory'], configuration['bridge_members'])
 
     # Child VLAN names and MTUs must fit their parent and kernel limits.
     interfaces.verify_vifs(endpoints)

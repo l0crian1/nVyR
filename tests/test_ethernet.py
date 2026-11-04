@@ -11,7 +11,7 @@ from nvyr.helpers import interfaces
 from nvyr.tree import ReadOnlyTree, lookup
 
 
-@pytest.mark.parametrize('value', ['dhcp', '192.0.2.1', '192.0.2.1/24', '2001:db8::1', '2001:db8::1/64'])
+@pytest.mark.parametrize('value', ['dhcp', 'dhcpv6', '192.0.2.1', '192.0.2.1/24', '2001:db8::1', '2001:db8::1/64'])
 def test_ethernet_address_forms(controller, session, value):
     controller.execute('set interfaces ethernet eth0 address ' + value, session)
 

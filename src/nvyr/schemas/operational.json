@@ -189,6 +189,42 @@
               ]
             }
           }
+        },
+        "dhcpv6": {
+          "kind": "node",
+          "description": "Release a DHCPv6 client lease",
+          "children": {
+            "interface": {
+              "kind": "leaf_node",
+              "description": "Interface whose DHCPv6 lease should be released",
+              "command": {
+                "argv": [
+                  "dhcp6.nvyr.op",
+                  "release",
+                  "@4"
+                ]
+              },
+              "validators": {
+                "mode": "AND",
+                "checks": {
+                  "regex": {
+                    "name": "regex",
+                    "args": {
+                      "pattern": "[a-zA-Z][a-zA-Z0-9_.-]{0,14}"
+                    }
+                  }
+                }
+              },
+              "hints": {
+                "interface": "DHCPv6 client interface"
+              },
+              "suggestors": [
+                {
+                  "name": "interfaces"
+                }
+              ]
+            }
+          }
         }
       }
     },
@@ -224,6 +260,42 @@
               },
               "hints": {
                 "interface": "DHCPv4 client interface"
+              },
+              "suggestors": [
+                {
+                  "name": "interfaces"
+                }
+              ]
+            }
+          }
+        },
+        "dhcpv6": {
+          "kind": "node",
+          "description": "Renew or acquire a DHCPv6 client lease",
+          "children": {
+            "interface": {
+              "kind": "leaf_node",
+              "description": "Interface whose DHCPv6 lease should be renewed",
+              "command": {
+                "argv": [
+                  "dhcp6.nvyr.op",
+                  "renew",
+                  "@4"
+                ]
+              },
+              "validators": {
+                "mode": "AND",
+                "checks": {
+                  "regex": {
+                    "name": "regex",
+                    "args": {
+                      "pattern": "[a-zA-Z][a-zA-Z0-9_.-]{0,14}"
+                    }
+                  }
+                }
+              },
+              "hints": {
+                "interface": "DHCPv6 client interface"
               },
               "suggestors": [
                 {
@@ -13603,6 +13675,75 @@
                   "command": {
                     "argv": [
                       "dhcp.nvyr.op",
+                      "show",
+                      "--interface",
+                      "@4",
+                      "--detail"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "dhcpv6-client": {
+          "kind": "node",
+          "description": "DHCPv6 client leases and runtime state",
+          "command": {
+            "argv": [
+              "dhcp6.nvyr.op",
+              "show"
+            ]
+          },
+          "children": {
+            "detail": {
+              "kind": "node",
+              "description": "Received lease information and local installation state",
+              "command": {
+                "argv": [
+                  "dhcp6.nvyr.op",
+                  "show",
+                  "--detail"
+                ]
+              }
+            },
+            "interface": {
+              "kind": "tag_node",
+              "description": "Inspect a DHCPv6 client interface",
+              "validators": {
+                "mode": "AND",
+                "checks": {
+                  "regex": {
+                    "name": "regex",
+                    "args": {
+                      "pattern": "[a-zA-Z][a-zA-Z0-9_.-]{0,14}"
+                    }
+                  }
+                }
+              },
+              "suggestors": [
+                {
+                  "name": "interfaces"
+                }
+              ],
+              "hints": {
+                "interface": "DHCPv6 client interface"
+              },
+              "command": {
+                "argv": [
+                  "dhcp6.nvyr.op",
+                  "show",
+                  "--interface",
+                  "@4"
+                ]
+              },
+              "children": {
+                "detail": {
+                  "kind": "node",
+                  "description": "Received lease information and local installation state",
+                  "command": {
+                    "argv": [
+                      "dhcp6.nvyr.op",
                       "show",
                       "--interface",
                       "@4",

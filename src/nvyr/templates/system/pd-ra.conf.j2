@@ -1,0 +1,13 @@
+interface {{ interface }} {
+    AdvSendAdvert on;
+{% for item in prefixes %}
+    prefix {{ item.prefix }} {
+        AdvOnLink on;
+        AdvAutonomous on;
+        AdvValidLifetime {{ item.valid }};
+        AdvPreferredLifetime {{ item.preferred }};
+        DecrementLifetimes on;
+        DeprecatePrefix on;
+    };
+{% endfor %}
+};

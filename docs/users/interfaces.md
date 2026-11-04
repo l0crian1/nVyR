@@ -184,8 +184,58 @@ receiving a new lease still depends on the server.
 
 The configuration remains unchanged. A released client stays released during
 normal reconciliation, but restarting/recreating that client or rebooting
-resumes acquisition because `address dhcp` is still configured. IPv6 DHCP client
-control remains deferred along with DHCPv6 client support.
+resumes acquisition because `address dhcp` is still configured.
+
+### DHCPv6 client and prefix delegation
+
+Configure each request on the uplink. Ethernet ports, bridges and VIFs can request
+a WAN address, delegated prefixes, or both. This example requests a WAN address
+and two independent delegations from the ISP. Each LAN must already be configured
+in the same VRF as the uplink.
+
+```text
+set interfaces ethernet eth0 address dhcpv6
+set interfaces ethernet eth0 dhcpv6-options rapid-commit
+
+set interfaces ethernet eth0 dhcpv6-pd 0 length 56
+set interfaces ethernet eth0 dhcpv6-pd 0 interface eth1.10 subnet-id 10 address 1
+set interfaces ethernet eth0 dhcpv6-pd 0 interface eth1.20 subnet-id 20 address 254
+
+set interfaces ethernet eth0 dhcpv6-pd 1 length 60
+set interfaces ethernet eth0 dhcpv6-pd 1 interface eth2 subnet-id 0
+
+set system name-server eth0
+```
+
+The number after `dhcpv6-pd` is the IAID sent to the ISP. Keep it stable for
+each request. The optional `length` is a hint. For a grant of
+`2001:db8:1200:3400::/56`, decimal subnet 10 selects `2001:db8:1200:340a::/64`.
+The router uses host number 1 by default. Decimal 254 selects `::fe`.
+nVyR advertises each assigned /64 and itself as the LAN's default router.
+If the provider grants a smaller address block than requested, the client display
+identifies any subnet ID that no longer fits. Other assignments continue.
+
+For PD only, omit `address dhcpv6` and keep the `dhcpv6-pd` requests. The uplink
+accepts router advertisements for its default route. To request DNS and search
+domains alone, configure `dhcpv6-options parameters-only` on the uplink without
+any address or delegation requests.
+
+An automatically generated DUID survives reboot and image upgrade. Use
+`dhcpv6-options duid` to supply a specific colon-separated identifier.
+`no-release` retains the server binding on normal shutdown. `no-request-dns`
+and `no-request-domain-search` independently suppress the corresponding DHCPv6
+option. Select the uplink under [system name-server](dns.md) to use learned data.
+
+```text
+show dhcpv6-client
+show dhcpv6-client interface eth0 detail
+
+release dhcpv6 interface eth0
+renew dhcpv6 interface eth0
+```
+
+Release withdraws the WAN lease and delegated LAN assignments. Renew starts
+acquisition again. The detail view includes the client and server identifiers.
 
 ### DHCPv4 client options
 
@@ -252,7 +302,7 @@ set interfaces virtual-ethernet veth0 vif 30 address 10.0.30.1/24
 
 These create `eth1.10`, `eth1.20`, and `veth0.30`. IDs are 1–4094 without leading
 zeros, and the complete generated name must fit Linux's 15-character limit.
-Each child supports description, disable, IPv4/IPv6 addresses, DHCPv4, MAC, MTU,
+Each child supports description, disable, IPv4/IPv6 addresses, DHCPv4, DHCPv6, prefix delegation, MAC, MTU,
 VRF and link-group. VRF assignment is independent of the parent. An omitted MTU
 tracks the parent's current MTU; an explicit MTU cannot exceed the parent.
 Nested anchored options remain on the VIF; configure parent options in a separate
@@ -386,9 +436,9 @@ unowned virtual links are rejected. Dummy MAC defaults are deterministic, locall
 administered addresses derived from the name.
 
 Static IPv4/IPv6 addresses are multi-valued. Omitted prefix lengths become /32 or
-/128. DHCP is IPv4-only and can coexist with static addresses. Kernel IPv6
+/128. DHCPv4 and DHCPv6 can coexist with static addresses on supported links. Kernel IPv6
 link-local addressing and DAD are enabled by default. RA reception and SLAAC are
-opt-in through the [IPv6 options](#ipv4-and-ipv6-options). DHCPv6 clients are not supported.
+configured through the [IPv6 options](#ipv4-and-ipv6-options). DHCPv6 enables WAN RA reception automatically.
 
 MAC, MTU and alias changes use Netlink. Original attributes are recorded before
 application; deleting a MAC or description restores their baseline. The schema's

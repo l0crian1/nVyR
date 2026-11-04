@@ -26,8 +26,10 @@ renewed DNS and remove expired/deconfigured leases or deleted interfaces. There 
 no second daemon, lease watcher, commit or signal required. Lease generation tokens
 and interface indices prevent stale records from contributing DNS. Pending interface
 transactions temporarily suppress that owner's learned DNS until recovery.
-Interface configuration changes publish immediately. Static interfaces are not
-polled on this timer; the full safety audit runs every 60 seconds.
+Interface configuration changes publish immediately. The kernel supplies RDNSS and DNSSL through RTM_NEWNDUSEROPT.
+Track individual lifetimes per receiving interface and advertising router. A zero
+lifetime withdraws that router's contribution immediately. DHCPv6 and RA hooks
+leave publication to the same resolver as DHCPv4.
 
 `/var/lib/nvyr-netlink/dns.json` journals same-boot DNS intent and incomplete updates.
 Netlinkd restarts restore sources and recalculate current lease contributions; a new

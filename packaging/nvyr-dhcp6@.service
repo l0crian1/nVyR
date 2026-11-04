@@ -1,0 +1,18 @@
+[Unit]
+Description=nVyR DHCPv6 client on %I
+After=nvyr-interface-naming.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/nvyr-dhcp6 %I
+Restart=on-failure
+RestartSec=3
+KillMode=mixed
+TimeoutStopSec=12
+RuntimeDirectory=nvyr-dhcp6-%i
+BindPaths=/run/nvyr-dhcp6-%i:/var/lib/dhcpcd
+ProtectSystem=strict
+ReadWritePaths=/run/nvyr-netlink /var/lib/dhcpcd /run/dhcpcd /sys/fs/cgroup
+ProtectHome=true
+PrivateTmp=true
+UMask=0077

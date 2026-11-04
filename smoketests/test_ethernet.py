@@ -52,6 +52,21 @@ def test_create_and_release_profile(config, ethernet_environment):
     assert_link(port, up=False)
 
 
+def test_dhcpv6_native_requests(config, ethernet_environment):
+    """Render multiple IAIDs and independent DHCP options without requiring an ISP."""
+    port = ethernet_environment
+    root = f'set interfaces ethernet {port}'
+    config.set(f'{root} address dhcpv6')
+    config.set(f'{root} dhcpv6-options rapid-commit no-request-domain-search')
+    config.set(f'{root} dhcpv6-pd 0 length 56')
+    config.set(f'{root} dhcpv6-pd 7 length 60')
+    config.commit()
+
+    native = cmd(['cat', f'/run/nvyr-netlink/dhcp6/{port}/client.conf']).splitlines()
+    assert {'ia_na 0', 'ia_pd 0/::/56 -', 'ia_pd 7/::/60 -', 'option dhcp6_rapid_commit',
+            'nooption dhcp6_domain_search', 'option dhcp6_name_servers'} <= set(native)
+
+
 def test_ipv4_addresses(config, ethernet_environment):
     """Adding two IPv4 prefixes and removing one preserves the remaining address."""
     port = ethernet_environment

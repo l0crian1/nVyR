@@ -634,7 +634,7 @@
             "address": {
               "kind": "leaf_node",
               "strip_kind": "ip",
-              "description": "IPv4/IPv6 address with optional prefix length, or dhcp for DHCPv4",
+              "description": "IPv4/IPv6 address with optional prefix length, or a DHCP client mode",
               "multi": true,
               "validators": {
                 "mode": "OR",
@@ -645,7 +645,7 @@
                   "list": {
                     "name": "list",
                     "args": {
-                      "values": "dhcp"
+                      "values": "dhcp dhcpv6"
                     }
                   }
                 }
@@ -655,6 +655,7 @@
                 "x:x:x:x:x:x/x": "IPv6 address with mask"
               },
               "choices": {
+                "dhcpv6": "Request an IPv6 address using DHCPv6",
                 "dhcp": "Acquire an IPv4 address using DHCP"
               }
             },
@@ -758,6 +759,173 @@
               },
               "hints": {
                 "0-4294967295": "Linux link group number"
+              }
+            },
+            "dhcpv6-options": {
+              "kind": "node",
+              "anchor": true,
+              "description": "DHCPv6 client identity and requested options",
+              "children": {
+                "duid": {
+                  "kind": "leaf_node",
+                  "description": "Override the persistent DHCPv6 client identifier",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "dhcp-identifier": {
+                        "name": "dhcp-identifier",
+                        "args": {
+                          "minimum": 3,
+                          "maximum": 130
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "hex": "Complete DUID in colon-separated hexadecimal bytes"
+                  }
+                },
+                "rapid-commit": {
+                  "kind": "leaf_node",
+                  "valueless": true,
+                  "description": "Accept a lease in a two-message exchange when offered"
+                },
+                "no-release": {
+                  "kind": "leaf_node",
+                  "valueless": true,
+                  "description": "Keep the lease on the server when the client exits"
+                },
+                "no-request-dns": {
+                  "kind": "leaf_node",
+                  "valueless": true,
+                  "description": "Omit recursive DNS servers from the DHCPv6 option request"
+                },
+                "no-request-domain-search": {
+                  "kind": "leaf_node",
+                  "valueless": true,
+                  "description": "Omit the domain search list from the DHCPv6 option request"
+                },
+                "parameters-only": {
+                  "kind": "leaf_node",
+                  "valueless": true,
+                  "description": "Request configuration information without an address or prefix"
+                }
+              }
+            },
+            "dhcpv6-pd": {
+              "kind": "tag_node",
+              "anchor": true,
+              "description": "Request a delegated IPv6 prefix using this IAID",
+              "validators": {
+                "mode": "AND",
+                "checks": {
+                  "integer-range": {
+                    "name": "integer-range",
+                    "args": {
+                      "minimum": 0,
+                      "maximum": 4294967295
+                    }
+                  },
+                  "regex": {
+                    "name": "regex",
+                    "args": {
+                      "pattern": "0|[1-9][0-9]*"
+                    }
+                  }
+                }
+              },
+              "hints": {
+                "iaid": "Decimal delegation request ID"
+              },
+              "children": {
+                "length": {
+                  "kind": "leaf_node",
+                  "description": "Preferred delegated prefix length sent to the ISP",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "integer-range": {
+                        "name": "integer-range",
+                        "args": {
+                          "minimum": 1,
+                          "maximum": 64
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "1-64": "Requested prefix length"
+                  }
+                },
+                "interface": {
+                  "kind": "tag_node",
+                  "anchor": true,
+                  "description": "Assign and advertise a delegated /64 on this LAN",
+                  "depends": "interface",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[a-zA-Z][a-zA-Z0-9_.-]{0,14}"
+                        }
+                      }
+                    }
+                  },
+                  "suggestors": [
+                    {
+                      "name": "interfaces"
+                    }
+                  ],
+                  "hints": {
+                    "interface": "Configured downstream interface or VIF"
+                  },
+                  "children": {
+                    "subnet-id": {
+                      "kind": "leaf_node",
+                      "description": "Decimal index of the LAN /64 within the delegation",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "integer-range": {
+                            "name": "integer-range",
+                            "args": {
+                              "minimum": 0,
+                              "maximum": 18446744073709551615
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "number": "Zero-based subnet number"
+                      }
+                    },
+                    "address": {
+                      "kind": "leaf_node",
+                      "description": "Decimal host number assigned to the router inside the /64 (default: 1)",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "integer-range": {
+                            "name": "integer-range",
+                            "args": {
+                              "minimum": 1,
+                              "maximum": 18446744073709551615
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "number": "Router host number, for example 254 for ::fe"
+                      },
+                      "default": {
+                        "mode": "direct",
+                        "value": "1"
+                      }
+                    }
+                  }
+                }
               }
             },
             "dhcp-options": {
@@ -1551,7 +1719,7 @@
                 "address": {
                   "kind": "leaf_node",
                   "strip_kind": "ip",
-                  "description": "IPv4/IPv6 address with optional prefix length, or dhcp for DHCPv4",
+                  "description": "IPv4/IPv6 address with optional prefix length, or a DHCP client mode",
                   "multi": true,
                   "validators": {
                     "mode": "OR",
@@ -1562,7 +1730,7 @@
                       "list": {
                         "name": "list",
                         "args": {
-                          "values": "dhcp"
+                          "values": "dhcp dhcpv6"
                         }
                       }
                     }
@@ -1572,6 +1740,7 @@
                     "x:x:x:x:x:x/x": "IPv6 address with mask"
                   },
                   "choices": {
+                    "dhcpv6": "Request an IPv6 address using DHCPv6",
                     "dhcp": "Acquire an IPv4 address using DHCP"
                   }
                 },
@@ -1671,6 +1840,173 @@
                   },
                   "hints": {
                     "0-4294967295": "Linux link group number"
+                  }
+                },
+                "dhcpv6-options": {
+                  "kind": "node",
+                  "anchor": true,
+                  "description": "DHCPv6 client identity and requested options",
+                  "children": {
+                    "duid": {
+                      "kind": "leaf_node",
+                      "description": "Override the persistent DHCPv6 client identifier",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "dhcp-identifier": {
+                            "name": "dhcp-identifier",
+                            "args": {
+                              "minimum": 3,
+                              "maximum": 130
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "hex": "Complete DUID in colon-separated hexadecimal bytes"
+                      }
+                    },
+                    "rapid-commit": {
+                      "kind": "leaf_node",
+                      "valueless": true,
+                      "description": "Accept a lease in a two-message exchange when offered"
+                    },
+                    "no-release": {
+                      "kind": "leaf_node",
+                      "valueless": true,
+                      "description": "Keep the lease on the server when the client exits"
+                    },
+                    "no-request-dns": {
+                      "kind": "leaf_node",
+                      "valueless": true,
+                      "description": "Omit recursive DNS servers from the DHCPv6 option request"
+                    },
+                    "no-request-domain-search": {
+                      "kind": "leaf_node",
+                      "valueless": true,
+                      "description": "Omit the domain search list from the DHCPv6 option request"
+                    },
+                    "parameters-only": {
+                      "kind": "leaf_node",
+                      "valueless": true,
+                      "description": "Request configuration information without an address or prefix"
+                    }
+                  }
+                },
+                "dhcpv6-pd": {
+                  "kind": "tag_node",
+                  "anchor": true,
+                  "description": "Request a delegated IPv6 prefix using this IAID",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "integer-range": {
+                        "name": "integer-range",
+                        "args": {
+                          "minimum": 0,
+                          "maximum": 4294967295
+                        }
+                      },
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "0|[1-9][0-9]*"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "iaid": "Decimal delegation request ID"
+                  },
+                  "children": {
+                    "length": {
+                      "kind": "leaf_node",
+                      "description": "Preferred delegated prefix length sent to the ISP",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "integer-range": {
+                            "name": "integer-range",
+                            "args": {
+                              "minimum": 1,
+                              "maximum": 64
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "1-64": "Requested prefix length"
+                      }
+                    },
+                    "interface": {
+                      "kind": "tag_node",
+                      "anchor": true,
+                      "description": "Assign and advertise a delegated /64 on this LAN",
+                      "depends": "interface",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "regex": {
+                            "name": "regex",
+                            "args": {
+                              "pattern": "[a-zA-Z][a-zA-Z0-9_.-]{0,14}"
+                            }
+                          }
+                        }
+                      },
+                      "suggestors": [
+                        {
+                          "name": "interfaces"
+                        }
+                      ],
+                      "hints": {
+                        "interface": "Configured downstream interface or VIF"
+                      },
+                      "children": {
+                        "subnet-id": {
+                          "kind": "leaf_node",
+                          "description": "Decimal index of the LAN /64 within the delegation",
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "integer-range": {
+                                "name": "integer-range",
+                                "args": {
+                                  "minimum": 0,
+                                  "maximum": 18446744073709551615
+                                }
+                              }
+                            }
+                          },
+                          "hints": {
+                            "number": "Zero-based subnet number"
+                          }
+                        },
+                        "address": {
+                          "kind": "leaf_node",
+                          "description": "Decimal host number assigned to the router inside the /64 (default: 1)",
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "integer-range": {
+                                "name": "integer-range",
+                                "args": {
+                                  "minimum": 1,
+                                  "maximum": 18446744073709551615
+                                }
+                              }
+                            }
+                          },
+                          "hints": {
+                            "number": "Router host number, for example 254 for ::fe"
+                          },
+                          "default": {
+                            "mode": "direct",
+                            "value": "1"
+                          }
+                        }
+                      }
+                    }
                   }
                 },
                 "dhcp-options": {
@@ -4062,7 +4398,7 @@
                 "address": {
                   "kind": "leaf_node",
                   "strip_kind": "ip",
-                  "description": "IPv4/IPv6 address with optional prefix length, or dhcp for DHCPv4",
+                  "description": "IPv4/IPv6 address with optional prefix length, or a DHCP client mode",
                   "multi": true,
                   "validators": {
                     "mode": "OR",
@@ -4073,7 +4409,7 @@
                       "list": {
                         "name": "list",
                         "args": {
-                          "values": "dhcp"
+                          "values": "dhcp dhcpv6"
                         }
                       }
                     }
@@ -4083,6 +4419,7 @@
                     "x:x:x:x:x:x/x": "IPv6 address with mask"
                   },
                   "choices": {
+                    "dhcpv6": "Request an IPv6 address using DHCPv6",
                     "dhcp": "Acquire an IPv4 address using DHCP"
                   }
                 },
@@ -4182,6 +4519,173 @@
                   },
                   "hints": {
                     "0-4294967295": "Linux link group number"
+                  }
+                },
+                "dhcpv6-options": {
+                  "kind": "node",
+                  "anchor": true,
+                  "description": "DHCPv6 client identity and requested options",
+                  "children": {
+                    "duid": {
+                      "kind": "leaf_node",
+                      "description": "Override the persistent DHCPv6 client identifier",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "dhcp-identifier": {
+                            "name": "dhcp-identifier",
+                            "args": {
+                              "minimum": 3,
+                              "maximum": 130
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "hex": "Complete DUID in colon-separated hexadecimal bytes"
+                      }
+                    },
+                    "rapid-commit": {
+                      "kind": "leaf_node",
+                      "valueless": true,
+                      "description": "Accept a lease in a two-message exchange when offered"
+                    },
+                    "no-release": {
+                      "kind": "leaf_node",
+                      "valueless": true,
+                      "description": "Keep the lease on the server when the client exits"
+                    },
+                    "no-request-dns": {
+                      "kind": "leaf_node",
+                      "valueless": true,
+                      "description": "Omit recursive DNS servers from the DHCPv6 option request"
+                    },
+                    "no-request-domain-search": {
+                      "kind": "leaf_node",
+                      "valueless": true,
+                      "description": "Omit the domain search list from the DHCPv6 option request"
+                    },
+                    "parameters-only": {
+                      "kind": "leaf_node",
+                      "valueless": true,
+                      "description": "Request configuration information without an address or prefix"
+                    }
+                  }
+                },
+                "dhcpv6-pd": {
+                  "kind": "tag_node",
+                  "anchor": true,
+                  "description": "Request a delegated IPv6 prefix using this IAID",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "integer-range": {
+                        "name": "integer-range",
+                        "args": {
+                          "minimum": 0,
+                          "maximum": 4294967295
+                        }
+                      },
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "0|[1-9][0-9]*"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "iaid": "Decimal delegation request ID"
+                  },
+                  "children": {
+                    "length": {
+                      "kind": "leaf_node",
+                      "description": "Preferred delegated prefix length sent to the ISP",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "integer-range": {
+                            "name": "integer-range",
+                            "args": {
+                              "minimum": 1,
+                              "maximum": 64
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "1-64": "Requested prefix length"
+                      }
+                    },
+                    "interface": {
+                      "kind": "tag_node",
+                      "anchor": true,
+                      "description": "Assign and advertise a delegated /64 on this LAN",
+                      "depends": "interface",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "regex": {
+                            "name": "regex",
+                            "args": {
+                              "pattern": "[a-zA-Z][a-zA-Z0-9_.-]{0,14}"
+                            }
+                          }
+                        }
+                      },
+                      "suggestors": [
+                        {
+                          "name": "interfaces"
+                        }
+                      ],
+                      "hints": {
+                        "interface": "Configured downstream interface or VIF"
+                      },
+                      "children": {
+                        "subnet-id": {
+                          "kind": "leaf_node",
+                          "description": "Decimal index of the LAN /64 within the delegation",
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "integer-range": {
+                                "name": "integer-range",
+                                "args": {
+                                  "minimum": 0,
+                                  "maximum": 18446744073709551615
+                                }
+                              }
+                            }
+                          },
+                          "hints": {
+                            "number": "Zero-based subnet number"
+                          }
+                        },
+                        "address": {
+                          "kind": "leaf_node",
+                          "description": "Decimal host number assigned to the router inside the /64 (default: 1)",
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "integer-range": {
+                                "name": "integer-range",
+                                "args": {
+                                  "minimum": 1,
+                                  "maximum": 18446744073709551615
+                                }
+                              }
+                            }
+                          },
+                          "hints": {
+                            "number": "Router host number, for example 254 for ::fe"
+                          },
+                          "default": {
+                            "mode": "direct",
+                            "value": "1"
+                          }
+                        }
+                      }
+                    }
                   }
                 },
                 "dhcp-options": {
@@ -5034,7 +5538,7 @@
             "address": {
               "kind": "leaf_node",
               "strip_kind": "ip",
-              "description": "IPv4/IPv6 address with optional prefix length, or dhcp for DHCPv4",
+              "description": "IPv4/IPv6 address with optional prefix length, or a DHCP client mode",
               "multi": true,
               "validators": {
                 "mode": "OR",
@@ -5045,7 +5549,7 @@
                   "list": {
                     "name": "list",
                     "args": {
-                      "values": "dhcp"
+                      "values": "dhcp dhcpv6"
                     }
                   }
                 }
@@ -5055,6 +5559,7 @@
                 "x:x:x:x:x:x/x": "IPv6 address with mask"
               },
               "choices": {
+                "dhcpv6": "Request an IPv6 address using DHCPv6",
                 "dhcp": "Acquire an IPv4 address using DHCP"
               }
             },
@@ -5158,6 +5663,173 @@
               },
               "hints": {
                 "0-4294967295": "Linux link group number"
+              }
+            },
+            "dhcpv6-options": {
+              "kind": "node",
+              "anchor": true,
+              "description": "DHCPv6 client identity and requested options",
+              "children": {
+                "duid": {
+                  "kind": "leaf_node",
+                  "description": "Override the persistent DHCPv6 client identifier",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "dhcp-identifier": {
+                        "name": "dhcp-identifier",
+                        "args": {
+                          "minimum": 3,
+                          "maximum": 130
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "hex": "Complete DUID in colon-separated hexadecimal bytes"
+                  }
+                },
+                "rapid-commit": {
+                  "kind": "leaf_node",
+                  "valueless": true,
+                  "description": "Accept a lease in a two-message exchange when offered"
+                },
+                "no-release": {
+                  "kind": "leaf_node",
+                  "valueless": true,
+                  "description": "Keep the lease on the server when the client exits"
+                },
+                "no-request-dns": {
+                  "kind": "leaf_node",
+                  "valueless": true,
+                  "description": "Omit recursive DNS servers from the DHCPv6 option request"
+                },
+                "no-request-domain-search": {
+                  "kind": "leaf_node",
+                  "valueless": true,
+                  "description": "Omit the domain search list from the DHCPv6 option request"
+                },
+                "parameters-only": {
+                  "kind": "leaf_node",
+                  "valueless": true,
+                  "description": "Request configuration information without an address or prefix"
+                }
+              }
+            },
+            "dhcpv6-pd": {
+              "kind": "tag_node",
+              "anchor": true,
+              "description": "Request a delegated IPv6 prefix using this IAID",
+              "validators": {
+                "mode": "AND",
+                "checks": {
+                  "integer-range": {
+                    "name": "integer-range",
+                    "args": {
+                      "minimum": 0,
+                      "maximum": 4294967295
+                    }
+                  },
+                  "regex": {
+                    "name": "regex",
+                    "args": {
+                      "pattern": "0|[1-9][0-9]*"
+                    }
+                  }
+                }
+              },
+              "hints": {
+                "iaid": "Decimal delegation request ID"
+              },
+              "children": {
+                "length": {
+                  "kind": "leaf_node",
+                  "description": "Preferred delegated prefix length sent to the ISP",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "integer-range": {
+                        "name": "integer-range",
+                        "args": {
+                          "minimum": 1,
+                          "maximum": 64
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "1-64": "Requested prefix length"
+                  }
+                },
+                "interface": {
+                  "kind": "tag_node",
+                  "anchor": true,
+                  "description": "Assign and advertise a delegated /64 on this LAN",
+                  "depends": "interface",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[a-zA-Z][a-zA-Z0-9_.-]{0,14}"
+                        }
+                      }
+                    }
+                  },
+                  "suggestors": [
+                    {
+                      "name": "interfaces"
+                    }
+                  ],
+                  "hints": {
+                    "interface": "Configured downstream interface or VIF"
+                  },
+                  "children": {
+                    "subnet-id": {
+                      "kind": "leaf_node",
+                      "description": "Decimal index of the LAN /64 within the delegation",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "integer-range": {
+                            "name": "integer-range",
+                            "args": {
+                              "minimum": 0,
+                              "maximum": 18446744073709551615
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "number": "Zero-based subnet number"
+                      }
+                    },
+                    "address": {
+                      "kind": "leaf_node",
+                      "description": "Decimal host number assigned to the router inside the /64 (default: 1)",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "integer-range": {
+                            "name": "integer-range",
+                            "args": {
+                              "minimum": 1,
+                              "maximum": 18446744073709551615
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "number": "Router host number, for example 254 for ::fe"
+                      },
+                      "default": {
+                        "mode": "direct",
+                        "value": "1"
+                      }
+                    }
+                  }
+                }
               }
             },
             "dhcp-options": {
@@ -7211,7 +7883,7 @@
                 "address": {
                   "kind": "leaf_node",
                   "strip_kind": "ip",
-                  "description": "IPv4/IPv6 address with optional prefix length, or dhcp for DHCPv4",
+                  "description": "IPv4/IPv6 address with optional prefix length, or a DHCP client mode",
                   "multi": true,
                   "validators": {
                     "mode": "OR",
@@ -7222,7 +7894,7 @@
                       "list": {
                         "name": "list",
                         "args": {
-                          "values": "dhcp"
+                          "values": "dhcp dhcpv6"
                         }
                       }
                     }
@@ -7232,6 +7904,7 @@
                     "x:x:x:x:x:x/x": "IPv6 address with mask"
                   },
                   "choices": {
+                    "dhcpv6": "Request an IPv6 address using DHCPv6",
                     "dhcp": "Acquire an IPv4 address using DHCP"
                   }
                 },
@@ -7331,6 +8004,173 @@
                   },
                   "hints": {
                     "0-4294967295": "Linux link group number"
+                  }
+                },
+                "dhcpv6-options": {
+                  "kind": "node",
+                  "anchor": true,
+                  "description": "DHCPv6 client identity and requested options",
+                  "children": {
+                    "duid": {
+                      "kind": "leaf_node",
+                      "description": "Override the persistent DHCPv6 client identifier",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "dhcp-identifier": {
+                            "name": "dhcp-identifier",
+                            "args": {
+                              "minimum": 3,
+                              "maximum": 130
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "hex": "Complete DUID in colon-separated hexadecimal bytes"
+                      }
+                    },
+                    "rapid-commit": {
+                      "kind": "leaf_node",
+                      "valueless": true,
+                      "description": "Accept a lease in a two-message exchange when offered"
+                    },
+                    "no-release": {
+                      "kind": "leaf_node",
+                      "valueless": true,
+                      "description": "Keep the lease on the server when the client exits"
+                    },
+                    "no-request-dns": {
+                      "kind": "leaf_node",
+                      "valueless": true,
+                      "description": "Omit recursive DNS servers from the DHCPv6 option request"
+                    },
+                    "no-request-domain-search": {
+                      "kind": "leaf_node",
+                      "valueless": true,
+                      "description": "Omit the domain search list from the DHCPv6 option request"
+                    },
+                    "parameters-only": {
+                      "kind": "leaf_node",
+                      "valueless": true,
+                      "description": "Request configuration information without an address or prefix"
+                    }
+                  }
+                },
+                "dhcpv6-pd": {
+                  "kind": "tag_node",
+                  "anchor": true,
+                  "description": "Request a delegated IPv6 prefix using this IAID",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "integer-range": {
+                        "name": "integer-range",
+                        "args": {
+                          "minimum": 0,
+                          "maximum": 4294967295
+                        }
+                      },
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "0|[1-9][0-9]*"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "iaid": "Decimal delegation request ID"
+                  },
+                  "children": {
+                    "length": {
+                      "kind": "leaf_node",
+                      "description": "Preferred delegated prefix length sent to the ISP",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "integer-range": {
+                            "name": "integer-range",
+                            "args": {
+                              "minimum": 1,
+                              "maximum": 64
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "1-64": "Requested prefix length"
+                      }
+                    },
+                    "interface": {
+                      "kind": "tag_node",
+                      "anchor": true,
+                      "description": "Assign and advertise a delegated /64 on this LAN",
+                      "depends": "interface",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "regex": {
+                            "name": "regex",
+                            "args": {
+                              "pattern": "[a-zA-Z][a-zA-Z0-9_.-]{0,14}"
+                            }
+                          }
+                        }
+                      },
+                      "suggestors": [
+                        {
+                          "name": "interfaces"
+                        }
+                      ],
+                      "hints": {
+                        "interface": "Configured downstream interface or VIF"
+                      },
+                      "children": {
+                        "subnet-id": {
+                          "kind": "leaf_node",
+                          "description": "Decimal index of the LAN /64 within the delegation",
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "integer-range": {
+                                "name": "integer-range",
+                                "args": {
+                                  "minimum": 0,
+                                  "maximum": 18446744073709551615
+                                }
+                              }
+                            }
+                          },
+                          "hints": {
+                            "number": "Zero-based subnet number"
+                          }
+                        },
+                        "address": {
+                          "kind": "leaf_node",
+                          "description": "Decimal host number assigned to the router inside the /64 (default: 1)",
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "integer-range": {
+                                "name": "integer-range",
+                                "args": {
+                                  "minimum": 1,
+                                  "maximum": 18446744073709551615
+                                }
+                              }
+                            }
+                          },
+                          "hints": {
+                            "number": "Router host number, for example 254 for ::fe"
+                          },
+                          "default": {
+                            "mode": "direct",
+                            "value": "1"
+                          }
+                        }
+                      }
+                    }
                   }
                 },
                 "dhcp-options": {
@@ -156027,7 +156867,7 @@
           "kind": "leaf_node",
           "strip_kind": "ip",
           "multi": true,
-          "description": "System DNS server address or interface providing DHCP DNS",
+          "description": "System DNS server address or interface providing learned DNS",
           "script": {
             "name": "dns",
             "priority": 14
@@ -156054,7 +156894,7 @@
           "hints": {
             "x.x.x.x": "Static IPv4 DNS server",
             "x:x:x:x:x:x": "Static IPv6 DNS server",
-            "interface": "Use DNS learned through DHCP on this interface"
+            "interface": "Use servers and search domains learned through DHCP or IPv6 RA on this interface"
           }
         },
         "configuration": {

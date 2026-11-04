@@ -15,23 +15,21 @@ commit
 save
 ```
 
-An IP address selects a static resolver. An interface name selects DNS from its
-current nVyR-managed DHCP lease; it does not enable DHCP on the interface. Configure
-`set interfaces ethernet eth0 address dhcp` separately. Selectors can remain while
-an interface is missing, disabled, unconfigured or awaiting a lease; they contribute
-no servers until an enabled DHCP interface has a valid lease. Unselected interfaces
-never contribute DNS. Removing the final name-server removes all upstream entries.
+An IP address selects a static resolver. An interface name selects DNS learned on
+that interface from DHCPv4, DHCPv6 or IPv6 router advertisements. Configure the
+client or RA reception separately. DHCPv6 Domain Search List and RA DNSSL options
+also populate the system search list. Selecting a SLAAC-only uplink works without
+a DHCP lease. Removing the selector withdraws that interface's contributions.
 
 Static IPv4 and IPv6 servers come first, in configured order. Selected interfaces
 follow in configured order, retaining each lease's advertised DNS order. Equivalent
-addresses are deduplicated, including alternate IPv6 spellings. The current DHCP
-client implements DHCPv4; this change does not add DHCPv6 or router-advertisement
-DNS acquisition.
+addresses are deduplicated, including alternate IPv6 spellings. Link-local DNS servers
+retain their interface scope. Search domains retain their advertised order.
 
 All aggregated servers are written, but resolver-library limits still apply:
 [glibc's resolv.conf interface](https://man7.org/linux/man-pages/man5/resolv.conf.5.html)
 uses at most three nameservers. This implementation does not start a local DNS
-listener, provide forwarding, or add search domains.
+listener or provide forwarding.
 
 ## Inspection
 
@@ -45,12 +43,14 @@ lookup 192.0.2.10
 ```
 
 `show system name-server` lists the currently published resolver addresses with
-their Static/DHCP source and, for DHCP, the source interface and its current VRF.
+their source, interface and current VRF, followed by the learned search domains.
 That VRF identifies the source of the learned server; system resolver queries are
 not bound to that VRF. Static servers use the default routing domain. Duplicates
 retain the first contributing source, with static addresses taking precedence.
 Failed publication and pending recovery are reported alongside the published list,
 rather than displaying proposed servers as if they were active.
+
+`lookup printer` uses the published search list. A trailing dot or an explicit DNS server selects an exact name.
 
 `lookup` requests A and AAAA by default. An IP address requests PTR automatically.
 The optional `type` accepts `a`, `aaaa`, `mx`, `txt`, `ns`, `cname`, `soa`, `srv`,

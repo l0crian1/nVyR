@@ -9,6 +9,7 @@ ROOT = ('interfaces', 'dummy')
 def get_config(context):
     return {
         'dummy': lookup(context.effective, ROOT, {}),
+        'inventory': dict(interfaces.configured(context.effective)),
         'vrfs': lookup(context.effective, ('vrf', 'name'), {}),
         'bridge_members': interfaces.bridge_members(context.effective),
     }
@@ -25,6 +26,9 @@ def verify(configuration, context):
     # VRFs must exist in the proposed configuration; switched ports cannot own L3 settings.
     interfaces.verify_membership(values, vrfs=configuration['vrfs'],
                                  bridge_members=configuration['bridge_members'])
+
+    # Changing a delegated LAN's VRF or link-local policy affects the requesting uplink.
+    interfaces.verify_pd(configuration['inventory'], configuration['bridge_members'])
 
     # Native preflight checks DHCP/IP relationships and supported device attributes.
     links = link_definitions(values)

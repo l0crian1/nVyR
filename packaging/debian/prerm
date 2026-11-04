@@ -8,7 +8,7 @@ if [ "$1" = remove ] && command -v systemctl >/dev/null && [ -d /run/systemd/sys
     systemctl stop nvyr-dhcp-hosts.timer nvyr-dhcp-hosts.service || true
     systemctl stop nvyr-configd.service || true
     systemctl stop nvyr-netlinkd.service || true
-    systemctl stop 'nvyr-dhcp4@*.service' || true
+    systemctl stop 'nvyr-dhcp4@*.service' 'nvyr-dhcp6@*.service' 'nvyr-pd-ra@*.service' || true
     systemctl stop 'nvyr-ssh@*.service' || true
     systemctl stop nvyr-ntp.service || true
     systemctl stop nvyr-interface-naming.service || true

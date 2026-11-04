@@ -76,7 +76,7 @@ def test_routing_commands_and_context_are_not_discarded():
 
 
 def test_comparison_names_failures_and_keeps_a_diff():
-    before = {'firewall': snapshots.firewall(ruleset()), 'routing': ['router bgp 65000'], 'vrf_conntrack': {}}
+    before = {'dhcpv6_duid': '00:04:01', 'firewall': snapshots.firewall(ruleset()), 'routing': ['router bgp 65000'], 'vrf_conntrack': {}}
     after = deepcopy(before)
     after['firewall']['chains']['input'].pop()
     result = snapshots.compare(before, after)
@@ -88,7 +88,7 @@ def test_comparison_names_failures_and_keeps_a_diff():
 
 def test_routing_hostname_metadata_is_not_policy_drift():
     """Daemons can start before the OS hostname changes; routing must still match."""
-    before = {'firewall': {}, 'vrf_conntrack': {}, 'routing': [
+    before = {'dhcpv6_duid': '00:04:01', 'firewall': {}, 'vrf_conntrack': {}, 'routing': [
         'hostname localhost.localdomain', 'hostname nvyr',
         'router bgp 65000', ' neighbor 192.0.2.1 remote-as 65001', 'exit',
     ]}
