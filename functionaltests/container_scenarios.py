@@ -24,18 +24,41 @@ def available_port(kind):
 
 
 @contextmanager
-def container_socket(name):
-    """Open a socket in a running member's actual network namespace."""
-    record = json.loads(cmd(['podman', 'inspect', name]))[0]
-    with open('/proc/self/ns/net', 'rb') as original, open(f'/proc/{record["State"]["Pid"]}/ns/net', 'rb') as target:
+def namespace_socket(namespace, family, kind):
+    """Create the socket in its namespace, then restore the test process immediately."""
+    with open('/proc/self/ns/net', 'rb') as original, open(namespace, 'rb') as target:
         try:
             os.setns(target.fileno(), 0)
-            endpoint = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            endpoint = socket.socket(family, kind)
         finally:
             os.setns(original.fileno(), 0)
     with endpoint:
         endpoint.settimeout(3)
         yield endpoint
+
+
+def container_socket(name, family=socket.AF_INET, kind=socket.SOCK_STREAM):
+    record = json.loads(cmd(['podman', 'inspect', name]))[0]
+    return namespace_socket(f'/proc/{record["State"]["Pid"]}/ns/net', family, kind)
+
+
+@contextmanager
+def publication_client():
+    """Attach an external client before Podman binds either router address."""
+    prefix = '2001:db8:ce::'
+    assert not cmd(['ip', '-6', 'route', 'show', 'table', 'all', 'exact', prefix + '/64']).strip()
+    namespace = 'nvyr-publish-client'
+    cmd(['ip', 'netns', 'add', namespace])
+    try:
+        cmd(['ip', 'link', 'add', 'ctpub-test', 'type', 'veth', 'peer', 'name', 'client0', 'netns', namespace])
+        cmd(['ip', 'link', 'set', 'ctpub-test', 'up'])
+        for address in ('1', '2'):
+            cmd(['ip', '-6', 'addr', 'add', prefix + address + '/64', 'dev', 'ctpub-test', 'nodad'])
+        cmd(['ip', '-n', namespace, 'link', 'set', 'client0', 'up'])
+        cmd(['ip', '-n', namespace, 'addr', 'add', prefix + '3/64', 'dev', 'client0', 'nodad'])
+        yield '/run/netns/' + namespace
+    finally:
+        cmd(['ip', 'netns', 'del', namespace])
 
 
 @contextmanager

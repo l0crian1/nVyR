@@ -9,6 +9,8 @@ Incompatible: deleting the whole container tree or changing the shared bridge.
 
 import json
 from pathlib import Path
+import socket
+
 import pytest
 
 
@@ -17,6 +19,7 @@ if __name__ == "__main__":
 
     raise SystemExit(pytest.main([__file__, "-v", "-s", *sys.argv[1:]]))
 
+from functionaltests.container_scenarios import container_socket, namespace_socket
 from nvyr.helpers.process import cmd, rc_cmd
 from nvyr.op_scripts import containers as container_commands
 from smoketests.assertions import (
@@ -266,3 +269,29 @@ def test_published_udp_port(container_scenario):
     """UDP publications preserve the selected protocol rather than defaulting to TCP."""
     bindings = assert_container_running('CTPUDP')['HostConfig']['PortBindings']
     assert_equal(bindings['5353/udp'], [{'HostIp': '127.0.0.1', 'HostPort': container_scenario['udp_port']}])
+
+
+@pytest.mark.parametrize(('name', 'address'), [('CTIPV6', '2001:db8:ce::1'), ('P6FIRST', '2001:db8:ce::2')])
+@pytest.mark.parametrize(('kind', 'port', 'target'), [(socket.SOCK_STREAM, 'tcp_port', 8080),
+                                                     (socket.SOCK_DGRAM, 'udp_port', 5353)])
+def test_ipv6_port_round_trip(container_scenario, name, address, kind, port, target):
+    """Reach the member through its published router address and receive its reply."""
+    with container_socket(name, socket.AF_INET6, kind) as service, namespace_socket(
+            container_scenario['client_namespace'], socket.AF_INET6, kind) as client:
+        service.bind(('::', target))
+        if kind == socket.SOCK_STREAM:
+            service.listen(1)
+        client.connect((address, int(container_scenario[port])))
+        client.sendall(b'query')
+        if kind == socket.SOCK_STREAM:
+            connection, _ = service.accept()
+            with connection:
+                connection.settimeout(3)
+                assert connection.recv(5, socket.MSG_WAITALL) == b'query'
+                connection.sendall(b'reply')
+            assert client.recv(5, socket.MSG_WAITALL) == b'reply'
+        else:
+            message, peer = service.recvfrom(64)
+            assert message == b'query'
+            service.sendto(b'reply', peer)
+            assert client.recv(64) == b'reply'

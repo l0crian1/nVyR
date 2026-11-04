@@ -141,7 +141,9 @@ owns its workload, pod or network, so it cannot restart another case's container
 
 The idle workload handles SIGTERM, avoiding a forced-stop timeout for a bare
 `sleep` as PID 1. Pod localhost probes exchange TCP traffic through member network
-namespaces without requiring an HTTP server in the image.
+namespaces without requiring an HTTP server in the image. One external namespace
+shares a veth link with the router. It sends TCP and UDP requests to separate
+IPv6 publications for the standalone workload and the pod, and checks each reply.
 
 ### Native operational and isolated lifecycle tests
 

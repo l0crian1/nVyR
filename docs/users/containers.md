@@ -130,7 +130,18 @@ set container name WEB port HTTP destination-port 80
 
 `internal` prevents external routing; `disable-dns` disables Netavark's DNS service
 for that network. Published ports support TCP, UDP, and SCTP. Omitting source-address
-publishes on all host IPv4 addresses. Attachments must reference a configured network;
+publishes on all host IPv4 addresses. For an IPv6 publication, specify the router's
+IPv6 address and attach the workload to an IPv6 network. Configure shared ports
+on the pod when the container belongs to one.
+
+```text
+set container pod WEB port HTTPS protocol tcp
+set container pod WEB port HTTPS source-address 2001:db8:10::1
+set container pod WEB port HTTPS source-port 443
+set container pod WEB port HTTPS destination-port 8443
+```
+
+Attachments must reference a configured network;
 a referenced network cannot be deleted.
 
 Separate bridges are isolated by default. Containers on the same bridge can
