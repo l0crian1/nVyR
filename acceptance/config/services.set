@@ -34,6 +34,7 @@ set service dhcp-server shared-network BOOTLAN subnet 198.18.195.0/24 reservatio
 set service dhcp-server shared-network BOOTLAN subnet 198.18.195.0/24 lease-time 6h
 set service dhcp-server shared-network BOOTLAN subnet 198.18.195.0/24 option domain-search subnet.boot.example
 set service dhcpv6-server listen-interface dum995
+set service dhcpv6-server update-hostfile
 set service dhcpv6-server preferred-lifetime 6h
 set service dhcpv6-server valid-lifetime 12h
 
@@ -41,6 +42,7 @@ set service dhcpv6-server ha mode active-passive name BOOT1 source-address 2001:
 set service dhcpv6-server ha peer BOOT2 address 2001:db8:195::2 port 9007 role standby
 
 set service dhcpv6-server shared-network BOOTLAN interface dum995
+set service dhcpv6-server shared-network BOOTLAN option ntp-server 2001:db8:195::123
 set service dhcpv6-server shared-network BOOTLAN option name-server 2001:db8:195::1
 set service dhcpv6-server shared-network BOOTLAN subnet 2001:db8:195::/64 range 2001:db8:195::100-2001:db8:195::110
 set service dhcpv6-server shared-network BOOTLAN subnet 2001:db8:195::/64 reservation BOOTPRINT duid 00:03:00:01:02:00:00:19:95:50 address 2001:db8:195::50

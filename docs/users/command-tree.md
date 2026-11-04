@@ -10655,7 +10655,8 @@ set
 │   │   ├── listen-interface <interface>
 │   │   ├── option
 │   │   │   ├── domain-search <domain>
-│   │   │   └── name-server <IPv6-address>
+│   │   │   ├── name-server <IPv6-address>
+│   │   │   └── ntp-server <IPv6-address>
 │   │   ├── preferred-lifetime <duration>
 │   │   ├── shared-network <name>
 │   │   │   ├── description <text>
@@ -10663,14 +10664,16 @@ set
 │   │   │   ├── interface <interface>
 │   │   │   ├── option
 │   │   │   │   ├── domain-search <domain>
-│   │   │   │   └── name-server <IPv6-address>
+│   │   │   │   ├── name-server <IPv6-address>
+│   │   │   │   └── ntp-server <IPv6-address>
 │   │   │   ├── preferred-lifetime <duration>
 │   │   │   ├── subnet <prefix>
 │   │   │   │   ├── description <text>
 │   │   │   │   ├── disable
 │   │   │   │   ├── option
 │   │   │   │   │   ├── domain-search <domain>
-│   │   │   │   │   └── name-server <IPv6-address>
+│   │   │   │   │   ├── name-server <IPv6-address>
+│   │   │   │   │   └── ntp-server <IPv6-address>
 │   │   │   │   ├── preferred-lifetime <duration>
 │   │   │   │   ├── prefix-pool <aggregate/length>
 │   │   │   │   │   └── delegated-length <1-128>
@@ -10683,6 +10686,7 @@ set
 │   │   │   │   │   └── prefix <prefix/length>
 │   │   │   │   └── valid-lifetime <duration>
 │   │   │   └── valid-lifetime <duration>
+│   │   ├── update-hostfile
 │   │   └── valid-lifetime <duration>
 │   └── ssh
 │       └── listen-address <x.x.x.x|x:x:x:x:x:x>
@@ -11346,7 +11350,8 @@ set
         │       ├── listen-interface <interface>
         │       ├── option
         │       │   ├── domain-search <domain>
-        │       │   └── name-server <IPv6-address>
+        │       │   ├── name-server <IPv6-address>
+        │       │   └── ntp-server <IPv6-address>
         │       ├── preferred-lifetime <duration>
         │       ├── shared-network <name>
         │       │   ├── description <text>
@@ -11354,14 +11359,16 @@ set
         │       │   ├── interface <interface>
         │       │   ├── option
         │       │   │   ├── domain-search <domain>
-        │       │   │   └── name-server <IPv6-address>
+        │       │   │   ├── name-server <IPv6-address>
+        │       │   │   └── ntp-server <IPv6-address>
         │       │   ├── preferred-lifetime <duration>
         │       │   ├── subnet <prefix>
         │       │   │   ├── description <text>
         │       │   │   ├── disable
         │       │   │   ├── option
         │       │   │   │   ├── domain-search <domain>
-        │       │   │   │   └── name-server <IPv6-address>
+        │       │   │   │   ├── name-server <IPv6-address>
+        │       │   │   │   └── ntp-server <IPv6-address>
         │       │   │   ├── preferred-lifetime <duration>
         │       │   │   ├── prefix-pool <aggregate/length>
         │       │   │   │   └── delegated-length <1-128>

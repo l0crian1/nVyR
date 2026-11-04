@@ -186,10 +186,11 @@ commit does not mean that the peer is reachable or that synchronization finished
 
 ### Local lease hostnames
 
-Publish active DHCPv4 lease hostnames in the router's `/etc/hosts`:
+Publish active lease hostnames in the router's `/etc/hosts`:
 
 ```text
 set service dhcp-server update-hostfile
+set service dhcpv6-server update-hostfile
 
 set service dhcp-server shared-network OFFICE option domain-name home.example
 ```
@@ -200,9 +201,13 @@ server options. A client reporting a fully qualified name keeps that domain.
 Without a domain, a short hostname stays a short hostname. Reservation hostnames
 are published once the reservation has an active lease.
 
-This setting is available only on the **global DHCPv4 server**. The hosts file
-has no VRF namespace, so named-VRF leases and DHCPv6 leases are not published.
-This provides local name resolution; it does not configure a DNS server or DDNS.
+Enable each family independently on the global servers. A DHCPv6 address lease
+publishes the name recorded by Kea. A fully qualified name also gets a short
+alias. The domain search list is for clients and does not qualify a short lease
+name. Delegated prefixes have no host entry.
+
+A dual-stack client can have both addresses under the same name. Expiring one
+lease removes only its entry. Named VRFs do not publish into the shared hosts file.
 
 Lease renewals update hostnames. Released, declined, expired and removed-subnet
 leases are omitted. Changes are reconciled at commit and periodically afterward.
@@ -213,8 +218,8 @@ are ignored. Hostname updates preserve the router
 hostname. A lease-file read error preserves existing entries and reports a
 failure, rather than treating the database as empty.
 
-Remove the option, disable the server, or delete the server to remove its managed
-hosts section:
+Remove the option, disable the server, or delete the server to remove its published
+addresses:
 
 ```text
 delete service dhcp-server update-hostfile
@@ -231,10 +236,15 @@ set service dhcpv6-server listen-interface eth1
 set service dhcpv6-server shared-network OFFICE subnet 2001:db8:10::/64 range 2001:db8:10::100-2001:db8:10::ffff
 
 set service dhcpv6-server shared-network OFFICE option name-server 2001:db8:10::1
+set service dhcpv6-server shared-network OFFICE option ntp-server 2001:db8:10::123
 
 set service dhcpv6-server shared-network OFFICE subnet 2001:db8:10::/64 reservation PRINTER duid 00:03:00:01:02:00:00:00:00:01
 set service dhcpv6-server shared-network OFFICE subnet 2001:db8:10::/64 reservation PRINTER address 2001:db8:10::50
 ```
+
+Set `option ntp-server` at the server, shared-network or subnet level. Repeat it
+for each unicast server address. Clients requesting DHCPv6 option 56 receive
+the list from the most specific configured scope.
 
 For directly connected DHCPv6 clients, Kea requires an interface selector for the
 shared network. nVyR derives it when exactly one listening interface has a local

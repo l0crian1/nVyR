@@ -64,12 +64,13 @@ def client4(interface, requested=None, hostname=None):
     return {'address': reply[BOOTP].yiaddr, 'server': server}
 
 
-def client6(interface, association='address'):
+def client6(interface, association='address', hostname=None):
     """Solicit and request addresses and/or prefixes from the selected server."""
     from scapy.all import AsyncSniffer, Ether, IPv6, UDP, get_if_hwaddr, sendp
     from scapy.layers.dhcp6 import (DHCP6_Solicit, DHCP6_Advertise, DHCP6_Request, DHCP6_Reply,
                                    DHCP6OptClientId, DHCP6OptServerId, DHCP6OptIA_NA, DHCP6OptIAAddress,
-                                   DHCP6OptIA_PD, DHCP6OptIAPrefix, DUID_LL)
+                                   DHCP6OptIA_PD, DHCP6OptIAPrefix, DHCP6OptOptReq,
+                                   DHCP6OptClientFQDN, DHCP6OptNTPServer, DUID_LL)
 
     mac = get_if_hwaddr(interface)
     addresses = json.loads(run('ip', '-j', '-6', 'address', 'show', 'dev', interface))[0]['addr_info']
@@ -88,7 +89,9 @@ def client6(interface, association='address'):
         assert capture.results, 'No DHCPv6 reply'
         return capture.results[0]
 
-    options = b''
+    options = bytes(DHCP6OptOptReq(reqopts=[56]))
+    if hostname:
+        options += bytes(DHCP6OptClientFQDN(fqdn=hostname))
     if association in ('address', 'both'):
         options += bytes(DHCP6OptIA_NA(iaid=1))
     if association in ('prefix', 'both'):
@@ -97,6 +100,12 @@ def client6(interface, association='address'):
     request = DHCP6_Request(trid=1235) / identifier / DHCP6OptServerId(duid=offer[DHCP6OptServerId].duid)
     reply = exchange(request / options, DHCP6_Reply)
     result = {}
+    ntp = reply.getlayer(DHCP6OptNTPServer)
+    while ntp is not None:
+        suboption, = ntp.ntpserver
+        assert suboption.optcode == 1 and suboption.optlen == 16
+        result.setdefault('ntp', []).append(suboption.addr)
+        ntp = ntp.payload.getlayer(DHCP6OptNTPServer)
     if association in ('address', 'both'):
         result['address'] = reply[DHCP6OptIAAddress].addr
     if association in ('prefix', 'both'):
@@ -196,7 +205,7 @@ def release4(interface, address, server):
     sendp(packet, iface=interface, verbose=False)
 
 
-def test_ipv4_hostfile_native_events(native, tmp_path):
+def test_dual_stack_hostfile_native_events(native, tmp_path):
     """The packaged hook publishes a real ACK/renewal and removes a released lease.
 
     This container has no systemd PID 1. A systemctl stand-in executes the same
@@ -211,11 +220,13 @@ def test_ipv4_hostfile_native_events(native, tmp_path):
     hook.parent.mkdir(parents=True, exist_ok=True)
     hook.write_bytes(Path('packaging/nvyr-dhcp-hosts-hook').read_bytes())
     hook.chmod(0o755)
-    configuration_path = tmp_path / '4-1/config.json'
+    for family in (4, 6):
+        configuration_path = tmp_path / (kea.instance_name(family, 'default') + '.json')
+        configuration_path.symlink_to(tmp_path / f'{family}-1/config.json')
     host_file = tmp_path / 'hosts'
     systemctl.write_text('#!/usr/bin/python3\n'
                         'from nvyr.helpers.dhcp_hosts import reconcile\n'
-                        f'reconcile({str(configuration_path)!r}, {str(host_file)!r})\n')
+                        f'reconcile({str(tmp_path)!r}, {str(host_file)!r})\n')
     systemctl.chmod(0o755)
     host_file.write_text('127.0.0.1 localhost\n')
     configuration = {'update-hostfile': {}, 'lease-time': '1d',
@@ -241,9 +252,22 @@ def test_ipv4_hostfile_native_events(native, tmp_path):
         wait_for_text('renamed.home.example renamed\n')
         assert 'printer' not in host_file.read_text()
 
+        section6 = {'update-hostfile': {}, 'preferred-lifetime': '12h', 'valid-lifetime': '1d',
+                    'shared-network': {'LAN': {'subnet': {'2001:db8::/64': {
+                        'range': ['2001:db8::10-2001:db8::20'],
+                        'prefix-pool': {'2001:db8:100::/48': {'delegated-length': '56'}},
+                    }}}}}
+        native(6, 1, section6)
+        lease6 = request(6, 1, 'both', hostname='renamed.home.example.')
+        ipv6_record = f"{lease6['address']}\trenamed.home.example renamed\n"
+        wait_for_text(ipv6_record)
+        assert lease['address'] in host_file.read_text()
+        assert lease6['prefix'].split('/')[0] not in host_file.read_text()
+
         code = 'from tests.test_kea_live import release4; release4("kcli1", ' + repr(lease['address']) + ', ' + repr(lease['server']) + ')'
         run('ip', 'netns', 'exec', 'kclient1', 'python3', '-c', code)
-        wait_for_text('renamed', present=False)
+        wait_for_text(lease['address'], present=False)
+        assert ipv6_record in host_file.read_text()
 
         # Removing the feature unloads the native hook instead of retaining it.
         configuration['Dhcp4']['hooks-libraries'] = []
@@ -339,8 +363,12 @@ def test_ipv6_operational_leases_pools_and_listeners(native, monkeypatch):
         'subnet': {'2001:db8::/64': {'range': ['2001:db8::10-2001:db8::20']}}}}}
     subnet = section['shared-network']['LAN']['subnet']['2001:db8::/64']
     subnet['prefix-pool'] = {'2001:db8:100::/48': {'delegated-length': '56'}}
+    servers = ['2001:db8::123', '2001:db8::124']
+    section['option'] = {'ntp-server': ['2001:db8::125']}
+    subnet['option'] = {'ntp-server': servers}
     folder, current = native(6, 1, section)
     lease = request(6, 1, 'both')
+    assert lease['ntp'] == servers
     delegated = ipaddress.IPv6Network(lease['prefix'])
     assert delegated.prefixlen == 56 and delegated.subnet_of(ipaddress.IPv6Network('2001:db8:100::/48'))
 
@@ -366,7 +394,7 @@ def test_ipv6_operational_leases_pools_and_listeners(native, monkeypatch):
     updated = generated_server(section | {'listen-interface': ['ksrv1']}, 6, kea.inventory())['Dhcp6']
     current['Dhcp6']['shared-networks'] = updated['shared-networks']
     control(folder / 'control.sock', 'config-set', current)
-    assert request(6, 1, 'prefix') == {'prefix': '2001:db8:200::/60'}
+    assert request(6, 1, 'prefix') == {'prefix': '2001:db8:200::/60', 'ntp': ['2001:db8::125']}
 
 
 def test_ipv4_vrf_isolation_renewal_and_reconfiguration(native):

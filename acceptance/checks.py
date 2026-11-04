@@ -306,8 +306,9 @@ def check_dhcp4_server(options):
 
 def check_dhcp_hostfile_hook(options):
     """The default Kea daemon reloads its hostfile hook and the expiry timer is active."""
-    server = server_configuration(4, 'default')
-    assert_equal(dhcp_hosts.enabled({'Dhcp4': server}), True)
+    for family in (4, 6):
+        server = server_configuration(family, 'default')
+        assert_equal(dhcp_hosts.enabled({f'Dhcp{family}': server}), True)
     assert_equal(Path(dhcp_hosts.HOOK_SCRIPT).is_file(), True)
     assert_equal(cmd(['systemctl', 'is-active', 'nvyr-dhcp-hosts.timer']).strip(), 'active')
 
@@ -317,8 +318,10 @@ def check_dhcp6_server(options):
     server = server_configuration(6, 'default')
     assert_equal(server['preferred-lifetime'], 21600)
     assert_equal(server['valid-lifetime'], 43200)
-    assert_equal(server['shared-networks'][0]['interface'], 'dum995')
-    subnet = server['shared-networks'][0]['subnet6'][0]
+    network = server['shared-networks'][0]
+    assert_equal(network['interface'], 'dum995')
+    assert_in('ntp-server', [option['name'] for option in network['option-data']])
+    subnet = network['subnet6'][0]
     assert_in('2001:db8:195::50', subnet['reservations'][0]['ip-addresses'])
     assert_in('2001:db8:601::/56', subnet['reservations'][0]['prefixes'])
     pool, = subnet['pd-pools']

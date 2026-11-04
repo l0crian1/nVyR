@@ -31,7 +31,7 @@ def files(tmp_path):
     """Use real files and the production parser, never the machine's hosts file."""
     lease_file = tmp_path / 'leases.csv'
     host_file = tmp_path / 'hosts'
-    configuration_file = tmp_path / 'server.json'
+    configuration_file = tmp_path / (kea.instance_name(4, 'default') + '.json')
     host_file.write_text('127.0.0.1 localhost\n127.0.1.1 nvyr\n# static\n192.0.2.1 gateway\n')
     configuration = generated_server({
         'update-hostfile': {}, 'option': {'domain-name': 'home.example'},
@@ -48,12 +48,12 @@ def test_publish_domain_alias_and_preserve_static(files):
     """A lease contributes an FQDN and alias while static text stays intact."""
     original = files.hosts.read_text()
     write_leases(files.leases, [{}])
-    dhcp_hosts.reconcile(files.config, files.hosts, now=1000)
+    dhcp_hosts.reconcile(files.config.parent, files.hosts, now=1000)
     assert files.hosts.read_text() == original + hosts.DHCP_BEGIN + (
         '192.0.2.10\tprinter.home.example printer\n') + hosts.DHCP_END
 
     previous = files.hosts.stat().st_mtime_ns
-    dhcp_hosts.reconcile(files.config, files.hosts, now=1000)
+    dhcp_hosts.reconcile(files.config.parent, files.hosts, now=1000)
     assert files.hosts.stat().st_mtime_ns == previous
 
 
@@ -68,11 +68,11 @@ def test_renew_release_decline_expiration_and_restart(files):
         {'address': '192.0.2.14', 'hostname': 'removed', 'subnet_id': 123},
         {'address': '192.0.2.15', 'hostname': 'reclaimed', 'state': 2},
     ])
-    dhcp_hosts.reconcile(files.config, files.hosts, now=1000)
+    dhcp_hosts.reconcile(files.config.parent, files.hosts, now=1000)
     _, managed = hosts.split_dhcp(files.hosts.read_text())
     assert managed == '192.0.2.10\trenamed.home.example renamed\n'
 
-    dhcp_hosts.reconcile(files.config, files.hosts, now=5000)
+    dhcp_hosts.reconcile(files.config.parent, files.hosts, now=5000)
     assert hosts.DHCP_BEGIN not in files.hosts.read_text()
 
 
@@ -100,7 +100,7 @@ def test_invalid_names_and_reserved_aliases(files):
         {'address': '192.0.2.13', 'hostname': 'bad#comment'},
         {'address': '192.0.2.14', 'hostname': 'gateway.home.example'},
     ])
-    dhcp_hosts.reconcile(files.config, files.hosts, now=1000)
+    dhcp_hosts.reconcile(files.config.parent, files.hosts, now=1000)
     _, managed = hosts.split_dhcp(files.hosts.read_text())
     assert hosts.entries(managed) == [
         ('192.0.2.10', ['localhost.home.example']),
@@ -112,7 +112,7 @@ def test_invalid_names_and_reserved_aliases(files):
 def test_hostname_change_preserves_dhcp_and_removes_name_collision(files):
     """Renaming the router cannot leave a DHCP alias that overrides its new name."""
     write_leases(files.leases, [{}])
-    dhcp_hosts.reconcile(files.config, files.hosts, now=1000)
+    dhcp_hosts.reconcile(files.config.parent, files.hosts, now=1000)
     updated = system.hostname_hosts(files.hosts.read_text(), 'printer.home.example')
     assert '127.0.1.1\tprinter.home.example printer\n' in updated
     assert hosts.DHCP_BEGIN not in updated
@@ -123,33 +123,55 @@ def test_disable_and_deleted_configuration_remove_only_managed_entries(files):
     """Turning the feature off cleans up immediately, without requiring a lease event."""
     original = files.hosts.read_text()
     write_leases(files.leases, [{}])
-    dhcp_hosts.reconcile(files.config, files.hosts, now=1000)
+    dhcp_hosts.reconcile(files.config.parent, files.hosts, now=1000)
     enabled = files.config.read_text()
     files.native['Dhcp4']['hooks-libraries'] = []
     files.config.write_text(json.dumps(files.native))
-    dhcp_hosts.reconcile(files.config, files.hosts, now=1000)
+    dhcp_hosts.reconcile(files.config.parent, files.hosts, now=1000)
     assert files.hosts.read_text() == original
 
     files.config.write_text(enabled)
-    dhcp_hosts.reconcile(files.config, files.hosts, now=1000)
+    dhcp_hosts.reconcile(files.config.parent, files.hosts, now=1000)
     files.config.unlink()
-    dhcp_hosts.reconcile(files.config, files.hosts, now=1000)
+    dhcp_hosts.reconcile(files.config.parent, files.hosts, now=1000)
     assert files.hosts.read_text() == original
+
+
+def test_ipv6_expiry_preserves_ipv4_and_short_names(files):
+    """Independent expiry and search domains must not change the other family's names."""
+    write_leases(files.leases, [{}])
+    directory = files.config.parent
+    journal = directory / 'leases6.csv'
+    prefix = '2001:db8::/64'
+    configuration = generated_server({
+        'update-hostfile': {}, 'option': {'domain-search': ['home.example']},
+        'shared-network': {'LAN': {'subnet': {prefix: {}}}},
+    }, 6, {})
+    configuration['Dhcp6']['lease-database']['name'] = str(journal)
+    (directory / (kea.instance_name(6, 'default') + '.json')).write_text(json.dumps(configuration))
+    journal.write_text('address,valid_lifetime,expire,subnet_id,state,hostname,lease_type,iaid\n'
+                       f'2001:db8::20,300,1300,{subnet_id(prefix)},0,printer,0,1\n')
+
+    dhcp_hosts.reconcile(directory, files.hosts, now=1000)
+    assert '2001:db8::20\tprinter\n' in files.hosts.read_text()
+    dhcp_hosts.reconcile(directory, files.hosts, now=1300)
+    assert hosts.entries(hosts.split_dhcp(files.hosts.read_text())[1]) == [
+        ('192.0.2.10', ['printer.home.example', 'printer'])]
 
 
 def test_failed_journal_read_preserves_previous_hosts(files):
     """A partial write or missing DB must not masquerade as an empty lease list."""
     write_leases(files.leases, [{}])
-    dhcp_hosts.reconcile(files.config, files.hosts, now=1000)
+    dhcp_hosts.reconcile(files.config.parent, files.hosts, now=1000)
     previous = files.hosts.read_text()
     files.leases.write_text('incomplete')
     with pytest.raises(OperationalError):
-        dhcp_hosts.reconcile(files.config, files.hosts, now=1000)
+        dhcp_hosts.reconcile(files.config.parent, files.hosts, now=1000)
     assert files.hosts.read_text() == previous
 
     files.leases.unlink()
     with pytest.raises(OperationalError):
-        dhcp_hosts.reconcile(files.config, files.hosts, now=1000)
+        dhcp_hosts.reconcile(files.config.parent, files.hosts, now=1000)
     assert files.hosts.read_text() == previous
 
 
@@ -170,7 +192,7 @@ def test_lock_survives_atomic_hosts_replacement(files):
     def update():
         started.set()
         try:
-            dhcp_hosts.reconcile(files.config, files.hosts, now=1000)
+            dhcp_hosts.reconcile(files.config.parent, files.hosts, now=1000)
         except Exception as error:
             errors.append(error)
         finally:
@@ -201,7 +223,7 @@ def test_hook_queues_update_without_client_environment_arguments(monkeypatch):
 
 
 def test_global_only_schema_and_native_hook(controller, engine, session, monkeypatch):
-    """Global DHCPv4 can load/unload the hook; VRF and IPv6 paths reject it."""
+    """Both global servers allow the hook and both VRF paths exclude it."""
     from tests.test_kea import devices
 
     monkeypatch.setattr(kea, 'inventory', devices)
@@ -220,8 +242,9 @@ def test_global_only_schema_and_native_hook(controller, engine, session, monkeyp
 
     with pytest.raises(RouterError):
         controller.execute('set vrf name BLUE service dhcp-server update-hostfile', session)
+    controller.execute('set service dhcpv6-server update-hostfile', session)
     with pytest.raises(RouterError):
-        controller.execute('set service dhcpv6-server update-hostfile', session)
+        controller.execute('set vrf name BLUE service dhcpv6-server update-hostfile', session)
 
 
 def test_hostfile_failure_restores_previous_kea_configuration(tmp_path, monkeypatch):
@@ -233,8 +256,8 @@ def test_hostfile_failure_restores_previous_kea_configuration(tmp_path, monkeypa
     path.write_text(json.dumps(old))
     calls = []
 
-    def update(configuration_path):
-        current = json.loads(configuration_path.read_text())
+    def update(directory):
+        current = json.loads((directory / path.name).read_text())
         calls.append(current)
         if dhcp_hosts.enabled(current):
             raise RouterError('hosts write failed')

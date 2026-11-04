@@ -9497,6 +9497,25 @@
                           },
                           "multi": true
                         },
+                        "ntp-server": {
+                          "kind": "leaf_node",
+                          "description": "IPv6 unicast NTP server advertised to clients",
+                          "hints": {
+                            "IPv6-address": "IPv6 unicast address of an NTP server"
+                          },
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "ipv6-address": {
+                                "name": "ipv6-address"
+                              },
+                              "unicast-address": {
+                                "name": "unicast-address"
+                              }
+                            }
+                          },
+                          "multi": true
+                        },
                         "domain-search": {
                           "kind": "leaf_node",
                           "description": "Domain search suffix",
@@ -9659,6 +9678,25 @@
                               },
                               "multi": true
                             },
+                            "ntp-server": {
+                              "kind": "leaf_node",
+                              "description": "IPv6 unicast NTP server advertised to clients",
+                              "hints": {
+                                "IPv6-address": "IPv6 unicast address of an NTP server"
+                              },
+                              "validators": {
+                                "mode": "AND",
+                                "checks": {
+                                  "ipv6-address": {
+                                    "name": "ipv6-address"
+                                  },
+                                  "unicast-address": {
+                                    "name": "unicast-address"
+                                  }
+                                }
+                              },
+                              "multi": true
+                            },
                             "domain-search": {
                               "kind": "leaf_node",
                               "description": "Domain search suffix",
@@ -9799,6 +9837,25 @@
                                     "checks": {
                                       "ipv6-address": {
                                         "name": "ipv6-address"
+                                      }
+                                    }
+                                  },
+                                  "multi": true
+                                },
+                                "ntp-server": {
+                                  "kind": "leaf_node",
+                                  "description": "IPv6 unicast NTP server advertised to clients",
+                                  "hints": {
+                                    "IPv6-address": "IPv6 unicast address of an NTP server"
+                                  },
+                                  "validators": {
+                                    "mode": "AND",
+                                    "checks": {
+                                      "ipv6-address": {
+                                        "name": "ipv6-address"
+                                      },
+                                      "unicast-address": {
+                                        "name": "unicast-address"
                                       }
                                     }
                                   },
@@ -169011,6 +169068,25 @@
                   },
                   "multi": true
                 },
+                "ntp-server": {
+                  "kind": "leaf_node",
+                  "description": "IPv6 unicast NTP server advertised to clients",
+                  "hints": {
+                    "IPv6-address": "IPv6 unicast address of an NTP server"
+                  },
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "ipv6-address": {
+                        "name": "ipv6-address"
+                      },
+                      "unicast-address": {
+                        "name": "unicast-address"
+                      }
+                    }
+                  },
+                  "multi": true
+                },
                 "domain-search": {
                   "kind": "leaf_node",
                   "description": "Domain search suffix",
@@ -169028,6 +169104,11 @@
                   "multi": true
                 }
               }
+            },
+            "update-hostfile": {
+              "kind": "leaf_node",
+              "description": "Publish active DHCPv6 address lease hostnames in the local hosts file",
+              "valueless": true
             },
             "listen-interface": {
               "kind": "leaf_node",
@@ -169173,6 +169254,25 @@
                       },
                       "multi": true
                     },
+                    "ntp-server": {
+                      "kind": "leaf_node",
+                      "description": "IPv6 unicast NTP server advertised to clients",
+                      "hints": {
+                        "IPv6-address": "IPv6 unicast address of an NTP server"
+                      },
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "ipv6-address": {
+                            "name": "ipv6-address"
+                          },
+                          "unicast-address": {
+                            "name": "unicast-address"
+                          }
+                        }
+                      },
+                      "multi": true
+                    },
                     "domain-search": {
                       "kind": "leaf_node",
                       "description": "Domain search suffix",
@@ -169313,6 +169413,25 @@
                             "checks": {
                               "ipv6-address": {
                                 "name": "ipv6-address"
+                              }
+                            }
+                          },
+                          "multi": true
+                        },
+                        "ntp-server": {
+                          "kind": "leaf_node",
+                          "description": "IPv6 unicast NTP server advertised to clients",
+                          "hints": {
+                            "IPv6-address": "IPv6 unicast address of an NTP server"
+                          },
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "ipv6-address": {
+                                "name": "ipv6-address"
+                              },
+                              "unicast-address": {
+                                "name": "unicast-address"
                               }
                             }
                           },

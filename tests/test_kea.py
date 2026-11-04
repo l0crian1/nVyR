@@ -411,7 +411,7 @@ def test_manager_accepts_and_reports_waiting_for_carrier(tmp_path, monkeypatch):
 
     assert messages == ['DHCPv4 (default): waiting for carrier on eth1.']
     assert (tmp_path / f'{instance}.json').read_text() == text
-    assert reconciled == [tmp_path / f'{instance}.json']
+    assert reconciled == [tmp_path]
 
 
 @pytest.mark.parametrize('address', ['::', 'ff02::1', 'fe80::1', '192.0.2.1'])
@@ -425,8 +425,11 @@ def test_ipv6_listener_restriction_at_entry(controller, session, address, root):
 @pytest.mark.parametrize('service,vrf,settings', [
     ('dhcpv6-server', 'default', {'listen-address': ['fe80::1']}),
     ('dhcpv6-server', 'BLUE', {'listen-address': ['ff02::1']}),
-    ('dhcpv6-server', 'default', {'update-hostfile': {}}),
-    ('dhcp-server', 'BLUE', {'update-hostfile': {}}),
+    ('dhcpv6-server', 'BLUE', {'update-hostfile': True}),
+    ('dhcp-server', 'BLUE', {'update-hostfile': True}),
+    ('dhcpv6-server', 'default', {'option': {'ntp-server': ['ff02::101']}}),
+    ('dhcpv6-server', 'BLUE', {'option': {'ntp-server': ['::']}}),
+    ('dhcpv6-server', 'default', {'option': {'ntp-server': ['192.0.2.1']}}),
 ])
 def test_loaded_service_scalar_and_scope_validation(service, vrf, settings):
     configuration = {'service': {service: settings}}

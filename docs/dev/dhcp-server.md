@@ -100,7 +100,8 @@ availability test; lease exchange and failover belong to the functional suite.
 ## Lease hostname updates
 
 Kea lease events request a short-lived systemd updater. It rebuilds a marked DHCP
-section from the current lease journal, including Kea's lease-file cleanup
+section under one lock from the enabled default-VRF IPv4 and IPv6 address lease
+journals, including Kea's lease-file cleanup
 rotation. Renewals update names; released, declined, expired and removed-subnet
 leases are omitted. Configuration application reconciles immediately. A one-minute
 timer also reconciles after boot and catches expired leases or coalesced events.

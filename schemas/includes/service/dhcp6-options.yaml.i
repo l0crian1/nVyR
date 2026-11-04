@@ -13,6 +13,16 @@ option:
         ipv6-address: {}
       multi: true
 
+    ntp-server:
+      kind: leaf_node
+      description: IPv6 unicast NTP server advertised to clients
+      hints:
+        IPv6-address: IPv6 unicast address of an NTP server
+      validators:
+        ipv6-address: {}
+        unicast-address: {}
+      multi: true
+
     domain-search:
       kind: leaf_node
       description: Domain search suffix

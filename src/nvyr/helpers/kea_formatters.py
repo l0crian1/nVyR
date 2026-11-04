@@ -29,6 +29,13 @@ def scope_options(section, family):
     if section.get('option'):
         result['option-data'] = []
         for key, value in section['option'].items():
+            if family == 6 and key == 'ntp-server':
+                # Kea 3.0 keeps only the first repeated named suboption. Encode
+                # type 1, length 16 and the address for each server; Kea splits
+                # these into one RFC 5908 option per server when sending.
+                payload = ''.join('00010010' + ipaddress.IPv6Address(address).packed.hex() for address in value)
+                result['option-data'].append({'name': 'ntp-server', 'csv-format': False, 'data': payload})
+                continue
             data = ', '.join(value) if isinstance(value, (list, tuple)) else value
             result['option-data'].append({'name': names[key], 'data': data})
     return result

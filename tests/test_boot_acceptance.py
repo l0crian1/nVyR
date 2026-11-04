@@ -63,7 +63,8 @@ def fake_agent(tmp_path, monkeypatch):
     monkeypatch.setattr(agent.baseline, 'preflight', lambda value, options: None)
     monkeypatch.setattr(agent.baseline, 'configure', configure)
     monkeypatch.setattr(agent.baseline, 'prepare_assets', lambda options: None)
-    monkeypatch.setattr(agent.snapshots, 'capture', lambda: {'firewall': {}, 'routing': [], 'vrf_conntrack': {}})
+    snapshot = {'firewall': {}, 'routing': [], 'vrf_conntrack': {}, 'dhcpv6_duid': '00:04:01'}
+    monkeypatch.setattr(agent.snapshots, 'capture', lambda: deepcopy(snapshot))
     monkeypatch.setattr(agent, 'observations', lambda options: [{'check': 'native', 'status': 'PASSED'}])
     return SimpleNamespace(directory=directory, state=state, saved=saved, original_bytes=original_bytes)
 
@@ -123,7 +124,7 @@ def test_agent_reports_all_postboot_failures(fake_agent, monkeypatch):
     with pytest.raises(AssertionError, match='running_configuration, vrf'):
         agent.verify(fake_agent.directory)
     result = agent.read_record(fake_agent.directory, 'after.json')
-    assert [check['status'] for check in result['checks']] == ['FAIL', 'PASSED', 'FAIL', 'PASSED', 'PASSED', 'PASSED']
+    assert [check['status'] for check in result['checks']] == ['FAIL', 'PASSED', 'FAIL', 'PASSED', 'PASSED', 'PASSED', 'PASSED']
     assert not (fake_agent.directory / 'restored.json').exists()
 
 
@@ -131,7 +132,8 @@ def test_native_policy_drift_fails_even_when_configuration_matches(fake_agent, m
     """A missing installed rule cannot hide behind an unchanged configuration dictionary."""
     agent.prepare(fake_agent.directory, OPTIONS)
     fake_agent.state['boot'] = 'after'
-    monkeypatch.setattr(agent.snapshots, 'capture', lambda: {'firewall': {'missing': 'rule'}, 'routing': [], 'vrf_conntrack': {}})
+    changed = agent.snapshots.capture() | {'firewall': {'missing': 'rule'}}
+    monkeypatch.setattr(agent.snapshots, 'capture', lambda: changed)
 
     with pytest.raises(AssertionError, match='firewall_native_configuration'):
         agent.verify(fake_agent.directory)

@@ -62,6 +62,13 @@ source addresses arriving from another interface; `route-localnet` allows routed
 127.0.0.0/8 traffic. `promote-secondaries` retains secondary addresses when their
 primary is removed. Those three behaviors are otherwise disabled.
 
+To block IPv6 transit arriving on an interface, use an IPv6 forward filter rule
+with an inbound interface match. Put it ahead of broader accepts in that chain.
+Global state-policy and inet rules run first, so account for any accepts there.
+Traffic addressed to the router uses the input hook.
+On the nVyR kernel, clearing an interface's IPv6 forwarding sysctl still permits
+transit when global IPv6 forwarding is enabled.
+
 IPv6 syntax:
 
 ```text

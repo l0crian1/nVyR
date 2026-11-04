@@ -36,6 +36,8 @@ vrf:
               replace:
                 /script/register/vrf: {tag: name}
             - file: service/dhcpv6-server.yaml.i
+              remove:
+              - /children/update-hostfile
               replace:
                 /script/register/vrf: {tag: name}
 

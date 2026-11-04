@@ -32,9 +32,13 @@ def hostfile_suite(config, request):
         assert_not_in('dum984', [link['ifname'] for link in links])
         prepared = True
 
-        if lookup(running, ('service', 'dhcp-server'), None) is not None:
-            session.delete('delete service dhcp-server')
+        for server in ('dhcp-server', 'dhcpv6-server'):
+            if lookup(running, ('service', server), None) is not None:
+                session.delete(f'delete service {server}')
         session.set('set interfaces dummy dum984 address 198.18.214.1/24')
+        session.set('set interfaces dummy dum984 address 2001:db8:214::1/64')
+        session.set('set service dhcpv6-server listen-interface dum984')
+        session.set('set service dhcpv6-server shared-network HOSTFILESMOKE subnet 2001:db8:214::/64 range 2001:db8:214::10-2001:db8:214::20')
         session.set('set service dhcp-server listen-interface dum984')
         session.set('set service dhcp-server shared-network HOSTFILESMOKE subnet 198.18.214.0/24 range 198.18.214.10-198.18.214.20')
         session.commit()
@@ -44,9 +48,10 @@ def hostfile_suite(config, request):
             return
         session.discard()
         running = session.get_config()
-        if lookup(running, ('service', 'dhcp-server'), None) is not None:
-            session.delete('delete service dhcp-server')
-            session.commit()
+        for server in ('dhcp-server', 'dhcpv6-server'):
+            if lookup(running, ('service', server), None) is not None:
+                session.delete(f'delete service {server}')
+        session.commit()
         if lookup(session.get_config(), ('interfaces', 'dummy', 'dum984'), None) is not None:
             session.delete('delete interfaces dummy dum984')
             session.commit()
@@ -65,13 +70,14 @@ def hostfile_environment(config, request, hostfile_suite):
         yield
 
 
-def test_hostfile_hook_enable_and_remove(config):
+@pytest.mark.parametrize(('family', 'server'), [(4, 'dhcp-server'), (6, 'dhcpv6-server')])
+def test_hostfile_hook_enable_and_remove(config, family, server):
     """The real Kea daemon loads the installed hook and unloads it on removal."""
     original_hosts = Path('/etc/hosts').read_text()
-    config.set('set service dhcp-server update-hostfile')
+    config.set(f'set service {server} update-hostfile')
     config.commit()
 
-    socket = kea.RUNTIME / (kea.instance_name(4, 'default') + '.sock')
+    socket = kea.RUNTIME / (kea.instance_name(family, 'default') + '.sock')
     native = kea.control(socket, 'config-get')['arguments']
     assert_equal(dhcp_hosts.enabled(native), True)
     assert_equal(Path(dhcp_hosts.HOOK_SCRIPT).is_file(), True)
@@ -79,9 +85,9 @@ def test_hostfile_hook_enable_and_remove(config):
     unmanaged, _ = hosts.split_dhcp(Path('/etc/hosts').read_text())
     assert_equal(unmanaged, original_hosts)
 
-    config.delete('delete service dhcp-server update-hostfile')
+    config.delete(f'delete service {server} update-hostfile')
     config.commit()
-    native = kea.control(socket, 'config-get')['arguments']['Dhcp4']
+    native = kea.control(socket, 'config-get')['arguments'][f'Dhcp{family}']
     assert_equal(native['hooks-libraries'], [])
     assert_equal(Path('/etc/hosts').read_text(), original_hosts)
 
@@ -93,16 +99,16 @@ def test_hostfile_server_disable(config):
     config.set('set service dhcp-server disable')
     config.commit()
 
-    assert_equal(dhcp_hosts.CONFIGURATION.exists(), False)
+    assert_equal((kea.RUNTIME / (kea.instance_name(4, 'default') + '.json')).exists(), False)
     assert_not_in('# BEGIN nVyR DHCP hosts', Path('/etc/hosts').read_text())
 
 
-def test_hostfile_global_ipv4_only(config):
-    """VRF and IPv6 configuration cannot publish into the global hosts namespace."""
+def test_hostfile_global_only(config):
+    """Named VRF configurations cannot publish into the global hosts namespace."""
     with assert_raises(RouterError, match='Unknown command|unknown'):
         config.set('set vrf name HOSTFILESMOKE service dhcp-server update-hostfile')
     config.discard()
 
     with assert_raises(RouterError, match='Unknown command|unknown'):
-        config.set('set service dhcpv6-server update-hostfile')
+        config.set('set vrf name HOSTFILESMOKE service dhcpv6-server update-hostfile')
     config.discard()

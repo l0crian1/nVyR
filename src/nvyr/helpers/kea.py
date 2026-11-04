@@ -225,8 +225,7 @@ class Manager:
 
         changed = []
         waiting = {}
-        default_instance = instance_name(4, 'default')
-        update_hosts = default_instance in targets
+        update_hosts = instance_name(plan.family, 'default') in targets
         try:
             # Release old sockets before starting their replacements. In particular,
             # moving a listener between VRFs must not overlap the previous binding.
@@ -255,7 +254,7 @@ class Manager:
             # Reconcile after native installation, including disable/deletion and
             # domain/subnet changes that do not generate a client lease event.
             if update_hosts:
-                self.update_hosts(self.directory / f'{default_instance}.json')
+                self.update_hosts(self.directory)
         except Exception as error:
             failures = []
             # Stop all attempted replacements before restoring any previous socket.
@@ -273,7 +272,7 @@ class Manager:
                     failures.append(str(rollback))
             if update_hosts:
                 try:
-                    self.update_hosts(self.directory / f'{default_instance}.json')
+                    self.update_hosts(self.directory)
                 except Exception as rollback:
                     failures.append(str(rollback))
             if recovery or failures:

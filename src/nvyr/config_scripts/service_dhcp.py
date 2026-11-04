@@ -515,7 +515,7 @@ def generate(configuration, context):
         if 'ha' in section:
             server['multi-threading'] = {'enable-multi-threading': True, 'thread-pool-size': 2}
             server['hooks-libraries'].extend(ha_hooks(section['ha']))
-        if family == 4 and 'update-hostfile' in section:
+        if 'update-hostfile' in section:
             server['hooks-libraries'].append({
                 'library': dhcp_hosts.HOOK_LIBRARY,
                 'parameters': {'name': dhcp_hosts.HOOK_SCRIPT, 'sync': False},

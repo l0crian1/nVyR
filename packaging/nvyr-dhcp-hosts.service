@@ -1,5 +1,5 @@
 [Unit]
-Description=Publish current DHCPv4 lease hostnames
+Description=Publish current DHCP lease hostnames
 After=nvyr-configd.service
 
 [Service]

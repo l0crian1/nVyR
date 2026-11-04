@@ -29,6 +29,11 @@ dhcpv6-server:
           mode: direct
           value: 1d
 
+    update-hostfile:
+      kind: leaf_node
+      description: Publish active DHCPv6 address lease hostnames in the local hosts file
+      valueless: true
+
     listen-interface:
       kind: leaf_node
       description: Listen on this interface; cannot overlap a listen-address selection
