@@ -8,7 +8,7 @@ from nvyr.config_scripts import (
     container, firewall, firewall_failsafe, interface_ethernet, interface_dummy, interface_virtual_ethernet,
     interface_bridge, interface_loopback, protocols_static, protocols_bgp, policy, logging,
     service_ssh, service_dhcp, system_dns, system_login, system_hostname, system_configuration, system_ntp, system_cpu,
-    system_timezone, vrf, vrf_conntrack,
+    system_task, system_timezone, vrf, vrf_conntrack,
 )
 from nvyr.modules import registry
 from nvyr.schema import Schema
@@ -20,6 +20,7 @@ def test_bundled_owners_use_scripts_directly_without_lifecycle_recording():
     assert modules == {
         'time-zone': system_timezone,
         'cpu': system_cpu,
+        'task': system_task,
         'container': container,
         'logging': logging,
         'firewall': firewall,

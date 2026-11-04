@@ -20,6 +20,7 @@ children: # operational
   include_schema:
   - file: operational/firewall-trace.yaml.i
   - file: operational/set.yaml.i
+  - file: operational/task-start.yaml.i
   - file: operational/dhcp-client.yaml.i
     as: null
   - file: operational/containers.yaml.i

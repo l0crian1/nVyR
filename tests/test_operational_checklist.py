@@ -53,7 +53,7 @@ def command_nodes(node, path=()):
 def test_all_command_permissions_follow_operational_contract(controller, role):
     """Adding a command below an administrative verb must not silently expose it to operators."""
     readable = {'show', 'ping', 'traceroute', 'lookup', 'exit'}
-    administrative = {'release', 'renew', 'update', 'restart', 'generate', 'clear', 'reboot',
+    administrative = {'release', 'renew', 'update', 'restart', 'start', 'generate', 'clear', 'reboot',
                       'poweroff', 'install', 'add', 'rename', 'delete', 'configure', 'connect'}
     token = access.role.set(role)
     try:
@@ -61,7 +61,7 @@ def test_all_command_permissions_follow_operational_contract(controller, role):
             # Capturing and reading packet traces both expose privileged packet data.
             if path == ('disable', 'system', 'developer-access'):
                 expected = 'dev-admin'
-            elif path[:3] in {('monitor', 'firewall', 'trace'), ('show', 'firewall', 'trace')}:
+            elif path[:3] in {('monitor', 'firewall', 'trace'), ('show', 'firewall', 'trace'), ('show', 'log', 'task')}:
                 expected = 'net-admin'
             elif path[0] in readable or path[:2] == ('set', 'terminal'):
                 expected = 'read-only'

@@ -94,12 +94,13 @@ def registry(schema):
         container, firewall, firewall_failsafe, logging, interface_ethernet, interface_dummy, interface_virtual_ethernet,
         interface_bridge, interface_loopback, protocols_static, protocols_bgp, policy,
         service_ssh, service_dhcp, system_dns, system_login, system_hostname, system_configuration, system_ntp, system_cpu,
-        system_timezone, vrf, vrf_conntrack,
+        system_task, system_timezone, vrf, vrf_conntrack,
     )
 
     modules = {
         'time-zone': system_timezone,
         'cpu': system_cpu,
+        'task': system_task,
         'logging': logging,
         'container': container,
         'firewall': firewall,

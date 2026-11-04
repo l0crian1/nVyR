@@ -90,6 +90,9 @@ def preflight(configuration, options):
         if lookup(configuration, ('service', service), {}):
             raise ValueError(f'Comprehensive acceptance needs no existing {service}')
 
+    if {'BOOT-AUDIT', 'BOOT-INTERVAL'}.intersection(lookup(configuration, ('system', 'task'), {})):
+        raise ValueError('An acceptance task name is already in use')
+
     assert_config_names_unused(configuration, *LINKS)
     port = options['ethernet']
     configured_port = lookup(configuration, ('interfaces', 'ethernet', port), {})

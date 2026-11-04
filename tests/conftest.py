@@ -25,7 +25,11 @@ def isolated_network_profiles(tmp_path, monkeypatch):
     from contextlib import nullcontext
     from types import SimpleNamespace
     from nvyr.config_scripts import protocols_bgp, system_timezone
-    from nvyr.helpers import logging_runtime
+    from nvyr.helpers import logging_runtime, task_schedule
+
+    monkeypatch.setattr(task_schedule, 'UNITS', tmp_path)
+    monkeypatch.setattr(task_schedule, 'LOGS', tmp_path / 'task-logs')
+    monkeypatch.setattr(task_schedule, 'cmd', lambda argv: '')
     from nvyr.helpers import kernel_settings
     from nvyr.helpers import cpu_settings
 

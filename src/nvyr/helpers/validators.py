@@ -301,6 +301,18 @@ def dhcp_identifier(value, minimum, maximum):
             and minimum <= len(value.split(':')) <= maximum)
 
 
+@register('task-op-command', 'a complete unattended nVyR operational command')
+def task_op_command(value):
+    from nvyr.helpers.task_commands import resolve
+    from nvyr.errors import RouterError
+
+    try:
+        resolve(value)
+    except RouterError:
+        return False
+    return True
+
+
 @register('duration', 'positive duration in s, m, h or d, within the supported maximum')
 def duration(value, maximum):
     if re.fullmatch(r'[0-9]+[smhd]', value) is None:

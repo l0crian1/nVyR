@@ -75,10 +75,8 @@ cache without querying DNS; missing or unreadable cache data produces a warning 
 empty membership. Neither domain groups nor GeoIP selectors are available beneath
 `firewall fail-safe`, which loads before interfaces.
 
-**There is no periodic refresh yet.** Answers remain installed until a manual refresh
-or configuration change removes them. DNS TTL expiry alone does not remove them.
-Cached addresses may become stale, so refresh when the domain's addresses change.
-The future shared scheduler will handle automatic refresh.
+DNS TTL expiry alone does not remove installed addresses. Refresh on demand, or configure a
+[scheduled task](tasks.md) to run `update firewall domain-group` at the interval you want.
 
 ## Operational commands
 
@@ -98,7 +96,7 @@ show firewall group domain-group ipv4 SERVICES detail
 nftables transaction. It requires the net-admin or administrator role. DNS runs
 outside the configuration lock; before applying results, configd rechecks that no
 commit, rollback or domain-group configuration change has intervened. A conflicting
-update asks the caller to retry. No scheduler or timer is installed.
+update asks the caller to retry. Configuring a group does not install a timer.
 
 `show firewall domain-group` displays cached answers, last successful lookup, last
 attempt and errors. `show firewall group domain-group` displays installed set members

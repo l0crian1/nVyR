@@ -12,6 +12,7 @@ operational commands, use the [user documentation](../users/README.md).
 - [Python configuration sessions](config-session.md)
 - [How the CLI and Python API communicate with configd](protocol.md)
 - [Operational scripts](opmode.md)
+- [Task scheduling and feature-owned timers](task-scheduling.md)
 - [Router initialization](initialization.md)
 - [FRR integration](frr.md)
 

@@ -12,12 +12,14 @@ update:
         geoip:
           kind: node
           description: Check DB-IP for changed country data and refresh address-groups
+          unattended: true
           command: ['geoip.nvyr.op', 'update']
           stream: true
 
         domain-group:
           kind: node
           description: DNS-backed firewall group lookups
+          unattended: true
           command: ['domain_groups.nvyr.op', 'update']
           stream: true
           children:
@@ -26,6 +28,7 @@ update:
               kind: tag_node
               optional_value: true
               description: IPv4 domain groups, optionally filtered by name
+              unattended: true
               command: ['domain_groups.nvyr.op', 'update', '--family', 'ipv4', '--name', '@5']
               stream: true
               validators:
@@ -39,6 +42,7 @@ update:
               kind: tag_node
               optional_value: true
               description: IPv6 domain groups, optionally filtered by name
+              unattended: true
               command: ['domain_groups.nvyr.op', 'update', '--family', 'ipv6', '--name', '@5']
               stream: true
               validators:

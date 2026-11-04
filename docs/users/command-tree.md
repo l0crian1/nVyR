@@ -10723,6 +10723,16 @@ set
 │   │   │   ├── nts
 │   │   │   └── prefer
 │   │   └── vrf <name>
+│   ├── task <name>
+│   │   ├── calendar
+│   │   │   ├── at <HH:MM>
+│   │   │   ├── day-of-month <last|1-31>
+│   │   │   └── day-of-week <monday|tuesday|wednesday|thursday|friday|saturday|sunday|weekdays|
+│   │   │                    weekends>
+│   │   ├── disable
+│   │   ├── exec <command>
+│   │   ├── interval <duration>
+│   │   └── op-command <operational-command>
 │   └── time-zone <area/location>
 └── vrf
     └── name <name>
@@ -13465,6 +13475,7 @@ operational mode
 │   │   │   └── follow
 │   │   ├── system
 │   │   │   └── follow
+│   │   ├── task <name>
 │   │   └── zebra
 │   │       └── follow
 │   ├── nat
@@ -13582,11 +13593,15 @@ operational mode
 │   │   │       ├── detail
 │   │   │       └── vrf <default|name>
 │   │   ├── storage
+│   │   ├── tasks [<name>]
 │   │   └── uptime
 │   ├── uptime
 │   ├── users
 │   ├── version
 │   └── vrf [<name>]
+├── start
+│   └── system
+│       └── task <name>
 ├── traceroute <host|x.x.x.x|x:x:x:x:x:x>
 │   ├── backward-hops
 │   ├── direct

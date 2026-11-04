@@ -747,7 +747,7 @@ class Schema:
                 name, arguments = callback_reference(reference)
                 if name in self.suggestors:
                     callback = self.suggestors[name]
-                    results = (callback.suggest(tree, **arguments) if isinstance(callback, BoundSuggestor)
+                    results = (callback.suggest(tree, input_prefix=prefix, **arguments) if isinstance(callback, BoundSuggestor)
                                else callback(**arguments))
                     for suggestion in results:
                         if isinstance(suggestion, Suggestion):

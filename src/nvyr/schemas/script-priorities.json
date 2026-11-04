@@ -172,5 +172,12 @@
     "paths": [
       "container"
     ]
+  },
+  {
+    "script": "task",
+    "priority": 99,
+    "paths": [
+      "system task <name>"
+    ]
   }
 ]

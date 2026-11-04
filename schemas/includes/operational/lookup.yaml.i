@@ -3,6 +3,7 @@ lookup:
   anchor: true
   description: Resolve DNS records or reverse lookup an IP address
   command: ['resolver.nvyr.op', 'lookup', '@line']
+  unattended: true
   validators:
     regex: {pattern: '[A-Za-z0-9_][A-Za-z0-9_.:-]{0,252}'}
   hints:

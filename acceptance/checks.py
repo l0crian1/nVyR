@@ -82,6 +82,13 @@ def check_system_timezone(options):
     assert_operational_output('show date', cmd(['date', '+%Z']).strip())
 
 
+def check_system_tasks(options):
+    """The saved audit schedule must be armed both before and after reboot."""
+    assert_equal(cmd(['systemctl', 'is-active', 'nvyr-task-system-op-BOOT-AUDIT.timer']).strip(), 'active')
+    assert_operational_output('show system tasks BOOT-AUDIT', 'BOOT-AUDIT', 'Armed')
+    assert_operational_output('show system tasks BOOT-INTERVAL', 'BOOT-INTERVAL', 'Disabled')
+
+
 def check_cpu_policy(options):
     """Saved CPU overrides, or the hardware-supported boot policy, survive reboot."""
     with ConfigurationSession() as config:
@@ -645,7 +652,7 @@ def check_complete_rule_inventory(options):
 
 CHECKS = (
     check_kernel_release, check_operational_inventory,
-    check_system_hostname, check_system_timezone, check_cpu_policy, check_vrfs,
+    check_system_hostname, check_system_timezone, check_system_tasks, check_cpu_policy, check_vrfs,
     check_ethernet, check_ethernet_ipv4, check_ethernet_ipv6, check_vlans,
     check_vlan_ipv4_traffic, check_vlan_ipv6_traffic,
     check_loopback_ipv4, check_loopback_ipv6, check_dummy_and_disabled, check_veth_pair,

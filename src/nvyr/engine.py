@@ -318,6 +318,9 @@ class Engine:
             access.require('manage login accounts')
             access.protect_login(self.view(session), overlay(self.running, [*session.mutations, *mutations]))
 
+        if any(mutation.owner == 'task' or mutation.path in ((), ('system',), ('system', 'task')) for mutation in mutations):
+            access.protect_tasks(self.view(session), overlay(self.running, [*session.mutations, *mutations]))
+
         if check_dependencies and mutations:
             self.dependencies.check_mutations(self.running, session, mutations)
 
@@ -517,6 +520,7 @@ class Engine:
 
             if replace:
                 access.protect_login(self.running, configuration)
+                access.protect_tasks(self.running, configuration)
 
             from nvyr.render import set_commands
 
@@ -606,6 +610,7 @@ class Engine:
             before = self.running
             intended = self.view(session)
             access.protect_login(before, intended)
+            access.protect_tasks(before, intended)
             effective = self.schema.defaults(intended)
             affected = self.schema.ownership.snapshot(before).changed(self.schema.ownership.snapshot(intended))
             snapshots = (self.schema.ownership.snapshot(effective),
@@ -670,6 +675,7 @@ class Engine:
             before = self.running
             intended = self.view(session)
             access.protect_login(before, intended)
+            access.protect_tasks(before, intended)
             effective = self.schema.defaults(intended)
             mutations = list(session.mutations)
             # Explicit changes select owners; effective snapshots also expose default

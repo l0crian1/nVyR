@@ -1,0 +1,10 @@
+[Unit]
+Description=nVyR scheduled task {{ owner }}:{{ name }}
+After=nvyr-configd.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+ExecStart=:{{ command }}
+StandardOutput=append:{{ log }}
+StandardError=inherit

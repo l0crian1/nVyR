@@ -42,6 +42,8 @@ ReadWritePaths=/run/nvyr-frr /run/nvyr-ssh /run/nvyr-kea /run/nvyr-containers /r
 # Firewall owns registered networking tunables; unrelated kernel trees stay protected.
 ReadWritePaths=/proc/sys/net/ipv4 /proc/sys/net/ipv6 /proc/sys/net/netfilter
 ReadWritePaths=/run/sysctl.d /run/nvyr-kernel-settings
+# Commit and boot recovery install runtime task services and timers here.
+ReadWritePaths=/run/systemd/system
 # CPUFreq may be absent on virtual machines; only this CPU control subtree is writable.
 ReadWritePaths=-/sys/devices/system/cpu/cpufreq
 ProtectHome=false

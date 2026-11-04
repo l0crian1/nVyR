@@ -6,8 +6,8 @@ nVyR has four roles:
 
 - **dev-admin:** nVyR CLI running directly on the host, with `shell` access and
   password-authenticated sudo. This role is for development, testing and recovery.
-- **sys-admin:** all router administration plus ordinary account management.
-  It cannot create, promote, delete or reset a dev-admin account.
+- **sys-admin:** all router administration, ordinary account management, and [scheduled host shell commands](tasks.md) that run as root.
+  The CLI account-management commands cannot create, promote, delete or reset a dev-admin account from this role.
 - **net-admin:** router configuration and operations, including containers, image
   installation, upgrades and reboot. It cannot manage accounts.
 - **read-only:** operational inspection and diagnostics without configuration changes.

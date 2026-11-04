@@ -571,6 +571,9 @@ def _normalize_commands(node, path=(), *, scripts, cache):
     if set(node) & {'script', 'argv', 'value_argv'}:
         raise SchemaBuildError(f'{location}: use command: [\'executable\', \'argument\']; script, argv and value_argv are not operational YAML syntax')
 
+    if 'unattended' in node and ('command' not in node or type(node['unattended']) is not bool):
+        raise SchemaBuildError(f'{location}: unattended must be a boolean on an operational command')
+
     if 'command' in node:
         arguments = node['command']
         if (not isinstance(arguments, list) or not arguments

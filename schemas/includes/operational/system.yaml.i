@@ -3,6 +3,18 @@ system:
   description: System information
   children: # system
 
+    tasks:
+      kind: tag_node
+      optional_value: true
+      description: Scheduled tasks, owners, next and last runs and results
+      hints:
+        name: Task name (owner:name for a feature-owned task)
+      validators:
+        regex: {pattern: '(?:[a-z0-9]+:)?[A-Za-z0-9][A-Za-z0-9_-]{0,62}'}
+      suggestors:
+        config-path: {path: system task}
+      command: ['tasks.nvyr.op', 'show', '--name', '@4']
+
     config:
       kind: node
       description: Configuration system information

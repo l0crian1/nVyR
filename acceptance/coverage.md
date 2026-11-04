@@ -41,6 +41,7 @@ full appliance reboot run is still required for qualification.
 | Feature | Fixture | Native evidence before and after reboot |
 | --- | --- | --- |
 | Time zone | `services.set`: `America/New_York` | `check_system_timezone` checks `/etc/localtime`, `/etc/timezone`, and `show date` before and after reboot. UTC restoration and invalid selections have dedicated smoketests. |
+| Scheduled tasks | `services.set`: month-end weekday audit and disabled shell interval | `check_system_tasks` checks the armed timer and disabled task before and after reboot. |
 | CPU policy | Existing system settings, or unconfigured boot behavior | `check_cpu_policy` reads CPUFreq governors and explicit energy preferences before and after reboot. No CPUFreq means a recorded skip. Alternative governors, EPP removal and invalid combinations have dedicated smoketests. |
 | Global kernel settings | `firewall.set` | Every managed scalar/default/all gate is read from procfs; automatic capacities must be positive. Nondefault ARP and timeout values are explicit. |
 | Interface IPv4/IPv6 policy | `interfaces.set` | Every registered setting is explicitly represented; procfs overrides, token, EUI-64 address, explicit/suppressed link-local and persistent privacy-secret creation are checked. |

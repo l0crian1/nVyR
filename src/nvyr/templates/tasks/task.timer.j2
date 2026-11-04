@@ -1,0 +1,13 @@
+[Unit]
+Description=nVyR schedule for {{ owner }}:{{ name }}
+
+[Timer]
+AccuracySec=1s
+{% if interval -%}
+OnActiveSec={{ interval }}
+OnUnitInactiveSec={{ interval }}
+{% else -%}
+{% for expression in calendar -%}
+OnCalendar={{ expression }}
+{% endfor -%}
+{% endif -%}

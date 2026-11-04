@@ -131,6 +131,7 @@ def test_real_accounts_passwords_cli_roles_revocation_and_restart(tmp_path):
         assert result.returncode == 0 and 'Build date |' in result.stdout, result.stdout + result.stderr
 
         user('netadmin', 'net-admin')
+        user('taskadmin', 'sys-admin')
         user('observer', 'read-only')
         user('replacement', 'dev-admin')
         commit()
@@ -148,11 +149,21 @@ def test_real_accounts_passwords_cli_roles_revocation_and_restart(tmp_path):
 
         assert 'Version    |' in result.stdout and 'Permission denied' in result.stdout, result.stdout + result.stderr
 
-        execute('exit')  # Release root's commit lock to the real net-admin CLI.
+        execute('exit')  # Release root's commit lock before exercising the other roles.
+        result = ssh('taskadmin', extra=('-tt',), input=(
+            "configure\rset system task ROLE-TEST exec 'id -u'\rset system task ROLE-TEST interval 1d\r"
+            "commit\rexit\rstart system task ROLE-TEST\rexit\r"))
+        assert 'Start requested for ROLE-TEST' in result.stdout, result.stdout + result.stderr
+
+        result = ssh('netadmin', extra=('-tt',), input='start system task ROLE-TEST\rexit\r')
+        assert 'requires sys-admin access' in result.stdout, result.stdout + result.stderr
+
         result = ssh('netadmin', extra=('-tt',), input='configure\rset system host-name role-test\rcommit\rexit\rexit\r')
         client.request('open')
 
         assert json.loads(execute('show running-configuration')['text'])['system']['host-name'] == 'role-test', result.stdout + result.stderr
+        execute('delete system task ROLE-TEST')
+        commit()
 
         # PAM console login exercises the actual login shell and CLI, not su bypass.
         import pty

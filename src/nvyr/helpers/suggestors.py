@@ -24,6 +24,7 @@ class Context:
     store: object = None
     commit_id: int = 0
     configuration: object = None
+    prefix: str = ''
 
 
 def configuration_section(context, path):
@@ -55,6 +56,43 @@ def cpu_policy(context, setting):
 
     descriptions = cpu_settings.GOVERNORS if setting == 'governor' else cpu_settings.PREFERENCES
     return [Suggestion(value, descriptions[value]) for value in cpu_settings.available(setting)]
+
+
+@register('task-op-commands')
+def task_op_commands(context):
+    from nvyr.helpers import task_commands
+    from nvyr.errors import RouterError
+
+    schema = task_commands.schema()
+    words = lex(context.prefix, partial=True)
+    if any(word.pipe for word in words):
+        return []
+    prefix, previous = '', context.prefix
+    if words and words[-1].end == len(context.prefix):
+        active = words.pop()
+        prefix, previous = active.value, context.prefix[:active.start]
+
+    state = schema.set_cursor()
+    try:
+        for word in words:
+            state = schema.advance_operational(state, word)
+    except RouterError:
+        return []
+
+    def available(node, path):
+        return task_commands.eligible(node, path) or any(
+            available(child, (*path, key)) for key, child in node.get('children', {}).items())
+
+    cursor = state.next
+    if cursor.path and not available(cursor.node, cursor.path) and state.anchor is None:
+        return []
+    results = []
+    for name, description in schema.candidates(cursor, prefix, context.configuration or {}):
+        child = cursor.node.get('children', {}).get(name)
+        if child and state.anchor is None and not available(child, (*cursor.path, name)):
+            continue
+        results.append(Suggestion(previous + name, description))
+    return results
 
 
 @register('time-zones')
@@ -268,8 +306,8 @@ class BoundSuggestor:
     def __call__(self, **arguments):
         return self.function(self.context(), **arguments)
 
-    def suggest(self, configuration, **arguments):
-        context = replace(self.context(), configuration=configuration)
+    def suggest(self, configuration, *, input_prefix='', **arguments):
+        context = replace(self.context(), configuration=configuration, prefix=input_prefix)
         return self.function(context, **arguments)
 
 

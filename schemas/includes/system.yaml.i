@@ -5,6 +5,7 @@ system:
 
     include_schema:
     - file: system/cpu.yaml.i
+    - file: system/task.yaml.i
     - file: system/login.yaml.i
     - file: system/host-name.yaml.i
     - file: system/time-zone.yaml.i

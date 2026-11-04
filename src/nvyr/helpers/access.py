@@ -16,8 +16,8 @@ terminal = ContextVar('nvyr_terminal', default='')
 
 
 def command_environment():
-    """Pass the authenticated caller's terminal for display, not authorization."""
-    return dict(os.environ, NVYR_SESSION_TTY=terminal.get())
+    """Pass server-derived role and terminal metadata to trusted operational scripts."""
+    return dict(os.environ, NVYR_SESSION_TTY=terminal.get(), NVYR_CALLER_ROLE=current_role())
 
 
 def current_role():
@@ -74,6 +74,18 @@ def visible(configuration):
         user.pop('authentication', None)
 
     return result
+
+
+def protect_tasks(before, after):
+    old = lookup(before, ('system', 'task'), {})
+    new = lookup(after, ('system', 'task'), {})
+    if old is new or old == new or allows('sys-admin'):
+        return
+
+    for name in old.keys() | new.keys():
+        previous, desired = old.get(name, {}), new.get(name, {})
+        if ('exec' in previous or 'exec' in desired) and previous != desired:
+            raise RouterError('Permission denied: managing a host exec task requires sys-admin access')
 
 
 def protect_login(before, after):

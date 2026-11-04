@@ -13,6 +13,19 @@ log:
       replace:
         /description: IPv6 source and destination NAT packet logs
 
+    task:
+      kind: tag_node
+      description: Output from a scheduled task
+      access: net-admin
+      hints:
+        name: Configured task name
+      validators:
+        regex: {pattern: '[A-Za-z0-9][A-Za-z0-9_-]{0,62}'}
+      suggestors:
+        config-path: {path: system task}
+      command: ['tasks.nvyr.op', 'logs', '@4']
+      stream: true
+
     system:
       kind: node
       description: system log

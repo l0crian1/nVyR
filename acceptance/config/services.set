@@ -1,6 +1,16 @@
 # Local-time selection must survive the saved-configuration reboot.
 set system time-zone America/New_York
 
+# Timers are rearmed from saved configuration on each boot.
+set system task BOOT-AUDIT op-command 'show uptime'
+set system task BOOT-AUDIT calendar at 03:15
+set system task BOOT-AUDIT calendar day-of-week weekdays
+set system task BOOT-AUDIT calendar day-of-month last
+
+set system task BOOT-INTERVAL exec 'id -u'
+set system task BOOT-INTERVAL interval 6h
+set system task BOOT-INTERVAL disable
+
 # Global file logging settings must be restored before packet collectors start.
 set system logging level info
 set system logging rotation size 64m count 3
