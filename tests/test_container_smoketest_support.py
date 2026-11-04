@@ -6,7 +6,6 @@ import shlex
 import pytest
 
 from smoketests import container_support
-from tests.test_static_smoketest import local_session
 
 
 @pytest.fixture

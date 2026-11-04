@@ -17,25 +17,30 @@ if __name__ == "__main__":
 
 from nvyr.errors import RouterError
 from smoketests.assertions import (
-    assert_equal, assert_raises, assert_firewall_object, assert_firewall_map_default_counter,
+    assert_equal, assert_raises, assert_firewall_object, firewall_map_entries, assert_is_not_none,
 )
 from smoketests.firewall_support import send_firewall_udp
 
 
-def test_ipv4_map_default_and_counter(config):
-    """A missing IPv4 tuple uses its default and increments that element's counter."""
-    # Baseline: configs/network-features.conf (FN31).
+@pytest.mark.parametrize('family, name, port', [('ipv4', 'FN31SERVICES', 54124), ('ipv6', 'FN32SERVICES', 54128)])
+def test_map_default_and_counter(config, family, name, port):
+    """The exact key wins, misses use the tracked fallback, and deleting it restores fall-through."""
+    assert_equal(send_firewall_udp(2, family=family, port=port), 2)
+    entries = firewall_map_entries(f'{family}_map_{name}')
+    default, = [entry for entry in entries if entry.get('default')]
+    exact, = [entry for entry in entries if not entry.get('default')]
+    assert_equal(default['counter']['packets'], 2)
+    assert_is_not_none(default['last-used'])
+    assert_equal(exact['counter']['packets'], 0)
 
-    assert_equal(send_firewall_udp(2, port=54124), 2)
-    assert_firewall_map_default_counter('ipv4_map_FN31SERVICES', 2)
+    assert_equal(send_firewall_udp(1, family=family, port=port + 1), 0)
+    config.set(f'set firewall group map {family} {name} default-result action drop')
+    config.commit()
+    assert_equal(send_firewall_udp(1, family=family, port=port), 0)
 
-
-def test_ipv6_map_default_and_counter(config):
-    """IPv6 defaults have independent element counters and normal tuple matching."""
-    # Baseline: configs/network-features.conf (FN32).
-
-    assert_equal(send_firewall_udp(2, family='ipv6', port=54128), 2)
-    assert_firewall_map_default_counter('ipv6_map_FN32SERVICES', 2)
+    config.delete(f'delete firewall group map {family} {name} default-result')
+    config.commit()
+    assert_equal(send_firewall_udp(1, family=family, port=port), 1)
 
 
 def test_inet_default_jump_nested_policy(config):

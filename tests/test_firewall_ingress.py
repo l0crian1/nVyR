@@ -1,8 +1,6 @@
 """Ingress schema, transitive hook constraints and whole-chain lifecycle."""
 
 from copy import deepcopy
-import ast
-from pathlib import Path
 
 import pytest
 
@@ -214,20 +212,3 @@ def test_ingress_summary_does_not_call_dispatch_a_state_policy(monkeypatch, caps
     assert 'State policy (ingress)' not in output
     firewall.show(family='ipv4', hook='ingress', stage='filter', detail=True)
     assert 'VLAN ID' in capsys.readouterr().out
-
-
-def test_ingress_smoketest_commands_parse(controller, engine, session):
-    """Check installed-suite command examples without mutating a router in build tests."""
-    source = Path(__file__).parents[1] / 'smoketests/test_firewall_ingress.py'
-    for function in ast.parse(source.read_text()).body:
-        if not isinstance(function, ast.FunctionDef) or not function.name.startswith('test_'):
-            continue
-        if 'schema_rejects' in function.name:
-            continue
-        engine.discard(session)
-        for statement in function.body:
-            if not isinstance(statement, ast.Expr) or not isinstance(statement.value, ast.Call):
-                continue
-            call = statement.value
-            if isinstance(call.func, ast.Attribute) and call.func.attr == 'set':
-                controller.execute(ast.literal_eval(call.args[0]), session)

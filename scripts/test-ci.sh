@@ -1,5 +1,5 @@
 #!/bin/sh
-# The same checks run locally and in GitHub Actions; stop at the first failure.
+# Run regression tests and package builds in the local test container.
 set -eu
 
 repository=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
@@ -21,4 +21,4 @@ python -m build --no-isolation
 printf '\nBuilding Debian package...\n'
 sh scripts/build-deb.sh
 
-printf '\nAll CI checks passed. Reports: test-results/; packages: dist/\n'
+printf '\nAll local checks passed. Reports: test-results/; packages: dist/\n'

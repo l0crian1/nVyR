@@ -24,7 +24,10 @@ def test_ipv4_pod_shared_localhost():
     """Two members share one IPv4 attachment and reach each other over localhost."""
     first = json.loads(cmd(['podman', 'inspect', 'P4FIRST']))[0]
     second = json.loads(cmd(['podman', 'inspect', 'P4SECOND']))[0]
-    assert_equal(first['Pod'], second['Pod'])
+    pod = json.loads(cmd(['podman', 'pod', 'inspect', 'POD4']))[0]
+    assert_equal(first['Pod'], pod['Id'])
+    assert_equal(second['Pod'], pod['Id'])
+    assert_not_equal(rc_cmd(['ip', 'link', 'show', 'pd-P4FIRST-0'])[0], 0)
     link = json.loads(cmd(['ip', '-j', 'link', 'show', 'pd-POD4-0']))[0]
     assert_equal(link['master'], 'pd-PODLAN4')
     # Exercise the actual member network namespaces without assuming an HTTP server in the image.
@@ -37,15 +40,27 @@ def test_ipv4_pod_shared_localhost():
             receiver.settimeout(3)
             sender.sendall(b'shared')
             assert_equal(receiver.recv(64), b'shared')
+    record, = json.loads(operations.pods(name='POD4', raw=True))
+    assert_equal(record['networks'][0]['addresses'], ['198.18.240.10/24'])
+    assert_equal({member['name'] for member in record['members']}, {'P4FIRST', 'P4SECOND'})
     assert_in('198.18.240.10/24', operations.pods(name='POD4'))
 
 
 def test_pod_member_change_preserves_sibling(config):
     """Changing one workload's memory does not recreate the other member."""
+    pod = json.loads(cmd(['podman', 'pod', 'inspect', 'PODMEM']))[0]['Id']
     sibling = json.loads(cmd(['podman', 'inspect', 'PMSECOND']))[0]['Id']
 
     config.set('set container name PMFIRST memory 64m')
     config.commit()
+    assert_equal(json.loads(cmd(['podman', 'inspect', 'PMFIRST']))[0]['HostConfig']['Memory'], 64 * 1024**2)
+    assert_equal(json.loads(cmd(['podman', 'pod', 'inspect', 'PODMEM']))[0]['Id'], pod)
+    assert_equal(json.loads(cmd(['podman', 'inspect', 'PMSECOND']))[0]['Id'], sibling)
+
+    config.set('set container name PMFIRST disable')
+    config.commit()
+    assert_equal(rc_cmd(['podman', 'container', 'exists', 'PMFIRST'])[0], 1)
+    assert_equal(json.loads(cmd(['podman', 'pod', 'inspect', 'PODMEM']))[0]['Id'], pod)
     assert_equal(json.loads(cmd(['podman', 'inspect', 'PMSECOND']))[0]['Id'], sibling)
 
 

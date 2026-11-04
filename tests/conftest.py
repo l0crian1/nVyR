@@ -1,6 +1,9 @@
+from copy import deepcopy
+import json
 import os
 
 import pytest
+from nvyr.config_session import CommitError
 from nvyr.engine import Engine
 from nvyr.schema import Schema
 from nvyr.storage import Store
@@ -87,3 +90,37 @@ def controller(engine):
     from nvyr.controller import Controller
 
     return Controller(engine)
+
+
+@pytest.fixture
+def local_session(controller, engine, session):
+    """Use real parsing, candidate mutations, defaults, verification, and commits."""
+    class LocalSession:
+        def set(self, command):
+            """Stage a full CLI command through the real controller."""
+            return controller.execute(command, session)
+
+        def delete(self, command):
+            """Exercise dependency checks when removing configuration."""
+            return controller.execute(command, session)
+
+        def commit(self):
+            """Match ConfigurationSession's result-to-exception contract."""
+            result = engine.commit(session)
+            if any(not unit['success'] for unit in result['results'].values()):
+                raise CommitError(result)
+            return result
+
+        def get_config(self, source='running'):
+            """Return an independent explicit configuration snapshot."""
+            configuration = engine.view(session) if source == 'candidate' else engine.running
+            return deepcopy(configuration)
+
+        def load(self, configuration, *, replace=True):
+            return controller.load(session, json.dumps(configuration), replace=replace)
+
+        def discard(self):
+            """Drop failed candidate operations before local teardown."""
+            return engine.discard(session)
+
+    return LocalSession()

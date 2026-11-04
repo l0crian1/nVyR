@@ -1,4 +1,4 @@
-"""Opt-in execution of policy operational smoketests against isolated FRR daemons."""
+"""Check that clearing a used route-map counter preserves its route on disposable FRR."""
 
 import json
 import os
@@ -8,30 +8,10 @@ import pytest
 
 from nvyr.helpers.process import cmd
 from nvyr.op_scripts import policy
-from functionaltests.network import test_policy_operations as smoke
-from tests.test_policy_smoketest import local_policy_session
 
 
 pytestmark = pytest.mark.skipif(os.environ.get('NVYR_POLICY_TEST') != '1',
                                 reason='requires isolated FRR policy daemons')
-
-
-@pytest.mark.parametrize('function', [pytest.param(function, id=name)
-                                     for name, function in vars(smoke).items() if name.startswith('test_')])
-def test_native_policy_operation(local_policy_session, function):
-    """Run shipped smoke functions through the real engine, formatter, reload and vtysh."""
-    assert Path('/.dockerenv').exists(), 'native tests must not run on a shared router'
-    configuration = Path(__file__).resolve().parents[1] / 'functionaltests/configs/network-features.conf'
-    try:
-        for command in configuration.read_text().splitlines():
-            if command.startswith('set policy '):
-                local_policy_session.set(command)
-        local_policy_session.commit()
-        function(local_policy_session)
-    finally:
-        local_policy_session.discard()
-        local_policy_session.delete('delete policy')
-        local_policy_session.commit()
 
 
 def test_native_clear_used_route_map():

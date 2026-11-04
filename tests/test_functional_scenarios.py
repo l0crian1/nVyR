@@ -1,16 +1,11 @@
 """Guard live-scenario imports and keep observation tests free of setup commits."""
 
-from tests.container_harness import verify_container
-
 import ast
 import builtins
 from pathlib import Path
 import symtable
 
-import pytest
-
-from tests.test_static_smoketest import local_session
-
+from tests.container_harness import verify_container
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -33,24 +28,9 @@ def test_functional_helpers_are_defined():
     assert not missing, '\n'.join(missing)
 
 
-@pytest.mark.parametrize('filename', ['containers.conf', 'pods.conf'])
-def test_container_batch_commands_parse(local_session, filename):
-    """Exercise the actual CLI parser against every batch command, with short valid inputs."""
-    text = (ROOT / 'functionaltests/configs' / filename).read_text()
-    for token, value in {'@IMAGE@': 'alpine', '@ENV@': 'test.env', '@VOLUME@': 'volume', '@HOSTFILE@': '/run/test-file',
-                         '@TCP_PORT@': '18200', '@UDP_PORT@': '18201'}.items():
-        text = text.replace(token, value)
-    for command in text.splitlines():
-        if command and not command.startswith('#'):
-            local_session.set(command)
-    candidate = local_session.get_config(source='candidate')
-    names = candidate['container']['name']
-    assert len(names) == (26 if filename == 'containers.conf' else 6)
-
-
 def test_containers_and_pods_can_coexist(local_session):
     """Combined workloads must pass real cross-network and attachment verification."""
-    for filename in ('containers.conf', 'pods.conf'):
+    for filename, expected_names in (('containers.conf', 26), ('pods.conf', 32)):
         text = (ROOT / 'functionaltests/configs' / filename).read_text()
         for token, value in {'@IMAGE@': 'alpine', '@ENV@': 'test.env', '@VOLUME@': 'volume', '@HOSTFILE@': '/run/test-file',
                              '@TCP_PORT@': '18200', '@UDP_PORT@': '18201'}.items():
@@ -59,10 +39,11 @@ def test_containers_and_pods_can_coexist(local_session):
             if command and not command.startswith('#'):
                 local_session.set(command)
 
-    candidate = local_session.get_config(source='candidate')
+        candidate = local_session.get_config(source='candidate')
+        assert len(candidate['container']['name']) == expected_names
+
     configuration = candidate['container']
     verify_container(configuration, vrfs=candidate.get('vrf', {}).get('name', {}))
-    assert len(configuration['name']) == 32
     assert len(configuration['pod']) == 4
 
 

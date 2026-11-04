@@ -176,7 +176,7 @@ The builder regenerates every top-level source `.yaml` into a same-stem `.json`
 in `src/nvyr/schemas/`; `--check` fails if any snapshot is missing or differs. After
 editing sources or fragments, regenerate before running the CLI or tests. Editable
 installation also regenerates the snapshots, but later source edits need an explicit
-rebuild. CI checks snapshots before installation can regenerate them.
+rebuild. The local test runner checks snapshots before installation can regenerate them.
 
 `python -m build` generates schemas for the source archive and its wheel.
 `pip install .` and `pip install -e .` invoke the appropriate setuptools hook.

@@ -27,10 +27,8 @@ hashes are recorded under `/usr/share/nvyr/` in the ISO and the package manifest
 exported as `dist/nvyr-0.1.0-amd64.frr-packages.json`. Scripting is compiled in;
 no Lua hooks are configured automatically, and no new nVyR CLI syntax is added.
 
-`tests/test_frr_scripting_live.py`, enabled with `NVYR_FRR_SCRIPTING_TEST=1`,
-starts disposable FRR processes in a separate network namespace and verifies a
-Lua callback during a real route installation. Run only in a privileged test
-container after installing the built packages.
+On a test router, `functionaltests/test_frr_scripting.py` starts disposable FRR
+processes in a separate network namespace and verifies a Lua callback during route installation.
 
 Access lists, prefix-lists and route-maps use the same serialized reload and
 recovery path; see [routing policies](routing-policy.md). Each adapter replaces

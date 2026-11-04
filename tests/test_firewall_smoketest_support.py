@@ -12,7 +12,6 @@ from nvyr.config_session import CommitError
 from nvyr.helpers import interfaces
 from nvyr.tree import lookup
 from smoketests import assertions, firewall_support
-from tests.test_static_smoketest import local_session
 
 
 def test_ingress_sender_ignores_unrelated_interfaces_without_mac(monkeypatch):

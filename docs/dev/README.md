@@ -18,7 +18,7 @@ operational commands, use the [user documentation](../users/README.md).
 ## Build, test, and release
 
 - [Build with Docker](debian.md)
-- [Run GitHub CI checks locally](testing.md)
+- [Run the local regression and package checks](testing.md)
 - [Operational completion checklist](operational-testing.md)
 - [Smoketests](../../smoketests/README.md)
 - [Functional tests](../../functionaltests/README.md)

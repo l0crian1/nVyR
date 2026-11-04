@@ -15,8 +15,8 @@ prefix-list prefix lookups are text-only; raw requests for those fail explicitly
 `functionaltests/network/test_policy_operations.py` exercises each policy type through configd
 and the native display commands. `test_bgp_operations.py` also checks clearing an
 actively used route-map's counters without withdrawing its BGP route. The opt-in
-`tests/test_policy_op_live.py` runs the policy smoke functions through the real
-configuration engine and reload manager against disposable FRR daemons.
+`tests/test_policy_op_live.py` checks that a nonzero invocation counter clears while the route and policy setter
+remain installed on disposable FRR daemons.
 
 References: [FRR filtering](https://docs.frrouting.org/en/stable-10.7/filter.html),
 [route maps](https://docs.frrouting.org/en/stable-10.7/routemap.html), and

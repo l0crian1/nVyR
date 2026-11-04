@@ -775,13 +775,17 @@ def assert_firewall_map_counter(name, key, *, minimum_packets):
     _checks.assertGreater(int(match.group(2)), 0, msg=output)
 
 
-def assert_firewall_map_default_counter(name, packets):
-    """Read the whole-key catch-all's counter independently of ordinary entries."""
+def firewall_map_entries(name):
+    """Read normalized runtime entries, including counters and last-used timestamps."""
     from nvyr.helpers.nftables_normalizer import normalize
 
     document = json.loads(cmd(['nft', '-j', 'list', 'map', 'inet', 'nvyr_filter', name]))
     group = normalize(document)['tables']['inet']['nvyr_filter']['maps'][name]
-    defaults = [entry for entry in group['entries'] if entry.get('default')]
+    return group['entries']
+
+
+def assert_firewall_map_default_counter(name, packets):
+    defaults = [entry for entry in firewall_map_entries(name) if entry.get('default')]
     assert_equal(len(defaults), 1, msg=f'Expected one catch-all element in {name}')
     assert_equal(defaults[0].get('counter', {}).get('packets'), packets)
 

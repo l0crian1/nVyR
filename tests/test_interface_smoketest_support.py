@@ -8,7 +8,6 @@ import pytest
 from nvyr.helpers import interfaces
 from nvyr.tree import lookup
 from smoketests import assertions, interface_support
-from tests.test_static_smoketest import local_session
 
 
 @pytest.fixture

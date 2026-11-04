@@ -23,40 +23,6 @@ def pod():
     return json.loads(cmd(['podman', 'pod', 'inspect', 'LIVEPOD']))[0]
 
 
-def test_shared_network_localhost_and_pod_display(runtime):
-    """Both members share one attachment and can reach a service over localhost."""
-    runtime.apply(runtime.generate(configuration()))
-    assert inspect('LIVE')['Pod'] == inspect('LIVE2')['Pod'] == pod()['Id']
-    assert host_link('pd-LIVEPOD-0')['master'] == 'pd-PODLAN'
-    assert rc_cmd(['ip', 'link', 'show', 'pd-LIVE-0'])[0] != 0
-    cmd(['podman', 'exec', 'LIVE2', 'sh', '-c', 'echo shared >/tmp/index.html; httpd -p 8080 -h /tmp'])
-    assert cmd(['podman', 'exec', 'LIVE', 'wget', '-qO-', 'http://127.0.0.1:8080']).strip() == 'shared'
-
-    records = json.loads(container_operations.show(runtime, 'pods', name='LIVEPOD', raw=True))
-    assert records[0]['networks'][0]['addresses'] == ['172.29.238.10/24']
-    assert {member['name'] for member in records[0]['members']} == {'LIVE', 'LIVE2'}
-    assert '172.29.238.10/24' in container_operations.show(runtime, 'pods', name='LIVEPOD')
-
-
-def test_member_change_and_disable_preserve_pod(runtime):
-    """A member's settings or disable flag do not interrupt its sibling or shared namespace."""
-    desired = configuration()
-    runtime.apply(runtime.generate(desired))
-    original_pod = pod()['Id']
-    sibling = inspect('LIVE2')['Id']
-    desired['name']['LIVE']['memory'] = '64m'
-    runtime.apply(runtime.generate(desired))
-    assert pod()['Id'] == original_pod
-    assert inspect('LIVE2')['Id'] == sibling
-    assert inspect('LIVE')['HostConfig']['Memory'] == 64 * 1024**2
-
-    desired['name']['LIVE']['disable'] = True
-    runtime.apply(runtime.generate(desired))
-    assert pod()['Id'] == original_pod
-    assert inspect('LIVE2')['Id'] == sibling
-    assert rc_cmd(['podman', 'container', 'exists', 'LIVE'])[0] == 1
-
-
 def test_pod_change_restart_disable_and_reenable(runtime):
     """Changes to the shared namespace recreate members; disabling the pod suppresses both."""
     desired = configuration()

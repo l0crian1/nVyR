@@ -1,7 +1,6 @@
-# Run the GitHub CI checks locally
+# Run the local regression and package checks
 
-The [Build and test workflow](../../.github/workflows/test.yml) uses the same
-Python 3.13 Linux container and [script](../../scripts/test-ci.sh) as local runs.
+The Python 3.13 Linux test container runs the [regression and packaging script](../../scripts/test-ci.sh) on your current checkout.
 Docker must be running Linux containers. No router or privileged container is
 required.
 
@@ -42,11 +41,11 @@ The script stops on the first failed stage:
 Pytest prints the 30 slowest test durations and writes its report to
 `test-results/framework.xml`. Packages are written to `dist/`. Both directories
 are ignored by Git. A successful run exits with status zero and prints
-`All CI checks passed`.
+`All local checks passed`.
 
-These are the CI regression and packaging checks. Native integration tests with
-explicit opt-in flags remain skipped; this command does not run the router's
-`smoketests/`, `functionaltests/` or reboot acceptance suite.
+Run the [smoketests](../../smoketests/README.md), [functional tests](../../functionaltests/README.md)
+and [reboot acceptance suite](../../acceptance/README.md) separately on a test router.
+Native integration tests in `tests/` require their documented opt-in flags.
 
 Dependency downloads happen during the image build. The test script uses those
 installed dependencies for editable installation and distribution builds.

@@ -10,13 +10,12 @@ import pytest
 
 from functionaltests import routed_network
 from nvyr.helpers import interfaces
-from tests.test_bgp_policy_smoketest import policy_session
 
 
 pytest_plugins = ['pytester']
 
 
-def test_combined_configuration(policy_session, monkeypatch):
+def test_combined_configuration(local_session, monkeypatch):
     """Real parsing and verification accept all features in one transaction."""
     addresses = {
         'default': {'127.0.0.1', '::1'},
@@ -33,8 +32,8 @@ def test_combined_configuration(policy_session, monkeypatch):
     })
     monkeypatch.setattr(geoip, 'manager', SimpleNamespace(apply=lambda *args, **kwargs: None))
     monkeypatch.setattr(domain_groups, 'manager', SimpleNamespace(prepare=lambda *args: ('', None)))
-    routed_network.configure(policy_session)
-    running = policy_session.get_config()
+    routed_network.configure(local_session)
+    running = local_session.get_config()
 
     assert set(running['vrf']['name']) == {'NVYRLEFT', 'NVYRRIGHT', 'NVYRFWSMOKE', 'NVYRSMOKE', 'NTPTEST', 'NVYRDHCPSMOKE'}
     assert 'bgp' in running['vrf']['name']['NVYRLEFT']['protocols']

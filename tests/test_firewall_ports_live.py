@@ -19,7 +19,7 @@ from smoketests.firewall_support import send_firewall_transport
 from smoketests.assertions import assert_firewall_counter
 
 run('ip', 'link', 'set', 'lo', 'up')
-for feature in ('direct', 'port-group', 'map', 'match-group', 'excluded-group', 'dynamic', 'limit'):
+for feature in ('port-group', 'map', 'match-group', 'excluded-group', 'dynamic', 'limit'):
     apply({})
     rule = {'outbound-interface': ['lo'], 'protocol': [protocol],
             'counter': {'group': 'MATCHED'}, 'action': 'drop'}
@@ -28,9 +28,7 @@ for feature in ('direct', 'port-group', 'map', 'match-group', 'excluded-group', 
     definition = {'match': {'protocol': True, 'destination-port': True},
                   'entry': {'SERVICE': {'protocol': protocol, 'destination-port': '53098'}}}
 
-    if feature == 'direct':
-        rule.update({'destination-port': ['53098-53100'], 'not': {'destination-port': ['53099', '53100']}})
-    elif feature == 'port-group':
+    if feature == 'port-group':
         groups['port-group'] = {'SERVICE': {'port': ['53098']}}
         rule['destination-port-group'] = 'SERVICE'
     elif feature in ('map', 'match-group', 'excluded-group', 'dynamic'):

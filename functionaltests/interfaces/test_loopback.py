@@ -13,7 +13,7 @@ if __name__ == "__main__":
 
     raise SystemExit(pytest.main([__file__, "-v", "-s", *sys.argv[1:]]))
 
-from smoketests.assertions import assert_link, assert_link_addresses
+from smoketests.assertions import assert_equal, assert_link, assert_link_addresses
 
 
 def test_system_addresses():
@@ -56,7 +56,9 @@ def test_description(config):
 def test_system_addresses_survive_configured_removal(config):
     """Deleting explicitly configured system prefixes leaves their kernel addresses intact."""
     # Installed once by configs/interfaces.conf.
+    index = assert_link('lo', up=True)['ifindex']
     config.delete('delete interfaces loopback lo address 127.0.0.1/8')
     config.delete('delete interfaces loopback lo address ::1/128')
     config.commit()
     assert_link_addresses('lo', '127.0.0.1/8', '::1/128')
+    assert_equal(assert_link('lo', up=True)['ifindex'], index)

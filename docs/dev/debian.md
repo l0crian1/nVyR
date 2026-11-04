@@ -12,8 +12,7 @@ Docker's storage for package compilation and ISO assembly, as well as space in
 Before publishing binary packages or ISOs, follow the
 [licensing and source-distribution requirements](../../THIRD_PARTY.md).
 
-To run GitHub's regression tests and package builds before pushing, use the
-separate [local CI test container](testing.md).
+Use the [local test container](testing.md) to run regression tests and build the packages before pushing.
 
 ## Build the builder
 

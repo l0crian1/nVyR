@@ -4,7 +4,7 @@ set -eu
 
 checkout=$(mktemp -d /tmp/nvyr-ci.XXXXXX)
 # Keep the copy owned by the container user so Git can inspect it when the
-# mounted checkout belongs to a different UID (including GitHub's runner user).
+# mounted checkout belongs to a different UID.
 rsync -a --no-owner --no-group \
     --exclude='/dist/' --exclude='/build/' --exclude='/experiments/' \
     --exclude='/acceptance-results/' --exclude='/test-results/' --exclude='/.venv/' \

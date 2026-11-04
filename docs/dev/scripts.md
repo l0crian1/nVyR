@@ -494,8 +494,6 @@ These are consumed by the scripts above rather than executed as Python or shell 
   packages; `packages.lock` pins external dependencies. `packaging/debian/control`
   declares Debian metadata/dependencies. `pyproject.toml` defines Python dependencies
   and entry points; `MANIFEST.in` selects source-distribution files.
-- `.github/workflows/test.yml` runs framework tests, schema checks and package builds
-  in CI on Python 3.13, matching the router image.
 
 ## Test scripts
 
@@ -503,7 +501,7 @@ Run ordinary tests with `python -m pytest -q`; select one file with
 `python -m pytest -q tests/test_controller.py`.
 
 After installing `.[test]`, run the isolated framework suite with two workers
-and timing output using the same options as CI:
+and timing output as in the [local test container](testing.md):
 
 ```sh
 python -m pytest -q -n 2 --dist loadfile --durations=30
@@ -513,9 +511,8 @@ The framework suite runs on Linux and uses `iproute2` for read-only interface
 observations and `less` for terminal tests. Install these when using a minimal
 test container.
 
-CI preserves a JUnit report for each Python version and cancels superseded runs
-on the same branch or pull request. Parallel execution is for isolated framework
-tests only; live router smoketests share configuration and must run serially.
+The local container writes its JUnit report to `test-results/framework.xml`.
+Run installed smoketests serially because they share the router configuration.
 Framework tests must not require root or contact real service managers. Tests
 that exercise privileged storage can model ownership metadata while retaining
 real temporary-file operations and separate rejection checks.

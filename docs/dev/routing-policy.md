@@ -59,8 +59,6 @@ isolated container, including partial apply, command rejection, a lost successfu
 reload reply, interrupted recovery, last-object deletion, and unchanged reapply.
 Enable with `NVYR_POLICY_TEST=1` only after starting disposable zebra, mgmtd,
 staticd and bgpd in ordinary CLI mode and installing our built FRR packages.
-The live examples also run through the real
-configuration engine in `tests/test_policy_smoketest.py` with that environment flag.
 
 Sources: [FRR filtering](https://docs.frrouting.org/en/stable-10.7/filter.html),
 [route-maps](https://docs.frrouting.org/en/stable-10.7/routemap.html), and
@@ -73,8 +71,3 @@ sudo python3 /usr/lib/nvyr/functionaltests/network/test_bgp_policy.py
 
 sudo python3 /usr/lib/nvyr/functionaltests/network/test_routed_network.py
 ```
-
-For isolated development runs, start `nvyr-netlinkd` and FRR, then set
-`NVYR_BGP_POLICY_TEST=1` when running `tests/test_bgp_policy_smoketest.py`.
-Without that flag, the same examples validate CLI and lifecycle behavior without
-creating network devices or BGP sessions.

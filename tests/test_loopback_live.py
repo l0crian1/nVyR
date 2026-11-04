@@ -27,23 +27,19 @@ def loopback(tmp_path, isolated):
         kernel.close()
 
 
-def test_addresses_description_removal_and_release(loopback):
+def test_releasing_owner_preserves_system_loopback(loopback):
     """Replace and delete owned settings without changing lo's identity or defaults."""
     manager, kernel, _ = loopback
     index = kernel.device('lo')['index']
     manager.replace('loopback', generate({'lo': {'address': ['192.0.2.1/32', '2001:db8::1/128'],
                                                 'description': 'Loopback native test'}}, None))
-    assert kernel.device('lo')['attributes']['description'] == 'Loopback native test'
-    assert {'127.0.0.1/8', '::1/128', '192.0.2.1/32', '2001:db8::1/128'} <= kernel.addresses('lo').keys()
-
-    manager.replace('loopback', generate({'lo': {'address': ['2001:db8::1/128']}}, None))
-    assert '192.0.2.1/32' not in kernel.addresses('lo')
-    assert kernel.device('lo')['attributes']['description'] == ''
+    assert {'192.0.2.1/32', '2001:db8::1/128'} <= kernel.addresses('lo').keys()
     manager.replace('loopback', {})
 
     assert set(kernel.addresses('lo')) == {'127.0.0.1/8', '::1/128'}
     assert kernel.device('lo')['up']
     assert kernel.device('lo')['index'] == index
+    assert kernel.device('lo')['attributes']['description'] == ''
 
 
 def test_restart_and_reconciliation(loopback):

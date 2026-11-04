@@ -1,8 +1,6 @@
 """Rule setters preserve matches, schema visibility and transitive hook restrictions."""
 
 from copy import deepcopy
-import ast
-from pathlib import Path
 
 import pytest
 
@@ -184,18 +182,6 @@ def test_ordinary_rules_skip_modify_verification(monkeypatch):
         raise AssertionError('Absent modify node was verified')
     monkeypatch.setattr(nftables_modify, 'verify', unexpected)
     firewall.verify_rule({'action': 'accept'}, ('firewall', 'ipv4', 'forward', 'filter', 'rule', '10'), {})
-
-
-def test_smoketest_commands_parse_with_nested_anchors():
-    """Every installed test command uses actual schema parsing, including and and modify."""
-    schema = Schema.bundled()
-    path = Path(__file__).resolve().parents[1] / 'smoketests/test_firewall_modify.py'
-    for node in ast.walk(ast.parse(path.read_text())):
-        if (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
-                and isinstance(node.func.value, ast.Name) and node.func.value.id == 'config'
-                and node.func.attr == 'set'):
-            command = ast.literal_eval(node.args[0])
-            assert schema.set_paths(lex(command)[1:]), command
 
 
 def test_modify_anchor_and_match_field_are_distinct(controller, engine, session):
