@@ -51,8 +51,17 @@ lb config --mode debian --distribution trixie --architectures amd64 \
     --bootappend-live-failsafe 'boot=live components noautologin nocomponents=user-setup,sudo hostname=nvyr locales=en_US.UTF-8 memtest noapic noapm nodma nomce nosmp nosplash vga=788 console=tty0 console=ttyS0,115200n8' \
     --bootappend-install 'console=tty0 console=ttyS0,115200n8'
 
-mkdir -p config/package-lists config/packages.chroot config/hooks/live \
+mkdir -p config/archives config/package-lists config/packages.chroot config/hooks/live \
     config/includes.chroot/lib/live/config config/includes.chroot/usr/share/nvyr config/rootfs
+
+# The binary stage starts from the base-suite bootstrap and gives Debian packages
+# priority 99. Let apt-utils pull the matching APT libraries from security updates
+# when live-build installs it to index our local packages.
+cat > config/archives/apt-tools.pref.chroot <<'EOF'
+Package: src:apt
+Pin: release o=Debian
+Pin-Priority: 500
+EOF
 
 # live-build temporarily restores APT sources for binary-stage tools. Exclude
 # them from the immutable OS, while retaining APT for explicit administrator use.
