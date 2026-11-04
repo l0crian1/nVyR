@@ -37,11 +37,12 @@ def test_reusable_masks(function, value, masked):
 
 
 @pytest.mark.parametrize('function,value,mode,expected', [
-    (strip_ip, '10.5.12.34/24', 'partial', '10.5.xxx.xxx/24'),
-    (strip_ip, '2001:db8::1234/64', 'partial', '2001:db8:x:x:x:x:x:x/64'),
-    (strip_ip, 'fe80::1234%eth0', 'partial', 'fe80:0:x:x:x:x:x:x'),
-    (strip_ip, '::1', 'partial', '0:0:x:x:x:x:x:x'),
-    (strip_ip, '10.5.1.1-10.6.1.10', 'partial', '10.5.xxx.xxx-10.6.xxx.xxx'),
+    (strip_ip, '10.5.12.34/24', 'partial', 'xxx.xxx.12.34/24'),
+    (strip_ip, '2001:db8::1234/64', 'partial', 'x:x:x:x:0:0:0:1234/64'),
+    (strip_ip, '2001:db8:abcd:1234:5678:9abc:def0:0012/56', 'partial', 'x:x:x:x:5678:9abc:def0:12/56'),
+    (strip_ip, 'fe80::1234%eth0', 'partial', 'x:x:x:x:0:0:0:1234'),
+    (strip_ip, '::1', 'partial', 'x:x:x:x:0:0:0:1'),
+    (strip_ip, '10.5.1.1-10.6.1.10', 'partial', 'xxx.xxx.1.1-xxx.xxx.1.10'),
     (strip_ip, '8.8.8.8/32', 'public', '<ipv4>'),
     (strip_ip, '2606:4700::1111', 'public', '<ipv6>'),
     (strip_ip, '10.5.1.1/24', 'public', '10.5.1.1/24'),
@@ -49,7 +50,7 @@ def test_reusable_masks(function, value, masked):
     (strip_ip, 'fe80::1%eth0', 'public', 'fe80::1%eth0'),
     (strip_ip, 'fd00::1', 'public', 'fd00::1'),
     (strip_ip, '224.0.0.1', 'public', '224.0.0.1'),
-    (strip_mac, '02:11:22:33:44:55', 'partial', '02:11:22:xx:xx:xx'),
+    (strip_mac, '02:11:22:33:44:55', 'partial', 'xx:xx:xx:xx:44:55'),
     (strip_mac, '02:11:22:33:44:55', 'public', '02:11:22:33:44:55'),
     (strip_value, 'Customer location', 'partial', '<private>'),
     (strip_value, 'Customer location', 'public', 'Customer location'),
@@ -63,13 +64,13 @@ def test_masking_modes(function, value, mode, expected):
 def test_partial_configuration_keeps_colliding_tags_and_changes_distinct():
     schema = Schema({'kind': 'node', 'children': {'address': {'kind': 'tag_node', 'strip_kind': 'ipv4'}}})
     masker = ConfigurationMasker(schema, 'partial')
-    before = {'address': {'10.5.1.1': {}, '10.5.1.2': {}}}
-    after = {'address': {'10.5.1.1': {}, '10.5.1.3': {}}}
+    before = {'address': {'10.5.1.1': {}, '10.6.1.1': {}}}
+    after = {'address': {'10.5.1.1': {}, '10.7.1.1': {}}}
     old, new = masker.tree(before), masker.tree(after)
 
     assert len(old['address']) == len(new['address']) == 2
     assert len(set(old['address']) & set(new['address'])) == 1
-    assert all(key.startswith('10.5.xxx.xxx') for key in new['address'])
+    assert all(key.startswith('xxx.xxx.1.1 <private-') for key in new['address'])
     assert masker.path(('address', '10.5.1.1'))[1] in new['address']
 
 
@@ -101,9 +102,9 @@ def test_interface_public_and_partial_modes_preserve_field_types():
     assert public['address'] == kernel['address']
     assert public['addr_info'] == [{'local': '10.5.1.1', 'broadcast': '10.5.1.255'},
                                  {'local': '<ipv4>'}, {'local': '<ipv6>'}]
-    assert partial['address'] == '02:11:22:xx:xx:xx'
+    assert partial['address'] == 'xx:xx:xx:xx:44:55'
     assert partial['ifalias'] == '<private>'
-    assert partial['addr_info'][2]['local'] == '2606:4700:x:x:x:x:x:x'
+    assert partial['addr_info'][2]['local'] == 'x:x:x:x:0:0:0:1111'
     assert kernel == original
     assert interfaces._mask_transceiver({'serial': 'secret'}, 'partial') == {'serial': '<private>'}
 
@@ -205,9 +206,9 @@ def test_configuration_mode_selection(configured_private):
     partial = controller.execute('show running-configuration | strip-private partial | commands', session)['text']
     public = controller.execute('show running-configuration | strip-private public | commands', session)['text']
 
-    assert '192.0.xxx.xxx/24' in partial
-    assert '2001:db8:x:x:x:x:x:x/64' in partial
-    assert '02:11:22:xx:xx:xx' in partial
+    assert 'xxx.xxx.2.10/24' in partial
+    assert 'x:x:x:x:0:0:0:10/64' in partial
+    assert 'xx:xx:xx:xx:44:55' in partial
     assert 'Customer location' not in partial
     assert '192.0.2.10/24' in public
     assert '02:11:22:33:44:55' in public
@@ -301,7 +302,7 @@ opmode.run()
     assert json.loads(controller.execute(line)['text']) == [None, '192.0.2.1', line]
 
     assert json.loads(controller.execute(line + ' | strip-private')['text']) == ['all', '<ipv4>', line]
-    assert json.loads(controller.execute(line + ' | strip-private partial')['text']) == ['partial', '192.0.xxx.xxx', line]
+    assert json.loads(controller.execute(line + ' | strip-private partial')['text']) == ['partial', 'xxx.xxx.2.1', line]
     assert json.loads(controller.execute(line + ' | strip-private public')['text']) == ['public', '192.0.2.1', line]
 
 

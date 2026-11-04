@@ -30,13 +30,12 @@ def strip_ip(value, strip_private=False):
         return value
 
     if strip_private == 'partial':
-        # Fixed boundaries retain useful topology hints without exposing host bits.
         if address.version == 4:
-            masked = '.'.join(str(address.ip).split('.')[:2]) + '.xxx.xxx'
+            masked = 'xxx.xxx.' + '.'.join(str(address.ip).split('.')[2:])
         else:
-            # packed excludes any scope identifier and handles compressed addresses.
-            hextets = [int.from_bytes(address.ip.packed[offset:offset + 2], 'big') for offset in (0, 2)]
-            masked = ':'.join(f'{part:x}' for part in hextets) + ':x:x:x:x:x:x'
+            # Use the low 64 bits regardless of compression or scope identifier.
+            suffix = address.ip.packed[8:].hex(':', 2).split(':')
+            masked = 'x:x:x:x:' + ':'.join(part.lstrip('0') or '0' for part in suffix)
 
         if '/' in value:
             masked += f'/{address.network.prefixlen}'
@@ -60,7 +59,7 @@ def strip_mac(value, strip_private=False):
         parts = value.split(':')
         if len(parts) == 6 and all(len(part) == 2 and all(char in '0123456789abcdefABCDEF' for char in part)
                                    for part in parts):
-            return ':'.join(parts[:3]) + ':xx:xx:xx'
+            return 'xx:xx:xx:xx:' + ':'.join(parts[-2:])
     return '<mac>' if strip_private else value
 
 

@@ -457,7 +457,7 @@ between the sides of one comparison and are not persistent identifiers.
 
 The optional `all`, `partial`, and `public` pipe choices select the masking mode;
 omitting the choice selects `all`. Partial configuration values have a unique
-suffix, for example `10.5.xxx.xxx/24 <private-1>`, so addresses with the same
+suffix, for example `xxx.xxx.12.34/24 <private-1>`, so addresses with the same
 visible portion still occupy distinct tag keys and remain distinguishable in diffs.
 Operational interface displays do not need these configuration aliases.
 
