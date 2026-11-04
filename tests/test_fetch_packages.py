@@ -1,8 +1,10 @@
 import hashlib
+from http.server import BaseHTTPRequestHandler, HTTPServer
 import os
 from pathlib import Path
 import shutil
 import subprocess
+from threading import Thread
 
 import pytest
 
@@ -34,15 +36,22 @@ def downloader(tmp_path):
                     'cp "$ARTIFACT" "$2"\n')
     wget.chmod(0o755)
 
-    def fetch(*, status=0, package='example', version='1.0', architecture='all', checksum=None):
+    def fetch(*, status=0, package='example', version='1.0', architecture='all', checksum=None,
+              cache=None, url=None):
         digest = checksum or hashlib.sha256(artifact.read_bytes()).hexdigest()
         (tmp_path / 'packages.lock').write_text(
-            f'{package} {version} {architecture} {digest} https://example.org/example.deb\n')
-        env = os.environ | {'PATH': str(tools) + os.pathsep + os.environ['PATH'],
-                            'ARTIFACT': str(artifact), 'DOWNLOAD_STATUS': str(status)}
+            f'{package} {version} {architecture} {digest} {url or "https://example.org/example.deb"}\n')
+        env = os.environ.copy()
+        if url is None:
+            env.update(PATH=str(tools) + os.pathsep + env['PATH'],
+                       ARTIFACT=str(artifact), DOWNLOAD_STATUS=str(status))
+        else:
+            env['no_proxy'] = '127.0.0.1'
 
-        return subprocess.run(['sh', str(tmp_path / 'fetch-packages.sh'), str(tmp_path / 'out')],
-                              env=env, capture_output=True, text=True)
+        args = ['sh', str(tmp_path / 'fetch-packages.sh'), str(tmp_path / 'out')]
+        if cache is not None:
+            args.append(str(cache))
+        return subprocess.run(args, env=env, capture_output=True, text=True, timeout=30)
 
     return fetch
 
@@ -83,3 +92,46 @@ def test_checksum_failure_does_not_publish_package(downloader, tmp_path):
     assert result.returncode != 0
     assert 'FAILED' in result.stdout
     assert not (tmp_path / 'out/example.deb').exists()
+
+
+def test_cache_survives_builds_and_recovers_from_corruption(downloader, tmp_path):
+    cache = tmp_path / 'cache'
+    assert downloader(cache=cache).returncode == 0
+    shutil.rmtree(tmp_path / 'out')
+    assert downloader(cache=cache, status=8).returncode == 0
+
+    entry, = cache.iterdir()
+    entry.write_bytes(b'damaged')
+    result = downloader(cache=cache)
+    assert result.returncode == 0, result.stderr
+    assert 'Downloading example' in result.stdout
+    assert entry.read_bytes() == (tmp_path / 'example.deb').read_bytes()
+
+
+@pytest.mark.skipif(not shutil.which('wget'), reason='HTTP retries require GNU Wget')
+@pytest.mark.parametrize('responses', [(503, 200), (503, 503, 503), (404,)])
+def test_http_retries(downloader, tmp_path, responses):
+    requests = []
+    artifact = (tmp_path / 'example.deb').read_bytes()
+
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            requests.append(self.path)
+            status = responses[len(requests) - 1]
+            self.send_response(status)
+            self.end_headers()
+            if status == 200:
+                self.wfile.write(artifact)
+
+    with HTTPServer(('127.0.0.1', 0), Handler) as server:
+        thread = Thread(target=server.serve_forever)
+        thread.start()
+        try:
+            result = downloader(url=f'http://127.0.0.1:{server.server_port}/example.deb')
+        finally:
+            server.shutdown()
+            thread.join()
+
+    assert requests == ['/example.deb'] * len(responses)
+    assert (result.returncode == 0) == (responses[-1] == 200), result.stderr
+    assert (tmp_path / 'out/example.deb').exists() == (responses[-1] == 200)

@@ -61,7 +61,7 @@ printf '%s\n' 'etc/apt/sources.list' 'etc/apt/sources.list.d/*.list' 'etc/apt/so
 # One text menu for BIOS/UEFI, serial and VGA; no graphical theme resets terminals.
 cp -R "$repository/images/bootloaders" config/
 
-sh "$repository/images/fetch-packages.sh" config/packages.chroot
+sh "$repository/images/fetch-packages.sh" config/packages.chroot "$repository/build/package-cache"
 python3 "$repository/build_tools/container_packages.py" \
     --cache /opt/nvyr-container-packages config/packages.chroot
 python3 "$repository/build_tools/frr_packages.py" \

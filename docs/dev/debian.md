@@ -195,7 +195,9 @@ ISOs into its own storage, replace that imported copy before booting the new bui
 - **`images/Dockerfile`, kernel/FRR/container source locks, their packaging helpers, or
   FRR build patches:** rebuild `nvyr-image-builder`, then build the ISO.
 - **`images/packages.lock`:** rebuild the ISO to download and install the new
-  pinned packages. This lock is read from the mounted checkout during assembly.
+  pinned packages. The builder reads this lock from the mounted checkout and caches
+  verified downloads in `build/package-cache/`. Subsequent builds reuse packages
+  with the same SHA-256 and check their contents and metadata again before staging.
 
 Mounting the checkout supplies current project files; it does not update packages
 already cached inside the builder. A stale kernel/FRR/container cache is rejected rather

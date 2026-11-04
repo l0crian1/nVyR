@@ -439,7 +439,8 @@ These are imported from `nvyr.helpers`; none is a standalone command.
   selected output directory. Installs the runner's metadata before invoking live-build.
 - [images/fetch-packages.sh](../../images/fetch-packages.sh): downloads dependencies
   from `images/packages.lock`, checking hashes and package metadata. Run
-  `sh images/fetch-packages.sh DESTINATION`; the image builder also calls it.
+  `sh images/fetch-packages.sh DESTINATION [CACHE]`. ISO assembly uses
+  `build/package-cache/` in the mounted checkout so downloads survive builder removal.
 - [build_tools/container_packages.py](../../build_tools/container_packages.py): builds
   the pinned Podman stack for Trixie/amd64, or verifies and stages the builder's
   cached packages with `--cache /opt/nvyr-container-packages DESTINATION`.
