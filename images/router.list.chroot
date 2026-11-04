@@ -11,6 +11,8 @@ less
 nano
 vim-tiny
 htop
+linux-cpupower
+powertop
 pciutils
 ca-certificates
 tzdata
