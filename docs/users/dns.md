@@ -31,6 +31,31 @@ All aggregated servers are written, but resolver-library limits still apply:
 uses at most three nameservers. This implementation does not start a local DNS
 listener or provide forwarding.
 
+## Static host mappings
+
+Use a static mapping for names that programs on the router should resolve
+locally. Give the canonical hostname at least one IPv4 or IPv6 address. Add an
+alias for each additional name you want to resolve to all of those addresses.
+
+```text
+set system static-host-mapping nas.home.arpa address 192.168.2.20
+set system static-host-mapping nas.home.arpa address fd00:2::20
+
+set system static-host-mapping nas.home.arpa alias nas
+set system static-host-mapping nas.home.arpa alias files
+
+commit
+save
+```
+
+On commit, the router publishes the entries in `/etc/hosts`. You can check
+either name from the Linux shell with `getent hosts nas` or `getent hosts files`.
+The `lookup` operational command queries DNS directly.
+
+A configured name takes precedence over that name from DHCP `update-hostfile`.
+Deleting the mapping makes any still-active DHCP lease for the name visible again
+on commit. To remove only one address or alias, delete its individual value.
+
 ## Inspection
 
 ```text

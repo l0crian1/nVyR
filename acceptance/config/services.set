@@ -1,6 +1,10 @@
 # Local-time selection must survive the saved-configuration reboot.
 set system time-zone America/New_York
 
+set system static-host-mapping boot-host.example.test address 192.0.2.42
+set system static-host-mapping boot-host.example.test address 2001:db8::42
+set system static-host-mapping boot-host.example.test alias boot-alias.example.test
+
 # Timers are rearmed from saved configuration on each boot.
 set system task BOOT-AUDIT op-command 'show uptime'
 set system task BOOT-AUDIT calendar at 03:15

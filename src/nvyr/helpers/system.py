@@ -11,6 +11,8 @@ from nvyr.storage import sync_directory
 
 def hostname_hosts(text, hostname):
     """Keep Debian's local-hostname address separate from localhost and static hosts."""
+    text, leases = hosts.split_dhcp(text)
+    text, mappings = hosts.split_section(text, 'static')
     names = hostname
     if '.' in hostname:
         names += ' ' + hostname.split('.', 1)[0]
@@ -33,9 +35,8 @@ def hostname_hosts(text, hostname):
             lines[-1] += '\n'
         lines.append(entry)
 
-    result = ''.join(lines)
-    _, managed = hosts.split_dhcp(result)
-    return hosts.with_dhcp(result, hosts.entries(managed))
+    result = hosts.append_section(''.join(lines), 'static', mappings)
+    return hosts.with_dhcp(result, hosts.entries(leases))
 
 
 def apply_hostname(hostname, *, path='/etc/hostname', hosts_path='/etc/hosts'):

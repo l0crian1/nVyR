@@ -259,6 +259,9 @@ applies it and `save` makes it the boot configuration.
   hostname mapping in `/etc/hosts`. Removal
   restores `nvyr`; normal save, boot recovery and rollback semantics apply.
   Example: `set system host-name test123`, then `commit` and `save`.
+- [system_static_hosts.py](../../src/nvyr/config_scripts/system_static_hosts.py)
+  publishes configured IPv4 and IPv6 hosts and aliases. See [system DNS](dns.md)
+  for its interaction with DHCP lease names.
 - [system_configuration.py](../../src/nvyr/config_scripts/system_configuration.py):
   registers `system configuration` as a commit unit. Its settings are consumed by
   configd after durable publication rather than configuring an external service.

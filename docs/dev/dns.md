@@ -11,6 +11,13 @@ hostname setting has its own `system` owner at `system host-name`, implemented b
 `system_dns.py` supplies resolver sources through netlinkd's root-only `replace-dns`
 request; it never writes resolver files itself.
 
+`system_static_hosts.py` owns `system static-host-mapping`. It renders the
+configured hosts entries and publishes them through the same locked update as
+Kea lease names. A static edit rebuilds the DHCP section from current leases so
+removing an override restores an active lease immediately. Lease events preserve
+the static section. The hostname script preserves both sections when updating
+the router's own loopback entry.
+
 `helpers/dns.py` aggregates sources and atomically publishes a Jinja-rendered
 `/run/nvyr-resolver/resolv.conf` with mode 0644. It writes only when contents change.
 `nvyr-resolver-init.service` creates the readable runtime directory and points

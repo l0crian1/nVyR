@@ -1,6 +1,7 @@
 """Lease publication, shared hosts ownership, and configuration compensation."""
 
 import csv
+from functools import partial
 import json
 from pathlib import Path
 import threading
@@ -55,6 +56,38 @@ def test_publish_domain_alias_and_preserve_static(files):
     previous = files.hosts.stat().st_mtime_ns
     dhcp_hosts.reconcile(files.config.parent, files.hosts, now=1000)
     assert files.hosts.stat().st_mtime_ns == previous
+
+
+def test_static_mapping_commit_shadows_and_restores_active_lease(files, controller, session, engine, monkeypatch):
+    from nvyr.config_scripts import system_static_hosts
+
+    original = files.hosts.read_text()
+    monkeypatch.setattr(system_static_hosts, 'HOSTS_PATH', files.hosts)
+    monkeypatch.setattr(dhcp_hosts, 'reconcile', partial(dhcp_hosts.reconcile, files.config.parent, now=1000))
+    write_leases(files.leases, [{}])
+    dhcp_hosts.reconcile(hosts_path=files.hosts)
+    leased = files.hosts.read_text()
+
+    path = 'system static-host-mapping printer.home.example'
+    controller.execute(f'set {path} alias printer', session)
+    rejected = engine.commit(session)['results']['static-host-mapping']
+    assert not rejected['success'] and 'requires address' in rejected['error']
+    assert files.hosts.read_text() == leased
+
+    controller.execute(f'set {path} address 192.0.2.42', session)
+    controller.execute(f'set {path} address 2001:db8::42', session)
+    assert engine.commit(session)['results']['static-host-mapping']['success']
+    dhcp_hosts.reconcile(hosts_path=files.hosts)
+
+    text = files.hosts.read_text()
+    unmanaged, static = hosts.split_section(text, 'static')
+    assert unmanaged == original
+    assert hosts.entries(static) == [('192.0.2.42', ['printer.home.example', 'printer']),
+                                     ('2001:db8::42', ['printer.home.example', 'printer'])]
+
+    controller.execute(f'delete {path}', session)
+    assert engine.commit(session)['results']['static-host-mapping']['success']
+    assert files.hosts.read_text() == leased
 
 
 def test_renew_release_decline_expiration_and_restart(files):
@@ -117,6 +150,14 @@ def test_hostname_change_preserves_dhcp_and_removes_name_collision(files):
     assert '127.0.1.1\tprinter.home.example printer\n' in updated
     assert hosts.DHCP_BEGIN not in updated
     assert '# static\n192.0.2.1 gateway\n' in updated
+
+
+def test_router_rename_preserves_static_mapping_on_hostname_address():
+    # Even a static entry using Debian's local hostname address belongs to its mapping.
+    mapping = '127.0.1.1\tmonitor.home.example monitor\n'
+    original = hosts.append_section('127.0.1.1\told\n', 'static', mapping)
+    updated = system.hostname_hosts(original, 'new')
+    assert hosts.split_section(updated, 'static') == ('127.0.1.1\tnew\n', mapping)
 
 
 def test_disable_and_deleted_configuration_remove_only_managed_entries(files):

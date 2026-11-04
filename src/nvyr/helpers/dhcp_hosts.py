@@ -97,13 +97,22 @@ def records(configuration, *, now=None):
     return result
 
 
-def reconcile(directory='/run/nvyr-kea', hosts_path='/etc/hosts', *, now=None):
-    """Preserve the previous hosts file on read errors; atomically replace on success."""
+def reconcile(directory='/run/nvyr-kea', hosts_path='/etc/hosts', *, now=None, static_section=None):
+    """Publish static and current lease names together under the shared hosts lock."""
     from nvyr.helpers.kea import instance_name
     from nvyr.helpers.template import write
 
     hosts_path = Path(hosts_path)
     with hosts.locked(hosts_path):
+        text = hosts_path.read_text(encoding='utf-8') if hosts_path.exists() else ''
+        base = text
+        if static_section is not None:
+            base, _ = hosts.split_dhcp(text)
+            base, previous = hosts.split_section(base, 'static')
+            if previous == static_section:
+                return
+            base = hosts.append_section(base, 'static', static_section)
+
         active = []
         for family in (4, 6):
             path = Path(directory) / (instance_name(family, 'default') + '.json')
@@ -113,8 +122,7 @@ def reconcile(directory='/run/nvyr-kea', hosts_path='/etc/hosts', *, now=None):
                 continue
             active.extend(records(configuration, now=now))
 
-        text = hosts_path.read_text(encoding='utf-8') if hosts_path.exists() else ''
-        desired = hosts.with_dhcp(text, active)
+        desired = hosts.with_dhcp(base, active)
         if desired != text:
             mode = hosts_path.stat().st_mode & 0o777 if hosts_path.exists() else 0o644
             write(hosts_path, desired, mode=mode)

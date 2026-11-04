@@ -91,6 +91,13 @@
     ]
   },
   {
+    "script": "static-host-mapping",
+    "priority": 13,
+    "paths": [
+      "system static-host-mapping <name>"
+    ]
+  },
+  {
     "script": "dns",
     "priority": 14,
     "paths": [

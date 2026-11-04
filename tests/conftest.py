@@ -24,7 +24,7 @@ def isolated_umask():
 def isolated_network_profiles(tmp_path, monkeypatch):
     from contextlib import nullcontext
     from types import SimpleNamespace
-    from nvyr.config_scripts import protocols_bgp, system_timezone
+    from nvyr.config_scripts import protocols_bgp, system_static_hosts, system_timezone
     from nvyr.helpers import logging_runtime, task_schedule
 
     monkeypatch.setattr(task_schedule, 'UNITS', tmp_path)
@@ -40,6 +40,7 @@ def isolated_network_profiles(tmp_path, monkeypatch):
     # Default timezone recovery must never replace the test host's localtime files.
     monkeypatch.setattr(system_timezone, 'LOCALTIME', tmp_path / 'localtime')
     monkeypatch.setattr(system_timezone, 'TIMEZONE', tmp_path / 'timezone')
+    monkeypatch.setattr(system_static_hosts, 'HOSTS_PATH', tmp_path / 'static-hosts')
 
     monkeypatch.setattr(kernel_settings, 'manager', SimpleNamespace(transaction=lambda *args, **kwargs: nullcontext()))
     monkeypatch.setattr(logging_runtime, "install", lambda *args, **kwargs: None)

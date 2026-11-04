@@ -10910,6 +10910,9 @@ set
 │   │   │   ├── nts
 │   │   │   └── prefer
 │   │   └── vrf <name>
+│   ├── static-host-mapping <hostname>
+│   │   ├── address <x.x.x.x|x:x:x:x:x:x:x:x>
+│   │   └── alias <hostname>
 │   ├── task <name>
 │   │   ├── calendar
 │   │   │   ├── at <HH:MM>

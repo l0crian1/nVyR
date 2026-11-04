@@ -73,6 +73,13 @@ def check_system_hostname(options):
     assert_equal(socket.gethostname(), lookup(configuration, ('system', 'host-name'), 'nvyr'))
 
 
+def check_static_host_mapping(options):
+    """Resolve the saved dual-stack mapping and its alias through the system resolver."""
+    for name in ('boot-host.example.test', 'boot-alias.example.test'):
+        results = socket.getaddrinfo(name, None, type=socket.SOCK_STREAM)
+        assert_equal({item[4][0] for item in results}, {'192.0.2.42', '2001:db8::42'})
+
+
 def check_system_timezone(options):
     """Both host timezone files select the saved local-time policy after reboot."""
     with ConfigurationSession() as config:
@@ -661,7 +668,7 @@ def check_complete_rule_inventory(options):
 
 CHECKS = (
     check_kernel_release, check_operational_inventory,
-    check_system_hostname, check_system_timezone, check_system_tasks, check_cpu_policy, check_vrfs,
+    check_system_hostname, check_static_host_mapping, check_system_timezone, check_system_tasks, check_cpu_policy, check_vrfs,
     check_ethernet, check_ethernet_ipv4, check_ethernet_ipv6, check_vlans,
     check_vlan_ipv4_traffic, check_vlan_ipv6_traffic,
     check_loopback_ipv4, check_loopback_ipv6, check_dummy_and_disabled, check_veth_pair,

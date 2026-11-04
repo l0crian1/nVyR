@@ -22,18 +22,32 @@ def locked(path):
         yield
 
 
-def split_dhcp(text):
+def split_section(text, name):
     """Remove only our marked section, preserving all other lines verbatim."""
-    before, separator, remainder = text.partition(DHCP_BEGIN)
-    if not separator:
-        if DHCP_END in text:
-            raise RouterError('Malformed nVyR DHCP hosts section: missing beginning marker')
+    begin = f'# BEGIN nVyR {name} hosts\n'
+    end = f'# END nVyR {name} hosts\n'
+    lines = text.splitlines(keepends=True)
+    if begin not in lines and end not in lines:
         return text, ''
 
-    managed, separator, after = remainder.partition(DHCP_END)
-    if not separator or DHCP_BEGIN in remainder or DHCP_END in after:
-        raise RouterError('Malformed nVyR DHCP hosts section: invalid boundary markers')
-    return before + after, managed
+    if lines.count(begin) != 1 or lines.count(end) != 1:
+        raise RouterError(f'Malformed nVyR {name} hosts section: invalid boundary markers')
+    start, stop = lines.index(begin), lines.index(end)
+    if stop < start:
+        raise RouterError(f'Malformed nVyR {name} hosts section: end precedes beginning')
+    return ''.join(lines[:start] + lines[stop + 1:]), ''.join(lines[start + 1:stop])
+
+
+def split_dhcp(text):
+    return split_section(text, 'DHCP')
+
+
+def append_section(text, name, content):
+    if not content:
+        return text
+    if text and not text.endswith('\n'):
+        text += '\n'
+    return text + f'# BEGIN nVyR {name} hosts\n' + content + f'# END nVyR {name} hosts\n'
 
 
 def entries(text):
@@ -56,8 +70,4 @@ def with_dhcp(text, records):
         if available:
             lines.append(f'{address}\t{" ".join(available)}\n')
 
-    if not lines:
-        return unmanaged
-    if unmanaged and not unmanaged.endswith('\n'):
-        unmanaged += '\n'
-    return unmanaged + DHCP_BEGIN + ''.join(lines) + DHCP_END
+    return append_section(unmanaged, 'DHCP', ''.join(lines))
