@@ -103,11 +103,11 @@ def test_interface_help_order_and_question_key(controller, monkeypatch):
     rows = completion_rows(result)
 
     assert [name for name, _ in rows] == [
-        '<Enter>', '<interface>', 'bridge', 'detail', 'ethernet', 'hardware-statistics',
+        '<Enter>', '<interface>', 'bond', 'bridge', 'detail', 'ethernet', 'hardware-statistics',
         'offload', 'queues', 'statistics', 'transceiver',
         'dum0', 'eth0', 'eth1', 'eth2', 'lo', 'pim6reg', 'pimreg']
     assert rows[1] == ('<interface>', 'Interface name (for example eth0)')
-    assert all(not description for _, description in rows[10:])
+    assert all(not description for _, description in rows[11:])
     assert result == before
     assert 'interface' not in dict(result['candidates'])
 

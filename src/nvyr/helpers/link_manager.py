@@ -151,7 +151,8 @@ class Manager:
             for name, spec in links.items():
                 driver = self.types[spec['kind']]
                 definition = dict(spec, name=name)
-                for dependency in (*driver.dependencies(definition), *driver.companions(definition)):
+                for dependency in (*driver.dependencies(definition), *driver.optional_dependencies(definition),
+                                   *driver.companions(definition)):
                     self.dependents.setdefault(dependency, set()).add(name)
 
     def fingerprint(self, name, device):
@@ -295,10 +296,12 @@ class Manager:
             for member in members:
                 definition = links[member]
                 member_driver = self.types[definition['kind']]
-                for dependency in member_driver.dependencies(dict(definition, name=member)):
+                named = dict(definition, name=member)
+                optional = member_driver.optional_dependencies(named)
+                for dependency in (*member_driver.dependencies(named), *optional):
                     if dependency in links:
                         visit(dependency)
-                    elif require_external and self.kernel.device(dependency) is None:
+                    elif require_external and dependency not in optional and self.kernel.device(dependency) is None:
                         raise ValidationError(f'{member}: missing dependency {dependency}')
 
             visiting.difference_update(members)
@@ -702,7 +705,8 @@ class Manager:
             target[name] = spec
             driver = self.types[spec['kind']]
             definition = dict(spec, name=name)
-            for dependency in (*driver.dependencies(definition), *driver.companions(definition)):
+            for dependency in (*driver.dependencies(definition), *driver.optional_dependencies(definition),
+                               *driver.companions(definition)):
                 if dependency in self.claims and dependency not in target:
                     queue.append(dependency)
 

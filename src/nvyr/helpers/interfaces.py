@@ -12,6 +12,10 @@ from nvyr.helpers import dhcp6, dhcp_options, interface_ip
 from nvyr.tree import lookup
 
 
+BOND_MEMBER_CONFLICTS = ('address', 'vrf', 'vif', 'dhcp-options', 'dhcpv6-options', 'dhcpv6-pd',
+                         'ip', 'ipv6', 'mac')
+
+
 def visible_link(device):
     """Exclude infrastructure devices using native metadata, never name prefixes."""
     link_type = device.get('link_type')
@@ -159,6 +163,11 @@ def bridge_members(configuration):
         for member in lookup(bridge, ('member', 'interface'), {})}
 
 
+def bond_members(configuration):
+    return {port for bond in lookup(configuration, ('interfaces', 'bond'), {}).values()
+            for port in lookup(bond, ('member', 'interface'), {})}
+
+
 def verify_pd(inventory, bridge_members):
     associations = {}
     for wan, values in inventory.items():
@@ -187,7 +196,7 @@ def verify_pd(inventory, bridge_members):
                     raise ValidationError(f'{wan} PD {key}: {lan} needs IPv6 link-local addressing')
 
 
-def verify_membership(configuration, *, vrfs, bridge_members):
+def verify_membership(configuration, *, vrfs, bridge_members, bond_members=()):
     for name, values in instances(configuration):
         # Membership must resolve in the proposed configuration, including new VRFs.
         if 'vrf' in values and values['vrf'] not in vrfs:
@@ -198,6 +207,10 @@ def verify_membership(configuration, *, vrfs, bridge_members):
                                        or values.get('ip') or values.get('ipv6') or values.get('dhcpv6-pd')
                                        or values.get('dhcpv6-options')):
             raise ValidationError(f'Interface {name}: bridge member cannot have addresses, DHCP, VRF, VIFs or IP options')
+
+        # Reject L3 settings in their owner's verify stage, before a partial commit can apply them.
+        if name in bond_members and any(key in values for key in BOND_MEMBER_CONFLICTS):
+            raise ValidationError(f'Interface {name}: configure routing, DHCP, MTU, MAC and VIFs on the bond')
 
 
 def instances(configuration):

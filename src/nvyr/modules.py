@@ -92,7 +92,7 @@ def registry(schema):
     """Bind every schema owner to its trusted configuration script."""
     from nvyr.config_scripts import (
         container, firewall, firewall_failsafe, logging, interface_ethernet, interface_dummy, interface_virtual_ethernet,
-        interface_bridge, interface_loopback, protocols_static, protocols_bgp, policy,
+        interface_bridge, interface_bond, interface_loopback, protocols_static, protocols_bgp, policy,
         service_ssh, service_dhcp, system_dns, system_login, system_hostname, system_configuration, system_ntp, system_cpu,
         system_task, system_timezone, vrf, vrf_conntrack,
     )
@@ -110,6 +110,7 @@ def registry(schema):
         'loopback': interface_loopback,
         'virtual-ethernet': interface_virtual_ethernet,
         'bridge': interface_bridge,
+        'bond': interface_bond,
         'vrf': vrf,
         'vrf_conntrack': vrf_conntrack,
         'static': protocols_static,

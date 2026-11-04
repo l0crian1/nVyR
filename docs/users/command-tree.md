@@ -9171,6 +9171,193 @@ set
 │               ├── ipv4-policy <name>
 │               └── ipv6-policy <name>
 ├── interfaces
+│   ├── bond <bondN>
+│   │   ├── address <dhcpv6|dhcp|x.x.x.x/x|x:x:x:x:x:x/x>
+│   │   ├── deliver-inactive-frames
+│   │   ├── description <text>
+│   │   ├── dhcp-options
+│   │   │   ├── client-id
+│   │   │   │   ├── hex <hex>
+│   │   │   │   └── text <text>
+│   │   │   ├── default-route-distance <1-254>
+│   │   │   ├── host-name <hostname>
+│   │   │   ├── mtu
+│   │   │   ├── no-default-route
+│   │   │   ├── user-class <text>
+│   │   │   └── vendor-class-id <text>
+│   │   ├── dhcpv6-options
+│   │   │   ├── duid <hex>
+│   │   │   ├── no-release
+│   │   │   ├── no-request-dns
+│   │   │   ├── no-request-domain-search
+│   │   │   ├── parameters-only
+│   │   │   └── rapid-commit
+│   │   ├── dhcpv6-pd <iaid>
+│   │   │   ├── interface <interface>
+│   │   │   │   ├── address <number>
+│   │   │   │   └── subnet-id <number>
+│   │   │   └── length <1-64>
+│   │   ├── disable
+│   │   ├── disable-dynamic-load-balancing
+│   │   ├── fail-over-mac <none|active|follow>
+│   │   ├── ip
+│   │   │   ├── accept-local
+│   │   │   ├── arp-accept <disable|enable|same-subnet>
+│   │   │   ├── arp-announce <any|subnet|best-local>
+│   │   │   ├── arp-cache-timeout <duration>
+│   │   │   ├── arp-filter <enable|disable>
+│   │   │   ├── arp-ignore <0|1|2|3|8>
+│   │   │   ├── arp-notify <enable|disable>
+│   │   │   ├── arp-proxy <enable|disable>
+│   │   │   ├── arp-proxy-pvlan <enable|disable>
+│   │   │   ├── arp-retransmit-interval <duration>
+│   │   │   ├── arp-stale-time <duration>
+│   │   │   ├── directed-broadcast <enable|disable>
+│   │   │   ├── disable-forwarding
+│   │   │   ├── log-martians <enable|disable>
+│   │   │   ├── promote-secondaries
+│   │   │   ├── receive-redirects <enable|disable>
+│   │   │   ├── route-localnet
+│   │   │   ├── send-redirects <enable|disable>
+│   │   │   └── source-route <enable|disable>
+│   │   ├── ipv6
+│   │   │   ├── accept-router-advertisements
+│   │   │   ├── address-generation <eui64|stable-privacy>
+│   │   │   ├── autoconf
+│   │   │   ├── disable
+│   │   │   ├── duplicate-address-detection
+│   │   │   │   ├── disable
+│   │   │   │   └── probes <number>
+│   │   │   ├── eui64 <address>
+│   │   │   ├── hop-limit <number>
+│   │   │   ├── interface-identifier <address>
+│   │   │   ├── link-local-address <address>
+│   │   │   ├── maximum-autoconf-addresses <number>
+│   │   │   ├── neighbor-reachable-time <duration>
+│   │   │   ├── neighbor-retransmit-interval <duration>
+│   │   │   ├── neighbor-stale-time <duration>
+│   │   │   ├── no-default-link-local
+│   │   │   ├── no-default-route
+│   │   │   ├── no-ra-mtu
+│   │   │   ├── proxy-ndp
+│   │   │   ├── receive-redirects <enable|disable>
+│   │   │   ├── source-route <disable|routing-header-2>
+│   │   │   └── temporary-addresses <disable|prefer-public|prefer-temporary>
+│   │   ├── lacp
+│   │   │   ├── aggregator-select <stable|bandwidth|count|actor-port-priority>
+│   │   │   ├── broadcast-neighbor
+│   │   │   ├── independent-control
+│   │   │   ├── min-links <0-2147483647>
+│   │   │   ├── passive
+│   │   │   ├── rate <slow|fast>
+│   │   │   ├── strict
+│   │   │   ├── system-mac <xx:xx:xx:xx:xx:xx>
+│   │   │   ├── system-priority <1-65535>
+│   │   │   └── user-port-key <0-1023>
+│   │   ├── learning-packet-interval <duration>
+│   │   ├── link-group <0-4294967295>
+│   │   ├── link-monitor
+│   │   │   ├── mii
+│   │   │   │   ├── down-delay <duration>
+│   │   │   │   ├── interval <duration>
+│   │   │   │   └── up-delay <duration>
+│   │   │   └── probe
+│   │   │       ├── interval <duration>
+│   │   │       ├── ipv4-target <x.x.x.x>
+│   │   │       ├── ipv6-target <h:h::h>
+│   │   │       ├── missed-max <1-255>
+│   │   │       ├── target-policy <any|all>
+│   │   │       └── validate <none|active|backup|all|filter|filter-active|filter-backup>
+│   │   ├── mac <xx:xx:xx:xx:xx:xx>
+│   │   ├── member
+│   │   │   └── interface <interface>
+│   │   │       ├── lacp
+│   │   │       │   └── port-priority <1-65535>
+│   │   │       ├── priority <-2147483648-2147483647>
+│   │   │       └── queue-id <0-65535>
+│   │   ├── mode <balance-rr|active-backup|balance-xor|broadcast|802.3ad|balance-tlb|balance-alb>
+│   │   ├── mtu <1280-65535>
+│   │   ├── packets-per-member <0-65535>
+│   │   ├── peer-notification-delay <duration>
+│   │   ├── peer-notifications <0-255>
+│   │   ├── primary <interface>
+│   │   ├── primary-reselect <always|better|failure>
+│   │   ├── resend-igmp <0-255>
+│   │   ├── transmit-hash-policy <layer2|layer2+3|layer3+4|encap2+3|encap3+4|vlan+srcmac>
+│   │   ├── vif <1-4094>
+│   │   │   ├── address <dhcpv6|dhcp|x.x.x.x/x|x:x:x:x:x:x/x>
+│   │   │   ├── description <text>
+│   │   │   ├── dhcp-options
+│   │   │   │   ├── client-id
+│   │   │   │   │   ├── hex <hex>
+│   │   │   │   │   └── text <text>
+│   │   │   │   ├── default-route-distance <1-254>
+│   │   │   │   ├── host-name <hostname>
+│   │   │   │   ├── mtu
+│   │   │   │   ├── no-default-route
+│   │   │   │   ├── user-class <text>
+│   │   │   │   └── vendor-class-id <text>
+│   │   │   ├── dhcpv6-options
+│   │   │   │   ├── duid <hex>
+│   │   │   │   ├── no-release
+│   │   │   │   ├── no-request-dns
+│   │   │   │   ├── no-request-domain-search
+│   │   │   │   ├── parameters-only
+│   │   │   │   └── rapid-commit
+│   │   │   ├── dhcpv6-pd <iaid>
+│   │   │   │   ├── interface <interface>
+│   │   │   │   │   ├── address <number>
+│   │   │   │   │   └── subnet-id <number>
+│   │   │   │   └── length <1-64>
+│   │   │   ├── disable
+│   │   │   ├── ip
+│   │   │   │   ├── accept-local
+│   │   │   │   ├── arp-accept <disable|enable|same-subnet>
+│   │   │   │   ├── arp-announce <any|subnet|best-local>
+│   │   │   │   ├── arp-cache-timeout <duration>
+│   │   │   │   ├── arp-filter <enable|disable>
+│   │   │   │   ├── arp-ignore <0|1|2|3|8>
+│   │   │   │   ├── arp-notify <enable|disable>
+│   │   │   │   ├── arp-proxy <enable|disable>
+│   │   │   │   ├── arp-proxy-pvlan <enable|disable>
+│   │   │   │   ├── arp-retransmit-interval <duration>
+│   │   │   │   ├── arp-stale-time <duration>
+│   │   │   │   ├── directed-broadcast <enable|disable>
+│   │   │   │   ├── disable-forwarding
+│   │   │   │   ├── log-martians <enable|disable>
+│   │   │   │   ├── promote-secondaries
+│   │   │   │   ├── receive-redirects <enable|disable>
+│   │   │   │   ├── route-localnet
+│   │   │   │   ├── send-redirects <enable|disable>
+│   │   │   │   └── source-route <enable|disable>
+│   │   │   ├── ipv6
+│   │   │   │   ├── accept-router-advertisements
+│   │   │   │   ├── address-generation <eui64|stable-privacy>
+│   │   │   │   ├── autoconf
+│   │   │   │   ├── disable
+│   │   │   │   ├── duplicate-address-detection
+│   │   │   │   │   ├── disable
+│   │   │   │   │   └── probes <number>
+│   │   │   │   ├── eui64 <address>
+│   │   │   │   ├── hop-limit <number>
+│   │   │   │   ├── interface-identifier <address>
+│   │   │   │   ├── link-local-address <address>
+│   │   │   │   ├── maximum-autoconf-addresses <number>
+│   │   │   │   ├── neighbor-reachable-time <duration>
+│   │   │   │   ├── neighbor-retransmit-interval <duration>
+│   │   │   │   ├── neighbor-stale-time <duration>
+│   │   │   │   ├── no-default-link-local
+│   │   │   │   ├── no-default-route
+│   │   │   │   ├── no-ra-mtu
+│   │   │   │   ├── proxy-ndp
+│   │   │   │   ├── receive-redirects <enable|disable>
+│   │   │   │   ├── source-route <disable|routing-header-2>
+│   │   │   │   └── temporary-addresses <disable|prefer-public|prefer-temporary>
+│   │   │   ├── link-group <0-4294967295>
+│   │   │   ├── mac <xx:xx:xx:xx:xx:xx>
+│   │   │   ├── mtu <1280-65535>
+│   │   │   └── vrf <name>
+│   │   └── vrf <name>
 │   ├── bridge <brN>
 │   │   ├── address <dhcpv6|dhcp|x.x.x.x/x|x:x:x:x:x:x/x>
 │   │   ├── default-pvid <0-4094>
@@ -11944,6 +12131,10 @@ operational mode
 │   │   └── interface <interface>
 │   └── dhcpv6
 │       └── interface <interface>
+├── reset
+│   └── interfaces
+│       └── bond <bondN>
+│           └── active-member <interface>
 ├── restart
 │   └── container [<name>]
 │       └── pod <name>
@@ -13162,6 +13353,10 @@ operational mode
 │   │       └── ipv6 [<name>]
 │   │           └── detail
 │   ├── interfaces [<interface>]
+│   │   ├── bond
+│   │   │   └── <bondN>
+│   │   │       ├── lacp
+│   │   │       └── member <interface>
 │   │   ├── bridge
 │   │   │   └── <brN>
 │   │   │       ├── mac

@@ -15,6 +15,7 @@ Configure and operate nVyR. For implementation and maintenance, use the
 
 - [Interface configuration](interfaces.md)
 - [Bridge interfaces](bridges.md)
+- [Bond interfaces and LACP](bonds.md)
 - [Persistent Ethernet names](interface-naming.md)
 - [Interface diagnostics](interface-operations.md)
 - [Static routing](static.md)

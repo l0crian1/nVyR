@@ -14,6 +14,7 @@ def get_config(context):
     return {
         'bridges': lookup(context.effective, ROOT, {}),
         'inventory': dict(interfaces.configured(context.effective)),
+        'bond-members': interfaces.bond_members(context.effective),
         'vrfs': lookup(context.effective, ('vrf', 'name'), {}),
     }
 
@@ -69,7 +70,11 @@ def verify(configuration, context):
 
     # A bridge membership or VRF change can invalidate a delegation owned by another script.
     members = {member for br in bridges.values() for member in lookup(br, ('member', 'interface'), {})}
-    interfaces.verify_pd(inventory, members)
+    # A port cannot be attached to two Linux masters.
+    overlap = members & configuration['bond-members']
+    if overlap:
+        raise ValidationError(f'{min(overlap)}: interface cannot be both a bridge and a bond member')
+    interfaces.verify_pd(inventory, members | configuration['bond-members'])
 
     # Child VLAN names and MTUs must fit their parent and kernel limits.
     interfaces.verify_vifs(bridges)

@@ -172,6 +172,15 @@ def check_veth_pair(options):
     assert_link('veth997', kind='veth', peer='veth995', mtu=1400, master='BOOTRIGHT', up=True)
 
 
+def check_bond(options):
+    """The bond must recover its member and failover policy after boot."""
+    assert_link('dum994', master='bond995', up=True)
+    data = assert_link('bond995', kind='bond', up=True)['linkinfo']['info_data']
+    assert_equal(data['mode'], 'active-backup')
+    assert_equal(data['miimon'], 100)
+    assert_equal(Path('/sys/class/net/bond995/bonding/primary').read_text().strip(), 'dum994')
+
+
 def check_bridge(options):
     """Inspect bridge properties, not just a link with the right name."""
     assert_link('br995', kind='bridge', master='BOOTLEFT', group=197, mtu=1400)
@@ -656,7 +665,7 @@ CHECKS = (
     check_ethernet, check_ethernet_ipv4, check_ethernet_ipv6, check_vlans,
     check_vlan_ipv4_traffic, check_vlan_ipv6_traffic,
     check_loopback_ipv4, check_loopback_ipv6, check_dummy_and_disabled, check_veth_pair,
-    check_bridge, check_bridge_ports, check_bridge_multicast,
+    check_bond, check_bridge, check_bridge_ports, check_bridge_multicast,
     check_static_ipv4, check_static_ipv6, check_multipath_ipv4, check_multipath_ipv6,
     check_vrf_static_ipv4, check_vrf_static_ipv6, check_routing_policies,
     check_bgp_ipv4_session, check_bgp_ipv6_session, check_bgp_ipv4_policy_result, check_bgp_ipv6_policy_result,

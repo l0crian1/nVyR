@@ -13,6 +13,7 @@ interfaces:
 
     include_schema:
     - file: operational/bridge.yaml.i
+    - file: operational/bond.yaml.i
     - file: operational/interface_options.yaml.i
       as: null
       add:

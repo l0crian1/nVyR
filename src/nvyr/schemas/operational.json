@@ -195,6 +195,78 @@
         }
       }
     },
+    "reset": {
+      "kind": "node",
+      "description": "Change runtime selection",
+      "access": "net-admin",
+      "children": {
+        "interfaces": {
+          "kind": "node",
+          "description": "Interface runtime controls",
+          "children": {
+            "bond": {
+              "kind": "tag_node",
+              "description": "Select an active bond member",
+              "validators": {
+                "mode": "AND",
+                "checks": {
+                  "regex": {
+                    "name": "regex",
+                    "args": {
+                      "pattern": "bond[0-9]+"
+                    }
+                  }
+                }
+              },
+              "hints": {
+                "bondN": "Bond interface name"
+              },
+              "suggestors": [
+                {
+                  "name": "config-path",
+                  "args": {
+                    "path": "interfaces bond"
+                  }
+                }
+              ],
+              "children": {
+                "active-member": {
+                  "kind": "leaf_node",
+                  "description": "Switch the active member until the next failover",
+                  "command": {
+                    "argv": [
+                      "bond.nvyr.op",
+                      "select",
+                      "@4",
+                      "@6"
+                    ]
+                  },
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[a-zA-Z][a-zA-Z0-9_.-]{0,14}"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "interface": "Member interface name"
+                  },
+                  "suggestors": [
+                    {
+                      "name": "bond-members"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "release": {
       "kind": "node",
       "access": "net-admin",
@@ -8395,6 +8467,103 @@
                     }
                   },
                   "positional": true
+                }
+              }
+            },
+            "bond": {
+              "kind": "node",
+              "description": "Bond carrier, mode and members",
+              "command": {
+                "argv": [
+                  "bond.nvyr.op",
+                  "show"
+                ]
+              },
+              "children": {
+                "bond-name": {
+                  "kind": "tag_node",
+                  "positional": true,
+                  "description": "Bond carrier, mode and members",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "bond[0-9]+"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "bondN": "Bond interface"
+                  },
+                  "suggestors": [
+                    {
+                      "name": "config-path",
+                      "args": {
+                        "path": "interfaces bond"
+                      }
+                    }
+                  ],
+                  "command": {
+                    "argv": [
+                      "bond.nvyr.op",
+                      "show",
+                      "--bond",
+                      "@4"
+                    ]
+                  },
+                  "children": {
+                    "lacp": {
+                      "kind": "leaf_node",
+                      "valueless": true,
+                      "description": "Local and partner LACP negotiation by port",
+                      "command": {
+                        "argv": [
+                          "bond.nvyr.op",
+                          "show",
+                          "--bond",
+                          "@4",
+                          "--section",
+                          "lacp"
+                        ]
+                      }
+                    },
+                    "member": {
+                      "kind": "tag_node",
+                      "description": "Member link state, speed and failures",
+                      "command": {
+                        "argv": [
+                          "bond.nvyr.op",
+                          "show",
+                          "--bond",
+                          "@4",
+                          "--member",
+                          "@6"
+                        ]
+                      },
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "regex": {
+                            "name": "regex",
+                            "args": {
+                              "pattern": "[a-zA-Z][a-zA-Z0-9_.-]{0,14}"
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "interface": "Member interface name"
+                      },
+                      "suggestors": [
+                        {
+                          "name": "bond-members"
+                        }
+                      ]
+                    }
+                  }
                 }
               }
             },

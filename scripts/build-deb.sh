@@ -146,6 +146,7 @@ install -m 0644 "$repository/packaging/nvyr-geoip-update.service" "$stage/usr/li
 install -m 0644 "$repository/packaging/nvyr-geoip-update.timer" "$stage/usr/lib/systemd/system/nvyr-geoip-update.timer"
 install -m 0644 "$repository/packaging/nvyr-conntrack.service" "$stage/usr/lib/systemd/system/nvyr-conntrack.service"
 install -D -m 0644 "$repository/packaging/nvyr-conntrack-helpers.conf" "$stage/usr/lib/modprobe.d/nvyr-conntrack-helpers.conf"
+install -D -m 0644 "$repository/packaging/nvyr-bonding.conf" "$stage/usr/lib/modprobe.d/nvyr-bonding.conf"
 
 install -D -m 0644 "$repository/packaging/20-nvyr-serial.conf" "$stage/usr/lib/systemd/system/serial-getty@.service.d/20-nvyr.conf"
 

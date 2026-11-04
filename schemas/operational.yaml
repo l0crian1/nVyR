@@ -21,6 +21,7 @@ children: # operational
   - file: operational/firewall-trace.yaml.i
   - file: operational/set.yaml.i
   - file: operational/task-start.yaml.i
+  - file: operational/bond-reset.yaml.i
   - file: operational/dhcp-client.yaml.i
     as: null
   - file: operational/containers.yaml.i

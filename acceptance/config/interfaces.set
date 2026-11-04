@@ -67,3 +67,9 @@ set interfaces dummy dum996 ipv6 eui64 2001:db8:210::/64 link-local-address fe80
 set interfaces dummy dum997 ipv6 no-default-link-local duplicate-address-detection disable
 set interfaces dummy dum992 ip disable-forwarding
 set interfaces dummy dum992 ipv6 disable
+
+set interfaces dummy dum994
+set interfaces bond bond995 mode active-backup
+set interfaces bond bond995 member interface dum994 queue-id 1
+set interfaces bond bond995 primary dum994
+set interfaces bond bond995 link-monitor mii interval 100ms

@@ -9,3 +9,4 @@ interfaces:
     - file: interfaces/loopback.yaml.i
     - file: interfaces/virtual-ethernet.yaml.i
     - file: interfaces/bridge.yaml.i
+    - file: interfaces/bond.yaml.i

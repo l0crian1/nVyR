@@ -23,7 +23,7 @@ from nvyr.tree import lookup
 
 
 SPECIAL = {'eui64', 'interface-identifier', 'link-local-address', 'no-default-link-local'}
-KINDS = {'ethernet', 'dummy', 'virtual-ethernet', 'bridge', 'vlan'}
+KINDS = {'ethernet', 'dummy', 'virtual-ethernet', 'bridge', 'bond', 'vlan'}
 
 
 def verify(options, *, addresses=(), kind=None):

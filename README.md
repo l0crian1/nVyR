@@ -21,6 +21,7 @@ or consult the complete [command tree](docs/users/command-tree.md).
 - Tab completion, contextual help, and anchored commands
 - [Ethernet, loopback, dummy, virtual Ethernet, and VLAN interfaces](docs/users/interfaces.md)
 - [Bridges, VLAN filtering, and spanning tree](docs/users/bridges.md)
+- [Bond interfaces and LACP](docs/users/bonds.md)
 - VRFs and interface link groups
 - Static IPv4/IPv6 addressing and DHCPv4 clients
 - [IPv4/IPv6 static routing](docs/users/static.md)

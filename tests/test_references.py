@@ -98,7 +98,7 @@ def test_reference_completion_uses_only_provider_paths(controller, session):
 
     controller.execute('edit interfaces', session)
     choices = dict(controller.completion('show references ', session, explicit=True)['candidates'])
-    assert set(choices) == {'ethernet', 'dummy', 'virtual-ethernet', 'bridge', 'loopback'}
+    assert set(choices) == {'ethernet', 'dummy', 'virtual-ethernet', 'bridge', 'bond', 'loopback'}
 
 
 def test_named_chains_are_family_specific_and_guarded(controller, engine, session):

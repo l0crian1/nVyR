@@ -77,6 +77,13 @@
     ]
   },
   {
+    "script": "bond",
+    "priority": 11,
+    "paths": [
+      "interfaces bond <name>"
+    ]
+  },
+  {
     "script": "bridge",
     "priority": 12,
     "paths": [

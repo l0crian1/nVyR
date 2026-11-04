@@ -164,7 +164,7 @@ every registered interface IP/IPv6 option and every named TCP/UDP timeout state.
   publication uses 127.0.0.1:41995.
 
 Reserved resources include BOOTLEFT/BOOTRIGHT, VRF tables 41995/41996,
-`dum992`, `dum995` through `dum999`, `veth993`, `veth994`, `veth995`, `veth997`, `br994`, `br995`,
+`dum992`, `dum994` through `dum999`, `veth993`, `veth994`, `veth995`, `veth997`, `br994`, `br995`, `bond995`,
 VLAN 195 on the selected Ethernet/veth/bridge parents, BOOTBOX/BOOTNET/BOOTVRF,
 IPv4 `198.18.192.0/19`, and IPv6 `2001:db8:192::/64` through `2001:db8:210::/64`
 (the third hextets are the literal strings shown). Preflight rejects collisions.

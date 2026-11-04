@@ -33,6 +33,7 @@ operational commands, use the [user documentation](../users/README.md).
 - [BGP operational commands: implementation and maintenance](bgp-operations.md)
 - [BGP unicast: implementation and maintenance](bgp.md)
 - [Bridge interfaces: implementation and maintenance](bridges.md)
+- [Bond interfaces: kernel attributes and reconciliation](bonds.md)
 - [Connection tracking operations: implementation and maintenance](conntrack-operations.md)
 - [Container operations: implementation and maintenance](container-operations.md)
 - [Containers: implementation and maintenance](containers.md)

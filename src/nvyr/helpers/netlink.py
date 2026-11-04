@@ -91,6 +91,10 @@ class LinkType:
         vrf = spec['attributes'].get('vrf')
         return (vrf,) if vrf else ()
 
+    def optional_dependencies(self, spec):
+        """Order and watch these links when present; their absence permits degraded operation."""
+        return ()
+
     def matches(self, device):
         return device['kind'] in ('', None, 'veth') if not self.virtual else device['kind'] == self.kernel_kind
 
@@ -129,6 +133,11 @@ class LinkType:
 
         device = kernel.device(spec['name'])
         current = read_attributes(device['message'], self.keymap)
+        if attached and not vrf and master and master['kind'] == 'bond':
+            # The bonding driver manages port MAC/MTU and requires ports down at attachment.
+            # Only its owner may attach the port; ordinary port audits preserve driver values.
+            for key in ('mac', 'mtu', 'vrf'):
+                attrs.pop(key, None)
         changes = {key: value for key, value in attrs.items() if current.get(key) != value}
 
         if 'vrf' in changes:
@@ -381,6 +390,56 @@ class VRF(LinkType):
         return False
 
 
+class Bond(LinkType):
+    virtual = True
+    kernel_kind = 'bond'
+    keymap = LINK_KEYMAP | {'bond': NetlinkKey('', ('NVYR_BOND_SETTINGS',))}
+
+    def attachments(self, spec):
+        return dict.fromkeys(spec['attributes']['bond']['members'], spec['name'])
+
+    def optional_dependencies(self, spec):
+        return self.attachments(spec)
+
+    def validate(self, spec, links, previous=None):
+        # Member and primary names cross the root-only daemon boundary.
+        settings = spec['attributes'].get('bond')
+        if not isinstance(settings, dict) or not isinstance(settings.get('members'), dict):
+            raise ValidationError(f"{spec['name']}: bond settings must declare members")
+        for port in self.attachments(spec):
+            interface_name(port)
+        if settings['primary'] and settings['primary'] not in settings['members']:
+            raise ValidationError(f"{spec['name']}: primary must be a bond member")
+
+    def snapshot(self, kernel, spec, device):
+        from nvyr.helpers import bond_netlink
+
+        baseline = read_attributes(device['message'], LINK_KEYMAP)
+        baseline['bond'] = bond_netlink.defaults(device)
+        return baseline
+
+    def configure(self, kernel, spec, baseline):
+        from nvyr.helpers import bond_netlink
+
+        name = spec['name']
+        attributes = dict(spec['attributes'])
+        intent = attributes.pop('bond')
+        available = {port: policy for port, policy in intent['members'].items() if kernel.device(port)}
+        intent = dict(intent, members=available, primary=intent['primary'] if intent['primary'] in available else '')
+        base = dict(baseline)
+        defaults = base.pop('bond')
+        bond_netlink.reconcile(kernel, name, intent, defaults)
+        # Keep the native inherited MAC. If an explicit MAC is removed, restore
+        # the first attached port's permanent address, or the empty bond baseline.
+        if 'mac' not in attributes:
+            if (Path('/sys/class/net') / name / 'addr_assign_type').read_text().strip() != '3':
+                base.pop('mac')
+            elif intent['members'] and not intent['options'].get('FAIL_OVER_MAC'):
+                first = next(iter(intent['members']))
+                base['mac'] = bond_netlink.attributes(kernel.device(first), member=True)['PERM_HWADDR']
+        return super().configure(kernel, dict(spec, attributes=attributes), base)
+
+
 class Bridge(LinkType):
     virtual = True
     kernel_kind = 'bridge'
@@ -469,7 +528,7 @@ class Bridge(LinkType):
 
 
 TYPES = {'ethernet': LinkType(), 'dummy': Dummy(), 'loopback': Loopback(), 'vrf': VRF(),
-         'virtual-ethernet': VirtualEthernet(), 'vlan': VLAN(), 'bridge': Bridge()}
+         'virtual-ethernet': VirtualEthernet(), 'vlan': VLAN(), 'bridge': Bridge(), 'bond': Bond()}
 
 
 def register_type(name, driver):
@@ -531,8 +590,8 @@ def normalize(links, types=None):
                 'dhcp-options': dhcp_options.normalize(spec.get('dhcp-options', {})),
                 'ip-options': interface_ip.normalize(spec.get('ip-options', {}), addresses=addresses, kind=kind)}
         if spec.get('dhcp6'):
-            if kind not in {'ethernet', 'bridge', 'vlan'}:
-                raise ValidationError(f'{name}: DHCPv6 requires Ethernet, a bridge or a VIF')
+            if kind not in {'ethernet', 'bridge', 'bond', 'vlan'}:
+                raise ValidationError(f'{name}: DHCPv6 requires Ethernet, a bond, a bridge or a VIF')
             dhcp6.verify(name, spec['dhcp6'], item['ip-options'].get('ipv6', {}))
             item['dhcp6'] = spec['dhcp6']
         result[name] = item

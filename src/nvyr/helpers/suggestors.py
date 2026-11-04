@@ -25,6 +25,7 @@ class Context:
     commit_id: int = 0
     configuration: object = None
     prefix: str = ''
+    path: tuple = ()
 
 
 def configuration_section(context, path):
@@ -189,6 +190,18 @@ def config_path(context, path):
     return [Suggestion(name, '') for name in value]
 
 
+@register('bond-members')
+def bond_members(context):
+    if 'bond' not in context.path:
+        return []
+    names = context.path[context.path.index('bond') + 1:]
+    bond = next((name for name in names if name.startswith('bond') and name[4:].isdigit()), None)
+    if bond is None:
+        return []
+    members = configuration_section(context, ('interfaces', 'bond', bond, 'member', 'interface'))
+    return [Suggestion(name, 'Configured bond member') for name in sorted(members)]
+
+
 @register('container-instances')
 def container_instances(context):
     """Service selectors accept both workload containers and shared pods."""
@@ -306,8 +319,8 @@ class BoundSuggestor:
     def __call__(self, **arguments):
         return self.function(self.context(), **arguments)
 
-    def suggest(self, configuration, *, input_prefix='', **arguments):
-        context = replace(self.context(), configuration=configuration, prefix=input_prefix)
+    def suggest(self, configuration, *, input_prefix='', input_path=(), **arguments):
+        context = replace(self.context(), configuration=configuration, prefix=input_prefix, path=input_path)
         return self.function(context, **arguments)
 
 
