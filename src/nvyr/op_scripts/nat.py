@@ -11,22 +11,25 @@ from nvyr.op_scripts import firewall
 
 
 @opmode.command
-def show(*, direction: str, rule: str = None, detail: bool = False, raw: bool = False):
+def show(*, direction: str, tree: str = 'nat', rule: str = None, detail: bool = False, raw: bool = False):
     """Preserve native rule order and distinguish missing counters from zero traffic."""
     # Only the two supported NAT hooks have nVyR-managed rule chains.
     if direction not in ('source', 'destination'):
         raise OperationalError('Choose source or destination NAT.')
+    if tree not in ('nat', 'nat66'):
+        raise OperationalError('Choose nat or nat66.')
+    family = 'ipv6' if tree == 'nat66' else 'ipv4'
     hook = 'postrouting' if direction == 'source' else 'prerouting'
     table = firewall._load_table(read_configuration=False)
-    rules = table.get('chains', {}).get(f'ipv4_nat_{hook}', {}).get('rules', [])
+    rules = table.get('chains', {}).get(f'{family}_nat_{hook}', {}).get('rules', [])
     if rule is not None:
         rules = [record for record in rules if record.get('number') == str(rule)]
         if not rules:
-            raise OperationalError(f'Rule {rule} is not installed in {direction} NAT.')
+            raise OperationalError(f'Rule {rule} is not installed in {direction} {tree.upper()}.')
     if raw:
         return json.dumps(rules)
 
-    firewall._section_heading(direction.capitalize() + ' NAT')
+    firewall._section_heading(direction.capitalize() + ' ' + tree.upper())
     if not rules:
         print('No rules installed.')
         return

@@ -1,13 +1,13 @@
-"""IPv4 NAT verification, invoked by the shared firewall commit owner."""
+"""NAT verification, invoked by the shared firewall commit owner."""
 
 from nvyr.errors import ValidationError
 from nvyr.helpers import nftables
 from nvyr.tree import lookup
 
 
-def verify(configuration, context):
+def verify(configuration, context, *, root='nat', family='ipv4'):
     for direction in ('source', 'destination'):
-        path = ('nat', direction, 'rule')
+        path = (root, direction, 'rule')
 
         for number, rule in lookup(configuration, path, {}).items():
             # Disabled rules are not emitted, so skip their translation requirements.
@@ -20,17 +20,17 @@ def verify(configuration, context):
             name = ' '.join((*path, number))
             selected = None
             if 'map' in rule:
-                maps = lookup(configuration, ('firewall', 'group', 'map', 'ipv4'), {})
+                maps = lookup(configuration, ('firewall', 'group', 'map', family), {})
                 # Translation maps must not duplicate explicit fields or results.
                 selected = nftables.verify_map_reference(rule, (*path, number), maps, {'address', 'port', 'address-port'})
 
-            groups = lookup(configuration, ('firewall', 'group', 'match-group', 'ipv4'), {})
+            groups = lookup(configuration, ('firewall', 'group', 'match-group', family), {})
             # All referenced fields must have one source across rule, map and group.
             group = nftables.verify_match_group_reference(rule, (*path, number), groups, selected)
 
             # Singleton groups must exist and cannot duplicate another match source.
             nftables.verify_singleton_references(
-                rule, (*path, number), 'ipv4', lookup(configuration, ('firewall', 'group'), {}), selected, group)
+                rule, (*path, number), family, lookup(configuration, ('firewall', 'group'), {}), selected, group)
             fields = nftables.match_fields(rule, selected, group)
 
             # Shared keys must be available at the NAT hook that consumes them.
@@ -50,7 +50,7 @@ def verify(configuration, context):
             nftables.verify_ports(rule, (*path, number), mapping=selected, match_group=group, translation=(
                 'port' in translation or lookup(translation, ('port-mapping',), 'default') != 'default'))
             # ICMP groups must remain compatible with the other rule matches.
-            nftables.verify_icmp(rule, (*path, number), 'ipv4', selected, group)
+            nftables.verify_icmp(rule, (*path, number), family, selected, group)
 
             if selected is not None:
                 # The rule or either group must constrain this map's NAT interface.

@@ -83,7 +83,7 @@ def preflight(configuration, options):
     """Require an exclusive minimal lab and explicit hardware/workload inputs."""
     validate_options(options)
     # Global policy cannot be meaningfully checked alongside an unrelated ruleset.
-    for section in ('firewall', 'nat', 'policy', 'protocols', 'container', 'vrf'):
+    for section in ('firewall', 'nat', 'nat66', 'policy', 'protocols', 'container', 'vrf'):
         if configuration.get(section):
             raise ValueError(f'Comprehensive acceptance needs a clean lab {section} section')
     for service in ('dhcp-server', 'dhcpv6-server'):

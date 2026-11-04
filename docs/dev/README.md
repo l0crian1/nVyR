@@ -39,7 +39,7 @@ operational commands, use the [user documentation](../users/README.md).
 - [DHCP servers: implementation and maintenance](dhcp-server.md)
 - [Early firewall protection: implementation and maintenance](firewall-failsafe.md)
 - [Firewall configuration: implementation and maintenance](firewall.md)
-- [IPv4 NAT: implementation and maintenance](nat.md)
+- [IPv4 NAT and NAT66: implementation and maintenance](nat.md)
 - [Installation and image management: implementation and maintenance](installation.md)
 - [Interface configuration and Netlink management: implementation and maintenance](interfaces.md)
 - [Interface diagnostics: implementation and maintenance](interface-operations.md)

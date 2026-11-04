@@ -430,7 +430,7 @@ show firewall ipv4 forward filter rule 250 detail
   results require a protocol key with TCP or UDP. ICMP type/code and TCP flags also
   require the appropriate protocol key.
 - Firewall consumers require `verdict`. NAT consumers require `address`, `port`
-  or `address-port`; nVyR currently exposes IPv4 NAT only. The address result is
+  or `address-port` in the same address family as the NAT rule. The address result is
   a single literal address, not `masquerade`. Mark-setting and other arbitrary
   nftables result types are not supported by this CLI.
 - Ordinary matches are allowed for fields absent from the map. Positive fields

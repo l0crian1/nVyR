@@ -6,6 +6,13 @@ log:
 
   children:
 
+    include_schema:
+    - file: operational/nat-logs.yaml.i
+    - file: operational/nat-logs.yaml.i
+      as: nat66
+      replace:
+        /description: IPv6 source and destination NAT packet logs
+
     system:
       kind: node
       description: system log
@@ -1339,76 +1346,3 @@ log:
       description: Follow new log entries until Ctrl-C
       command: ["logs.nvyr.op", "show", "system", "--follow"]
       stream: true
-
-    nat:
-      kind: node
-      description: Source and destination NAT packet logs
-      command: ['logs.nvyr.op', 'show', 'nat']
-      stream: true
-      children:
-
-        follow:
-          kind: node
-          description: Follow new NAT packet logs
-          command: ['logs.nvyr.op', 'show', 'nat', '--follow']
-          stream: true
-
-        source:
-          kind: node
-          description: Source NAT packet logs
-          command: ['logs.nvyr.op', 'show', 'nat', '--direction', 'source']
-          stream: true
-          children:
-
-            follow:
-              kind: node
-              description: Follow new packet logs
-              command: ['logs.nvyr.op', 'show', 'nat', '--direction', 'source', '--follow']
-              stream: true
-
-            rule:
-              kind: tag_node
-              description: Logs from one exact NAT rule
-              hints:
-                1-999999: NAT rule number
-              validators:
-                integer-range: {minimum: 1, maximum: 999999}
-              command: ['logs.nvyr.op', 'show', 'nat', '--direction', 'source', '--rule', '@6']
-              stream: true
-              children:
-
-                follow:
-                  kind: node
-                  description: Follow new packet logs
-                  command: ['logs.nvyr.op', 'show', 'nat', '--direction', 'source', '--rule', '@6', '--follow']
-                  stream: true
-
-        destination:
-          kind: node
-          description: Destination NAT packet logs
-          command: ['logs.nvyr.op', 'show', 'nat', '--direction', 'destination']
-          stream: true
-          children:
-
-            follow:
-              kind: node
-              description: Follow new packet logs
-              command: ['logs.nvyr.op', 'show', 'nat', '--direction', 'destination', '--follow']
-              stream: true
-
-            rule:
-              kind: tag_node
-              description: Logs from one exact NAT rule
-              hints:
-                1-999999: NAT rule number
-              validators:
-                integer-range: {minimum: 1, maximum: 999999}
-              command: ['logs.nvyr.op', 'show', 'nat', '--direction', 'destination', '--rule', '@6']
-              stream: true
-              children:
-
-                follow:
-                  kind: node
-                  description: Follow new packet logs
-                  command: ['logs.nvyr.op', 'show', 'nat', '--direction', 'destination', '--rule', '@6', '--follow']
-                  stream: true

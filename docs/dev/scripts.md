@@ -178,7 +178,7 @@ applies it and `save` makes it the boot configuration.
   and stages early-boot protection using the shared firewall implementation.
   Live configuration does not activate the fail-safe table; normal firewall
   application removes it during boot handover. See [fail-safe](firewall-failsafe.md).
-- [nat.py](../../src/nvyr/config_scripts/nat.py): verifies IPv4 source/destination NAT for
+- [nat.py](../../src/nvyr/config_scripts/nat.py): verifies IPv4 and IPv6 source/destination NAT for
   the firewall owner. NAT rules and map consumers are rendered and applied in the
   shared firewall transaction. Example: `set nat source rule 10 outbound-interface eth0 translation address masquerade`.
   See [NAT configuration](nat.md).
@@ -471,7 +471,7 @@ These are consumed by the scripts above rather than executed as Python or shell 
   `schemas/includes/` holds reusable fragments; generated runtime copies live in
   `src/nvyr/schemas/`. Edit the sources, then run the builder.
 - `src/nvyr/templates/firewall/filter.nft.j2` renders firewall chains;
-  `nat/ipv4.nft.j2` renders NAT chains in the same table;
+  `nat/rules.nft.j2` renders NAT chains in the same table;
   `frr/static.conf.j2` renders native static-routing commands; `ssh/sshd_config.j2` renders
   SSH settings. Interface operations use direct Netlink rather than text templates.
 - `packaging/nvyr-configd.service` starts configd after baseline initialization;
@@ -568,7 +568,7 @@ some also create nested network namespaces. In that environment, run
   and startup blocking when naming fails.
 - `test_frr_live.py`: native FRR static reloads, VRFs, policy preservation and recovery.
 - `test_nftables_live.py`: actual rule loading, packet filtering, counters and rollback.
-- `test_nat_live.py`: actual NAT translation, pools, exclusions, IPv6 bypass and recovery.
+- `test_nat_live.py`: actual NAT translation, pools, exclusions, dual-stack isolation and recovery.
 - `test_ssh_live.py`: real listening sockets, key authentication, recovery and removal.
 
 `test_console_boot_live.py` is separately enabled with `NVYR_CONSOLE_BOOT_TEST=1`.

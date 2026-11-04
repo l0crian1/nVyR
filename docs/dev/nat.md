@@ -1,4 +1,4 @@
-# IPv4 NAT: implementation and maintenance
+# IPv4 NAT and NAT66: implementation and maintenance
 
 For configuration and command usage, see the [user guide](../users/nat.md).
 
@@ -6,16 +6,13 @@ For configuration and command usage, see the [user guide](../users/nat.md).
 
 NAT uses the existing `inet nvyr_filter` table. Its entry points are:
 
-- `nat_prerouting`: NAT prerouting at priority `dstnat` (-100), dispatching
-  `meta nfproto vmap { ipv4 : jump ipv4_nat_prerouting }`.
-- `nat_postrouting`: NAT postrouting at priority `srcnat` (100), dispatching
-  `meta nfproto vmap { ipv4 : jump ipv4_nat_postrouting }`.
+- `nat_prerouting`: DNAT at priority `dstnat` (-100).
+- `nat_postrouting`: SNAT at priority `srcnat` (100).
 
-The family-specific chains contain the ordered rules. No IPv6 dispatch entry or
-IPv6 NAT chain is created. This follows the firewall's family-dispatch design and
-prevents generic masquerade or port-only statements from affecting IPv6.
-An explicitly present source/destination subtree creates its entry point, including
-when its rule collection is empty. Removing the subtree removes those chains.
+Each entry point dispatches by `meta nfproto` to the numbered rules for that direction:
+`ipv4_nat_<hook>` for `nat`, `ipv6_nat_<hook>` for `nat66`. Only configured
+directions participate, so even an unqualified masquerade or port-only translation
+cannot cross families. Removing the last family removes the shared entry point.
 
 The Jinja template consumes the shared configuration view directly. `nft_nat_rule()`
 uses the same `NFT_KEYMAP` match/statement renderer, deterministic value ordering and
@@ -47,7 +44,7 @@ does not flush all live connections on each commit.
 anchors, verification errors and the shared firewall artifact. Opt-in
 `test_nat_live.py` uses disposable network namespaces to exercise SNAT, DNAT,
 masquerade, address/port pools, port-only translations, exclusions, disabled rules,
-IPv6 bypass, firewall coexistence, rejected transactions and lifecycle recovery.
+IPv6 bypass, dual-stack translation and reply traffic, firewall coexistence, rejected transactions and lifecycle recovery.
 
 
 NAT rules also accept `match-group <name>` without a map. The group supplies
@@ -65,10 +62,9 @@ set nat source rule 10 match-group CLIENTS translation address masquerade
 
 ## NAT lifecycle ownership
 
-`nat.py` verifies IPv4 source and destination NAT as part of the shared firewall
+`nat.py` verifies IPv4 and IPv6 source and destination NAT as part of the shared firewall
 commit owner. Filtering, NAT and their groups apply together at firewall priority
-15, after interface scripts at priority 10. The top-level path is `nat`; IPv6 NAT
-is not exposed yet.
+15, after interface scripts at priority 10. Both `nat` and `nat66` declare this same script owner.
 
 ## Structured operational output
 

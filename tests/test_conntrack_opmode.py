@@ -231,8 +231,9 @@ def test_empty_tables_and_statistics_display(monkeypatch, capsys, kernel):
     ('show conntrack', ['conntrack.nvyr.op', 'show', 'show conntrack']),
     ('show conntrack statistics', ['conntrack.nvyr.op', 'show', 'show conntrack statistics']),
     ('show conntrack ipv4 state established', ['conntrack.nvyr.op', 'show', 'show conntrack ipv4 state established']),
-    ('show nat source', ['nat.nvyr.op', 'show', '--direction', 'source']),
-    ('show nat destination rule 10 detail', ['nat.nvyr.op', 'show', '--direction', 'destination', '--rule', '10', '--detail']),
+    ('show nat66 destination rule 10 detail', ['nat.nvyr.op', 'show', '--tree', 'nat66', '--direction', 'destination', '--rule', '10', '--detail']),
+    ('show nat source', ['nat.nvyr.op', 'show', '--tree', 'nat', '--direction', 'source']),
+    ('show nat destination rule 10 detail', ['nat.nvyr.op', 'show', '--tree', 'nat', '--direction', 'destination', '--rule', '10', '--detail']),
     ('show nat source translations ipv6', ['conntrack.nvyr.op', 'show', 'show nat source translations ipv6']),
 ])
 def test_read_only_commands_available_to_operator(controller, monkeypatch, line, arguments):

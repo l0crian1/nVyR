@@ -69,7 +69,7 @@ def configure(config):
     """Stage readable literal CLI commands and install the complete scenario once."""
     config.discard()
     running = config.get_config()
-    for section in ('nat', 'firewall'):
+    for section in ('nat', 'nat66', 'firewall'):
         if section in running:
             config.delete('delete ' + section)
     if lookup(running, ('protocols', 'static'), None) is not None:
@@ -233,7 +233,8 @@ def host_socket(namespace, family, kind=socket.SOCK_DGRAM):
         yield endpoint
 
 
-def assert_traffic(family, port, *, allowed=True, static=False, counter=None, map_entry=None, dscp=None):
+def assert_traffic(family, port, *, allowed=True, static=False, counter=None, map_entry=None, dscp=None,
+                   translated_source=None, translated_destination=None):
     """Prove delivery/reply or a drop; rule counters use deltas, never suite totals."""
     ipv6 = family == 'ipv6'
     address_family = socket.AF_INET6 if ipv6 else socket.AF_INET
@@ -252,7 +253,7 @@ def assert_traffic(family, port, *, allowed=True, static=False, counter=None, ma
             level, option = (socket.IPPROTO_IPV6, socket.IPV6_TCLASS) if ipv6 else (socket.IPPROTO_IP, socket.IP_TOS)
             sender.setsockopt(level, option, dscp << 2)
         sender.settimeout(2)
-        receiver.bind((destination, port))
+        receiver.bind(translated_destination or (destination, port))
         receiver.settimeout(2 if allowed else 0.2)
         sender.sendto(payload, (destination, port))
         try:
@@ -262,8 +263,12 @@ def assert_traffic(family, port, *, allowed=True, static=False, counter=None, ma
         else:
             assert allowed, f'{family} UDP/{port}: packet passed the configured drop'
             assert_equal(received, payload)
+            if translated_source is not None:
+                assert_equal(peer[0], translated_source)
             receiver.sendto(payload, peer)
-            assert_equal(sender.recv(256), payload)
+            reply, reply_peer = sender.recvfrom(256)
+            assert_equal(reply, payload)
+            assert_equal(reply_peer[:2], (destination, port))
 
     if counter:
         wait_for(lambda: firewall_rule_packets(*counter), lambda count: count == before + 1,

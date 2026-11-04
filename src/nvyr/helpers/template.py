@@ -87,6 +87,7 @@ class TemplateRenderer:
                            'nft_helper_assignment': nftables_helpers.assignment,
                            'nft_singleton_name': nft.nft_singleton_name,
                            'nft_rule': nft.nft_rule, 'nft_comment': nft.nft_comment,
+                           'nat_families': nft.NAT_FAMILIES,
                            'nft_nat_rule': nft.nft_nat_rule,
                            'nft_nat_dispatch': nft.nft_nat_dispatch,
                            'nft_family_dispatch': nft.nft_family_dispatch,

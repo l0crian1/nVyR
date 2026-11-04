@@ -13,6 +13,7 @@ def failsafe(configuration):
     scoped = dict(configuration)
     scoped['firewall'] = lookup(configuration, ('firewall', 'fail-safe'), {})
     scoped.pop('nat', None)
+    scoped.pop('nat66', None)
     return scoped
 
 

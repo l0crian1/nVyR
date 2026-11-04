@@ -1,0 +1,18 @@
+{%- for direction, hook, priority in [('source', 'postrouting', 'srcnat'), ('destination', 'prerouting', 'dstnat')] %}
+    {%- for root, family in nat_families.items() %}
+        {%- set nat = configuration.get(root, {}) %}
+        {%- if ('chain', family + '_nat_' + hook) in rebuild %}
+    chain {{ family }}_nat_{{ hook }} {
+        {%- for number, rule in numeric_items(nat[direction].get('rule', {})) if not rule.get('disable') %}
+        {{ nft_nat_rule(direction, number, rule, map_config.get(family, {}), group_config.get(family, {}), log_groups, family=family) }}
+        {%- endfor %}
+    }
+        {%- endif %}
+    {%- endfor %}
+    {%- if ('chain', 'nat_' + hook) in rebuild %}
+    chain nat_{{ hook }} {
+        type nat hook {{ hook }} priority {{ priority }}; policy accept;
+        {{ nft_nat_dispatch(configuration, hook) }}
+    }
+    {%- endif %}
+{%- endfor %}

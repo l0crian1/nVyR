@@ -11,4 +11,5 @@ children: # configuration
   - file: policy.yaml.i
   - file: service.yaml.i
   - file: nat.yaml.i
+  - file: nat66.yaml.i
   - file: container.yaml.i

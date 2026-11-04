@@ -15,12 +15,12 @@ nat:
     source:
       kind: node
       description: Installed source NAT rules
-      command: ['nat.nvyr.op', 'show', '--direction', 'source']
+      command: ['nat.nvyr.op', 'show', '--tree', '@2', '--direction', 'source']
       children:
         detail:
           kind: node
           description: Show all source NAT rule fields
-          command: ['nat.nvyr.op', 'show', '--direction', 'source', '--detail']
+          command: ['nat.nvyr.op', 'show', '--tree', '@2', '--direction', 'source', '--detail']
         rule:
           kind: tag_node
           description: Select an installed source NAT rule
@@ -30,12 +30,12 @@ nat:
             number: NAT rule number
           suggestors:
             config-path: {path: 'nat source rule'}
-          command: ['nat.nvyr.op', 'show', '--direction', 'source', '--rule', '@5']
+          command: ['nat.nvyr.op', 'show', '--tree', '@2', '--direction', 'source', '--rule', '@5']
           children:
             detail:
               kind: node
               description: Show all fields for the selected rule
-              command: ['nat.nvyr.op', 'show', '--direction', 'source', '--rule', '@5', '--detail']
+              command: ['nat.nvyr.op', 'show', '--tree', '@2', '--direction', 'source', '--rule', '@5', '--detail']
         translations:
           kind: node
           anchor: true
@@ -49,12 +49,12 @@ nat:
     destination:
       kind: node
       description: Installed destination NAT rules
-      command: ['nat.nvyr.op', 'show', '--direction', 'destination']
+      command: ['nat.nvyr.op', 'show', '--tree', '@2', '--direction', 'destination']
       children:
         detail:
           kind: node
           description: Show all destination NAT rule fields
-          command: ['nat.nvyr.op', 'show', '--direction', 'destination', '--detail']
+          command: ['nat.nvyr.op', 'show', '--tree', '@2', '--direction', 'destination', '--detail']
         rule:
           kind: tag_node
           description: Select an installed destination NAT rule
@@ -64,12 +64,12 @@ nat:
             number: NAT rule number
           suggestors:
             config-path: {path: 'nat destination rule'}
-          command: ['nat.nvyr.op', 'show', '--direction', 'destination', '--rule', '@5']
+          command: ['nat.nvyr.op', 'show', '--tree', '@2', '--direction', 'destination', '--rule', '@5']
           children:
             detail:
               kind: node
               description: Show all fields for the selected rule
-              command: ['nat.nvyr.op', 'show', '--direction', 'destination', '--rule', '@5', '--detail']
+              command: ['nat.nvyr.op', 'show', '--tree', '@2', '--direction', 'destination', '--rule', '@5', '--detail']
         translations:
           kind: node
           anchor: true

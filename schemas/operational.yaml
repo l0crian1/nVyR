@@ -63,6 +63,16 @@ children: # operational
       - file: operational/vrf.yaml.i
       - file: operational/firewall.yaml.i
       - file: operational/nat.yaml.i
+      - file: operational/nat.yaml.i
+        as: nat66
+        remove:
+        - /children/translations
+        - /children/source/children/translations
+        - /children/destination/children/translations
+        replace:
+          /description: Installed IPv6 NAT rules
+          /children/source/children/rule/suggestors/config-path/path: nat66 source rule
+          /children/destination/children/rule/suggestors/config-path/path: nat66 destination rule
       - file: operational/conntrack.yaml.i
       - file: operational/static.yaml.i
       - file: operational/bgp.yaml.i

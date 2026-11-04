@@ -1,4 +1,6 @@
-# IPv4 NAT
+# IPv4 NAT and NAT66
+
+Use `nat` for IPv4 and `nat66` for stateful IPv6-to-IPv6 translation. Each family has its own numbered source and destination rules.
 
 For implementation and testing, see the [developer guide](../dev/nat.md).
 
@@ -17,7 +19,12 @@ show nat source rule 10 detail
 show nat destination
 show nat destination rule 20 detail
 
+show nat66 source rule 10 detail
+show nat66 destination
+show log nat66 destination rule 20
+
 show nat translations
+show nat translations ipv6
 show nat source translations
 show nat destination translations
 
@@ -36,13 +43,14 @@ Translation views read the live conntrack table. They show original and translat
 source/destination endpoints, protocol, NAT type, transport state and remaining
 timeout. A connection with both SNAT and DNAT appears once in the combined view
 and is included in both directional views. Filters use **original addresses before
-NAT**. Both families are inspected by default, even though nVyR currently exposes
-only IPv4 NAT configuration. Runtime entries are not attributed to rule numbers:
+NAT**. Both families are inspected by default. Runtime entries are not attributed to rule numbers:
 conntrack does not retain that relationship, and rules may have changed since the
 connection was created.
 
 The same family, protocol, state, address and detail filters are available under
-[`show conntrack`](conntrack-operations.md). ## Configuration
+[`show conntrack`](conntrack-operations.md).
+
+## Configuration
 
 Source NAT runs in postrouting; destination NAT runs in prerouting:
 
@@ -55,11 +63,19 @@ commit
 save
 ```
 
+For IPv6, the same syntax can masquerade a ULA subnet or forward an incoming TCP port:
+
+```text
+set nat66 source rule 10 outbound-interface eth0 source-address fd01:20::/64 translation address masquerade
+
+set nat66 destination rule 20 inbound-interface eth0 destination-address 2001:db8:1::80 protocol tcp destination-port 443 translation address fd01:20::80 translation port 8443
+```
+
 Rules are anchor-capable and ordered numerically using the firewall convention:
 numbers 1 through 999999 with at most six characters. Both directions support
 multi-value `source-address`, `destination-address`, `source-port`,
 `destination-port` and `protocol` matches. Repeat the leaf name for additional values.
-Addresses accept IPv4 hosts/prefixes; match ports accept individual ports and
+Addresses accept hosts and prefixes of the selected family; match ports accept individual ports and
 ascending ranges. Protocols use the same named `ip-protocol` validator and choices
 include as firewall rules; numeric values are not accepted. Leave `protocol` unset
 to match without a protocol restriction. Ports require an
@@ -71,7 +87,7 @@ interfaces that do not exist yet, with the same matching behavior as firewall ru
 
 ## Translation
 
-Each enabled rule needs `translation address`, `translation port`, or `exclude`.
+Each enabled rule needs a translation address or port, a translation map, or `exclude`.
 Translation address/port are each single-valued; ranges describe contiguous pools.
 
 ```text
@@ -85,19 +101,16 @@ set nat destination rule 20 protocol tcp translation port 8000-8100
 Address prefixes must have no host bits. They become inclusive address pools:
 `203.0.113.0/24` is passed directly to nftables as a CIDR pool, including both endpoints.
 This is pool selection, not one-to-one prefix mapping. An explicit range must be
-ascending and entirely IPv4. The generic `ipv4-address`, `network`, `ip-range` and
-`list` validators compose these forms; masquerade is permitted only by the source
-address definition. The shared `port` validator handles port ranges and rejects
+ascending with both endpoints in the rule’s address family. Only source NAT supports masquerade. The shared `port` validator handles port ranges and rejects
 leading zeros. Port strings are rendered unchanged; nftables normalizes anonymous
 address/port sets.
 
-Source NAT renders `snat ip to ...`, destination NAT `dnat ip to ...`, and
 `translation address masquerade` selects the outgoing interface's address.
 Masquerade can also specify a translation port/range. A port-only translation
 renders `snat to :PORT` or `dnat to :PORT` and leaves the address unchanged.
 
 NAT does not assign pool addresses to interfaces, arrange upstream reachability,
-enable proxy ARP, or create firewall permits. Those remain separate configuration
+enable proxy ARP or proxy NDP, or create firewall permits. Those remain separate configuration
 responsibilities. Destination NAT here covers incoming traffic, not locally
 generated traffic requiring an output NAT hook.
 
@@ -143,7 +156,7 @@ double quotes. Comments use `number|description`.
 
 Logging precedes the translation or return statement. Prefixes use the existing
 family/hook/number/action structure: `[ipv4-POST-10-S]` for SNAT,
-`[ipv4-PRE-10-D]` for DNAT, `M` for masquerade and `E` for an exclusion.
+`[ipv4-PRE-10-D]` for DNAT, `M` for masquerade and `E` for an exclusion. NAT66 uses the `ipv6` prefix instead.
 NAT chains process the first packet that establishes a connection's NAT mapping;
 logging is not a per-packet audit of the entire connection.
 
@@ -156,7 +169,7 @@ Replacing NAT chains on commit resets both observations. Disabled rules emit nei
 
 ## Translation maps
 
-NAT rules can reference an IPv4 [firewall map](firewall.md#named-maps) with an
+NAT rules can reference a same-family [firewall map](firewall.md#named-maps) with an
 `address`, `port`, or `address-port` result:
 
 ```text
@@ -184,7 +197,7 @@ their own tracking options.
 NAT also accepts the [single-field firewall groups](firewall.md#single-field-groups).
 Use `inbound-interface-group` for destination NAT or `outbound-interface-group` for
 source NAT, matching the existing explicit interface syntax. Address groups must
-be IPv4. Source/destination address, MAC, and port group references can coexist
+match the NAT family. Source/destination address, MAC, and port group references can coexist
 with maps and match-groups when their packet fields do not overlap.
 
 ```text

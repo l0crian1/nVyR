@@ -145,6 +145,8 @@ show log nat source
 show log nat source rule 10
 
 show log nat destination rule 20 follow
+
+show log nat66 destination rule 20 follow
 ```
 
 ## Container logs

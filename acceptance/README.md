@@ -91,7 +91,7 @@ commands. The fixtures are deliberately readable and reviewable:
   packet/byte/per-key/subnet limits, connection limits, shared counters/quotas,
   logging, NFLOG collectors, nested singleton inclusions, native interface prefixes
   in rules/groups/zones/flowtables, FIB, link-group and VRF-aware matches, reject
-  responses, disabled rules, zones/intra-zone/local policies, NAT maps and masquerade.
+  responses, disabled rules, zones/intra-zone/local policies, IPv4 and IPv6 NAT maps and masquerade.
   Recent coverage includes inet rules and providers, IPv4/IPv6/inet ingress,
   VLAN keys, future device subscriptions, flowtable accounting, map default
   results, source validation, FTP/TFTP/SIP helper assignment, TCP/UDP timeout

@@ -170072,6 +170072,1519 @@
         }
       }
     },
+    "nat66": {
+      "kind": "node",
+      "description": "IPv6 network address translation",
+      "script": {
+        "name": "firewall",
+        "priority": 15
+      },
+      "children": {
+        "source": {
+          "kind": "node",
+          "description": "IPv6 source NAT",
+          "children": {
+            "rule": {
+              "kind": "tag_node",
+              "anchor": true,
+              "description": "Numbered IPv6 NAT rule",
+              "validators": {
+                "mode": "AND",
+                "checks": {
+                  "integer-range": {
+                    "name": "integer-range",
+                    "args": {
+                      "minimum": 1,
+                      "maximum": 999999
+                    }
+                  },
+                  "length": {
+                    "name": "length",
+                    "args": {
+                      "maximum": 6
+                    }
+                  }
+                }
+              },
+              "hints": {
+                "1-999999": "NAT rule number"
+              },
+              "children": {
+                "map": {
+                  "kind": "leaf_node",
+                  "depends": "firewall-map-ipv6",
+                  "description": "Map supplying this rule's lookup fields and result",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[A-Za-z_][A-Za-z0-9_-]{0,62}"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "name": "Existing IPv6 map"
+                  },
+                  "suggestors": [
+                    {
+                      "name": "config-path",
+                      "args": {
+                        "path": "firewall group map ipv6"
+                      }
+                    }
+                  ]
+                },
+                "match-group": {
+                  "kind": "leaf_node",
+                  "depends": "firewall-match-group-ipv6",
+                  "description": "Match-group supplying additional packet matches",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[A-Za-z_][A-Za-z0-9_-]{0,62}"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "name": "Existing IPv6 match-group"
+                  },
+                  "suggestors": [
+                    {
+                      "name": "config-path",
+                      "args": {
+                        "path": "firewall group match-group ipv6"
+                      }
+                    }
+                  ]
+                },
+                "outbound-interface-group": {
+                  "kind": "leaf_node",
+                  "depends": "firewall-interface-group",
+                  "description": "Match outbound interface using a named group",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[A-Za-z_][A-Za-z0-9_-]{0,62}"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "name": "Existing interface-group name"
+                  },
+                  "suggestors": [
+                    {
+                      "name": "config-path",
+                      "args": {
+                        "path": "firewall group interface-group"
+                      }
+                    }
+                  ]
+                },
+                "source-mac-group": {
+                  "kind": "leaf_node",
+                  "depends": "firewall-mac-group",
+                  "description": "Match source MAC using a named group",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[A-Za-z_][A-Za-z0-9_-]{0,62}"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "name": "Existing mac-group name"
+                  },
+                  "suggestors": [
+                    {
+                      "name": "config-path",
+                      "args": {
+                        "path": "firewall group mac-group"
+                      }
+                    }
+                  ]
+                },
+                "destination-mac-group": {
+                  "kind": "leaf_node",
+                  "depends": "firewall-mac-group",
+                  "description": "Match destination MAC using a named group",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[A-Za-z_][A-Za-z0-9_-]{0,62}"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "name": "Existing mac-group name"
+                  },
+                  "suggestors": [
+                    {
+                      "name": "config-path",
+                      "args": {
+                        "path": "firewall group mac-group"
+                      }
+                    }
+                  ]
+                },
+                "source-port-group": {
+                  "kind": "leaf_node",
+                  "depends": "firewall-port-group",
+                  "description": "Match source port using a named group",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[A-Za-z_][A-Za-z0-9_-]{0,62}"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "name": "Existing port-group name"
+                  },
+                  "suggestors": [
+                    {
+                      "name": "config-path",
+                      "args": {
+                        "path": "firewall group port-group"
+                      }
+                    }
+                  ]
+                },
+                "destination-port-group": {
+                  "kind": "leaf_node",
+                  "depends": "firewall-port-group",
+                  "description": "Match destination port using a named group",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[A-Za-z_][A-Za-z0-9_-]{0,62}"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "name": "Existing port-group name"
+                  },
+                  "suggestors": [
+                    {
+                      "name": "config-path",
+                      "args": {
+                        "path": "firewall group port-group"
+                      }
+                    }
+                  ]
+                },
+                "source-address-group": {
+                  "kind": "leaf_node",
+                  "depends": "firewall-address-group-ipv6",
+                  "description": "Match source address using a named group",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[A-Za-z_][A-Za-z0-9_-]{0,62}"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "name": "Existing address-group IPv6 name"
+                  },
+                  "suggestors": [
+                    {
+                      "name": "config-path",
+                      "args": {
+                        "path": "firewall group address-group ipv6"
+                      }
+                    }
+                  ]
+                },
+                "destination-address-group": {
+                  "kind": "leaf_node",
+                  "depends": "firewall-address-group-ipv6",
+                  "description": "Match destination address using a named group",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[A-Za-z_][A-Za-z0-9_-]{0,62}"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "name": "Existing address-group IPv6 name"
+                  },
+                  "suggestors": [
+                    {
+                      "name": "config-path",
+                      "args": {
+                        "path": "firewall group address-group ipv6"
+                      }
+                    }
+                  ]
+                },
+                "source-domain-group": {
+                  "kind": "leaf_node",
+                  "depends": "firewall-domain-group-ipv6",
+                  "description": "Match source address using a DNS-populated group",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[A-Za-z_][A-Za-z0-9_-]{0,62}"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "name": "Existing domain-group IPv6 name"
+                  },
+                  "suggestors": [
+                    {
+                      "name": "config-path",
+                      "args": {
+                        "path": "firewall group domain-group ipv6"
+                      }
+                    }
+                  ]
+                },
+                "destination-domain-group": {
+                  "kind": "leaf_node",
+                  "depends": "firewall-domain-group-ipv6",
+                  "description": "Match destination address using a DNS-populated group",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[A-Za-z_][A-Za-z0-9_-]{0,62}"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "name": "Existing domain-group IPv6 name"
+                  },
+                  "suggestors": [
+                    {
+                      "name": "config-path",
+                      "args": {
+                        "path": "firewall group domain-group ipv6"
+                      }
+                    }
+                  ]
+                },
+                "disable": {
+                  "kind": "leaf_node",
+                  "description": "Disable this rule",
+                  "valueless": true
+                },
+                "protocol": {
+                  "kind": "leaf_node",
+                  "description": "IP protocol",
+                  "multi": true,
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "ip-protocol": {
+                        "name": "ip-protocol"
+                      }
+                    }
+                  },
+                  "choices": {
+                    "ip": "IP protocol 0 (IPv6 Hop-by-Hop Options)",
+                    "icmp": "Internet Control Message Protocol",
+                    "igmp": "Internet Group Management Protocol",
+                    "ggp": "Gateway-to-Gateway Protocol",
+                    "ipencap": "IPv4 encapsulation (IP protocol 4)",
+                    "st": "Internet Stream Protocol",
+                    "tcp": "Transmission Control Protocol",
+                    "egp": "Exterior Gateway Protocol",
+                    "igp": "Private interior gateway protocol (including Cisco IGRP)",
+                    "pup": "PARC Universal Packet protocol",
+                    "udp": "User Datagram Protocol",
+                    "hmp": "Host Monitoring Protocol",
+                    "xns-idp": "Xerox Network Systems Internet Datagram Protocol",
+                    "rdp": "Reliable Data Protocol",
+                    "iso-tp4": "ISO Transport Protocol Class 4",
+                    "dccp": "Datagram Congestion Control Protocol",
+                    "xtp": "Xpress Transport Protocol",
+                    "ddp": "AppleTalk Datagram Delivery Protocol",
+                    "idpr-cmtp": "Inter-Domain Policy Routing Control Message Transport Protocol",
+                    "ipv6": "IPv6 encapsulation",
+                    "ipv6-route": "IPv6 routing header",
+                    "ipv6-frag": "IPv6 fragment header",
+                    "idrp": "Inter-Domain Routing Protocol",
+                    "rsvp": "Resource Reservation Protocol",
+                    "gre": "Generic Routing Encapsulation",
+                    "esp": "IPsec Encapsulating Security Payload",
+                    "ah": "IPsec Authentication Header",
+                    "skip": "Simple Key-Management for Internet Protocols",
+                    "ipv6-icmp": "Internet Control Message Protocol for IPv6",
+                    "ipv6-nonxt": "IPv6 no-next-header indicator",
+                    "ipv6-opts": "IPv6 destination options header",
+                    "rspf": "Radio Shortest Path First",
+                    "vmtp": "Versatile Message Transaction Protocol",
+                    "eigrp": "Enhanced Interior Gateway Routing Protocol",
+                    "ospf": "Open Shortest Path First",
+                    "ax.25": "AX.25 amateur packet-radio frames",
+                    "ipip": "IP-within-IP Encapsulation Protocol (IP protocol 94)",
+                    "etherip": "Ethernet-within-IP encapsulation",
+                    "encap": "Encapsulation Header",
+                    "pim": "Protocol Independent Multicast",
+                    "ipcomp": "IP Payload Compression Protocol",
+                    "vrrp": "Virtual Router Redundancy Protocol",
+                    "l2tp": "Layer Two Tunneling Protocol",
+                    "isis": "Intermediate System to Intermediate System over IPv4",
+                    "sctp": "Stream Control Transmission Protocol",
+                    "fc": "Fibre Channel",
+                    "mobility-header": "IPv6 mobility header",
+                    "udplite": "Lightweight User Datagram Protocol",
+                    "mpls-in-ip": "Multiprotocol Label Switching encapsulated in IP",
+                    "manet": "Mobile Ad Hoc Network protocols",
+                    "hip": "Host Identity Protocol",
+                    "shim6": "IPv6 multihoming shim protocol",
+                    "wesp": "Wrapped Encapsulating Security Payload",
+                    "rohc": "Robust Header Compression",
+                    "ethernet": "Ethernet encapsulation in IP"
+                  }
+                },
+                "counter": {
+                  "kind": "node",
+                  "anchor": true,
+                  "description": "Count matching packets and bytes",
+                  "children": {
+                    "group": {
+                      "kind": "leaf_node",
+                      "description": "Accumulate counts in a shared named counter",
+                      "depends": "firewall-counter-group",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "regex": {
+                            "name": "regex",
+                            "args": {
+                              "pattern": "[A-Za-z_][A-Za-z0-9_-]{0,62}"
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "name": "Counter group name"
+                      },
+                      "suggestors": [
+                        {
+                          "name": "config-path",
+                          "args": {
+                            "path": "firewall group counter-group"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                },
+                "last-used": {
+                  "kind": "leaf_node",
+                  "description": "Record the last packet match time",
+                  "valueless": true
+                },
+                "log": {
+                  "kind": "node",
+                  "anchor": true,
+                  "description": "Log matching packets to the kernel log or an NFLOG group",
+                  "children": {
+                    "level": {
+                      "kind": "leaf_node",
+                      "description": "Syslog severity (default warn)",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "list": {
+                            "name": "list",
+                            "args": {
+                              "values": "emerg alert crit err warn notice info debug"
+                            }
+                          }
+                        }
+                      },
+                      "choices": {
+                        "emerg": "System is unusable",
+                        "alert": "Immediate action needed",
+                        "crit": "Critical condition",
+                        "err": "Error condition",
+                        "warn": "Warning condition (default)",
+                        "notice": "Normal but significant condition",
+                        "info": "Informational message",
+                        "debug": "Debugging message"
+                      }
+                    },
+                    "flags": {
+                      "kind": "leaf_node",
+                      "joinable": true,
+                      "description": "Additional packet details to include in the log",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "log-flags": {
+                            "name": "log-flags"
+                          }
+                        }
+                      },
+                      "choices": {
+                        "tcp-sequence": "TCP sequence numbers",
+                        "tcp-options": "TCP options",
+                        "ip-options": "IP options",
+                        "skuid": "UID of the originating socket",
+                        "ether": "Ethernet header",
+                        "all": "All supported details"
+                      }
+                    },
+                    "group": {
+                      "kind": "leaf_node",
+                      "description": "Send packets to a named NFLOG collector",
+                      "depends": "firewall-log-group",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "regex": {
+                            "name": "regex",
+                            "args": {
+                              "pattern": "[A-Za-z_][A-Za-z0-9_-]{0,62}"
+                            }
+                          }
+                        }
+                      },
+                      "suggestors": [
+                        {
+                          "name": "config-path",
+                          "args": {
+                            "path": "firewall group log-group"
+                          }
+                        }
+                      ],
+                      "hints": {
+                        "name": "Configured log group"
+                      }
+                    }
+                  }
+                },
+                "description": {
+                  "kind": "leaf_node",
+                  "strip_kind": "private",
+                  "description": "Rule description (at most 121 characters and UTF-8 bytes)",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "text": {
+                        "name": "text"
+                      },
+                      "length": {
+                        "name": "length",
+                        "args": {
+                          "maximum": 121
+                        }
+                      },
+                      "byte-length": {
+                        "name": "byte-length",
+                        "args": {
+                          "maximum": 121
+                        }
+                      },
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[^\"]*"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "text": "Rule description; quote spaces, no embedded double quotes"
+                  }
+                },
+                "source-port": {
+                  "kind": "leaf_node",
+                  "description": "Source transport port or range",
+                  "multi": true,
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "port": {
+                        "name": "port",
+                        "args": {
+                          "allow_range": true
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "1-65535": "Port number",
+                    "start-end": "Inclusive ascending port range"
+                  }
+                },
+                "destination-port": {
+                  "kind": "leaf_node",
+                  "description": "Destination transport port or range",
+                  "multi": true,
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "port": {
+                        "name": "port",
+                        "args": {
+                          "allow_range": true
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "1-65535": "Port number",
+                    "start-end": "Inclusive ascending port range"
+                  }
+                },
+                "outbound-interface": {
+                  "kind": "leaf_node",
+                  "depends": "interface",
+                  "description": "Outgoing interface name or prefix ending in *",
+                  "multi": true,
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "interface-match": {
+                        "name": "interface-match"
+                      }
+                    }
+                  },
+                  "hints": {
+                    "name": "Outgoing interface name (may refer to an interface not yet created)",
+                    "prefix*": "Match outgoing interface names starting with this prefix"
+                  },
+                  "suggestors": [
+                    {
+                      "name": "interfaces"
+                    }
+                  ]
+                },
+                "source-address": {
+                  "kind": "leaf_node",
+                  "strip_kind": "ipv6",
+                  "description": "Source IPv6 address or prefix",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "address": {
+                        "name": "address",
+                        "args": {
+                          "version": 6
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "h:h:h:h:h:h:h:h[/x]": "Source IPv6 address or prefix"
+                  },
+                  "multi": true
+                },
+                "destination-address": {
+                  "kind": "leaf_node",
+                  "strip_kind": "ipv6",
+                  "description": "Destination IPv6 address or prefix",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "address": {
+                        "name": "address",
+                        "args": {
+                          "version": 6
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "h:h:h:h:h:h:h:h[/x]": "Destination IPv6 address or prefix"
+                  },
+                  "multi": true
+                },
+                "translation": {
+                  "kind": "node",
+                  "description": "NAT translation settings",
+                  "children": {
+                    "address": {
+                      "kind": "leaf_node",
+                      "strip_kind": "ipv6",
+                      "description": "Translation IPv6 address or inclusive address pool",
+                      "validators": {
+                        "mode": "OR",
+                        "checks": {
+                          "ipv6-address": {
+                            "name": "ipv6-address"
+                          },
+                          "network": {
+                            "name": "network",
+                            "args": {
+                              "version": 6
+                            }
+                          },
+                          "ip-range": {
+                            "name": "ip-range",
+                            "args": {
+                              "version": 6
+                            }
+                          },
+                          "list": {
+                            "name": "list",
+                            "args": {
+                              "values": "masquerade"
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "h:h:h:h:h:h:h:h": "Single IPv6 address",
+                        "h:h:h:h:h:h:h:h/x": "IPv6 network used as an inclusive address pool",
+                        "start-end": "Inclusive ascending IPv6 address range"
+                      },
+                      "choices": {
+                        "masquerade": "Translate to the outgoing interface address"
+                      }
+                    },
+                    "port": {
+                      "kind": "leaf_node",
+                      "description": "Translation port or inclusive port range",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "port": {
+                            "name": "port",
+                            "args": {
+                              "allow_range": true
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "1-65535": "Translation port",
+                        "start-end": "Inclusive ascending translation port range"
+                      }
+                    },
+                    "port-mapping": {
+                      "kind": "leaf_node",
+                      "description": "Transport port selection behavior",
+                      "choices": {
+                        "default": "Use the kernel's default port selection",
+                        "random": "Randomize port selection",
+                        "fully-random": "Fully randomize port selection"
+                      },
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "list": {
+                            "name": "list",
+                            "args": {
+                              "values": "default random fully-random"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "persistent": {
+                      "kind": "leaf_node",
+                      "description": "Keep translated address selection stable for a client across connections",
+                      "valueless": true
+                    }
+                  }
+                },
+                "exclude": {
+                  "kind": "leaf_node",
+                  "description": "Return without translation; skip later nVyR rules in this NAT chain",
+                  "valueless": true
+                }
+              }
+            }
+          }
+        },
+        "destination": {
+          "kind": "node",
+          "description": "IPv6 destination NAT",
+          "children": {
+            "rule": {
+              "kind": "tag_node",
+              "anchor": true,
+              "description": "Numbered IPv6 NAT rule",
+              "validators": {
+                "mode": "AND",
+                "checks": {
+                  "integer-range": {
+                    "name": "integer-range",
+                    "args": {
+                      "minimum": 1,
+                      "maximum": 999999
+                    }
+                  },
+                  "length": {
+                    "name": "length",
+                    "args": {
+                      "maximum": 6
+                    }
+                  }
+                }
+              },
+              "hints": {
+                "1-999999": "NAT rule number"
+              },
+              "children": {
+                "map": {
+                  "kind": "leaf_node",
+                  "depends": "firewall-map-ipv6",
+                  "description": "Map supplying this rule's lookup fields and result",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[A-Za-z_][A-Za-z0-9_-]{0,62}"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "name": "Existing IPv6 map"
+                  },
+                  "suggestors": [
+                    {
+                      "name": "config-path",
+                      "args": {
+                        "path": "firewall group map ipv6"
+                      }
+                    }
+                  ]
+                },
+                "match-group": {
+                  "kind": "leaf_node",
+                  "depends": "firewall-match-group-ipv6",
+                  "description": "Match-group supplying additional packet matches",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[A-Za-z_][A-Za-z0-9_-]{0,62}"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "name": "Existing IPv6 match-group"
+                  },
+                  "suggestors": [
+                    {
+                      "name": "config-path",
+                      "args": {
+                        "path": "firewall group match-group ipv6"
+                      }
+                    }
+                  ]
+                },
+                "inbound-interface-group": {
+                  "kind": "leaf_node",
+                  "depends": "firewall-interface-group",
+                  "description": "Match inbound interface using a named group",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[A-Za-z_][A-Za-z0-9_-]{0,62}"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "name": "Existing interface-group name"
+                  },
+                  "suggestors": [
+                    {
+                      "name": "config-path",
+                      "args": {
+                        "path": "firewall group interface-group"
+                      }
+                    }
+                  ]
+                },
+                "source-mac-group": {
+                  "kind": "leaf_node",
+                  "depends": "firewall-mac-group",
+                  "description": "Match source MAC using a named group",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[A-Za-z_][A-Za-z0-9_-]{0,62}"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "name": "Existing mac-group name"
+                  },
+                  "suggestors": [
+                    {
+                      "name": "config-path",
+                      "args": {
+                        "path": "firewall group mac-group"
+                      }
+                    }
+                  ]
+                },
+                "destination-mac-group": {
+                  "kind": "leaf_node",
+                  "depends": "firewall-mac-group",
+                  "description": "Match destination MAC using a named group",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[A-Za-z_][A-Za-z0-9_-]{0,62}"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "name": "Existing mac-group name"
+                  },
+                  "suggestors": [
+                    {
+                      "name": "config-path",
+                      "args": {
+                        "path": "firewall group mac-group"
+                      }
+                    }
+                  ]
+                },
+                "source-port-group": {
+                  "kind": "leaf_node",
+                  "depends": "firewall-port-group",
+                  "description": "Match source port using a named group",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[A-Za-z_][A-Za-z0-9_-]{0,62}"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "name": "Existing port-group name"
+                  },
+                  "suggestors": [
+                    {
+                      "name": "config-path",
+                      "args": {
+                        "path": "firewall group port-group"
+                      }
+                    }
+                  ]
+                },
+                "destination-port-group": {
+                  "kind": "leaf_node",
+                  "depends": "firewall-port-group",
+                  "description": "Match destination port using a named group",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[A-Za-z_][A-Za-z0-9_-]{0,62}"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "name": "Existing port-group name"
+                  },
+                  "suggestors": [
+                    {
+                      "name": "config-path",
+                      "args": {
+                        "path": "firewall group port-group"
+                      }
+                    }
+                  ]
+                },
+                "source-address-group": {
+                  "kind": "leaf_node",
+                  "depends": "firewall-address-group-ipv6",
+                  "description": "Match source address using a named group",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[A-Za-z_][A-Za-z0-9_-]{0,62}"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "name": "Existing address-group IPv6 name"
+                  },
+                  "suggestors": [
+                    {
+                      "name": "config-path",
+                      "args": {
+                        "path": "firewall group address-group ipv6"
+                      }
+                    }
+                  ]
+                },
+                "destination-address-group": {
+                  "kind": "leaf_node",
+                  "depends": "firewall-address-group-ipv6",
+                  "description": "Match destination address using a named group",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[A-Za-z_][A-Za-z0-9_-]{0,62}"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "name": "Existing address-group IPv6 name"
+                  },
+                  "suggestors": [
+                    {
+                      "name": "config-path",
+                      "args": {
+                        "path": "firewall group address-group ipv6"
+                      }
+                    }
+                  ]
+                },
+                "source-domain-group": {
+                  "kind": "leaf_node",
+                  "depends": "firewall-domain-group-ipv6",
+                  "description": "Match source address using a DNS-populated group",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[A-Za-z_][A-Za-z0-9_-]{0,62}"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "name": "Existing domain-group IPv6 name"
+                  },
+                  "suggestors": [
+                    {
+                      "name": "config-path",
+                      "args": {
+                        "path": "firewall group domain-group ipv6"
+                      }
+                    }
+                  ]
+                },
+                "destination-domain-group": {
+                  "kind": "leaf_node",
+                  "depends": "firewall-domain-group-ipv6",
+                  "description": "Match destination address using a DNS-populated group",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[A-Za-z_][A-Za-z0-9_-]{0,62}"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "name": "Existing domain-group IPv6 name"
+                  },
+                  "suggestors": [
+                    {
+                      "name": "config-path",
+                      "args": {
+                        "path": "firewall group domain-group ipv6"
+                      }
+                    }
+                  ]
+                },
+                "disable": {
+                  "kind": "leaf_node",
+                  "description": "Disable this rule",
+                  "valueless": true
+                },
+                "protocol": {
+                  "kind": "leaf_node",
+                  "description": "IP protocol",
+                  "multi": true,
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "ip-protocol": {
+                        "name": "ip-protocol"
+                      }
+                    }
+                  },
+                  "choices": {
+                    "ip": "IP protocol 0 (IPv6 Hop-by-Hop Options)",
+                    "icmp": "Internet Control Message Protocol",
+                    "igmp": "Internet Group Management Protocol",
+                    "ggp": "Gateway-to-Gateway Protocol",
+                    "ipencap": "IPv4 encapsulation (IP protocol 4)",
+                    "st": "Internet Stream Protocol",
+                    "tcp": "Transmission Control Protocol",
+                    "egp": "Exterior Gateway Protocol",
+                    "igp": "Private interior gateway protocol (including Cisco IGRP)",
+                    "pup": "PARC Universal Packet protocol",
+                    "udp": "User Datagram Protocol",
+                    "hmp": "Host Monitoring Protocol",
+                    "xns-idp": "Xerox Network Systems Internet Datagram Protocol",
+                    "rdp": "Reliable Data Protocol",
+                    "iso-tp4": "ISO Transport Protocol Class 4",
+                    "dccp": "Datagram Congestion Control Protocol",
+                    "xtp": "Xpress Transport Protocol",
+                    "ddp": "AppleTalk Datagram Delivery Protocol",
+                    "idpr-cmtp": "Inter-Domain Policy Routing Control Message Transport Protocol",
+                    "ipv6": "IPv6 encapsulation",
+                    "ipv6-route": "IPv6 routing header",
+                    "ipv6-frag": "IPv6 fragment header",
+                    "idrp": "Inter-Domain Routing Protocol",
+                    "rsvp": "Resource Reservation Protocol",
+                    "gre": "Generic Routing Encapsulation",
+                    "esp": "IPsec Encapsulating Security Payload",
+                    "ah": "IPsec Authentication Header",
+                    "skip": "Simple Key-Management for Internet Protocols",
+                    "ipv6-icmp": "Internet Control Message Protocol for IPv6",
+                    "ipv6-nonxt": "IPv6 no-next-header indicator",
+                    "ipv6-opts": "IPv6 destination options header",
+                    "rspf": "Radio Shortest Path First",
+                    "vmtp": "Versatile Message Transaction Protocol",
+                    "eigrp": "Enhanced Interior Gateway Routing Protocol",
+                    "ospf": "Open Shortest Path First",
+                    "ax.25": "AX.25 amateur packet-radio frames",
+                    "ipip": "IP-within-IP Encapsulation Protocol (IP protocol 94)",
+                    "etherip": "Ethernet-within-IP encapsulation",
+                    "encap": "Encapsulation Header",
+                    "pim": "Protocol Independent Multicast",
+                    "ipcomp": "IP Payload Compression Protocol",
+                    "vrrp": "Virtual Router Redundancy Protocol",
+                    "l2tp": "Layer Two Tunneling Protocol",
+                    "isis": "Intermediate System to Intermediate System over IPv4",
+                    "sctp": "Stream Control Transmission Protocol",
+                    "fc": "Fibre Channel",
+                    "mobility-header": "IPv6 mobility header",
+                    "udplite": "Lightweight User Datagram Protocol",
+                    "mpls-in-ip": "Multiprotocol Label Switching encapsulated in IP",
+                    "manet": "Mobile Ad Hoc Network protocols",
+                    "hip": "Host Identity Protocol",
+                    "shim6": "IPv6 multihoming shim protocol",
+                    "wesp": "Wrapped Encapsulating Security Payload",
+                    "rohc": "Robust Header Compression",
+                    "ethernet": "Ethernet encapsulation in IP"
+                  }
+                },
+                "counter": {
+                  "kind": "node",
+                  "anchor": true,
+                  "description": "Count matching packets and bytes",
+                  "children": {
+                    "group": {
+                      "kind": "leaf_node",
+                      "description": "Accumulate counts in a shared named counter",
+                      "depends": "firewall-counter-group",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "regex": {
+                            "name": "regex",
+                            "args": {
+                              "pattern": "[A-Za-z_][A-Za-z0-9_-]{0,62}"
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "name": "Counter group name"
+                      },
+                      "suggestors": [
+                        {
+                          "name": "config-path",
+                          "args": {
+                            "path": "firewall group counter-group"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                },
+                "last-used": {
+                  "kind": "leaf_node",
+                  "description": "Record the last packet match time",
+                  "valueless": true
+                },
+                "log": {
+                  "kind": "node",
+                  "anchor": true,
+                  "description": "Log matching packets to the kernel log or an NFLOG group",
+                  "children": {
+                    "level": {
+                      "kind": "leaf_node",
+                      "description": "Syslog severity (default warn)",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "list": {
+                            "name": "list",
+                            "args": {
+                              "values": "emerg alert crit err warn notice info debug"
+                            }
+                          }
+                        }
+                      },
+                      "choices": {
+                        "emerg": "System is unusable",
+                        "alert": "Immediate action needed",
+                        "crit": "Critical condition",
+                        "err": "Error condition",
+                        "warn": "Warning condition (default)",
+                        "notice": "Normal but significant condition",
+                        "info": "Informational message",
+                        "debug": "Debugging message"
+                      }
+                    },
+                    "flags": {
+                      "kind": "leaf_node",
+                      "joinable": true,
+                      "description": "Additional packet details to include in the log",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "log-flags": {
+                            "name": "log-flags"
+                          }
+                        }
+                      },
+                      "choices": {
+                        "tcp-sequence": "TCP sequence numbers",
+                        "tcp-options": "TCP options",
+                        "ip-options": "IP options",
+                        "skuid": "UID of the originating socket",
+                        "ether": "Ethernet header",
+                        "all": "All supported details"
+                      }
+                    },
+                    "group": {
+                      "kind": "leaf_node",
+                      "description": "Send packets to a named NFLOG collector",
+                      "depends": "firewall-log-group",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "regex": {
+                            "name": "regex",
+                            "args": {
+                              "pattern": "[A-Za-z_][A-Za-z0-9_-]{0,62}"
+                            }
+                          }
+                        }
+                      },
+                      "suggestors": [
+                        {
+                          "name": "config-path",
+                          "args": {
+                            "path": "firewall group log-group"
+                          }
+                        }
+                      ],
+                      "hints": {
+                        "name": "Configured log group"
+                      }
+                    }
+                  }
+                },
+                "description": {
+                  "kind": "leaf_node",
+                  "strip_kind": "private",
+                  "description": "Rule description (at most 121 characters and UTF-8 bytes)",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "text": {
+                        "name": "text"
+                      },
+                      "length": {
+                        "name": "length",
+                        "args": {
+                          "maximum": 121
+                        }
+                      },
+                      "byte-length": {
+                        "name": "byte-length",
+                        "args": {
+                          "maximum": 121
+                        }
+                      },
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[^\"]*"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "text": "Rule description; quote spaces, no embedded double quotes"
+                  }
+                },
+                "source-port": {
+                  "kind": "leaf_node",
+                  "description": "Source transport port or range",
+                  "multi": true,
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "port": {
+                        "name": "port",
+                        "args": {
+                          "allow_range": true
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "1-65535": "Port number",
+                    "start-end": "Inclusive ascending port range"
+                  }
+                },
+                "destination-port": {
+                  "kind": "leaf_node",
+                  "description": "Destination transport port or range",
+                  "multi": true,
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "port": {
+                        "name": "port",
+                        "args": {
+                          "allow_range": true
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "1-65535": "Port number",
+                    "start-end": "Inclusive ascending port range"
+                  }
+                },
+                "inbound-interface": {
+                  "kind": "leaf_node",
+                  "depends": "interface",
+                  "description": "Incoming interface name or prefix ending in *",
+                  "multi": true,
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "interface-match": {
+                        "name": "interface-match"
+                      }
+                    }
+                  },
+                  "hints": {
+                    "name": "Incoming interface name (may refer to an interface not yet created)",
+                    "prefix*": "Match incoming interface names starting with this prefix"
+                  },
+                  "suggestors": [
+                    {
+                      "name": "interfaces"
+                    }
+                  ]
+                },
+                "source-address": {
+                  "kind": "leaf_node",
+                  "strip_kind": "ipv6",
+                  "description": "Source IPv6 address or prefix",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "address": {
+                        "name": "address",
+                        "args": {
+                          "version": 6
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "h:h:h:h:h:h:h:h[/x]": "Source IPv6 address or prefix"
+                  },
+                  "multi": true
+                },
+                "destination-address": {
+                  "kind": "leaf_node",
+                  "strip_kind": "ipv6",
+                  "description": "Destination IPv6 address or prefix",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "address": {
+                        "name": "address",
+                        "args": {
+                          "version": 6
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "h:h:h:h:h:h:h:h[/x]": "Destination IPv6 address or prefix"
+                  },
+                  "multi": true
+                },
+                "translation": {
+                  "kind": "node",
+                  "description": "NAT translation settings",
+                  "children": {
+                    "address": {
+                      "kind": "leaf_node",
+                      "strip_kind": "ipv6",
+                      "description": "Translation IPv6 address or inclusive address pool",
+                      "validators": {
+                        "mode": "OR",
+                        "checks": {
+                          "ipv6-address": {
+                            "name": "ipv6-address"
+                          },
+                          "network": {
+                            "name": "network",
+                            "args": {
+                              "version": 6
+                            }
+                          },
+                          "ip-range": {
+                            "name": "ip-range",
+                            "args": {
+                              "version": 6
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "h:h:h:h:h:h:h:h": "Single IPv6 address",
+                        "h:h:h:h:h:h:h:h/x": "IPv6 network used as an inclusive address pool",
+                        "start-end": "Inclusive ascending IPv6 address range"
+                      }
+                    },
+                    "port": {
+                      "kind": "leaf_node",
+                      "description": "Translation port or inclusive port range",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "port": {
+                            "name": "port",
+                            "args": {
+                              "allow_range": true
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "1-65535": "Translation port",
+                        "start-end": "Inclusive ascending translation port range"
+                      }
+                    },
+                    "port-mapping": {
+                      "kind": "leaf_node",
+                      "description": "Transport port selection behavior",
+                      "choices": {
+                        "default": "Use the kernel's default port selection",
+                        "random": "Randomize port selection",
+                        "fully-random": "Fully randomize port selection"
+                      },
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "list": {
+                            "name": "list",
+                            "args": {
+                              "values": "default random fully-random"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "persistent": {
+                      "kind": "leaf_node",
+                      "description": "Keep translated address selection stable for a client across connections",
+                      "valueless": true
+                    }
+                  }
+                },
+                "exclude": {
+                  "kind": "leaf_node",
+                  "description": "Return without translation; skip later nVyR rules in this NAT chain",
+                  "valueless": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "container": {
       "kind": "node",
       "description": "Podman containers and Netavark networks",

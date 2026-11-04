@@ -7,7 +7,7 @@ if __name__ == '__main__':
 
     raise SystemExit(pytest.main([__file__, '-v', '-s', *sys.argv[1:]]))
 
-from smoketests.assertions import assert_firewall_object, assert_firewall_commit_rejected
+from smoketests.assertions import assert_firewall_commit_rejected, assert_firewall_object, assert_firewall_rule
 from smoketests.firewall_support import firewall_environment, firewall_suite
 
 
@@ -32,13 +32,21 @@ def test_default_port_nat_map(config):
 
 
 def test_default_address_port_nat_map(config):
-    """A concatenated address/port result is one complete fallback."""
+    """Both families can use the same map name and rule number with distinct fallbacks."""
     config.set('set firewall group map ipv4 TRANSLATE match protocol')
     config.set('set firewall group map ipv4 TRANSLATE result-type address-port')
     config.set('set firewall group map ipv4 TRANSLATE default-result address 192.0.2.10 port 8443')
     config.set('set nat destination rule 10 inbound-interface dum998 map TRANSLATE')
+
+    config.set('set firewall group map ipv6 TRANSLATE match protocol')
+    config.set('set firewall group map ipv6 TRANSLATE result-type address-port')
+    config.set('set firewall group map ipv6 TRANSLATE default-result address 2001:db8::10 port 8443')
+    config.set('set nat66 destination rule 10 inbound-interface dum998 map TRANSLATE')
     config.commit()
+
     assert_firewall_object('map', 'ipv4_map_TRANSLATE', r'\*.*: 192.0.2.10 . 8443')
+    assert_firewall_object('map', 'ipv6_map_TRANSLATE', r'\*.*: 2001:db8::10 . 8443')
+    assert_firewall_rule('ipv6_nat_prerouting', 10, 'dnat ip6 to', '@ipv6_map_TRANSLATE')
 
 
 def test_empty_default_rejected(config):

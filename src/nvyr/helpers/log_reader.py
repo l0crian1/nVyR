@@ -42,7 +42,7 @@ def select(service, *, root=ROOT, name='', vrf='default', family='', hook='', st
                     raise OperationalError('Select a chain and a rule number from 1 to 999999.')
                 prefix += rule + r'-[A-Z]\]'
             pattern = re.compile(prefix)
-    elif service == 'nat':
+    elif service in ('nat', 'nat66'):
         paths = lambda: sorted((root / 'firewall').glob('*.log'))
         if direction and direction not in NFT_NAT_HOOK_LABELS:
             raise OperationalError('Expected source or destination NAT.')
@@ -50,7 +50,8 @@ def select(service, *, root=ROOT, name='', vrf='default', family='', hook='', st
         if rule and not re.fullmatch(r'[1-9][0-9]{0,5}', rule):
             raise OperationalError('Expected a rule number from 1 to 999999.')
         number = rule or '[0-9]+'
-        pattern = re.compile(r'\[ipv4-' + label + '-' + number + r'-[A-Z]+\]')
+        family = 'ipv6' if service == 'nat66' else 'ipv4'
+        pattern = re.compile(r'\[' + family + '-' + label + '-' + number + r'-[A-Z]+\]')
     elif service == 'container':
         container = identifier(name)
         paths = lambda: [root / 'containers' / (container + '.log')]

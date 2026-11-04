@@ -36,7 +36,7 @@ Configure and operate nVyR. For implementation and maintenance, use the
 - [Early firewall protection](firewall-failsafe.md)
 - [Packet trace analysis](firewall-tracing.md)
 - [Firewall operational views](nftables-operational-data.md)
-- [IPv4 NAT](nat.md)
+- [IPv4 NAT and NAT66](nat.md)
 - [Connection tracking operations](conntrack-operations.md)
 
 ## Services and system administration

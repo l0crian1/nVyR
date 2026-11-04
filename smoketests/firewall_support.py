@@ -17,7 +17,7 @@ def clear_firewall(config):
     config.discard()
     running = config.get_config()
     changed = False
-    for section in ('nat', 'firewall'):
+    for section in ('nat', 'nat66', 'firewall'):
         if section in running:
             config.delete('delete ' + section)
             changed = True

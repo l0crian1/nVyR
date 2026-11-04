@@ -93,6 +93,11 @@ nat_before = [item for item in snapshot() if ('nat_' in item.get('chain', {}).ge
               or 'nat_' in item.get('rule', {}).get('chain', ''))]
 apply(filter_config, 'firewall')
 assert len([item for item in snapshot() if 'nat_' in item.get('rule', {}).get('chain', '')]) == len([item for item in nat_before if 'rule' in item])
+# nft's IPv6 port separator differs for hosts, prefixes and ranges.
+for address in ('2001:db8::2', '2001:db8::/120', '2001:db8::2-2001:db8::10'):
+    apply({'source': {'rule': {'10': {'outbound-interface': ['eth0'], 'protocol': ['udp'],
+           'translation': {'address': address, 'port': '1000-2000', 'port-mapping': 'random', 'persistent': True}}}}}, 'nat66')
+apply({}, 'nat66')
 before = snapshot()
 last_good = (directory / 'firewall.nft').read_text()
 try:
@@ -148,7 +153,8 @@ def test_real_snat_dnat_masquerade_ports_exclusions_disable_and_ipv6_bypass():
     isolated(r'''
 peers = []
 try:
-    run('/usr/lib/systemd/systemd-sysctl', '/usr/lib/sysctl.d/50-nvyr-router.conf')
+    # This namespace is the router; enable forwarding without booting systemd.
+    run('sysctl', '-qw', 'net.ipv4.ip_forward=1', 'net.ipv6.conf.all.forwarding=1')
     for index in (1, 2):
         peer = subprocess.Popen(['unshare', '-n', 'sleep', '80'])
         peers.append(peer)
@@ -229,9 +235,39 @@ try:
            'destination-port':['53001'], 'translation':{'port':'8080'}}}}})
     assert exchange('10.10.2.2',53001)[0] == '10.10.1.2'
     # Broad IPv4 masquerade and DNAT must leave IPv6 traffic alone.
-    apply({'source':{'rule':{'1':{'outbound-interface':['router2'], 'translation':{'address':'masquerade'}}}},
-           'destination':{'rule':{'1':{'inbound-interface':['router1'], 'translation':{'address':'10.99.99.99'}}}}})
+    apply({'source':{'rule':{'10':{'outbound-interface':['router2'], 'counter':{}, 'translation':{'address':'masquerade'}}}},
+           'destination':{'rule':{'10':{'inbound-interface':['router1'], 'counter':{}, 'translation':{'address':'10.10.2.2'}}}}})
     assert exchange('2001:db8:2::2',8080,True)[0] == '2001:db8:1::2'
+    # Dual-stack dispatch must preserve the already installed IPv4 rules.
+    assert exchange('203.0.113.99', 8080)[0] == '10.10.2.1'
+    def ipv4_state():
+        return [(rule['handle'], next(expr['counter']['packets'] for expr in rule['expr'] if 'counter' in expr))
+                for item in snapshot() if (rule := item.get('rule', {}))
+                and rule['chain'].startswith('ipv4_nat_')]
+    original = ipv4_state()
+    assert len(original) == 2 and all(packets > 0 for _, packets in original), original
+    apply({'source': {'rule': {'10': {'outbound-interface': ['router2'], 'translation': {'address': 'masquerade'}}}},
+           'destination': {'rule': {'10': {'inbound-interface': ['router1'], 'protocol': ['udp'],
+                           'destination-port': ['53001'], 'translation': {'address': '2001:db8:2::2', 'port': '8080'}}}}},
+          'nat66')
+    assert exchange('2001:db8:ffff::10', 53001, True)[0] == '2001:db8:2::1'
+    from nvyr.op_scripts import nat
+    target = json.loads(nat.show(tree='nat66', direction='destination', rule='10', raw=True))[0]
+    assert target['translation']['address'] == '2001:db8:2::2' and str(target['translation']['port']) == '8080', target
+    assert ipv4_state() == original
+    # A missing key uses the IPv6 address/port fallback, gated by a match-group.
+    apply({'group': {'map': {'ipv6': {'SERVICE': {
+              'match': {'protocol': True, 'destination-port': True}, 'result-type': 'address-port',
+              'default-result': {'address': '2001:db8:2::2', 'port': '8080'}}}},
+           'match-group': {'ipv6': {'CLIENT': {'match': {'source-address': True},
+              'entry': {'left': {'source-address': '2001:db8:1::2'}}}}}}}, 'firewall')
+    apply({'destination': {'rule': {'10': {'inbound-interface': ['router1'], 'map': 'SERVICE',
+                                          'match-group': 'CLIENT'}}}}, 'nat66')
+    assert exchange('2001:db8:ffff::10', 53002, True)[0] == '2001:db8:1::2'
+    assert ipv4_state() == original
+    apply({}, 'nat66')
+    assert ipv4_state() == original
+    assert exchange('2001:db8:2::2', 8080, True)[0] == '2001:db8:1::2'
     # Named translation maps must change packet addresses/ports, not only parse.
     for kind, target, destination, port in [
         ('address', {'address':'10.10.2.2'}, '203.0.113.99', 8080),
@@ -297,6 +333,8 @@ finally:
 
 def test_real_nat_commit_rollback_restart_and_shared_firewall_owner():
     isolated('''
+from contextlib import nullcontext
+from unittest.mock import patch
 from nvyr.controller import Controller
 from nvyr.engine import Engine
 from tests.lifecycle import LifecycleStub, RecordingModule
@@ -305,6 +343,8 @@ schema = Schema.bundled()
 modules = {owner: LifecycleStub() for owner in schema.owners}
 modules.update(firewall=RecordingModule(firewall))
 now = [100.0]
+# Only nftables is under test; this private namespace does not run netlinkd.
+patch('nvyr.helpers.kernel_settings.manager.transaction', side_effect=lambda _: nullcontext()).start()
 engine = Engine(schema, modules, Store(directory), clock=lambda: now[0])
 session = engine.open('test','namespace')
 controller = Controller(engine)
@@ -319,10 +359,13 @@ result = engine.commit(session)
 assert result['results'] == {'firewall': {'success': True}}
 assert any('masquerade' in expr for expr in translation()[0]['expr'])
 execute('set nat source rule 10 translation address 203.0.113.1')
+execute('set nat66 source rule 10 outbound-interface eth0 translation address masquerade')
 engine.commit(session, minutes=1, confirmed_minutes=1)
 assert any('snat' in expr for expr in translation()[0]['expr'])
+assert any(item.get('chain', {}).get('name') == 'ipv6_nat_postrouting' for item in snapshot())
 now[0] = 161
 engine.tick()
+assert not any(item.get('chain', {}).get('name') == 'ipv6_nat_postrouting' for item in snapshot())
 assert any('masquerade' in expr for expr in translation()[0]['expr'])
 execute('set nat source rule 20 destination-port 80')
 execute('set firewall ipv4 forward filter rule 20 action drop')

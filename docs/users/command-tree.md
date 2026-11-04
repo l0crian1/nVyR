@@ -9754,6 +9754,83 @@ set
 │               ├── persistent
 │               ├── port <1-65535|start-end>
 │               └── port-mapping <default|random|fully-random>
+├── nat66
+│   ├── destination
+│   │   └── rule <1-999999>
+│   │       ├── counter
+│   │       │   └── group <name>
+│   │       ├── description <text>
+│   │       ├── destination-address <h:h:h:h:h:h:h:h[/x]>
+│   │       ├── destination-address-group <name>
+│   │       ├── destination-domain-group <name>
+│   │       ├── destination-mac-group <name>
+│   │       ├── destination-port <1-65535|start-end>
+│   │       ├── destination-port-group <name>
+│   │       ├── disable
+│   │       ├── exclude
+│   │       ├── inbound-interface <name|prefix*>
+│   │       ├── inbound-interface-group <name>
+│   │       ├── last-used
+│   │       ├── log
+│   │       │   ├── flags <tcp-sequence|tcp-options|ip-options|skuid|ether|all> [and <value> ...]
+│   │       │   ├── group <name>
+│   │       │   └── level <emerg|alert|crit|err|warn|notice|info|debug>
+│   │       ├── map <name>
+│   │       ├── match-group <name>
+│   │       ├── protocol <ip|icmp|igmp|ggp|ipencap|st|tcp|egp|igp|pup|udp|hmp|xns-idp|rdp|iso-tp4|
+│   │       │             dccp|xtp|ddp|idpr-cmtp|ipv6|ipv6-route|ipv6-frag|idrp|rsvp|gre|esp|ah|
+│   │       │             skip|ipv6-icmp|ipv6-nonxt|ipv6-opts|rspf|vmtp|eigrp|ospf|ax.25|ipip|
+│   │       │             etherip|encap|pim|ipcomp|vrrp|l2tp|isis|sctp|fc|mobility-header|udplite|
+│   │       │             mpls-in-ip|manet|hip|shim6|wesp|rohc|ethernet>
+│   │       ├── source-address <h:h:h:h:h:h:h:h[/x]>
+│   │       ├── source-address-group <name>
+│   │       ├── source-domain-group <name>
+│   │       ├── source-mac-group <name>
+│   │       ├── source-port <1-65535|start-end>
+│   │       ├── source-port-group <name>
+│   │       └── translation
+│   │           ├── address <h:h:h:h:h:h:h:h|h:h:h:h:h:h:h:h/x|start-end>
+│   │           ├── persistent
+│   │           ├── port <1-65535|start-end>
+│   │           └── port-mapping <default|random|fully-random>
+│   └── source
+│       └── rule <1-999999>
+│           ├── counter
+│           │   └── group <name>
+│           ├── description <text>
+│           ├── destination-address <h:h:h:h:h:h:h:h[/x]>
+│           ├── destination-address-group <name>
+│           ├── destination-domain-group <name>
+│           ├── destination-mac-group <name>
+│           ├── destination-port <1-65535|start-end>
+│           ├── destination-port-group <name>
+│           ├── disable
+│           ├── exclude
+│           ├── last-used
+│           ├── log
+│           │   ├── flags <tcp-sequence|tcp-options|ip-options|skuid|ether|all> [and <value> ...]
+│           │   ├── group <name>
+│           │   └── level <emerg|alert|crit|err|warn|notice|info|debug>
+│           ├── map <name>
+│           ├── match-group <name>
+│           ├── outbound-interface <name|prefix*>
+│           ├── outbound-interface-group <name>
+│           ├── protocol <ip|icmp|igmp|ggp|ipencap|st|tcp|egp|igp|pup|udp|hmp|xns-idp|rdp|iso-tp4|
+│           │             dccp|xtp|ddp|idpr-cmtp|ipv6|ipv6-route|ipv6-frag|idrp|rsvp|gre|esp|ah|
+│           │             skip|ipv6-icmp|ipv6-nonxt|ipv6-opts|rspf|vmtp|eigrp|ospf|ax.25|ipip|
+│           │             etherip|encap|pim|ipcomp|vrrp|l2tp|isis|sctp|fc|mobility-header|udplite|
+│           │             mpls-in-ip|manet|hip|shim6|wesp|rohc|ethernet>
+│           ├── source-address <h:h:h:h:h:h:h:h[/x]>
+│           ├── source-address-group <name>
+│           ├── source-domain-group <name>
+│           ├── source-mac-group <name>
+│           ├── source-port <1-65535|start-end>
+│           ├── source-port-group <name>
+│           └── translation
+│               ├── address <masquerade|h:h:h:h:h:h:h:h|h:h:h:h:h:h:h:h/x|start-end>
+│               ├── persistent
+│               ├── port <1-65535|start-end>
+│               └── port-mapping <default|random|fully-random>
 ├── policy
 │   ├── access-list
 │   │   ├── ipv4 <name>
@@ -13285,6 +13362,16 @@ operational mode
 │   │   │       ├── follow
 │   │   │       └── rule <1-999999>
 │   │   │           └── follow
+│   │   ├── nat66
+│   │   │   ├── destination
+│   │   │   │   ├── follow
+│   │   │   │   └── rule <1-999999>
+│   │   │   │       └── follow
+│   │   │   ├── follow
+│   │   │   └── source
+│   │   │       ├── follow
+│   │   │       └── rule <1-999999>
+│   │   │           └── follow
 │   │   ├── netlinkd
 │   │   │   └── follow
 │   │   ├── ntp
@@ -13353,6 +13440,15 @@ operational mode
 │   │                  close|syn-sent2|closed|cookie-wait|cookie-echoed|shutdown-sent|shutdown-recd|
 │   │                  shutdown-ack-sent|heartbeat-sent|heartbeat-acked|request|respond|partopen|
 │   │                  open|closereq|closing|timewait>
+│   ├── nat66
+│   │   ├── destination
+│   │   │   ├── detail
+│   │   │   └── rule <number>
+│   │   │       └── detail
+│   │   └── source
+│   │       ├── detail
+│   │       └── rule <number>
+│   │           └── detail
 │   ├── ntp
 │   │   ├── clients
 │   │   ├── server

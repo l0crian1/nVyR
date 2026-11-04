@@ -93,7 +93,7 @@ class FakeSession:
 
     def delete(self, command):
         self.commands.append(command)
-        if command in ('delete nat', 'delete firewall'):
+        if command in ('delete nat', 'delete nat66', 'delete firewall'):
             del self.running[command.split()[1]]
         else:
             del self.running['interfaces']['dummy'][command.split()[-1]]
@@ -122,6 +122,7 @@ def test_cleanup_discards_failure_and_releases_providers_after_consumers():
     running = {
         'firewall': {'rule': 'test'},
         'nat': {'rule': 'test'},
+        'nat66': {'rule': 'test'},
         'interfaces': {
             'ethernet': {'eth0': {'address': ['dhcp']}},
             'dummy': {'dum998': {}, 'dum999': {}, 'dum1': {}},
@@ -132,7 +133,7 @@ def test_cleanup_discards_failure_and_releases_providers_after_consumers():
     firewall_support.cleanup(config, {'prepared': True, 'links': True})
 
     assert config.commands == [
-        'discard', 'delete nat', 'delete firewall', 'commit',
+        'discard', 'delete nat', 'delete nat66', 'delete firewall', 'commit',
         'delete interfaces dummy dum998', 'delete interfaces dummy dum999', 'commit',
     ]
     assert config.running['interfaces']['ethernet'] == running['interfaces']['ethernet']

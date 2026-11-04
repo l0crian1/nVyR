@@ -218,11 +218,12 @@ NFT_FIB_LOOKUP = {
 # Translation fragments concatenate into a target, followed by comma-separated
 # flags. As with NFT_KEYMAP, insertion order defines canonical output order.
 NFT_NAT_KEYMAP = {
-    'address': NftKey(' ip to {value}', 'target', omit_value='masquerade'),
+    'address': NftKey(' {protocol} to {value}', 'target', omit_value='masquerade'),
     'port': NftKey('{port_separator}{value}', 'target'),
     'persistent': NftKey('persistent', 'flags', flag=True),
     'port-mapping': NftKey('{value}', 'flags', omit_value='default'),
 }
+NAT_FAMILIES = {'nat': 'ipv4', 'nat66': 'ipv6'}
 NFT_NAT_ACTIONS = {
     'source': ('snat', 'S'),
     'destination': ('dnat', 'D'),
@@ -689,9 +690,10 @@ def _nft_dispatch(families, target):
     return 'meta nfproto vmap { ' + ', '.join(entries) + ' }' if entries else ''
 
 
-def nft_nat_dispatch(nat, hook):
+def nft_nat_dispatch(configuration, hook):
     direction = {'prerouting': 'destination', 'postrouting': 'source'}[hook]
-    return _nft_dispatch(['ipv4'] if direction in nat else [], 'nat_' + hook)
+    families = [family for root, family in NAT_FAMILIES.items() if direction in configuration.get(root, {})]
+    return _nft_dispatch(families, 'nat_' + hook)
 
 
 def nft_reject_response(rule, global_options=None):
@@ -1205,7 +1207,7 @@ def nft_chain_body(family, hook, configuration, global_options=None, maps=None, 
     return '\n'.join(lines)
 
 
-def _nft_nat_translation(statement, translation):
+def _nft_nat_translation(statement, translation, family):
     """Render translation fields using the same key metadata as firewall rules."""
     address = translation.get('address')
     if address is None or address == 'masquerade':
@@ -1224,14 +1226,18 @@ def _nft_nat_translation(statement, translation):
         if not entry.flag and value == entry.omit_value:
             continue
 
+        if key == 'address' and family == 'ipv6' and 'port' in translation and '/' not in value:
+            # nft brackets each IPv6 endpoint separately when appending a port.
+            value = '-'.join(f'[{endpoint}]' for endpoint in value.split('-'))
         parts[entry.side].append(entry.expression if entry.flag else
-                                entry.expression.format(value=value, port_separator=port_separator))
+                                entry.expression.format(value=value, protocol='ip6' if family == 'ipv6' else 'ip',
+                                                        port_separator=port_separator))
 
     return statement + ''.join(parts['target']) + (
         ' ' + ','.join(parts['flags']) if parts['flags'] else '')
 
 
-def nft_nat_rule(direction, number, rule, maps=None, match_groups=None, log_groups=None):
+def nft_nat_rule(direction, number, rule, maps=None, match_groups=None, log_groups=None, *, family='ipv4'):
     """Render shared matches/statements followed by keymapped NAT translation."""
     if 'disable' in rule:
         return ''
@@ -1243,16 +1249,17 @@ def nft_nat_rule(direction, number, rule, maps=None, match_groups=None, log_grou
 
     if 'map' in rule:
         configuration = maps[rule['map']]
-        target = nft_group_lookup('ipv4', configuration) + ' map @' + nft_map_name('ipv4', rule['map'])
-        statement += (' to : ' if configuration['result-type'] == 'port' else ' ip to ') + target
+        protocol = 'ip6' if family == 'ipv6' else 'ip'
+        target = nft_group_lookup(family, configuration) + ' map @' + nft_map_name(family, rule['map'])
+        statement += (' to : ' if configuration['result-type'] == 'port' else f' {protocol} to ') + target
     elif action != 'exclude':
-        statement = _nft_nat_translation(statement, translation)
+        statement = _nft_nat_translation(statement, translation, family)
 
     hook = NFT_NAT_HOOK_LABELS[direction]
-    prefix = f'"[ipv4-{hook}-{number}-{label}]"'
-    parts = _nft_parts('ipv4', rule, prefix, match_groups, log_groups=log_groups)
+    prefix = f'"[{family}-{hook}-{number}-{label}]"'
+    parts = _nft_parts(family, rule, prefix, match_groups, log_groups=log_groups)
     if 'map' in rule:
-        guard = nft_group_guard('ipv4', nft_group_fields(configuration), configuration.get('result-type')).rstrip()
+        guard = nft_group_guard(family, nft_group_fields(configuration), configuration.get('result-type')).rstrip()
         if guard:
             parts.insert(0, guard)
     parts.extend((statement, 'comment ' + nft_comment(number, rule.get('description', ''))))

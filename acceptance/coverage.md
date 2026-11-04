@@ -43,6 +43,7 @@ full appliance reboot run is still required for qualification.
 | VRF routing and conntrack | `interfaces.set`, `services.set` | Routing barriers, distinct zones, VLAN/container memberships, cross-VRF traffic and the complete zone table are checked. |
 | Inet firewall and providers | `firewall.set` | Shared rules at all hooks, a named chain, map, match-group, limit-group and ICMPX rejection are installed before family dispatch. |
 | Ingress and VLAN matching | `firewall.set` | IPv4/IPv6/inet dispatch, recreated interfaces, future-device prefixes, VLAN concatenations and notrack are checked. |
+| NAT and NAT66 | `firewall.set` | Both families retain their own same-numbered DNAT rule, address/port map and source masquerade across reboot. |
 | Map default results | `firewall.set` | IPv4/IPv6/inet verdict defaults and address/port NAT defaults remain native catch-all entries. |
 | Source validation | `firewall.set` | IPv4/IPv6 strict and loose overrides are scoped to lab links; the fail-safe uses the inet syntax. |
 | Packet tracing and modification | `firewall.set` | nftrace, packet/connection marks, DSCP, TTL/hop limit, fixed MSS and route-based MSS statements are checked. |

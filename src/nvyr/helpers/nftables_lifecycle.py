@@ -65,8 +65,9 @@ def object_paths(configuration):
     for name in firewall.get('flowtable', {}):
         result['flowtable', nft.nft_flowtable_name(name)] = ('firewall', 'flowtable', name)
     for direction, hook in NAT_HOOKS.items():
-        if direction in configuration.get('nat', {}):
-            result['chain', 'ipv4_nat_' + hook] = ('nat', direction)
+        for root, family in nft.NAT_FAMILIES.items():
+            if direction in configuration.get(root, {}):
+                result['chain', family + '_nat_' + hook] = (root, direction)
 
     # Private meter sets share the lifecycle of the complete firewall chain.
     for (kind, chain), path in list(result.items()):
@@ -102,8 +103,10 @@ def entrypoints(configuration):
             policy_state = (policy_state, firewall.get('global-options', {}).get('flowtable'))
         result['chain', entrypoint] = (targets, policy_state)
     for direction, hook in NAT_HOOKS.items():
-        if direction in configuration.get('nat', {}):
-            result['chain', 'nat_' + hook] = ((('chain', 'ipv4_nat_' + hook),), {})
+        targets = tuple(('chain', family + '_nat_' + hook) for root, family in nft.NAT_FAMILIES.items()
+                        if direction in configuration.get(root, {}))
+        if targets:
+            result['chain', 'nat_' + hook] = (targets, {})
     return result
 
 
@@ -216,7 +219,8 @@ def _recovery_objects(manager):
                    for hook in nft.NFT_FILTER_HOOKS)
     objects.update(('map', zones.map_name(family, hook)) for family in IP_FAMILIES for hook in zones.HOOKS)
     for hook in NAT_HOOKS.values():
-        objects.update({('chain', 'nat_' + hook), ('chain', 'ipv4_nat_' + hook)})
+        objects.add(('chain', 'nat_' + hook))
+        objects.update(('chain', family + '_nat_' + hook) for family in IP_FAMILIES)
     objects.update(('chain', nft.nft_named_chain(family, name)) for family, name in manager.named_chains())
     objects.update(('map', nft.nft_map_name(family, name)) for family, name in manager.maps())
     objects.update(('set', nft.nft_match_group_name(family, name)) for family, name in manager.match_groups())

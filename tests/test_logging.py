@@ -234,6 +234,7 @@ def test_named_chain_and_nat_scopes_keep_distinct_prefixes(tmp_path):
     (directory / 'default.log').write_text(
         '[ipv4-name_LAN-10-D] named\n'
         '[ipv4-name_LAN_EXTRA-10-D] another chain\n'
+        '[ipv6-PRE-10-D] destination nat66\n'
         '[ipv4-PRE-10-D] destination nat\n'
         '[ipv4-POST-10-S] source nat\n'
         '[ipv4-PRE-100-D] another rule\n')
@@ -243,6 +244,9 @@ def test_named_chain_and_nat_scopes_keep_distinct_prefixes(tmp_path):
 
     paths, pattern = log_reader.select('nat', root=tmp_path, direction='destination', rule='10')
     assert [line for _, line in log_reader.records(paths, pattern)] == ['[ipv4-PRE-10-D] destination nat\n']
+
+    paths, pattern = log_reader.select('nat66', root=tmp_path, direction='destination', rule='10')
+    assert [line for _, line in log_reader.records(paths, pattern)] == ['[ipv6-PRE-10-D] destination nat66\n']
 
 
 def test_group_collectors_start_without_global_logging_configuration(tmp_path, monkeypatch):

@@ -11,7 +11,7 @@ from nvyr.helpers import nftables_source_validation as source_validation
 from nvyr.helpers.nftables_singletons import verify_group_inclusions
 from nvyr.helpers.template import render
 from nvyr.helpers.nftables_formatters import (
-    NFT_KEYMAP, NFT_FILTER_HOOKS, nft_group_fields, nft_field_type, singleton_groups, limit_refill_seconds,
+    NAT_FAMILIES, NFT_KEYMAP, NFT_FILTER_HOOKS, nft_group_fields, nft_field_type, singleton_groups, limit_refill_seconds,
     nft_group_tcp_mask, nft_present_fields, nft_field_value, NFT_RULE_LIMIT_PATHS,
     NFT_PORT_PROTOCOLS, NFT_NAT_PORT_PROTOCOLS, NFT_FAMILY_FIELDS, nft_map_results,
     nft_interface_contexts, nft_slave_matches,
@@ -977,8 +977,9 @@ def verify(configuration, context):
     kernel_settings.firewall_values(configuration)
 
     # Validate NAT as part of the same atomic firewall/NAT commit.
-    if 'nat' in configuration:
-        nat.verify(configuration, context)
+    for root, family in NAT_FAMILIES.items():
+        if root in configuration:
+            nat.verify(configuration, context, root=root, family=family)
 
     firewall = lookup(configuration, ('firewall',), {})
 

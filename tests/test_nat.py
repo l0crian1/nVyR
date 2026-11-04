@@ -107,6 +107,9 @@ def test_schema_rejects_invalid_nat_fields(controller, session, suffix):
     'set nat source rule 10 inbound-interface eth0',
     'set nat destination rule 10 outbound-interface eth0',
     'set nat destination rule 10 translation address masquerade',
+    'set nat66 source rule 10 translation address 203.0.113.1',
+    'set nat66 destination rule 10 translation address masquerade',
+    'set nat66 source rule 10 translation address 2001:db8::2-2001:db8::1',
     'set nat source rule 0 exclude', 'set nat source rule 1000000 exclude',
     'set nat source rule 0000001 exclude',
 ])

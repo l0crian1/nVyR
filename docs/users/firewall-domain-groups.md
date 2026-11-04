@@ -32,7 +32,7 @@ set firewall ipv6 forward filter rule 110 action drop source-domain-group not SE
 ```
 
 Source and destination references work in firewall rules, including named chains and
-raw hooks, and IPv4 NAT rules. A reference cannot duplicate the same packet field
+raw hooks, and same-family NAT rules. A reference cannot duplicate the same packet field
 from an explicit positive match, another positive singleton group, a map, or a
 match-group. Positive and negative matches remain separate.
 

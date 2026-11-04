@@ -9125,6 +9125,384 @@
             "stream": true
           },
           "children": {
+            "nat": {
+              "kind": "node",
+              "description": "Source and destination NAT packet logs",
+              "command": {
+                "argv": [
+                  "logs.nvyr.op",
+                  "show",
+                  "@3"
+                ],
+                "stream": true
+              },
+              "children": {
+                "follow": {
+                  "kind": "node",
+                  "description": "Follow new NAT packet logs",
+                  "command": {
+                    "argv": [
+                      "logs.nvyr.op",
+                      "show",
+                      "@3",
+                      "--follow"
+                    ],
+                    "stream": true
+                  }
+                },
+                "source": {
+                  "kind": "node",
+                  "description": "Source NAT packet logs",
+                  "command": {
+                    "argv": [
+                      "logs.nvyr.op",
+                      "show",
+                      "@3",
+                      "--direction",
+                      "source"
+                    ],
+                    "stream": true
+                  },
+                  "children": {
+                    "follow": {
+                      "kind": "node",
+                      "description": "Follow new packet logs",
+                      "command": {
+                        "argv": [
+                          "logs.nvyr.op",
+                          "show",
+                          "@3",
+                          "--direction",
+                          "source",
+                          "--follow"
+                        ],
+                        "stream": true
+                      }
+                    },
+                    "rule": {
+                      "kind": "tag_node",
+                      "description": "Logs from one exact NAT rule",
+                      "hints": {
+                        "1-999999": "NAT rule number"
+                      },
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "integer-range": {
+                            "name": "integer-range",
+                            "args": {
+                              "minimum": 1,
+                              "maximum": 999999
+                            }
+                          }
+                        }
+                      },
+                      "command": {
+                        "argv": [
+                          "logs.nvyr.op",
+                          "show",
+                          "@3",
+                          "--direction",
+                          "source",
+                          "--rule",
+                          "@6"
+                        ],
+                        "stream": true
+                      },
+                      "children": {
+                        "follow": {
+                          "kind": "node",
+                          "description": "Follow new packet logs",
+                          "command": {
+                            "argv": [
+                              "logs.nvyr.op",
+                              "show",
+                              "@3",
+                              "--direction",
+                              "source",
+                              "--rule",
+                              "@6",
+                              "--follow"
+                            ],
+                            "stream": true
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "destination": {
+                  "kind": "node",
+                  "description": "Destination NAT packet logs",
+                  "command": {
+                    "argv": [
+                      "logs.nvyr.op",
+                      "show",
+                      "@3",
+                      "--direction",
+                      "destination"
+                    ],
+                    "stream": true
+                  },
+                  "children": {
+                    "follow": {
+                      "kind": "node",
+                      "description": "Follow new packet logs",
+                      "command": {
+                        "argv": [
+                          "logs.nvyr.op",
+                          "show",
+                          "@3",
+                          "--direction",
+                          "destination",
+                          "--follow"
+                        ],
+                        "stream": true
+                      }
+                    },
+                    "rule": {
+                      "kind": "tag_node",
+                      "description": "Logs from one exact NAT rule",
+                      "hints": {
+                        "1-999999": "NAT rule number"
+                      },
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "integer-range": {
+                            "name": "integer-range",
+                            "args": {
+                              "minimum": 1,
+                              "maximum": 999999
+                            }
+                          }
+                        }
+                      },
+                      "command": {
+                        "argv": [
+                          "logs.nvyr.op",
+                          "show",
+                          "@3",
+                          "--direction",
+                          "destination",
+                          "--rule",
+                          "@6"
+                        ],
+                        "stream": true
+                      },
+                      "children": {
+                        "follow": {
+                          "kind": "node",
+                          "description": "Follow new packet logs",
+                          "command": {
+                            "argv": [
+                              "logs.nvyr.op",
+                              "show",
+                              "@3",
+                              "--direction",
+                              "destination",
+                              "--rule",
+                              "@6",
+                              "--follow"
+                            ],
+                            "stream": true
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "nat66": {
+              "kind": "node",
+              "description": "IPv6 source and destination NAT packet logs",
+              "command": {
+                "argv": [
+                  "logs.nvyr.op",
+                  "show",
+                  "@3"
+                ],
+                "stream": true
+              },
+              "children": {
+                "follow": {
+                  "kind": "node",
+                  "description": "Follow new NAT packet logs",
+                  "command": {
+                    "argv": [
+                      "logs.nvyr.op",
+                      "show",
+                      "@3",
+                      "--follow"
+                    ],
+                    "stream": true
+                  }
+                },
+                "source": {
+                  "kind": "node",
+                  "description": "Source NAT packet logs",
+                  "command": {
+                    "argv": [
+                      "logs.nvyr.op",
+                      "show",
+                      "@3",
+                      "--direction",
+                      "source"
+                    ],
+                    "stream": true
+                  },
+                  "children": {
+                    "follow": {
+                      "kind": "node",
+                      "description": "Follow new packet logs",
+                      "command": {
+                        "argv": [
+                          "logs.nvyr.op",
+                          "show",
+                          "@3",
+                          "--direction",
+                          "source",
+                          "--follow"
+                        ],
+                        "stream": true
+                      }
+                    },
+                    "rule": {
+                      "kind": "tag_node",
+                      "description": "Logs from one exact NAT rule",
+                      "hints": {
+                        "1-999999": "NAT rule number"
+                      },
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "integer-range": {
+                            "name": "integer-range",
+                            "args": {
+                              "minimum": 1,
+                              "maximum": 999999
+                            }
+                          }
+                        }
+                      },
+                      "command": {
+                        "argv": [
+                          "logs.nvyr.op",
+                          "show",
+                          "@3",
+                          "--direction",
+                          "source",
+                          "--rule",
+                          "@6"
+                        ],
+                        "stream": true
+                      },
+                      "children": {
+                        "follow": {
+                          "kind": "node",
+                          "description": "Follow new packet logs",
+                          "command": {
+                            "argv": [
+                              "logs.nvyr.op",
+                              "show",
+                              "@3",
+                              "--direction",
+                              "source",
+                              "--rule",
+                              "@6",
+                              "--follow"
+                            ],
+                            "stream": true
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "destination": {
+                  "kind": "node",
+                  "description": "Destination NAT packet logs",
+                  "command": {
+                    "argv": [
+                      "logs.nvyr.op",
+                      "show",
+                      "@3",
+                      "--direction",
+                      "destination"
+                    ],
+                    "stream": true
+                  },
+                  "children": {
+                    "follow": {
+                      "kind": "node",
+                      "description": "Follow new packet logs",
+                      "command": {
+                        "argv": [
+                          "logs.nvyr.op",
+                          "show",
+                          "@3",
+                          "--direction",
+                          "destination",
+                          "--follow"
+                        ],
+                        "stream": true
+                      }
+                    },
+                    "rule": {
+                      "kind": "tag_node",
+                      "description": "Logs from one exact NAT rule",
+                      "hints": {
+                        "1-999999": "NAT rule number"
+                      },
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "integer-range": {
+                            "name": "integer-range",
+                            "args": {
+                              "minimum": 1,
+                              "maximum": 999999
+                            }
+                          }
+                        }
+                      },
+                      "command": {
+                        "argv": [
+                          "logs.nvyr.op",
+                          "show",
+                          "@3",
+                          "--direction",
+                          "destination",
+                          "--rule",
+                          "@6"
+                        ],
+                        "stream": true
+                      },
+                      "children": {
+                        "follow": {
+                          "kind": "node",
+                          "description": "Follow new packet logs",
+                          "command": {
+                            "argv": [
+                              "logs.nvyr.op",
+                              "show",
+                              "@3",
+                              "--direction",
+                              "destination",
+                              "--rule",
+                              "@6",
+                              "--follow"
+                            ],
+                            "stream": true
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
             "system": {
               "kind": "node",
               "description": "system log",
@@ -12567,195 +12945,6 @@
                   "--follow"
                 ],
                 "stream": true
-              }
-            },
-            "nat": {
-              "kind": "node",
-              "description": "Source and destination NAT packet logs",
-              "command": {
-                "argv": [
-                  "logs.nvyr.op",
-                  "show",
-                  "nat"
-                ],
-                "stream": true
-              },
-              "children": {
-                "follow": {
-                  "kind": "node",
-                  "description": "Follow new NAT packet logs",
-                  "command": {
-                    "argv": [
-                      "logs.nvyr.op",
-                      "show",
-                      "nat",
-                      "--follow"
-                    ],
-                    "stream": true
-                  }
-                },
-                "source": {
-                  "kind": "node",
-                  "description": "Source NAT packet logs",
-                  "command": {
-                    "argv": [
-                      "logs.nvyr.op",
-                      "show",
-                      "nat",
-                      "--direction",
-                      "source"
-                    ],
-                    "stream": true
-                  },
-                  "children": {
-                    "follow": {
-                      "kind": "node",
-                      "description": "Follow new packet logs",
-                      "command": {
-                        "argv": [
-                          "logs.nvyr.op",
-                          "show",
-                          "nat",
-                          "--direction",
-                          "source",
-                          "--follow"
-                        ],
-                        "stream": true
-                      }
-                    },
-                    "rule": {
-                      "kind": "tag_node",
-                      "description": "Logs from one exact NAT rule",
-                      "hints": {
-                        "1-999999": "NAT rule number"
-                      },
-                      "validators": {
-                        "mode": "AND",
-                        "checks": {
-                          "integer-range": {
-                            "name": "integer-range",
-                            "args": {
-                              "minimum": 1,
-                              "maximum": 999999
-                            }
-                          }
-                        }
-                      },
-                      "command": {
-                        "argv": [
-                          "logs.nvyr.op",
-                          "show",
-                          "nat",
-                          "--direction",
-                          "source",
-                          "--rule",
-                          "@6"
-                        ],
-                        "stream": true
-                      },
-                      "children": {
-                        "follow": {
-                          "kind": "node",
-                          "description": "Follow new packet logs",
-                          "command": {
-                            "argv": [
-                              "logs.nvyr.op",
-                              "show",
-                              "nat",
-                              "--direction",
-                              "source",
-                              "--rule",
-                              "@6",
-                              "--follow"
-                            ],
-                            "stream": true
-                          }
-                        }
-                      }
-                    }
-                  }
-                },
-                "destination": {
-                  "kind": "node",
-                  "description": "Destination NAT packet logs",
-                  "command": {
-                    "argv": [
-                      "logs.nvyr.op",
-                      "show",
-                      "nat",
-                      "--direction",
-                      "destination"
-                    ],
-                    "stream": true
-                  },
-                  "children": {
-                    "follow": {
-                      "kind": "node",
-                      "description": "Follow new packet logs",
-                      "command": {
-                        "argv": [
-                          "logs.nvyr.op",
-                          "show",
-                          "nat",
-                          "--direction",
-                          "destination",
-                          "--follow"
-                        ],
-                        "stream": true
-                      }
-                    },
-                    "rule": {
-                      "kind": "tag_node",
-                      "description": "Logs from one exact NAT rule",
-                      "hints": {
-                        "1-999999": "NAT rule number"
-                      },
-                      "validators": {
-                        "mode": "AND",
-                        "checks": {
-                          "integer-range": {
-                            "name": "integer-range",
-                            "args": {
-                              "minimum": 1,
-                              "maximum": 999999
-                            }
-                          }
-                        }
-                      },
-                      "command": {
-                        "argv": [
-                          "logs.nvyr.op",
-                          "show",
-                          "nat",
-                          "--direction",
-                          "destination",
-                          "--rule",
-                          "@6"
-                        ],
-                        "stream": true
-                      },
-                      "children": {
-                        "follow": {
-                          "kind": "node",
-                          "description": "Follow new packet logs",
-                          "command": {
-                            "argv": [
-                              "logs.nvyr.op",
-                              "show",
-                              "nat",
-                              "--direction",
-                              "destination",
-                              "--rule",
-                              "@6",
-                              "--follow"
-                            ],
-                            "stream": true
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
               }
             }
           }
@@ -20159,6 +20348,8 @@
                 "argv": [
                   "nat.nvyr.op",
                   "show",
+                  "--tree",
+                  "@2",
                   "--direction",
                   "source"
                 ]
@@ -20171,6 +20362,8 @@
                     "argv": [
                       "nat.nvyr.op",
                       "show",
+                      "--tree",
+                      "@2",
                       "--direction",
                       "source",
                       "--detail"
@@ -20207,6 +20400,8 @@
                     "argv": [
                       "nat.nvyr.op",
                       "show",
+                      "--tree",
+                      "@2",
                       "--direction",
                       "source",
                       "--rule",
@@ -20221,6 +20416,8 @@
                         "argv": [
                           "nat.nvyr.op",
                           "show",
+                          "--tree",
+                          "@2",
                           "--direction",
                           "source",
                           "--rule",
@@ -20418,6 +20615,8 @@
                 "argv": [
                   "nat.nvyr.op",
                   "show",
+                  "--tree",
+                  "@2",
                   "--direction",
                   "destination"
                 ]
@@ -20430,6 +20629,8 @@
                     "argv": [
                       "nat.nvyr.op",
                       "show",
+                      "--tree",
+                      "@2",
                       "--direction",
                       "destination",
                       "--detail"
@@ -20466,6 +20667,8 @@
                     "argv": [
                       "nat.nvyr.op",
                       "show",
+                      "--tree",
+                      "@2",
                       "--direction",
                       "destination",
                       "--rule",
@@ -20480,6 +20683,8 @@
                         "argv": [
                           "nat.nvyr.op",
                           "show",
+                          "--tree",
+                          "@2",
                           "--direction",
                           "destination",
                           "--rule",
@@ -20665,6 +20870,190 @@
                       "kind": "leaf_node",
                       "valueless": true,
                       "description": "Show original and reply tuples, status, and available accounting"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "nat66": {
+          "kind": "node",
+          "description": "Installed IPv6 NAT rules",
+          "children": {
+            "source": {
+              "kind": "node",
+              "description": "Installed source NAT rules",
+              "command": {
+                "argv": [
+                  "nat.nvyr.op",
+                  "show",
+                  "--tree",
+                  "@2",
+                  "--direction",
+                  "source"
+                ]
+              },
+              "children": {
+                "detail": {
+                  "kind": "node",
+                  "description": "Show all source NAT rule fields",
+                  "command": {
+                    "argv": [
+                      "nat.nvyr.op",
+                      "show",
+                      "--tree",
+                      "@2",
+                      "--direction",
+                      "source",
+                      "--detail"
+                    ]
+                  }
+                },
+                "rule": {
+                  "kind": "tag_node",
+                  "description": "Select an installed source NAT rule",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "integer-range": {
+                        "name": "integer-range",
+                        "args": {
+                          "minimum": 1,
+                          "maximum": 999999
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "number": "NAT rule number"
+                  },
+                  "suggestors": [
+                    {
+                      "name": "config-path",
+                      "args": {
+                        "path": "nat66 source rule"
+                      }
+                    }
+                  ],
+                  "command": {
+                    "argv": [
+                      "nat.nvyr.op",
+                      "show",
+                      "--tree",
+                      "@2",
+                      "--direction",
+                      "source",
+                      "--rule",
+                      "@5"
+                    ]
+                  },
+                  "children": {
+                    "detail": {
+                      "kind": "node",
+                      "description": "Show all fields for the selected rule",
+                      "command": {
+                        "argv": [
+                          "nat.nvyr.op",
+                          "show",
+                          "--tree",
+                          "@2",
+                          "--direction",
+                          "source",
+                          "--rule",
+                          "@5",
+                          "--detail"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "destination": {
+              "kind": "node",
+              "description": "Installed destination NAT rules",
+              "command": {
+                "argv": [
+                  "nat.nvyr.op",
+                  "show",
+                  "--tree",
+                  "@2",
+                  "--direction",
+                  "destination"
+                ]
+              },
+              "children": {
+                "detail": {
+                  "kind": "node",
+                  "description": "Show all destination NAT rule fields",
+                  "command": {
+                    "argv": [
+                      "nat.nvyr.op",
+                      "show",
+                      "--tree",
+                      "@2",
+                      "--direction",
+                      "destination",
+                      "--detail"
+                    ]
+                  }
+                },
+                "rule": {
+                  "kind": "tag_node",
+                  "description": "Select an installed destination NAT rule",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "integer-range": {
+                        "name": "integer-range",
+                        "args": {
+                          "minimum": 1,
+                          "maximum": 999999
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "number": "NAT rule number"
+                  },
+                  "suggestors": [
+                    {
+                      "name": "config-path",
+                      "args": {
+                        "path": "nat66 destination rule"
+                      }
+                    }
+                  ],
+                  "command": {
+                    "argv": [
+                      "nat.nvyr.op",
+                      "show",
+                      "--tree",
+                      "@2",
+                      "--direction",
+                      "destination",
+                      "--rule",
+                      "@5"
+                    ]
+                  },
+                  "children": {
+                    "detail": {
+                      "kind": "node",
+                      "description": "Show all fields for the selected rule",
+                      "command": {
+                        "argv": [
+                          "nat.nvyr.op",
+                          "show",
+                          "--tree",
+                          "@2",
+                          "--direction",
+                          "destination",
+                          "--rule",
+                          "@5",
+                          "--detail"
+                        ]
+                      }
                     }
                   }
                 }

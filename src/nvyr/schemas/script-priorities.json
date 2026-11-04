@@ -95,7 +95,8 @@
     "priority": 15,
     "paths": [
       "firewall",
-      "nat"
+      "nat",
+      "nat66"
     ]
   },
   {

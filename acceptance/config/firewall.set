@@ -203,6 +203,13 @@ set firewall group map ipv4 BOOTNAT entry web protocol tcp destination-port 8080
 set nat destination rule 41990 inbound-interface dum995 map BOOTNAT
 set nat source rule 41990 outbound-interface dum995 source-address 198.18.196.0/24 translation address masquerade
 
+set firewall group map ipv6 BOOTNAT match protocol destination-port
+set firewall group map ipv6 BOOTNAT result-type address-port
+set firewall group map ipv6 BOOTNAT entry web protocol tcp destination-port 8080 result address 2001:db8:195::10 result port 80
+
+set nat66 destination rule 41990 inbound-interface dum995 map BOOTNAT
+set nat66 source rule 41990 outbound-interface dum995 source-address 2001:db8:196::/64 translation address masquerade
+
 # Missing keys use native catch-all results, including a non-verdict NAT result.
 set firewall group map ipv4 BOOTMAP default-result action continue
 set firewall group map ipv6 BOOTMAP default-result action continue

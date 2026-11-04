@@ -80,9 +80,9 @@ def rule_path(table, chain, comment):
         hook = 'output' if suffix == 'output_raw' else suffix
         priority = 'raw' if suffix in ('prerouting', 'output_raw') else 'filter'
         path = f'{prefix} {family} {hook} {priority}'
-    elif table == firewall_scope.MAIN_TABLE and chain in ('ipv4_nat_prerouting', 'ipv4_nat_postrouting'):
+    elif table == firewall_scope.MAIN_TABLE and family in ('ipv4', 'ipv6') and suffix in ('nat_prerouting', 'nat_postrouting'):
         direction = 'source' if chain.endswith('postrouting') else 'destination'
-        path = 'nat ' + direction
+        path = ('nat66 ' if family == 'ipv6' else 'nat ') + direction
     else:
         return None
 

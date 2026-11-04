@@ -494,3 +494,10 @@ def test_ipv6_map_catchall():
 def test_ipv6_dscp_miss():
     """Unmarked traffic misses the DSCP permit and reaches the service-range drop."""
     assert_traffic('ipv6', 52114, allowed=False, counter=('ipv6_forward', 42999))
+
+
+def test_nat66():
+    """Observe translated endpoints, exclusion and reverse translation on the shared routed path."""
+    assert_traffic('ipv6', 52350, translated_source='2001:db8:62::1')
+    assert_traffic('ipv6', 52351, translated_source='2001:db8:61::2')
+    assert_traffic('ipv6', 52352, static=True, translated_destination=('2001:db8:62::2', 52353))

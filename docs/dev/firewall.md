@@ -22,7 +22,7 @@ the main firewall removes its temporary table atomically when it loads.
 [Router initialization](initialization.md) resets the entire nftables ruleset at boot
 and creates the empty `inet nvyr_filter` table. It creates no chains. Normal firewall
 commits own only their managed chains and do not perform this global reset.
-[IPv4 NAT](nat.md) uses separate managed entry/family chains in the same
+[IPv4 NAT and NAT66](nat.md) use separate managed entry/family chains in the same
 `inet nvyr_filter` table. Affected filtering, NAT, maps, and match-groups are replaced together atomically.
 
 ## Native chains and dispatch

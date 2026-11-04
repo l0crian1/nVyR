@@ -125,7 +125,7 @@ table inet {{ table }} {
     {%- endfor %}
 
     {#- NAT uses the same maps and is installed in this transaction. #}
-    {% include 'nat/ipv4.nft.j2' %}
+    {% include 'nat/rules.nft.j2' %}
 }
 
 {% if table == 'nvyr_filter' %}
