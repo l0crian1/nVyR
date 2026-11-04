@@ -32,14 +32,50 @@ def report(name):
     return summary, members
 
 
-def lacp_state(value):
-    flags = ('active', 'short-timeout', 'aggregatable', 'synchronized',
-             'collecting', 'distributing', 'defaulted', 'expired')
-    return ', '.join(flag for bit, flag in enumerate(flags) if int(value or 0) & (1 << bit)) or '-'
+LACP_FORWARDING = ((8, 'S'), (16, 'C'), (32, 'D'))
+
+
+def lacp_flags(pdu):
+    if 'port state' not in pdu:
+        return 'Unknown'
+    state = int(pdu['port state'])
+    return ''.join(letter if state & bit else '-' for bit, letter in LACP_FORWARDING)
+
+
+def lacp_detail(port):
+    sides = (port.get('actor', {}), port.get('partner', {}))
+    rows = [
+        ('System MAC', *(pdu.get('system mac address') for pdu in sides)),
+        ('System priority', *(pdu.get('system priority') for pdu in sides)),
+        ('Key', *(pdu.get('port key', pdu.get('oper key')) for pdu in sides)),
+        ('Port number', *(pdu.get('port number') for pdu in sides)),
+        ('Port priority', *(pdu.get('port priority') for pdu in sides)),
+    ]
+    states = [int(pdu['port state']) if 'port state' in pdu else None for pdu in sides]
+    for bit, label, on, off in (
+        (1, 'Activity', 'Active', 'Passive'),
+        (2, 'Timeout', 'Short', 'Long'),
+        (4, 'Aggregatable', 'Yes', 'No'),
+        (8, 'Synchronized', 'Yes', 'No'),
+        (16, 'Collecting', 'Yes', 'No'),
+        (32, 'Distributing', 'Yes', 'No'),
+        (64, 'Defaulted', 'Yes', 'No'),
+        (128, 'Expired', 'Yes', 'No'),
+    ):
+        row = [label]
+        for state in states:
+            if state is None:
+                row.append('Unknown')
+            else:
+                row.append(on if state & bit else off)
+        rows.append(row)
+
+    heading = f"{port['Slave Interface']} (aggregator {port.get('Aggregator ID', 'Unknown')})"
+    return heading + '\n' + tabulate(rows, headers=['Field', 'Actor', 'Partner'], missingval='Unknown')
 
 
 @opmode.command
-def show(bond: str = None, section: str = None, member: str = None):
+def show(bond: str = None, section: str = None, member: str = None, detail: bool = False):
     if not bond:
         rows = []
         for path in sorted(Path('/proc/net/bonding').glob('*')):
@@ -54,15 +90,19 @@ def show(bond: str = None, section: str = None, member: str = None):
     if section == 'lacp':
         if '802.3ad' not in summary.get('Bonding Mode', ''):
             raise OperationalError(f'{bond} is not in 802.3ad mode')
+        if not ports:
+            return f'{bond} has no members.'
+        if detail:
+            return '\n\n'.join(lacp_detail(port) for port in ports)
+
         rows = []
         for port in ports:
-            for side in ('actor', 'partner'):
-                pdu = port.get(side, {})
-                rows.append([port['Slave Interface'], side, port.get('Aggregator ID'), pdu.get('system mac address'),
-                             pdu.get('system priority'), pdu.get('port key', pdu.get('oper key')),
-                             pdu.get('port number'), pdu.get('port priority'), lacp_state(pdu.get('port state'))])
-        return tabulate(rows, headers=['Member', 'Side', 'Aggregator', 'System MAC', 'System priority',
-                                       'Key', 'Port', 'Port priority', 'State'])
+            partner = port.get('partner', {})
+            rows.append([port['Slave Interface'], port.get('Aggregator ID'), partner.get('system mac address'),
+                         lacp_flags(port.get('actor', {})), lacp_flags(partner)])
+
+        table = tabulate(rows, headers=['Member', 'Aggregator', 'Partner system', 'Actor', 'Partner'], missingval='Unknown')
+        return table + '\n\nS = synchronized, C = collecting, D = distributing, - = flag not set'
 
     active = summary.get('Currently Active Slave')
     rows = [[port['Slave Interface'], port.get('MII Status'), port.get('Speed'), port.get('Duplex'),

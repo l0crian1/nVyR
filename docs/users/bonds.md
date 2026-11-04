@@ -26,9 +26,15 @@ set interfaces bond bond0 vif 10 address 192.0.2.1/24
 
 `lacp min-links` controls how many active links an aggregator needs before
 reporting carrier. A transmit hash distributes flows; one TCP connection
-normally uses one member. Use `show interfaces bond bond0 lacp` to check the
-partner system, aggregator ID and whether both ports are collecting and
-distributing.
+normally uses one member.
+
+`show interfaces bond bond0 lacp` shows one row per member. Compare the
+aggregator ID and partner MAC across ports, then check the actor (local) and
+partner flags. `SCD` means synchronized, collecting and distributing. A dash
+means that flag is clear. `Unknown` means the kernel did not report the value.
+
+Use `show interfaces bond bond0 lacp detail` to compare each member's actor
+and partner system MACs, priorities, keys, port numbers and all eight state flags.
 
 ## Primary and standby
 

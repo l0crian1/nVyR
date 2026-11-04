@@ -18,10 +18,16 @@ bond:
       children:
 
         lacp:
-          kind: leaf_node
-          valueless: true
-          description: Local and partner LACP negotiation by port
+          kind: node
+          description: Actor and partner forwarding state for each bond member
           command: ['bond.nvyr.op', 'show', '--bond', '@4', '--section', 'lacp']
+          children:
+
+            detail:
+              kind: leaf_node
+              valueless: true
+              description: Actor and partner system IDs, port settings and full LACP state
+              command: ['bond.nvyr.op', 'show', '--bond', '@4', '--section', 'lacp', '--detail']
 
         member:
           kind: tag_node

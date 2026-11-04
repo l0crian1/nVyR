@@ -13356,6 +13356,7 @@ operational mode
 │   │   ├── bond
 │   │   │   └── <bondN>
 │   │   │       ├── lacp
+│   │   │       │   └── detail
 │   │   │       └── member <interface>
 │   │   ├── bridge
 │   │   │   └── <brN>
