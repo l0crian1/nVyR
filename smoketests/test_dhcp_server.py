@@ -87,7 +87,8 @@ def test_ipv4_socket_type_change_and_default_restoration(config):
         config.commit()
 
         native = kea.control(path, 'config-get')['arguments']['Dhcp4']
-        assert_equal(native['interfaces-config']['dhcp-socket-type'], expected)
+        # Kea omits its default raw socket type from config-get; UDP must be explicit.
+        assert_equal(native['interfaces-config'].get('dhcp-socket-type', 'raw'), expected)
 
 
 def test_ipv4_disjoint_ranges_and_reservation(config):

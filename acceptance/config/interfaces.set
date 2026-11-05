@@ -23,6 +23,17 @@ set interfaces bridge br994 dhcpv6-options rapid-commit
 set interfaces bridge br994 dhcp-options client-id text boot-client
 set interfaces bridge br994 dhcp-options host-name boot-client vendor-class-id nvyr-acceptance user-class boot-lab default-route-distance 210
 
+# A separate, healthy ISP instance supplies two delegations without the absent HA peers.
+set interfaces virtual-ethernet veth981 peer-name veth982
+set interfaces virtual-ethernet veth982 peer-name veth981 vrf BOOTRIGHT address 2001:db8:211::1/64
+set interfaces bridge br993 member interface veth981 address dhcpv6
+set interfaces bridge br993 dhcpv6-options rapid-commit
+set interfaces bridge br993 dhcpv6-pd 0 length 56
+set interfaces bridge br993 dhcpv6-pd 1 length 56 interface veth983 subnet-id 10 address 254
+set interfaces virtual-ethernet veth983 peer-name veth984
+set interfaces virtual-ethernet veth984 peer-name veth983 vrf BOOTRIGHT ipv6 autoconf
+set system name-server br993
+
 set interfaces dummy dum995 description "Boot acceptance default VRF" address 198.18.195.1/24 address 2001:db8:195::1/64
 set interfaces dummy dum996 vrf BOOTLEFT address 198.18.196.1/24 address 2001:db8:196::1/64
 set interfaces dummy dum997 vrf BOOTLEFT address 198.18.208.1/24 address 2001:db8:208::1/64

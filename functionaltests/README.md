@@ -131,6 +131,13 @@ address values or the alias. Only the explicit VRF create/delete test creates
 disposable additional VRFs. Ethernet options are reset between incompatible
 physical-port cases without deleting the port or its shared VRFs.
 
+The bond pair checks dual-stack active-backup failover and then LACP negotiation
+and forwarding on the same members. DHCPv6 uses its existing ISP and LAN links
+for two delegations, downstream SLAAC/default routes, learned DNS/search domains,
+release/renew, PD-only operation, renumbering and lease expiry. Its isolated server
+uses short lifetimes so expiry is observed without adding a long production timer
+to every test run.
+
 ### Containers and pods
 
 Both scripts under [workloads/](workloads) share a single installation of
@@ -162,8 +169,6 @@ The remaining scripts were reviewed individually:
 - `test_firewall_failsafe.py`: each case tests a separate boot/handover/failure
   lifecycle in an isolated namespace. Reusing an already-activated table would
   invalidate the startup precondition. These cases do not touch configd's network.
-- `test_frr_scripting.py`: one isolated FRR pathspace tests the installed Lua hook.
-  Its custom daemon startup cannot share the managed routing daemons.
 - `test_cli_login.py`: an opt-in disposable image tests account creation, login,
   revocation and configd restart. It cannot run against the shared live session.
 
@@ -184,7 +189,7 @@ effect of a function-scoped fixture.
 - Bridge forwarding, learning, VLAN separation, port isolation and learned-MAC
   cleanup; veth/VIF connectivity across routing instances.
 - DHCP process start/stop, lease release/renewal, route preference and MTU behavior;
-  Chrony client access and serving activity; logging and FRR Lua callbacks.
+  Chrony client access and serving activity; logging.
 - Container commands, DNS aliases, mounts, shared pod localhost, process restart,
   workload preservation and operational views.
 - Installed operational commands for routing/policies, interfaces, users,
@@ -216,8 +221,7 @@ Packet tests keep their address-readiness checks. Ethernet lease tests need a
 server and carrier; ordinary veth/namespace packet tests create their own peers.
 Containers require a preloaded BusyBox-compatible image. DNS protocol tests use a
 local responder without depending on public DNS. Domain-group refresh tests need
-working public DNS; GeoIP refresh tests need DB-IP HTTPS access. The FRR scripting
-test launches separate daemons in an isolated namespace and FRR pathspace.
+working public DNS; GeoIP refresh tests need DB-IP HTTPS access.
 
 Run sequentially, without pytest-xdist. Acceptance remains a separate suite for
 combined saved configuration and reboot restoration; see

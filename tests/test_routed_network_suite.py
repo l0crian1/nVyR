@@ -27,6 +27,8 @@ def test_combined_configuration(local_session, monkeypatch):
     from nvyr.helpers import domain_groups, geoip, kea
 
     monkeypatch.setattr(kea, 'inventory', lambda: {
+        'lo': {'vrf': 'default', 'up': True, 'running': True,
+               'addresses': ['127.0.0.1', '::1']},
         'dum980': {'vrf': 'NVYRDHCPSMOKE', 'up': True, 'running': True,
                    'addresses': ['198.18.210.1', '2001:db8:210::1', 'fe80::980']},
     })

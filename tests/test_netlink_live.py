@@ -281,11 +281,15 @@ def test_configd_commit_confirm_and_restart_use_real_daemon(daemon, tmp_path):
                'logging_runtime.install=lambda *a, **k: None; '
                'logging_runtime.prepare_groups=lambda *a, **k: None; '
                'logging_runtime.cleanup=lambda *a, **k: None; '
+               # DNS service lifecycle is outside this isolated Netlink test.
+               'from nvyr.helpers import dns_forwarding; dns_forwarding.install=lambda *a, **k: None; '
                # This suite exercises real links, not firewall defaults in the container's kernel.
                'from contextlib import nullcontext; '
                'from nvyr.helpers import kernel_settings; '
                'kernel_settings.manager.transaction=lambda *a, **k: nullcontext(); '
                f'interfaces.manager = interfaces.NetlinkManager({backend.path!r}); '
+               # Only Netlink is real here; firewall generation must not query a host ruleset.
+               'from nvyr.config_scripts import firewall; firewall.generate = lambda *a, **k: None; '
                'nftables.manager.apply = lambda *args, **kwargs: None; '
                'ssh.manager.apply = lambda *args, **kwargs: None; '
                'from nvyr.helpers import accounts, system; '

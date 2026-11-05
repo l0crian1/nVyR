@@ -595,7 +595,7 @@ def assert_dhcp_client(name, *, active):
     wait_for(state, matches, description=f'{name} DHCP client active={active}')
 
 
-def assert_dhcp_lease(name, *, after=None):
+def assert_dhcp_lease(name, *, acquired_after=None):
     """Optional server-backed test: require a current lease installed on the link."""
     from nvyr.helpers.dhcp import DHCP
 
@@ -604,7 +604,9 @@ def assert_dhcp_lease(name, *, after=None):
         device = link_inventory().get(name)
         return DHCP().lease(name, device['ifindex']) if device else None
 
-    result = wait_for(lease, lambda value: value is not None and (after is None or value['expires'] > after),
+    # A server can renew a cached lease with the same expiry. A new ACK advances acquisition time.
+    result = wait_for(lease, lambda value: value is not None and (
+        acquired_after is None or value['acquired'] > acquired_after),
                       description=f'{name} DHCP lease', timeout=60)
     assert_link_addresses(name, result['address'])
     return result

@@ -19,6 +19,7 @@ option:
       hints:
         IPv6-address: IPv6 unicast address of an NTP server
       validators:
+        mode: AND
         ipv6-address: {}
         unicast-address: {}
       multi: true

@@ -12,8 +12,10 @@ def test_hints_are_separate_from_every_completion_operation(controller, session)
     for options in ({}, {'tab': True}, {'explicit': True}, {'space': True}):
         result = controller.completion(command, session, **options)
 
-        assert dict(result['candidates']) == {'dhcp': 'Acquire an IPv4 address using DHCP'}
-        assert result['replacement'] == 'dhcp' and result['extension'] == 'dhcp'
+        assert dict(result['candidates']) == {'dhcp': 'Acquire an IPv4 address using DHCP',
+                                               'dhcpv6': 'Request an IPv6 address using DHCPv6'}
+        assert result['replacement'] is None
+        assert result['extension'] == 'dhcp'
         assert dict(result['hints']) == {'x.x.x.x/x': 'IPv4 address with mask',
                                         'x:x:x:x:x:x/x': 'IPv6 address with mask'}
 

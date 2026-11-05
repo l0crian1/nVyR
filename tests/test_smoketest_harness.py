@@ -58,7 +58,6 @@ def test_all_live_fixture_dependencies_resolve_without_mutations():
     ('functionaltests/network/test_bgp_operations.py', [], True, None, 0),
     ('functionaltests/network/test_policy_operations.py', [], True, None, 0),
     ('functionaltests/network/test_bgp_operational_peers.py', [], True, None, 0),
-    ('functionaltests/test_frr_scripting.py', [], True, None, 0),
     ('test_firewall_interfaces.py', [], True, None, 0),
     ('test_ethernet.py', [], True, None, 0),
     ('test_dummy.py', [], True, None, 0),
@@ -100,8 +99,9 @@ def test_direct_script_collection(tmp_path, filename, selection, elsewhere, sele
         assert selected_names
 
     expected = {f'{filename}::{name}' for name in selected_names}
-    assert set(collected) == expected, result.stdout + result.stderr
-    assert len(collected) == len(expected)
+    # Parameterized cases collect once per value; every feature function must still be present.
+    assert {name.split('[', 1)[0] for name in collected} == expected, result.stdout + result.stderr
+    assert len(collected) == len(set(collected))
     assert 'Original configuration snapshot' not in result.stdout
 
 

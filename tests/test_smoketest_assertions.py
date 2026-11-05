@@ -11,6 +11,29 @@ from smoketests.assertions import (
 )
 
 
+def test_dhcp_renewal_accepts_a_new_ack_without_extending_expiry(monkeypatch):
+    """Lease reuse can preserve expiry; renewal must still observe a fresh ACK."""
+    from nvyr.helpers.dhcp import DHCP
+
+    previous = {'address': '192.0.2.10/24', 'acquired': 100, 'expires': 400}
+    renewed = {**previous, 'acquired': 150}
+    monkeypatch.setattr(assertions, 'link_inventory', lambda: {'eth5': {'ifindex': 7}})
+    monkeypatch.setattr(DHCP, 'lease', lambda self, name, index: previous)
+
+    def check(read, matches, **kwargs):
+        assert not matches(None)
+        assert not matches(read())
+        assert matches(renewed)
+        return renewed
+
+    addresses = []
+    monkeypatch.setattr(assertions, 'wait_for', check)
+    monkeypatch.setattr(assertions, 'assert_link_addresses', lambda *args: addresses.append(args))
+
+    assert assertions.assert_dhcp_lease('eth5', acquired_after=100) == renewed
+    assert addresses == [('eth5', '192.0.2.10/24')]
+
+
 def test_accounting_does_not_accept_an_earlier_flow(monkeypatch):
     """Shared topology must not let an old successful flow satisfy a new probe."""
     from nvyr.helpers import conntrack

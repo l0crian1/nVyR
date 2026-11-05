@@ -79,8 +79,9 @@ commands. The fixtures are deliberately readable and reviewable:
   transit, with separate destinations from BGP. Both sides must form adjacencies,
   install OSPF routes and exchange traffic before and after reboot. Global opaque
   capability and router-info coexist with the VRF configuration.
-- [Services and containers](config/services.set): four Kea instances (IPv4/IPv6
-  in the default VRF and BOOTLEFT), disjoint pools, IPv4/IPv6 reservations,
+- [Services and containers](config/services.set): five Kea instances (IPv4/IPv6
+  in the default VRF and BOOTLEFT, plus an independent IPv6 ISP in BOOTRIGHT),
+  disjoint pools, IPv4/IPv6 reservations,
   inherited/overridden options and lifetimes, default-VRF hostfile hook recovery;
   registries, dual-stack and VRF container networks, static attachments/IDs/aliases,
   a shared dual-stack pod with two members, resource limits,
@@ -114,8 +115,14 @@ The native checks are individually named in [checks.py](checks.py) and
 IPv4/IPv6 observations. BGP must establish and install received routes with the
 expected policy attributes. A DHCP client on `br994` must acquire its reservation
 from BOOTLEFT's Kea instance and install a default route with AD 210. VLAN traffic
-must cross the veth pair. IPv4 and IPv6 packets must populate dynamic address
-groups. Flowtable hooks must attach exactly once to both recreated forwarding
+must cross the veth pair. A separate DHCPv6 client on `br993` requests an address
+and two /56 delegations from BOOTRIGHT. Delegation 1 assigns subnet ID 10 and
+host ID 254 to `veth983`; `veth984` must learn a SLAAC address and default route
+from its advertisements and reach the LAN router. Learned DHCPv6 DNS and search
+domains must return after boot, and both clients' DUIDs must remain unchanged.
+The ISP is independent of the HA configuration whose absent peer prevents
+allocation. IPv4 and IPv6 packets must populate dynamic address groups.
+Flowtable hooks must attach exactly once to both recreated forwarding
 interfaces selected by prefixes. Nested group members and prefix selectors must
 remain installed. The container must run and read its original persistent sentinel
 through the bind mount, with the expected environment and native settings.
@@ -169,9 +176,11 @@ every registered interface IP/IPv6 option and every named TCP/UDP timeout state.
   publication uses 127.0.0.1:41995.
 
 Reserved resources include BOOTLEFT/BOOTRIGHT, VRF tables 41995/41996,
-`dum992`, `dum994` through `dum999`, `veth993`, `veth994`, `veth995`, `veth997`, `br994`, `br995`, `bond995`,
+`dum992`, `dum994` through `dum999`, `veth981` through `veth984`,
+`veth993`, `veth994`, `veth995`, `veth997`, `br993`, `br994`, `br995`, `bond995`,
 VLAN 195 on the selected Ethernet/veth/bridge parents, BOOTBOX/BOOTNET/BOOTVRF,
-IPv4 `198.18.192.0/19`, and IPv6 `2001:db8:192::/64` through `2001:db8:210::/64`
+IPv4 `198.18.192.0/19`, IPv6 `2001:db8:610::/48`, and
+IPv6 `2001:db8:192::/64` through `2001:db8:211::/64`
 (the third hextets are the literal strings shown). Preflight rejects collisions.
 
 Persistent workload inputs are created under `/config/containers/boot-<run-id>/`.

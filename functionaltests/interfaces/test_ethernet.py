@@ -81,7 +81,7 @@ def test_dhcp_lease_and_renewal(config, ethernet_environment, request):
 
     lease = assert_dhcp_lease(port)
     dhcp_op.renew(port)
-    assert_dhcp_lease(port, after=lease['expires'])
+    assert_dhcp_lease(port, acquired_after=lease['acquired'])
 
 
 def test_dhcp_client_operational_detail(config, ethernet_environment, request):

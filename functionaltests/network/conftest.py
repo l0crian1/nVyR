@@ -2,7 +2,7 @@
 
 import pytest
 
-from functionaltests.routed_network import scenario
+from functionaltests.routed_network import remove_firewall, scenario
 from smoketests.support import configuration_case
 
 
@@ -23,7 +23,7 @@ def network_case(config, request, policy_baseline):
         if request.node.get_closest_marker('exclusive_firewall'):
             # These tests change global/default policy, not ordinary per-service
             # rules. Stage removal without an extra empty-firewall commit.
-            config.delete('delete firewall')
+            remove_firewall(config)
         if request.node.get_closest_marker('exclusive_static'):
             config.delete('delete protocols static')
             config.delete('delete vrf name NVYRSMOKE protocols static')
@@ -38,6 +38,6 @@ def policy_baseline(config, request, routed_network):
         return
 
     with configuration_case(config, request, routed_network):
-        config.delete('delete firewall')
+        remove_firewall(config)
         config.commit()
         yield config.get_config()

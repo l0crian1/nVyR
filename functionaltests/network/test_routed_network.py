@@ -251,7 +251,8 @@ def test_ipv6_family_drop():
 
 def test_ipv6_static_forwarding():
     """Static routes carry this destination while BGP supplies its return route."""
-    assert_kernel_route('2001:db8:64::2/128', 'via 2001:db8:60::2', 'proto static', vrf='NVYRLEFT')
+    # The BGP route to the global next hop can resolve through the peer's link-local address.
+    assert_kernel_route('2001:db8:64::2/128', 'dev veth42061', 'proto static', vrf='NVYRLEFT')
     assert_kernel_route('2001:db8:64::2/128', 'via 2001:db8:62::2', 'proto static', vrf='NVYRRIGHT')
     assert_traffic('ipv6', 52106, static=True, counter=('ipv6_forward', 42030))
 

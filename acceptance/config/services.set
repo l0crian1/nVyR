@@ -126,6 +126,14 @@ set vrf name BOOTLEFT service dhcpv6-server ha peer BOOTCOPY address 2001:db8:19
 
 set vrf name BOOTLEFT service dhcpv6-server shared-network BOOTDHCP subnet 2001:db8:193::/64 range 2001:db8:193::100-2001:db8:193::110
 
+# The ISP is deliberately independent of HA; allocation and LAN RAs must work at boot.
+set vrf name BOOTRIGHT service dhcpv6-server listen-interface veth982
+set vrf name BOOTRIGHT service dhcpv6-server shared-network BOOTISP interface veth982
+set vrf name BOOTRIGHT service dhcpv6-server shared-network BOOTISP option name-server 2001:db8:211::1
+set vrf name BOOTRIGHT service dhcpv6-server shared-network BOOTISP option domain-search pd.boot.example
+set vrf name BOOTRIGHT service dhcpv6-server shared-network BOOTISP subnet 2001:db8:211::/64 range 2001:db8:211::100-2001:db8:211::110
+set vrf name BOOTRIGHT service dhcpv6-server shared-network BOOTISP subnet 2001:db8:211::/64 prefix-pool 2001:db8:610::/48 delegated-length 56
+
 # Persistent workload and two networks, one attached to a VRF.
 set container registry docker.io priority 10
 set container registry quay.io priority 20

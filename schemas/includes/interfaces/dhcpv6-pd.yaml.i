@@ -3,6 +3,7 @@ dhcpv6-pd:
   anchor: true
   description: Request a delegated IPv6 prefix using this IAID
   validators:
+    mode: AND
     integer-range: {minimum: 0, maximum: 4294967295}
     regex: {pattern: '0|[1-9][0-9]*'}
   hints:

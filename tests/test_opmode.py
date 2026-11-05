@@ -273,7 +273,7 @@ def test_original_tokens_quotes_line_pipeline_and_run_are_not_reconstructed(cont
 
     assert controller.execute(line)['text'] == '1\n'
     assert calls[-1] == (['echo', 'sh', 'ec', 'WAN Interface|literal', '  sh ec "WAN Interface|literal"', 'WAN Interface|literal', '@literal'],
-                        {'timeout': 7, 'env': dict(os.environ, NVYR_SESSION_TTY='')})
+                        {'timeout': 7, 'env': dict(os.environ, NVYR_SESSION_TTY='', NVYR_CALLER_ROLE='dev-admin')})
 
     line = 'run sh ec "quoted value"'
     controller.execute(line, session)

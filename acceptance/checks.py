@@ -1,5 +1,6 @@
 """Independent native observations for the combined boot configuration."""
 
+import ipaddress
 import json
 from pathlib import Path
 import socket
@@ -8,6 +9,7 @@ import uuid
 from nvyr.config_session import ConfigurationSession
 from nvyr.helpers import cpu_settings, dhcp_hosts, kea, logging_runtime
 from nvyr.helpers.process import cmd
+from nvyr.helpers.interfaces import manager
 from nvyr.tree import lookup
 from smoketests.assertions import (
     assert_equal, assert_in, assert_not_in, assert_link, assert_link_addresses,
@@ -413,6 +415,45 @@ def check_dhcp_client_lease(options):
     assert_dhcp_client_options('br994', **{'host-name': 'boot-client', 'vendor-class-id': 'nvyr-acceptance'})
 
 
+def check_dhcpv6_delegation(options):
+    """Acquire an address and two PDs, then observe the LAN's SLAAC address and default route."""
+    lease = wait_for(lambda: manager.request('dhcp6-status')['br993'],
+                     lambda value: len(value.get('entries', ())) == 3 and bool(value.get('lans')),
+                     description='boot DHCPv6 address and two delegations', timeout=60)
+    assert_equal(lease['errors'], [])
+    prefixes = {entry['id']: ipaddress.IPv6Network(entry['prefix'])
+                for entry in lease['entries'] if entry['type'] == 'IA_PD'}
+    assert_equal(set(prefixes), {'0', '1'})
+    assert not prefixes['0'].overlaps(prefixes['1'])
+    for prefix in prefixes.values():
+        assert_equal(prefix.prefixlen, 56)
+        assert prefix.subnet_of(ipaddress.IPv6Network('2001:db8:610::/48'))
+
+    wan = next(entry['prefix'] for entry in lease['entries'] if entry['type'] == 'IA_NA')
+    assert_link_addresses('br993', wan)
+    address = ipaddress.IPv6Address(int(prefixes['1'].network_address) + (10 << 64) + 254)
+    assert_equal(lease['lans'][0]['address'], f'{address}/64')
+    assert_link_addresses('veth983', f'{address}/64')
+    network = ipaddress.IPv6Interface(f'{address}/64').network
+
+    def station_addresses():
+        link = json.loads(cmd(['ip', '-j', '-6', 'address', 'show', 'dev', 'veth984']))[0]
+        return [entry['local'] for entry in link['addr_info'] if not entry.get('tentative')]
+
+    wait_for(station_addresses, lambda values: any(ipaddress.IPv6Address(value) in network for value in values),
+             description='boot downstream SLAAC address', timeout=40)
+    wait_for(lambda: json.loads(cmd(['ip', '-j', '-6', 'route', 'show', 'vrf', 'BOOTRIGHT', 'default'])),
+             lambda routes: any(route.get('dev') == 'veth984' and route.get('protocol') == 'ra' for route in routes),
+             description='boot downstream RA default route', timeout=40)
+    cmd(['ip', 'vrf', 'exec', 'BOOTRIGHT', 'ping', '-6', '-c', '1', '-W', '2', str(address)])
+
+    dns = wait_for(lambda: manager.request('dns-status'),
+                   lambda value: any(item['interface'] == 'br993' for item in value.get('search', ())),
+                   description='boot delegated uplink resolver data')
+    assert_in({'server': '2001:db8:211::1', 'source': 'DHCPv6', 'interface': 'br993'}, dns['servers'])
+    assert_in({'domain': 'pd.boot.example', 'source': 'DHCPv6', 'interface': 'br993'}, dns['search'])
+
+
 def check_container_workload(options):
     """Check running state, entrypoint, hostname and resource limits in Podman."""
     container = assert_container_running('BOOTBOX')
@@ -741,7 +782,8 @@ CHECKS = (
     check_bgp_ipv4_session, check_bgp_ipv6_session, check_bgp_ipv4_policy_result, check_bgp_ipv6_policy_result,
     check_bgp_unicast_options, check_ospf_ipv4, check_ospf_ipv6,
     check_dhcp4_server, check_dhcp6_server, check_vrf_dhcp4_server, check_vrf_dhcp6_server,
-    check_dhcp_hostfile_hook, check_dhcp_ha, check_dhcp_client_lease, check_container_workload, check_container_network_ipv4,
+    check_dhcp_hostfile_hook, check_dhcp_ha, check_dhcp_client_lease, check_dhcpv6_delegation,
+    check_container_workload, check_container_network_ipv4,
     check_container_network_ipv6, check_container_persistence, check_container_pod,
     check_firewall_failsafe_handover,
     check_firewall_ipv4_rules, check_firewall_ipv6_rules, check_firewall_ipv4_dynamic,

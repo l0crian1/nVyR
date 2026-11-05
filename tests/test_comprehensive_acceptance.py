@@ -27,6 +27,7 @@ def test_comprehensive_configuration_and_restore(controller, engine, session, mo
         'dum996': {'vrf': 'BOOTLEFT', 'addresses': ['198.18.196.1', '2001:db8:196::1'], 'up': True, 'running': True},
         'dum995': {'vrf': 'default', 'addresses': ['198.18.195.1', '2001:db8:195::1', 'fe80::195'], 'up': True, 'running': True},
         'veth993': {'vrf': 'BOOTLEFT', 'addresses': ['198.18.193.1', '2001:db8:193::1', 'fe80::193'], 'up': True, 'running': True},
+        'veth982': {'vrf': 'BOOTRIGHT', 'addresses': ['2001:db8:211::1', 'fe80::982'], 'up': True, 'running': True},
     }
     monkeypatch.setattr(kea, 'inventory', lambda: devices)
     rendered = []

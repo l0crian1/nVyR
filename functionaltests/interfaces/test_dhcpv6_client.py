@@ -1,4 +1,4 @@
-"""Exercise an ISP granting two prefixes and an address, LAN SLAAC, release and renew.
+"""Exercise two delegations, LAN SLAAC, PD-only, renumbering and lease expiry.
 
 The shared interface topology owns the veth pairs. A tagged ISP and a LAN
 station live in private namespaces. Other DHCPv6 servers on this link would
@@ -11,12 +11,13 @@ import json
 import os
 import subprocess
 
+from nvyr.helpers import kea
 from nvyr.helpers.interfaces import manager
 from nvyr.helpers.process import cmd
 from smoketests.support import wait_for
 
 
-def test_delegations(tmp_path):
+def test_delegations(config, tmp_path):
     wan = 'veth43440.20'
     isp, lan = (f'nvyr-pd-{role}-{os.getpid()}' for role in ('isp', 'lan'))
 
@@ -37,7 +38,10 @@ def test_delegations(tmp_path):
         cmd(['ip', '-n', isp, '-6', 'addr', 'add', '2001:db8:442::1/64', 'dev', 'isp0', 'nodad'])
         wait_for(lambda: cmd(['ip', '-n', isp, '-6', 'addr', 'show', 'dev', 'isp0', 'scope', 'link']),
                  lambda text: 'fe80:' in text and 'tentative' not in text, description='ISP link-local address')
+        control = tmp_path / 'control.sock'
         native = {'interfaces-config': {'interfaces': ['isp0']}, 'lease-database': {'type': 'memfile', 'persist': False},
+                  'control-socket': {'socket-type': 'unix', 'socket-name': str(control)},
+                  'preferred-lifetime': 20, 'valid-lifetime': 30, 'renew-timer': 10, 'rebind-timer': 20,
                   'subnet6': [{'id': 1, 'subnet': '2001:db8:442::/64', 'interface': 'isp0',
                                'pools': [{'pool': '2001:db8:442::10-2001:db8:442::20'}],
                                'pd-pools': [{'prefix': '2001:db8:443::', 'prefix-len': 48, 'delegated-len': 56}]}],
@@ -49,6 +53,14 @@ def test_delegations(tmp_path):
         server = subprocess.Popen(['ip', 'netns', 'exec', isp, 'kea-dhcp6', '-c', str(config_file)], env=env)
         cleanup.callback(server.wait, timeout=10)
         cleanup.callback(server.terminate)
+
+        # The ISP supplies a default route even when the client requests only PD.
+        ra_file = tmp_path / 'isp-ra.conf'
+        ra_file.write_text('interface isp0 { AdvSendAdvert on; MinRtrAdvInterval 3; MaxRtrAdvInterval 4; };\n')
+        ra = subprocess.Popen(['ip', 'netns', 'exec', isp, 'radvd', '-n', '-m', 'stderr',
+                               '-C', str(ra_file), '-p', str(tmp_path / 'radvd.pid')])
+        cleanup.callback(ra.wait, timeout=10)
+        cleanup.callback(ra.terminate)
 
         # Restart discovery now that the ISP exists rather than waiting out a previous Solicit backoff.
         manager.request('dhcp6-release', interface=wan)
@@ -81,3 +93,48 @@ def test_delegations(tmp_path):
         renewed = wait_for(status, lambda s: len(s.get('entries', ())) == 3,
                            description='reacquisition after release', timeout=40)
         assert renewed['duid'] == lease['duid']
+
+        # Removing IA_NA must retain both delegations and learn the ISP's default via RA.
+        config.delete('delete interfaces virtual-ethernet veth43440 vif 20 address dhcpv6')
+        config.commit()
+        pd_only = wait_for(status, lambda s: len(s.get('entries', ())) == 2
+                           and all(e['type'] == 'IA_PD' for e in s['entries']),
+                           description='PD-only acquisition', timeout=40)
+        assert pd_only['duid'] == lease['duid']
+        wait_for(lambda: cmd(['ip', '-6', 'route', 'show', 'default', 'dev', wan]),
+                 lambda text: 'proto ra' in text, description='PD-only WAN default route', timeout=20)
+        addresses = json.loads(cmd(['ip', '-j', '-6', 'addr', 'show', 'dev', wan]))[0]['addr_info']
+        assert not any(entry['scope'] == 'global' for entry in addresses)
+
+        # Change the ISP's aggregate while keeping links and the client identity intact.
+        native['subnet6'][0]['pd-pools'][0]['prefix'] = '2001:db8:444::'
+        kea.control(control, 'config-set', {'Dhcp6': native})
+        manager.request('dhcp6-renew', interface=wan)
+        replacement = ipaddress.IPv6Network('2001:db8:444::/48')
+        renumbered = wait_for(status, lambda s: any(
+            ipaddress.IPv6Network(entry['prefix']).subnet_of(replacement)
+            for entry in s.get('lans', ())), description='renumbered delegated LAN', timeout=45)
+        new_lan = next(entry for entry in renumbered['lans']
+                       if ipaddress.IPv6Network(entry['prefix']).subnet_of(replacement))
+        previous_lan = pd_only['lans'][0]['address']
+        wait_for(lambda: cmd(['ip', '-6', 'addr', 'show', 'dev', 'veth43442']),
+                 lambda text: new_lan['address'] in text and previous_lan not in text,
+                 description='replacement of the delegated router address')
+        wait_for(lambda: json.loads(cmd(['ip', '-n', lan, '-j', '-6', 'addr', 'show', 'dev', 'lan0'])),
+                 lambda links: any(ipaddress.IPv6Address(entry['local']) in replacement
+                                   and not entry.get('tentative') for entry in links[0]['addr_info']),
+                 description='renumbered downstream SLAAC address', timeout=25)
+
+        # Stop replies without releasing: validity expiry must withdraw addresses, DNS and RAs.
+        server.terminate()
+        server.wait(timeout=10)
+        wait_for(status, lambda s: not s.get('entries') and not s.get('lans') and not s.get('dns'),
+                 description='delegation expiry without server replies', timeout=40)
+        wait_for(lambda: cmd(['ip', '-6', 'addr', 'show', 'dev', 'veth43442', 'scope', 'global']),
+                 lambda text: 'inet6' not in text, description='expired delegated router address')
+        wait_for(lambda: cmd(['ip', '-n', lan, '-6', 'route', 'show', 'default']),
+                 lambda text: not text.strip(), description='expired LAN default advertisement', timeout=15)
+        wait_for(lambda: manager.request('dns-status'),
+                 lambda state: not any(item['interface'] == wan for key in ('servers', 'search')
+                                       for item in state.get(key, ())),
+                 description='withdrawal of expired DNS servers and search domains')

@@ -93,8 +93,11 @@ scenario and required lab resources.
 
 - GeoIP downloads and domain-group DNS refresh remain external-data tests, not
   claims of this reboot scenario. Their cache/failure behavior has separate tests.
-- SLAAC address acquisition requires an RA sender. This fixture checks restored
-  RA/SLAAC settings and tokens, not receipt of an advertised prefix.
+- DHCPv6 acceptance uses a healthy local ISP instance and downstream RA client.
+  It checks two delegations, subnet/host IDs, SLAAC acquisition, a learned default
+  route, DHCPv6 DNS/search domains and stable DUIDs across reboot. PD-only WANs,
+  renew/release, renumbering and expiry are covered by the shared-interface
+  functional scenario rather than repeated during boot qualification.
 - NTP sources deliberately cannot synchronize the clock; startup, ACLs and
   configuration recovery do not depend on public DNS or a remote time server.
 - Trace capture/story output and setter/timeout/helper packet semantics have
@@ -103,19 +106,38 @@ scenario and required lab resources.
 - A fail-safe table being absent after startup proves handover, not the duration
   or packet behavior of the early boot protection window.
 
-## Qualification status — 2026-10-27
+## Qualification status — 2026-11-05
 
-The expanded configuration passed local real validation/generation, saved-state
-replay and restoration tests. A live preboot run on the October 27 ISO reached
-the native observations: 74 of 76 checks passed. The two failures both expose
-[NFT-IFNAME-001](../docs/dev/upstream-issues.md#nft-ifname-001-adjacent-interface-prefixes-corrupt-anonymous-set-listings).
-Full-table JSON loses adjacent wildcard entries and emits a warning, preventing
-complete native snapshot comparison. The base configuration now uses the
-nonadjacent `veth995*` and `veth997*` prefixes, with matching interface names and
-references throughout the fixture. Wildcard coverage and full snapshot checks
-remain in place; the adjacent-prefix reproducer remains in the upstream issue.
+Run `9b47e21c-50c6-4ce6-9f22-7ad74f1fe066` passed all 87 preboot checks and
+all 93 postboot checks on the installed 0.2.0 test router, using physical `eth5`
+with carrier. The native nftables/FRR snapshots, running/saved configuration,
+VRF conntrack ownership and DHCPv6 DUIDs matched. The runner restored the
+original running and saved configuration. Test artifacts are retained locally
+under `experiments/qualification-020/` (excluded from Git).
 
-This is tracked as an upstream defect, not a release blocker. No reboot
-qualification is claimed for the revised configuration until the full
-save/reboot/restore run passes. This fixture update has not been run. Failed runs retain their
-original configuration backups and installed test state for inspection.
+The accompanying functional run passed all 417 retained cases; the disruptive
+CLI-login case remained opt-in and was skipped. The run also executed one Lua
+packaging probe that has since been removed because no nVyR feature consumes it.
+The smoke run passed 1,270 cases and exposed one stale assertion for Kea's omitted
+default socket type. After correcting that assertion, all 16 DHCP smoke cases
+passed. Bond coverage includes all seven modes and native option readback in
+smoketests, plus dual-stack failover and LACP forwarding in functional tests.
+
+The router used Linux 6.18.59-nvyr-amd64, FRR 10.7.1 with nVyR's second package
+revision, and the updated test files from this checkout. Its image metadata still
+identifies the November 4 build (`2026-11-04T14:25:49Z`). This qualifies that
+installed runtime with these tests; all installed nVyR Python sources matched
+the checkout. It does not certify the newer ISO being built
+without installing and testing that image.
+
+The first attempt passed the feature checks but failed the full FRR comparison:
+three empty VRF stanzas from earlier tests disappeared at reboot. The static
+route adapter deliberately retains VRF declarations when removing routes, even
+after the corresponding Linux VRFs disappear. The failure and its snapshots
+remain recorded under run `553a9d6f-3cdc-41c3-9474-84f9d5e56774`. No comparison
+exception was added; the repeat run started after reboot and restoration.
+
+[NFT-IFNAME-001](../docs/dev/upstream-issues.md#nft-ifname-001-adjacent-interface-prefixes-corrupt-anonymous-set-listings)
+remains tracked as an upstream defect, not a release blocker. The fixture uses
+nonadjacent `veth995*` and `veth997*` prefixes and retains the complete native
+snapshot comparison; the adjacent-prefix reproducer remains in the issue record.

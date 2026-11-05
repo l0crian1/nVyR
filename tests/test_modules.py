@@ -9,6 +9,7 @@ from nvyr.config_scripts import (
     interface_bridge, interface_bond, interface_loopback, protocols_static, protocols_bgp, policy, logging,
     service_ssh, service_dhcp, system_dns, system_login, system_hostname, system_configuration, system_ntp, system_cpu,
     system_static_hosts, system_task, system_timezone, vrf, vrf_conntrack,
+    protocols_ospf, protocols_ospfv3, service_dns_forwarding,
 )
 from nvyr.modules import registry
 from nvyr.schema import Schema
@@ -36,11 +37,14 @@ def test_bundled_owners_use_scripts_directly_without_lifecycle_recording():
         'vrf_conntrack': vrf_conntrack,
         'static': protocols_static,
         'bgp': protocols_bgp,
+        'ospf': protocols_ospf,
+        'ospfv3': protocols_ospfv3,
         'policy': policy,
         'ssh': service_ssh,
         'dhcp-server': service_dhcp,
         'dhcpv6-server': service_dhcp,
         'dns': system_dns,
+        'dns-forwarding': service_dns_forwarding,
         'ntp': system_ntp,
         'login': system_login,
         'system': system_hostname,

@@ -169,7 +169,8 @@ def stopped(pid):
     return not state.exists() or state.read_text().split()[2] == 'Z'
 
 
-@pytest.mark.parametrize('daemon', [schema(WAIT_PROBE, timeout=.3)], indirect=True)
+# Include runner/interpreter startup in the budget; the probe itself blocks for 30 seconds.
+@pytest.mark.parametrize('daemon', [schema(WAIT_PROBE, timeout=3)], indirect=True)
 def test_timeout_stops_privileged_process_and_preserves_connection(daemon):
     client, chunks = Client(daemon), []
 

@@ -21,6 +21,7 @@ if __name__ == '__main__':
 
 
 from nvyr.helpers.process import cmd
+from functionaltests.routed_network import remove_firewall
 from smoketests.assertions import (
     assert_equal, assert_in, assert_connection_accounting,
     firewall_rule_packets, assert_firewall_rule_packets, assert_raises,
@@ -32,7 +33,7 @@ from smoketests.support import configuration_case
 def global_offload(config, request, routed_network):
     """Global early acceptance conflicts with detailed rule counters, not topology."""
     with configuration_case(config, request, routed_network):
-        config.delete('delete firewall')
+        remove_firewall(config)
         config.set('set firewall global-options connection-accounting')
         config.set('set firewall flowtable FAST interface veth41050 interface veth41052 counter')
         config.set('set firewall global-options state-policy established action accept')

@@ -42,6 +42,12 @@ POLICIES = ('RNCOMM', 'RNLARGE', 'RNAS', 'RNCALL', 'RNIN4', 'RNIN6', 'RNOUT4', '
             'RN6P1', 'RN6P2', 'RN6P3', 'RN6P4', 'RN6P5', 'RN6P6')
 
 
+def remove_firewall(config):
+    """Withdraw NAT consumers before deleting their firewall maps and groups."""
+    for section in ('nat', 'nat66', 'firewall'):
+        config.delete(f'delete {section}')
+
+
 def commands():
     """Read the reviewed CLI configuration in installation order."""
     for path in CONFIGURATIONS:
