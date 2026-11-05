@@ -6,8 +6,11 @@ IPv6 clients share the same upstream and forwarder; no host DNS is replaced.
 
 from contextlib import contextmanager
 import os
+from pathlib import Path
+import pwd
 import shutil
 import subprocess
+import tempfile
 import time
 
 import dns.message
@@ -16,6 +19,7 @@ import dns.rcode
 import pytest
 
 from nvyr.helpers import logging_formatters
+from nvyr.helpers import dns_forwarding
 from nvyr.helpers.template import render
 
 pytestmark = pytest.mark.skipif(os.environ.get('NVYR_DNS_NATIVE') != '1', reason='requires disposable native Unbound lab')
@@ -58,6 +62,37 @@ def native_text(directory, configuration, *, records=(), learned=None):
                   state=str(directory), identifier='74657374'))
     # Test daemons remain in a private temporary directory and retain the invoking user.
     return text.replace('username: "unbound"', 'username: ""').replace('use-syslog: yes', 'use-syslog: no')
+
+
+@pytest.mark.parametrize('retained', [False, True])
+def test_dnssec_state_ownership_after_image_change(monkeypatch, retained):
+    account = pwd.getpwnam('unbound')
+    # An accessible parent lets the real daemon drop privileges as it does on boot.
+    with tempfile.TemporaryDirectory(prefix='nvyr-dns-state-') as temporary:
+        root = Path(temporary)
+        root.chmod(0o755)
+        monkeypatch.setattr(dns_forwarding, 'STATE', root)
+        directory = root / dns_forwarding.instance_id('default')
+        key = directory / 'root.key'
+        content = Path('/usr/share/dns/root.key').read_text()
+        if retained:
+            directory.mkdir(mode=0o700)
+            content = '; Retained trust-anchor state\n' + content
+            key.write_text(content)
+            key.chmod(0o600)
+            # Simulate a copied key whose old numeric owner is not today's Unbound.
+            os.chown(key, 0, 0)
+
+        dns_forwarding.initialize_state('default')
+
+        assert key.read_text() == content
+        assert (key.stat().st_uid, key.stat().st_gid) == (account.pw_uid, account.pw_gid)
+        section = {'port': '15360'}
+        text = native_text(directory, section, records=['ownership.test. 60 IN A 192.0.2.80'])
+        text = text.replace('username: ""', 'username: "unbound"')
+        os.chown(directory / 'socket', account.pw_uid, account.pw_gid)
+        with daemon(directory, text):
+            assert query('ownership.test', port=15360).answer[0][0].address == '192.0.2.80'
 
 
 @pytest.fixture(scope='module')

@@ -161,7 +161,8 @@ def initialize_state(vrf):
     key = directory / 'root.key'
     if not key.exists():
         write(key, Path('/usr/share/dns/root.key').read_text(), mode=0o600)
-        os.chown(key, account.pw_uid, account.pw_gid)
+    # Retained files can carry a previous image's numeric service account IDs.
+    os.chown(key, account.pw_uid, account.pw_gid)
 
 
 def active(vrf):
