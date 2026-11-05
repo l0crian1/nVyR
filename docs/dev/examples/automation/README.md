@@ -74,6 +74,44 @@ forces session-lock ownership nor changes accounts or permissions. Run these
 scripts on the host through a dev-admin shell or an authorized task-scheduler
 `exec` action, not inside a restricted interactive session container.
 
+## ISP reachability and BGP default advertisement
+
+[ispcheck.py](ispcheck.py) checks the Cloudflare, Google and Quad9 ping targets.
+If all checks fail while a default route is being advertised to the configured
+BGP peer, it removes `default-originate`. When a target becomes reachable and
+the default is not being advertised, it restores `default-originate`. Each
+change attempt is logged and sent to the configured ntfy server.
+
+Copy it beside `nvyr_helpers.py`, for example into `/config/scripts/`, and edit
+`peer`, `ntfy_server` and `addresses` for your network. As a sys-admin or dev-admin,
+configure a [scheduled task](../../../users/tasks.md) with a one-minute interval:
+
+```text
+configure
+set system task ISPCHECK exec '/usr/bin/python3 /config/scripts/ispcheck.py'
+set system task ISPCHECK interval 1m
+commit
+save
+exit
+```
+
+Commit arms the task; no separate start is required. Its first run is one minute
+later, and subsequent runs wait one minute after the previous execution finishes.
+The `save` above preserves the task configuration across reboot.
+
+Check its status and output, or trigger an immediate run:
+
+```text
+show system tasks ISPCHECK
+show log task ISPCHECK
+start system task ISPCHECK
+```
+
+The script runs as root on the host in the default routing instance and
+deliberately requests the configuration lock with `force=True`, taking ownership
+from another session if necessary. Its BGP changes are committed to running
+configuration without saving them for reboot.
+
 ## Notifications and logging
 
 ```python
