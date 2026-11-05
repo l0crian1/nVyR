@@ -4,7 +4,7 @@
 Configuration changes belong in the caller, using ConfigurationSession.
 """
 
-import socket
+from math import ceil
 from syslog import openlog, syslog, closelog, LOG_INFO, LOG_PID
 from time import sleep
 
@@ -130,22 +130,23 @@ def http_test(urls, source_address="", retries=3, timeout=2):
 def port_test(port, address, source_address="", retries=3, interval=3, timeout=2):
     """Return True if a TCP connection succeeds; this does not test UDP.
 
-    Uses Python sockets, so netcat is not required. source_address must be a
-    local IP address, not an interface name. timeout applies to each candidate
-    address returned by hostname resolution, not to the entire function.
+    Uses nc from netcat-openbsd. source_address must be a local IP address,
+    not an interface name. timeout is rounded up to whole seconds for nc and
+    applies per resolved address, not to hostname resolution or all retries.
     """
     port = int(port)
     if not 1 <= port <= 65535:
         raise ValueError('port must be between 1 and 65535')
     if timeout <= 0:
         raise ValueError('timeout must be positive')
-    source = (source_address, 0) if source_address else None
+    arguments = ['nc', '-z', '-w', str(ceil(timeout))]
+    if source_address:
+        arguments.extend(['-s', source_address])
+    arguments.extend(['--', address, str(port)])
 
     for attempt in range(retries):
-        try:
-            with socket.create_connection((address, port), timeout=timeout, source_address=source):
-                return True
-        except OSError:
-            if attempt < retries - 1:
-                sleep(interval)
+        if run(arguments, timeout=None) == 0:
+            return True
+        if attempt < retries - 1:
+            sleep(interval)
     return False

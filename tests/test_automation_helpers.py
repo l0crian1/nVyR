@@ -114,6 +114,7 @@ def test_dns_answers_failover_and_absent_records(helpers, dns_server):
     assert not helpers.dns_test(['127.0.0.1'], 'absent.test', retries=1)
 
 
+@pytest.mark.skipif(not shutil.which('nc'), reason='requires netcat-openbsd')
 def test_tcp_connect_and_refusal(helpers, http_server):
     port, _ = http_server
     assert helpers.port_test(port, '127.0.0.1', source_address='127.0.0.1', retries=1)
@@ -122,6 +123,32 @@ def test_tcp_connect_and_refusal(helpers, http_server):
     with socket.socket() as closed:
         closed.bind(('127.0.0.1', 0))
         assert not helpers.port_test(closed.getsockname()[1], '127.0.0.1', retries=1)
+
+
+@pytest.mark.skipif(not shutil.which('nc'), reason='requires netcat-openbsd')
+def test_tcp_ipv6(helpers):
+    with socket.socket(socket.AF_INET6) as listener:
+        listener.bind(('::1', 0))
+        listener.listen()
+        assert helpers.port_test(listener.getsockname()[1], '::1', source_address='::1', retries=1)
+
+
+def test_tcp_retries_keep_arguments_literal(helpers, monkeypatch):
+    calls, waits = [], []
+
+    def run(arguments, **options):
+        calls.append((arguments, options))
+        return 1
+
+    monkeypatch.setattr(helpers, 'run', run)
+    monkeypatch.setattr(helpers, 'sleep', waits.append)
+
+    assert not helpers.port_test(443, 'literal;not-a-shell-command', source_address='192.0.2.1',
+                                 retries=3, interval=2, timeout=0.5)
+    assert waits == [2, 2]
+    assert len(calls) == 3
+    assert calls[0] == (['nc', '-z', '-w', '1', '-s', '192.0.2.1', '--',
+                         'literal;not-a-shell-command', '443'], {'timeout': None})
 
 
 @pytest.mark.skipif(not shutil.which('ping'), reason='requires iputils-ping')

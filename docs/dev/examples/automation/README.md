@@ -2,9 +2,8 @@
 
 Copy [nvyr_helpers.py](nvyr_helpers.py) beside your Python scripts, for example
 under `/config/scripts/`. It is an importable helper file, not an installed nVyR
-module or a new CLI command. It uses the nVyR Python package, dnspython, curl and
-iputils-ping already available in the router image. Netcat and a shell wrapper
-are not required.
+module or a new CLI command. It uses the nVyR Python package, dnspython, curl,
+iputils-ping and `nc` (netcat-openbsd) already available in the router image.
 
 The supplied `ping_targets` dictionary is retained. Nothing probes those
 addresses automatically, and their availability has not been revalidated.
@@ -42,7 +41,8 @@ Missing executables and subprocess launch errors remain exceptions. The nVyR
 process wrapper also raises `CommandError` if its outer execution deadline is
 exceeded. Ping uses the wrapper's 15-second outer deadline, independently of
 its 0.5-second reply wait. HTTP and notifications allow two additional seconds
-beyond curl's transfer deadline. TCP's timeout applies per resolved address;
+beyond curl's transfer deadline. TCP uses `nc -z` with its connection timeout
+rounded up to whole seconds. That timeout applies per resolved address;
 hostname resolution and a complete retry sequence can take longer.
 
 ## Configuration changes
