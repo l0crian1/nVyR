@@ -14,6 +14,9 @@ session locking, and commit pipeline.
 
 ## Open a session
 
+For reusable health checks and notifications alongside this API, see the
+[standalone automation helper](examples/automation/README.md).
+
 ```python
 from nvyr.config_session import ConfigurationSession
 
