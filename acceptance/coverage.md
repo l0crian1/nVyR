@@ -12,6 +12,11 @@ IPv4 addresses and virtual-network traffic checks still run without a cable.
 
 ## Recent configuration additions
 
+LLDP in `services.set` covers native wildcard selection, an excluded port,
+custom system/chassis identity, management address, transmit timing and an exact
+port override. `check_lldp` verifies installed native state and operational output
+before and after reboot. It needs no external LLDP neighbor.
+
 DNS forwarding in `services.set` covers default and BOOTLEFT instances,
 dual-stack listeners, conditional/TLS upstreams, cache and worker settings,
 DNSSEC controls, local publication and logging. Native configuration and local

@@ -26,10 +26,11 @@ def isolated_network_profiles(tmp_path, monkeypatch):
     from types import SimpleNamespace
     from nvyr.config_scripts import protocols_bgp, system_static_hosts, system_timezone
     from nvyr.helpers import logging_runtime, task_schedule
-    from nvyr.helpers import dns_forwarding
+    from nvyr.helpers import dns_forwarding, lldp
 
     # Engine unit tests must not start or stop the host's DNS service.
     monkeypatch.setattr(dns_forwarding, 'install', lambda plan: None)
+    monkeypatch.setattr(lldp, 'install', lambda plan: None)
 
     monkeypatch.setattr(task_schedule, 'UNITS', tmp_path)
     monkeypatch.setattr(task_schedule, 'LOGS', tmp_path / 'task-logs')

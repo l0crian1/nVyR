@@ -26,6 +26,7 @@ if [ "$1" = configure ]; then
         systemctl mask --now chrony.service
         # DNS forwarding uses independently configured per-VRF instances.
         systemctl mask --now unbound.service
+        systemctl mask --now lldpd.service
         systemctl mask chronyd.service systemd-timesyncd.service
         udevadm control --reload || true
 

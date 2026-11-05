@@ -1,0 +1,53 @@
+{% set interfaces = configuration.get('interface', {}) -%}
+{% if lldp_interface_pattern(configuration) -%}
+configure system interface pattern {{ lldp_interface_pattern(configuration) }}
+{% endif -%}
+{% set overrides = interfaces.items() | selectattr('1') | map(attribute='0') | list -%}
+{% if overrides -%}
+configure system interface permanent {{ overrides | join(',') }}
+{% endif -%}
+{% for key, native in [('system-name', 'hostname'), ('system-description', 'description'), ('chassis-id', 'chassisid')] if key in configuration -%}
+configure system {{ native }} {{ lldp_quote(configuration[key]) }}
+{% endfor -%}
+{% set management = (configuration.get('management-address', []) | list) + (configuration.get('management-interface', []) | list) -%}
+{% if management -%}
+configure system ip management pattern {{ management | join(',') }}
+{% endif -%}
+{% if configuration.get('capability') -%}
+configure system capabilities enabled {{ configuration['capability'] | join(',') }}
+{% endif -%}
+{% for key, native in [('max-neighbors', 'max-neighbors'), ('bond-member-source-mac', 'bond-slave-src-mac-type')] if key in configuration -%}
+configure system {{ native }} {{ configuration[key] }}
+{% endfor -%}
+{% for key, native in [('disable-capability-advertisement', 'capabilities-advertisements'), ('disable-management-address-advertisement', 'management-addresses-advertisements')] if key in configuration -%}
+unconfigure lldp {{ native }}
+{% endfor -%}
+{% set modes = {'receive-transmit': 'rx-and-tx', 'receive-only': 'rx-only', 'transmit-only': 'tx-only'} -%}
+{% if 'mode' in configuration -%}
+configure lldp status {{ modes[configuration['mode']] }}
+{% endif -%}
+{% for key, native in [('transmit-interval', 'tx-interval'), ('hold-multiplier', 'tx-hold'), ('agent-type', 'agent-type')] if key in configuration -%}
+configure lldp {{ native }} {{ configuration[key] }}
+{% endfor -%}
+{% if 'port-id' in configuration -%}
+configure lldp portidsubtype {{ {'interface-name': 'ifname', 'mac-address': 'macaddress'}[configuration['port-id']] }}
+{% endif -%}
+{% if 'port-description' in configuration -%}
+configure lldp portdescription {{ lldp_quote(configuration['port-description']) }}
+{% endif -%}
+{% for name, settings in interfaces.items() if settings -%}
+{% if 'disable' in settings -%}
+configure ports {{ name }} lldp status disabled
+{% elif 'mode' in settings -%}
+configure ports {{ name }} lldp status {{ modes[settings['mode']] }}
+{% endif -%}
+{% if 'port-id' in settings -%}
+configure ports {{ name }} lldp portidsubtype local {{ lldp_quote(settings['port-id']) }}
+{% endif -%}
+{% if 'port-description' in settings -%}
+configure ports {{ name }} lldp portdescription {{ lldp_quote(settings['port-description']) }}
+{% endif -%}
+{% for vlan, options in settings.get('transmit-vlan', {}).items() -%}
+configure ports {{ name }} lldp vlan-tx {{ vlan }} prio {{ options.get('priority', '0') }} dei {{ 1 if 'dei' in options else 0 }}
+{% endfor -%}
+{% endfor -%}

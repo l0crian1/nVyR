@@ -11,5 +11,6 @@ if [ "$1" = remove ] && command -v systemctl >/dev/null && [ -d /run/systemd/sys
     systemctl stop 'nvyr-dhcp4@*.service' 'nvyr-dhcp6@*.service' 'nvyr-pd-ra@*.service' || true
     systemctl stop 'nvyr-ssh@*.service' || true
     systemctl stop nvyr-ntp.service || true
+    systemctl stop nvyr-lldp.service || true
     systemctl stop nvyr-interface-naming.service || true
 fi

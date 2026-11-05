@@ -101,7 +101,7 @@ def test_comprehensive_configuration_and_restore(controller, engine, session, mo
 
     assert set(result['results']) >= {'firewall', 'firewall_failsafe', 'static', 'bgp', 'policy', 'container',
                                       'dhcp-server', 'dhcpv6-server', 'bridge', 'bond', 'ethernet',
-                                      'dummy', 'virtual-ethernet', 'loopback', 'vrf', 'vrf_conntrack', 'ntp'}
+                                      'dummy', 'virtual-ethernet', 'loopback', 'vrf', 'vrf_conntrack', 'ntp', 'lldp'}
 
     # Replay every owner from saved configuration with a new kernel boot identity.
     engine.save(session)

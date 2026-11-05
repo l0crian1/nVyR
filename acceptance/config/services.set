@@ -187,3 +187,10 @@ set container name BOOTAPP memory 64m
 set container name BOOTCACHE image @image
 set container name BOOTCACHE pod BOOTPOD command sleep argument infinity
 set container name BOOTCACHE memory 64m
+# LLDP native selection and exact-port overrides survive reboot.
+set service lldp interface 'veth99*'
+set service lldp interface veth995 port-id boot-uplink port-description "Acceptance uplink"
+set service lldp exclude-interface veth997
+set service lldp system-name boot-lldp chassis-id boot-lldp
+set service lldp management-address 192.0.2.1
+set service lldp transmit-interval 5 hold-multiplier 3 port-id interface-name

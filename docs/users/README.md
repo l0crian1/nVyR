@@ -47,6 +47,7 @@ Configure and operate nVyR. For implementation and maintenance, use the
 - [DHCP operational views](dhcp-operations.md)
 - [System DNS](dns.md)
 - [DNS forwarding](dns-forwarding.md)
+- [LLDP discovery](lldp.md)
 - [Scheduled tasks](tasks.md)
 - [NTP](ntp.md)
 - [SSH service](ssh.md)

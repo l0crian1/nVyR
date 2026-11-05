@@ -34,6 +34,19 @@ class RenderingError(RouterError):
     code = 'template'
 
 
+def lldp_quote(value):
+    """Quote one lldpcli token, preserving quotes, backslashes and Unicode."""
+    return '"' + str(value).replace('\\', '\\\\').replace('"', '\\"') + '"'
+
+
+def lldp_interface_pattern(configuration):
+    """Keep selector matching and exclusion precedence in lldpd."""
+    names = configuration.get('interface', {})
+    patterns = ['*' if name == 'all' else name for name in names]
+    patterns.extend('!' + name for name in configuration.get('exclude-interface', ()))
+    return ','.join(patterns)
+
+
 class TemplateRenderer:
     """An isolated renderer, optionally loading from a service's template directory."""
 
@@ -41,6 +54,8 @@ class TemplateRenderer:
         self._loader = (PackageLoader('nvyr', 'templates') if searchpath is None
                         else FileSystemLoader(searchpath))
         self._functions = {'json_text': json_text,
+                           'lldp_quote': lldp_quote,
+                           'lldp_interface_pattern': lldp_interface_pattern,
                            'logging_severity': logging_formatters.severity,
                            'logging_program_condition': logging_formatters.program_condition,
                            'logging_services': logging_formatters.SERVICES,

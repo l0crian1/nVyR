@@ -769,7 +769,21 @@ def check_dns_forwarding(options):
         assert_equal(answer.answer[0][0].address, expected)
 
 
+def check_lldp(options):
+    from nvyr.helpers import lldp
+
+    document = lldp.control('show', 'interfaces', 'details', raw=True)
+    ports = {port['name']: port for group in document['lldp'] for port in group.get('interface', ())}
+    assert_not_in('veth997', ports)
+    port = ports['veth995']
+    assert_equal(port['port'][0]['id'][0]['value'], 'boot-uplink')
+    assert_equal(port['port'][0]['descr'][0]['value'], 'Acceptance uplink')
+    assert_equal(port['chassis'][0]['name'][0]['value'], 'boot-lldp')
+    assert_in('veth995', cmd(['lldp.nvyr.op', 'show', 'interfaces']))
+
+
 CHECKS = (
+    check_lldp,
     check_kernel_release, check_operational_inventory,
     check_system_hostname, check_static_host_mapping, check_system_timezone, check_system_tasks, check_cpu_policy, check_vrfs,
     check_dns_forwarding,

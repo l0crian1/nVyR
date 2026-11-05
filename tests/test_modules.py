@@ -9,7 +9,7 @@ from nvyr.config_scripts import (
     interface_bridge, interface_bond, interface_loopback, protocols_static, protocols_bgp, policy, logging,
     service_ssh, service_dhcp, system_dns, system_login, system_hostname, system_configuration, system_ntp, system_cpu,
     system_static_hosts, system_task, system_timezone, vrf, vrf_conntrack,
-    protocols_ospf, protocols_ospfv3, service_dns_forwarding,
+    protocols_ospf, protocols_ospfv3, service_dns_forwarding, service_lldp,
 )
 from nvyr.modules import registry
 from nvyr.schema import Schema
@@ -45,6 +45,7 @@ def test_bundled_owners_use_scripts_directly_without_lifecycle_recording():
         'dhcpv6-server': service_dhcp,
         'dns': system_dns,
         'dns-forwarding': service_dns_forwarding,
+        'lldp': service_lldp,
         'ntp': system_ntp,
         'login': system_login,
         'system': system_hostname,

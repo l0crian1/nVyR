@@ -3,6 +3,9 @@ monitor:
   description: Watch live system events
   children:
 
+    include_schema:
+    - file: operational/lldp-monitor.yaml.i
+
     firewall:
       kind: node
       description: Watch firewall events

@@ -160,6 +160,8 @@ def configure(config, options):
     """Apply everything together to expose dependency/startup ordering defects."""
     if lookup(config.get_config(), ('system', 'ntp'), None) is not None:
         config.delete('delete system ntp')
+    if lookup(config.get_config(), ('service', 'lldp'), None) is not None:
+        config.delete('delete service lldp')
     if lookup(config.get_config(), ('interfaces', 'ethernet', options['ethernet']), None) is not None:
         config.delete('delete interfaces ethernet ' + options['ethernet'])
     for filename, number, line in commands(options):

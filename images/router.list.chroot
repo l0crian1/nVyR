@@ -39,6 +39,7 @@ jq
 openssh-server
 chrony
 unbound
+lldpd
 dns-root-data
 isc-kea-common
 isc-kea-dhcp4

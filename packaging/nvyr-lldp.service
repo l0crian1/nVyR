@@ -1,0 +1,16 @@
+[Unit]
+Description=nVyR LLDP service
+After=network.target nvyr-netlinkd.service
+Conflicts=lldpd.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=notify
+NotifyAccess=main
+EnvironmentFile=/run/nvyr-lldp/daemon.env
+ExecStart=/usr/sbin/lldpd -d -O /run/nvyr-lldp/lldpd.conf -u /run/nvyr-lldp/control.sock -p /run/nvyr-lldp/pid $LLDP_OPTIONS
+Restart=on-failure
+RestartSec=2
+TimeoutStartSec=20
+TimeoutStopSec=15
+# Configuration owns activation; this unit is not enabled independently.

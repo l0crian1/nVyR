@@ -212,6 +212,13 @@
     ]
   },
   {
+    "script": "lldp",
+    "priority": 75,
+    "paths": [
+      "service lldp"
+    ]
+  },
+  {
     "script": "task",
     "priority": 99,
     "paths": [

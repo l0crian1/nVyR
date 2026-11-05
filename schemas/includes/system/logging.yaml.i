@@ -61,10 +61,11 @@ logging:
         dhcp-server: Kea DHCPv4 servers
         dhcpv6-server: Kea DHCPv6 servers
         ntp: Chrony time service
+        lldp: LLDP discovery service
         dns-forwarding: Unbound DNS forwarding services
         ssh: Secure Shell service
       validators:
-        list: {values: 'system kernel authentication configd netlinkd bgp static zebra ospf dhcp-server dhcpv6-server ntp ssh dns-forwarding'}
+        list: {values: 'system kernel authentication configd netlinkd bgp static zebra ospf dhcp-server dhcpv6-server ntp ssh dns-forwarding lldp'}
       children:
 
         level:

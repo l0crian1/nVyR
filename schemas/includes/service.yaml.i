@@ -5,6 +5,7 @@ service:
 
     include_schema:
     - file: service/ssh.yaml.i
+    - file: service/lldp.yaml.i
     - file: service/dns.yaml.i
     - file: service/dhcp-server.yaml.i
     - file: service/dhcpv6-server.yaml.i

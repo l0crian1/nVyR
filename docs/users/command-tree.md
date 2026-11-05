@@ -11244,6 +11244,34 @@ set
 │   │       │   └── threads <1-1024>
 │   │       ├── port <1-65535>
 │   │       └── source-address <IPv4|IPv6>
+│   ├── lldp
+│   │   ├── agent-type <nearest-bridge|nearest-non-tpmr-bridge|nearest-customer-bridge>
+│   │   ├── bond-member-source-mac <local|real|zero|fixed>
+│   │   ├── capability <bridge|router|station|wlan|telephone|repeater|docsis|other>
+│   │   ├── chassis-id <text>
+│   │   ├── chassis-interface <interface>
+│   │   ├── disable
+│   │   ├── disable-capability-advertisement
+│   │   ├── disable-management-address-advertisement
+│   │   ├── exclude-interface <interface>
+│   │   ├── hold-multiplier <1-100>
+│   │   ├── interface <all|interface>
+│   │   │   ├── disable
+│   │   │   ├── mode <receive-transmit|receive-only|transmit-only>
+│   │   │   ├── port-description <text>
+│   │   │   ├── port-id <text>
+│   │   │   └── transmit-vlan <0-4094>
+│   │   │       ├── dei
+│   │   │       └── priority <0-7>
+│   │   ├── management-address <address>
+│   │   ├── management-interface <interface>
+│   │   ├── max-neighbors <1-2147483647>
+│   │   ├── mode <receive-transmit|receive-only|transmit-only>
+│   │   ├── port-description <text>
+│   │   ├── port-id <interface-name|mac-address>
+│   │   ├── system-description <text>
+│   │   ├── system-name <text>
+│   │   └── transmit-interval <1-3600>
 │   └── ssh
 │       └── listen-address <x.x.x.x|x:x:x:x:x:x>
 ├── system
@@ -11259,7 +11287,7 @@ set
 │   │   │   ├── count <1-1000>
 │   │   │   └── size <size>
 │   │   └── service <system|kernel|authentication|configd|netlinkd|bgp|static|zebra|ospf|
-│   │                dhcp-server|dhcpv6-server|ntp|dns-forwarding|ssh>
+│   │                dhcp-server|dhcpv6-server|ntp|lldp|dns-forwarding|ssh>
 │   │       └── level <emerg|alert|crit|err|warn|notice|info|debug>
 │   ├── login
 │   │   └── user <username>
@@ -12839,10 +12867,12 @@ operational mode
 │   ├── server <x.x.x.x|x:x:x:x:x:x>
 │   └── type <a|aaaa|mx|txt|ns|cname|soa|srv|caa|ptr>
 ├── monitor
-│   └── firewall
-│       └── trace
-│           ├── duration <time>
-│           └── save </config/traces/file.jsonl>
+│   ├── firewall
+│   │   └── trace
+│   │       ├── duration <time>
+│   │       └── save </config/traces/file.jsonl>
+│   └── lldp
+│       └── interface <interface>
 ├── ping <host|x.x.x.x|x:x:x:x:x:x>
 │   ├── adaptive
 │   ├── allow-broadcast
@@ -14582,6 +14612,16 @@ operational mode
 │   │           │       └── prefix
 │   │           └── tag <1-4294967295>
 │   ├── license
+│   ├── lldp
+│   │   ├── interfaces [<interface>]
+│   │   │   └── detail
+│   │   ├── local
+│   │   ├── neighbors
+│   │   │   ├── detail
+│   │   │   └── interface <interface>
+│   │   │       └── detail
+│   │   └── statistics
+│   │       └── interface <interface>
 │   ├── log
 │   │   ├── authentication
 │   │   │   └── follow
@@ -14730,6 +14770,8 @@ operational mode
 │   │   │                   └── follow
 │   │   ├── follow
 │   │   ├── kernel
+│   │   │   └── follow
+│   │   ├── lldp
 │   │   │   └── follow
 │   │   ├── nat
 │   │   │   ├── destination

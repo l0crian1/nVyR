@@ -41,6 +41,7 @@ operational commands, use the [user documentation](../users/README.md).
 - [DHCP operational views: implementation and maintenance](dhcp-operations.md)
 - [DHCP servers: implementation and maintenance](dhcp-server.md)
 - [DNS forwarding: lifecycle and dynamic inputs](dns-forwarding.md)
+- [LLDP: native selection, lifecycle and tests](lldp.md)
 - [Early firewall protection: implementation and maintenance](firewall-failsafe.md)
 - [Firewall configuration: implementation and maintenance](firewall.md)
 - [IPv4 NAT and NAT66: implementation and maintenance](nat.md)

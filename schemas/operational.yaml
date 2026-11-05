@@ -61,6 +61,7 @@ children: # operational
       - file: operational/logs.yaml.i
       - file: operational/ntp.yaml.i
       - file: operational/dns-show.yaml.i
+      - file: operational/lldp-show.yaml.i
       - file: operational/dhcp-show.yaml.i
         as: null
       - file: operational/vrf.yaml.i

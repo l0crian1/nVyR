@@ -14,6 +14,7 @@ SERVICES = {
     'zebra': ('zebra',),
     'ospf': ('ospfd', 'ospf6d'),
     'ntp': ('chronyd', 'nvyr-ntp'),
+    'lldp': ('lldpd', 'lldpcli'),
     'ssh': ('sshd', 'sshd-session'),
     'dhcp-server': ('kea-dhcp4',),
     'dhcpv6-server': ('kea-dhcp6',),

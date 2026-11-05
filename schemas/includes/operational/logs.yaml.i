@@ -72,6 +72,18 @@ log:
                   command: ['logs.nvyr.op', 'show', 'dns-forwarding', '--vrf', '@6', '--follow']
                   stream: true
 
+    lldp:
+      kind: node
+      description: LLDP service logs
+      command: ['logs.nvyr.op', 'show', 'lldp']
+      children:
+
+        follow:
+          kind: node
+          description: Follow new LLDP log entries
+          command: ['logs.nvyr.op', 'show', 'lldp', '--follow']
+          stream: true
+
     kernel:
       kind: node
       description: kernel log

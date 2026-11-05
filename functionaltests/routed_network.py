@@ -5,13 +5,14 @@ distinct routes and ports; deliberate mutations are restored by the package fixt
 The simulated hosts are the only objects configured outside the nVyR CLI.
 """
 
-from contextlib import contextmanager
+from contextlib import contextmanager, ExitStack
 from pathlib import Path
 import json
 import os
 import socket
 import shlex
 import uuid
+import tempfile
 
 from nvyr.helpers.process import cmd, rc_cmd
 from nvyr.helpers.nftables_normalizer import normalize
@@ -22,6 +23,7 @@ from smoketests.assertions import (
     link_inventory,
 )
 from smoketests.support import defer_interrupt, wait_for
+from functionaltests.lldp_lab import daemon as lldp_peer
 
 
 CONFIGURATION = Path(__file__).with_name('configs') / 'routed-network.conf'
@@ -85,6 +87,8 @@ def configure(config):
         config.delete('delete system ntp')
     if lookup(running, ('service', 'dns'), None) is not None:
         config.delete('delete service dns')
+    if lookup(running, ('service', 'lldp'), None) is not None:
+        config.delete('delete service lldp')
 
     config.set('set interfaces dummy dum998')
     config.set('set interfaces dummy dum999')
@@ -219,7 +223,16 @@ def scenario(config, stop):
         cmd(['ip', '-n', 'nvyr-routed-right', '-6', 'address', 'add', '2001:db8:64::2/128',
              'dev', 'lo', 'nodad'])
         converge()
-        yield
+        with tempfile.TemporaryDirectory(prefix='nvyr-routed-lldp-') as temporary, ExitStack() as peers:
+            directory = Path(temporary)
+            directory.chmod(0o755)
+            for side, interface in (('left', 'veth42064'), ('right', 'veth42066')):
+                peers.enter_context(lldp_peer(directory / side, 'nvyr-routed-' + side, {
+                    'system-name': 'routed-' + side, 'chassis-id': 'routed-' + side,
+                    'interface': {interface: {'port-id': side + '-uplink'}},
+                    'transmit-interval': '1', 'hold-multiplier': '3',
+                }))
+            yield
     finally:
         try:
             with defer_interrupt():
