@@ -99,7 +99,7 @@ def verify_icmp_group_reference(rule, path, groups, mapping, match_group, exclud
 
 
 def _group_interval(field, value, family):
-    """Normalize one validated key component for duplicate/overlap detection."""
+    """Normalize a complete key component; intersecting ranges remain distinct."""
     if field == 'connection-expiration' or field.endswith(('-packets', '-bytes', '-average-packet-size')):
         kind = 'expiration' if field == 'connection-expiration' else 'packets' if field.endswith('-packets') else 'bytes'
         number = connection_quantity(value, kind)
@@ -113,7 +113,8 @@ def _group_interval(field, value, family):
         parts = value.split('-')
         return int(ipaddress.ip_address(parts[0])), int(ipaddress.ip_address(parts[-1]))
 
-    if field in {'source-port', 'destination-port', 'packet-mark', 'connection-mark', 'dscp', 'vlan-id', 'vlan-priority'} or (field.startswith('connection-') and field.endswith(('-port', '-zone', '-id'))):
+    if field in {'source-port', 'destination-port', 'packet-mark', 'connection-mark', 'dscp', 'vlan-id', 'vlan-priority',
+                 'inbound-link-group', 'outbound-link-group'} or (field.startswith('connection-') and field.endswith(('-port', '-zone', '-id'))):
         parts = value.split('-')
         return int(parts[0]), int(parts[-1])
 
@@ -322,7 +323,6 @@ def _verify_group(family, name, configuration, group_kind, named_chains):
     if 'tcp-flags' in fields and 'protocol' not in fields:
         raise ValidationError(f'{path}: TCP flags require protocol in the {group_kind} match fields')
 
-    intervals = []
     exact_keys = {}
     tcp_mask = nft_group_tcp_mask(configuration) if 'tcp-flags' in fields else None
 
@@ -374,28 +374,13 @@ def _verify_group(family, name, configuration, group_kind, named_chains):
         for flag_value in flags:
             key = tuple((flag_value, flag_value) if field == 'tcp-flags' else _group_interval(field, nft_field_value(entry, field), family)
                         for field in fields)
-            # Expanded alternatives may not overlap another logical entry's key.
+            # Only identical complete native keys conflict. A different range in
+            # any component is a distinct key, even when the ranges intersect.
             if key in exact_keys:
                 other = exact_keys[key]
-                raise ValidationError(f'{path}: entries {other!r} and {identifier!r} have duplicate or overlapping lookup keys')
+                raise ValidationError(f'{path}: entries {other!r} and {identifier!r} have duplicate lookup keys')
 
             exact_keys[key] = identifier
-            intervals.append((key, identifier))
-
-    # Exact tuples need only the hash lookup above, even for large maps.
-    if all(low == high for key, _ in intervals for low, high in key):
-        return
-
-    # Sweep the most varied component to avoid scanning identical interface keys.
-    axis = max(range(len(fields)), key=lambda index: len({key[index] for key, _ in intervals}))
-    active = []
-    for key, identifier in sorted(intervals, key=lambda item: item[0][axis]):
-        active = [(prior, name) for prior, name in active if prior[axis][1] >= key[axis][0]]
-        for prior, other in active:
-            # Two entries conflict only when their ranges overlap in every key field.
-            if all(left[0] <= right[1] and right[0] <= left[1] for left, right in zip(prior, key)):
-                raise ValidationError(f'{path}: entries {other!r} and {identifier!r} have duplicate or overlapping lookup keys')
-        active.append((key, identifier))
 
 
 def _verify_map_result(result, entry_path, kind, named_chains, family):

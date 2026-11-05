@@ -129,7 +129,7 @@ def test_map_aliases_cannot_create_duplicate_wire_keys():
     mapping['entry']['ECHO']['icmp-type'] = 'mld-listener-done'
     mapping['entry']['OTHER'] = deepcopy(mapping['entry']['ECHO'])
     mapping['entry']['OTHER']['icmp-type'] = 'mld-listener-reduction'
-    with pytest.raises(RouterError, match='duplicate or overlapping'):
+    with pytest.raises(RouterError, match='duplicate lookup keys'):
         firewall.verify_map('ipv6', 'M', mapping, {})
 
 

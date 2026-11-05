@@ -1091,7 +1091,12 @@ additional matches, including protocol constraints supplied by map entries.
 Description, disable, logging and tracking remain available on that rule.
 
 `verify_map()` requires every entry to provide exactly the declared key fields and
-result fields. It rejects duplicate/overlapping tuples and missing jump targets.
+result fields. It rejects identical complete lookup keys and missing jump targets.
+Keys remain distinct if any component differs, including overlapping prefixes or
+ranges. Equivalent representations of the same value still count as duplicates.
+Changing the result does not distinguish otherwise identical keys, for any result
+type. Native nftables can still reject overlapping intervals during installation;
+for example, `tcp . 100-200` and `tcp . 150-250` are rejected by nftables 1.1.7.
 Transport port keys require `protocol` with TCP, UDP, UDP-Lite, SCTP or DCCP
 in every entry. NAT port results remain limited to TCP/UDP.
 There may be at most five key fields and 64 bytes of key storage. Concatenated
@@ -1234,7 +1239,7 @@ packet-field combinations. Each entry must match all of its fields; matching any
 entry satisfies the group. Entry names do not establish priority.
 
 Match-groups share the map selectors, scalar entry fields, protocol checks,
-five-field/64-byte limits, duplicate/overlap detection, and description limits.
+five-field/64-byte limits, exact duplicate-key detection, and description limits.
 They have no `result-type` or entry `result`. The consuming rule supplies its own
 action or translation, or uses a separate map for its result.
 

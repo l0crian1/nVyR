@@ -123,7 +123,7 @@ def test_group_generation_masks_and_conflicts(kind, family):
 
     definition = tree['firewall']['group'][kind][family]['FLAGS']
     definition['entry']['SYN']['tcp-flags'] = 'syn'
-    with pytest.raises(RouterError, match='overlapping'):
+    with pytest.raises(RouterError, match='duplicate lookup keys'):
         rendered(tree)
 
     definition['entry']['SYN']['tcp-flags'] = 'syn,not rst'

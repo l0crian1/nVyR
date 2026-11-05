@@ -118,7 +118,7 @@ def test_key_sizes_match_nft_storage_types():
     (lambda m: m['entry']['WEB'].update(result={}), 'requires exactly'),
     (lambda m: m['entry']['WEB']['result'].update(address='192.0.2.1'), 'requires exactly'),
     (lambda m: m['entry']['WEB'].update(result={'action': 'jump', 'jump-target': 'MISSING'}), 'not a named chain'),
-    (lambda m: m['entry'].update({'SECOND': deepcopy(m['entry']['WEB'])}), 'duplicate or overlapping'),
+    (lambda m: m['entry'].update({'SECOND': deepcopy(m['entry']['WEB'])}), 'duplicate lookup keys'),
 ])
 def test_map_cross_field_validation(change, message):
     mapping = definition()
@@ -127,20 +127,23 @@ def test_map_cross_field_validation(change, message):
         firewall.verify_map('ipv4', 'M', mapping, {})
 
 
-@pytest.mark.parametrize('family,first,second', [
-    ('ipv4', '192.0.2.0/24', '192.0.2.1'),
-    ('ipv4', '192.0.2.1-192.0.2.10', '192.0.2.10-192.0.2.20'),
-    ('ipv6', '2001:db8::/64', '2001:0db8:0:0::1'),
-    ('ipv6', '2001:db8::1', '2001:0db8::1'),
+@pytest.mark.parametrize('family,first,second,duplicate', [
+    ('ipv4', '192.0.2.0/24', '192.0.2.1', False),
+    ('ipv4', '192.0.2.1-192.0.2.10', '192.0.2.10-192.0.2.20', False),
+    ('ipv6', '2001:db8::/64', '2001:0db8:0:0::1', False),
+    ('ipv6', '2001:db8::1', '2001:0db8::1', True),
 ])
-def test_overlap_detection_normalizes_addresses_and_checks_all_components(family, first, second):
+def test_duplicate_detection_normalizes_addresses_and_checks_all_components(family, first, second, duplicate):
     mapping = {'match': {'source-address': True, 'protocol': True}, 'result-type': 'verdict', 'entry': {
         'A': {'source-address': first, 'protocol': 'tcp', 'result': {'action': 'accept'}},
         'B': {'source-address': second, 'protocol': 'udp', 'result': {'action': 'drop'}},
     }}
     firewall.verify_map(family, 'M', mapping, {})
     mapping['entry']['B']['protocol'] = 'tcp'
-    with pytest.raises(RouterError, match='overlapping'):
+    if duplicate:
+        with pytest.raises(RouterError, match='duplicate lookup keys'):
+            firewall.verify_map(family, 'M', mapping, {})
+    else:
         firewall.verify_map(family, 'M', mapping, {})
 
 

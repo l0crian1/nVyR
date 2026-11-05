@@ -123,7 +123,7 @@ def test_icmp_group_requires_protocol_and_checks_combined_type_code(family):
     (lambda g: g.pop('match'), 'match field'),
     (lambda g: g['entry']['TRUSTED'].pop('source-address'), 'missing match'),
     (lambda g: g['entry']['TRUSTED'].update({'protocol': 'tcp'}), 'undeclared match'),
-    (lambda g: g['entry'].update({'OTHER': {'source-address': '192.0.2.1'}}), 'overlapping'),
+    (lambda g: g['entry'].update({'OTHER': {'source-address': '192.0.2.0/24'}}), 'duplicate lookup keys'),
     (lambda g: g['entry']['TRUSTED'].update(description='x' * 128), 'comment limit'),
 ])
 def test_groups_reuse_key_verification(edit, message):
