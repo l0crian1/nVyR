@@ -1,6 +1,7 @@
 """Reusable routing policies applied through the shared FRR reload pipeline."""
 
 import ipaddress
+from datetime import datetime
 from collections.abc import Mapping
 
 from nvyr.errors import ValidationError
@@ -216,7 +217,31 @@ def _verify_route_map(configuration, rule, path):
             raise ValidationError(f'{path}: {family} next-hop modes are mutually exclusive')
 
 
+def _verify_key_chains(configuration):
+    for name, chain in lookup(configuration, ('key-chain',), {}).items():
+        keys = lookup(chain, ('key',), {})
+        # An empty authentication chain cannot authenticate any routing packet.
+        if not keys:
+            raise ValidationError(f'policy key-chain {name}: at least one key is required')
+        for identifier, key in keys.items():
+            path = f'policy key-chain {name} key {identifier}'
+            # Both the secret and algorithm are necessary for unambiguous authentication.
+            if 'secret' not in key or 'algorithm' not in key:
+                raise ValidationError(f'{path}: secret and algorithm are required')
+            for direction in ('accept', 'send'):
+                lifetime = lookup(key, (direction + '-lifetime',), None)
+                if lifetime is None:
+                    continue
+                # FRR needs a start and exactly one termination form for a lifetime.
+                if 'start' not in lifetime or sum(field in lifetime for field in ('end', 'duration', 'infinite')) != 1:
+                    raise ValidationError(f'{path} {direction}-lifetime: start and one of end, duration, or infinite are required')
+                # A key must remain valid for a positive time interval.
+                if 'end' in lifetime and datetime.fromisoformat(lifetime['end']) <= datetime.fromisoformat(lifetime['start']):
+                    raise ValidationError(f'{path} {direction}-lifetime: end must be later than start')
+
+
 def verify(configuration, context):
+    _verify_key_chains(configuration)
     _verify_bgp_lists(configuration)
     for kind in ('access-list', 'prefix-list'):
         for family, lists in lookup(configuration, (kind,), {}).items():

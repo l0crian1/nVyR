@@ -10117,6 +10117,20 @@ set
 │   │                          accept-own|llgr-stale|no-llgr|accept-own-nexthop|
 │   │                          route-filter-translated-v4|route-filter-v4|
 │   │                          route-filter-translated-v6|route-filter-v6|asn:value>
+│   ├── key-chain <name>
+│   │   └── key <key-id>
+│   │       ├── accept-lifetime
+│   │       │   ├── duration <1-2147483646>
+│   │       │   ├── end <YYYY-MM-DDTHH:MM:SS>
+│   │       │   ├── infinite
+│   │       │   └── start <YYYY-MM-DDTHH:MM:SS>
+│   │       ├── algorithm <md5|hmac-sha-1|hmac-sha-256|hmac-sha-384|hmac-sha-512>
+│   │       ├── secret <secret>
+│   │       └── send-lifetime
+│   │           ├── duration <1-2147483646>
+│   │           ├── end <YYYY-MM-DDTHH:MM:SS>
+│   │           ├── infinite
+│   │           └── start <YYYY-MM-DDTHH:MM:SS>
 │   ├── large-community-list
 │   │   ├── expanded <name>
 │   │   │   ├── description <text>
@@ -10200,6 +10214,7 @@ set
 │               │              route-filter-translated-v4|route-filter-v4|
 │               │              route-filter-translated-v6|route-filter-v6|additive|none|asn:value>
 │               ├── community-delete <name>
+│               ├── forwarding-address <h:h::h>
 │               ├── ipv4
 │               │   └── next-hop
 │               │       ├── address <x.x.x.x>
@@ -10215,7 +10230,9 @@ set
 │               ├── large-community-delete <name>
 │               ├── local-preference <value|+value|-value>
 │               ├── metric <value|+value|-value>
+│               ├── metric-type <type-1|type-2>
 │               ├── origin <igp|egp|incomplete>
+│               ├── tag <0-4294967295>
 │               └── weight <0-4294967295>
 ├── protocols
 │   ├── bgp
@@ -10671,6 +10688,296 @@ set
 │   │       ├── ttl-security
 │   │       │   └── hops <1-254>
 │   │       └── update-source <interface|address>
+│   ├── ospf
+│   │   ├── area <0-4294967295|x.x.x.x>
+│   │   │   ├── authentication <plaintext|message-digest>
+│   │   │   ├── default-cost <0-16777215>
+│   │   │   ├── export-list <name>
+│   │   │   ├── filter-list
+│   │   │   │   ├── in <name>
+│   │   │   │   └── out <name>
+│   │   │   ├── flood-reduction
+│   │   │   ├── import-list <name>
+│   │   │   ├── network <prefix>
+│   │   │   ├── nssa
+│   │   │   │   ├── default-information
+│   │   │   │   │   └── originate
+│   │   │   │   │       ├── metric <0-16777214>
+│   │   │   │   │       └── metric-type <1|2>
+│   │   │   │   ├── no-summary
+│   │   │   │   ├── range <prefix>
+│   │   │   │   │   ├── cost <0-16777215>
+│   │   │   │   │   └── no-advertise
+│   │   │   │   ├── suppress-forwarding-address
+│   │   │   │   └── translator-role <candidate|always|never>
+│   │   │   ├── range <prefix>
+│   │   │   │   ├── cost <0-16777215>
+│   │   │   │   ├── no-advertise
+│   │   │   │   └── substitute <prefix>
+│   │   │   ├── shortcut <default|enable|disable>
+│   │   │   └── stub
+│   │   │       └── no-summary
+│   │   ├── default-information
+│   │   │   └── originate
+│   │   │       ├── always
+│   │   │       ├── metric <0-16777214>
+│   │   │       ├── metric-type <1|2>
+│   │   │       └── route-map <name>
+│   │   ├── default-metric <0-16777214>
+│   │   ├── disable-proactive-arp
+│   │   ├── disable-socket-per-interface
+│   │   ├── distance <1-255>
+│   │   ├── distribute-list
+│   │   │   └── export <source>
+│   │   │       └── access-list <name>
+│   │   ├── flood-reduction
+│   │   ├── forwarding-address-self
+│   │   ├── graceful-restart
+│   │   │   └── grace-period <1-1800>
+│   │   ├── graceful-restart-helper
+│   │   │   ├── all
+│   │   │   ├── disable-strict-lsa-checking
+│   │   │   ├── neighbor <x.x.x.x>
+│   │   │   ├── planned-only
+│   │   │   └── supported-grace-time <10-1800>
+│   │   ├── interface <interface>
+│   │   │   ├── address <x.x.x.x>
+│   │   │   │   ├── area <area-id>
+│   │   │   │   ├── authentication
+│   │   │   │   │   ├── key-chain <name>
+│   │   │   │   │   ├── md5
+│   │   │   │   │   │   └── key <1-255>
+│   │   │   │   │   │       └── secret <secret>
+│   │   │   │   │   └── none
+│   │   │   │   ├── cost <1-65535>
+│   │   │   │   ├── dead-interval <1-65535>
+│   │   │   │   ├── disable-opaque-capability
+│   │   │   │   ├── fast-hello <2-20>
+│   │   │   │   ├── hello-interval <1-65535>
+│   │   │   │   ├── mtu-ignore
+│   │   │   │   ├── neighbor-filter <name>
+│   │   │   │   ├── passive
+│   │   │   │   │   └── disable
+│   │   │   │   ├── prefix-suppression
+│   │   │   │   ├── priority <0-255>
+│   │   │   │   ├── retransmit-interval <1-65535>
+│   │   │   │   ├── retransmit-window <20-1000>
+│   │   │   │   └── transmit-delay <1-65535>
+│   │   │   ├── area <area-id>
+│   │   │   ├── authentication
+│   │   │   │   ├── key-chain <name>
+│   │   │   │   ├── md5
+│   │   │   │   │   └── key <1-255>
+│   │   │   │   │       └── secret <secret>
+│   │   │   │   ├── none
+│   │   │   │   └── plaintext <secret>
+│   │   │   ├── cost <1-65535>
+│   │   │   ├── dead-interval <1-65535>
+│   │   │   ├── dead-timer-reset-any-control
+│   │   │   ├── disable-opaque-capability
+│   │   │   ├── dscp
+│   │   │   │   ├── all <0-63>
+│   │   │   │   └── low-control <0-63>
+│   │   │   ├── fast-hello <2-20>
+│   │   │   ├── graceful-restart-hello-delay <1-1800>
+│   │   │   ├── hello-interval <1-65535>
+│   │   │   ├── mtu-ignore
+│   │   │   ├── neighbor-filter <name>
+│   │   │   ├── network
+│   │   │   │   ├── broadcast
+│   │   │   │   ├── non-broadcast
+│   │   │   │   ├── point-to-multipoint
+│   │   │   │   │   ├── delay-reflood
+│   │   │   │   │   └── non-broadcast
+│   │   │   │   └── point-to-point
+│   │   │   ├── passive
+│   │   │   │   └── disable
+│   │   │   ├── prefix-suppression
+│   │   │   ├── priority <0-255>
+│   │   │   ├── retransmit-interval <1-65535>
+│   │   │   ├── retransmit-window <20-1000>
+│   │   │   └── transmit-delay <1-65535>
+│   │   ├── log-adjacency-changes
+│   │   │   └── detail
+│   │   ├── max-metric
+│   │   │   ├── administrative
+│   │   │   ├── on-shutdown <5-100>
+│   │   │   └── on-startup <5-86400>
+│   │   ├── maximum-paths <1-256>
+│   │   ├── neighbor <x.x.x.x>
+│   │   │   ├── poll-interval <1-65535>
+│   │   │   └── priority <0-255>
+│   │   ├── options
+│   │   │   ├── abr-type <cisco|ibm|shortcut|standard>
+│   │   │   ├── opaque-lsa
+│   │   │   ├── rfc1583-compatibility
+│   │   │   ├── router-id <x.x.x.x>
+│   │   │   ├── send-extra-data
+│   │   │   └── write-multiplier <1-100>
+│   │   ├── passive-default
+│   │   ├── redistribute
+│   │   │   ├── bgp
+│   │   │   │   ├── metric <0-16777214>
+│   │   │   │   ├── metric-type <1|2>
+│   │   │   │   └── route-map <name>
+│   │   │   ├── connected
+│   │   │   │   ├── metric <0-16777214>
+│   │   │   │   ├── metric-type <1|2>
+│   │   │   │   └── route-map <name>
+│   │   │   ├── kernel
+│   │   │   │   ├── metric <0-16777214>
+│   │   │   │   ├── metric-type <1|2>
+│   │   │   │   └── route-map <name>
+│   │   │   ├── local
+│   │   │   │   ├── metric <0-16777214>
+│   │   │   │   ├── metric-type <1|2>
+│   │   │   │   └── route-map <name>
+│   │   │   ├── static
+│   │   │   │   ├── metric <0-16777214>
+│   │   │   │   ├── metric-type <1|2>
+│   │   │   │   └── route-map <name>
+│   │   │   ├── table <source-id>
+│   │   │   │   ├── metric <0-16777214>
+│   │   │   │   ├── metric-type <1|2>
+│   │   │   │   └── route-map <name>
+│   │   │   └── table-direct <source-id>
+│   │   │       ├── metric <0-16777214>
+│   │   │       ├── metric-type <1|2>
+│   │   │       └── route-map <name>
+│   │   ├── reference-bandwidth <1-4294967>
+│   │   ├── route-distance
+│   │   │   ├── external <1-255>
+│   │   │   ├── inter-area <1-255>
+│   │   │   └── intra-area <1-255>
+│   │   ├── router-info <area|as>
+│   │   ├── shutdown
+│   │   ├── socket
+│   │   │   └── buffer
+│   │   │       ├── all <1-4000000000>
+│   │   │       ├── receive <1-4000000000>
+│   │   │       └── send <1-4000000000>
+│   │   ├── summary-address <prefix>
+│   │   │   ├── no-advertise
+│   │   │   └── tag <1-4294967295>
+│   │   └── timers
+│   │       ├── aggregation <5-1800>
+│   │       ├── lsa-generation <0-5000>
+│   │       ├── lsa-min-arrival <0-5000>
+│   │       ├── refresh <10-1800>
+│   │       └── spf
+│   │           ├── delay <0-600000>
+│   │           ├── initial-hold <0-600000>
+│   │           └── maximum-hold <0-600000>
+│   ├── ospfv3
+│   │   ├── area <0-4294967295|x.x.x.x>
+│   │   │   ├── export-list <name>
+│   │   │   ├── filter-list
+│   │   │   │   ├── in <name>
+│   │   │   │   └── out <name>
+│   │   │   ├── import-list <name>
+│   │   │   ├── nssa
+│   │   │   │   ├── default-information
+│   │   │   │   │   └── originate
+│   │   │   │   │       ├── metric <0-16777214>
+│   │   │   │   │       └── metric-type <1|2>
+│   │   │   │   ├── no-summary
+│   │   │   │   └── range <prefix>
+│   │   │   │       ├── cost <0-16777215>
+│   │   │   │       └── no-advertise
+│   │   │   ├── range <prefix>
+│   │   │   │   ├── cost <0-16777215>
+│   │   │   │   └── no-advertise
+│   │   │   └── stub
+│   │   │       └── no-summary
+│   │   ├── default-information
+│   │   │   └── originate
+│   │   │       ├── always
+│   │   │       ├── metric <0-16777214>
+│   │   │       ├── metric-type <1|2>
+│   │   │       └── route-map <name>
+│   │   ├── distance <1-255>
+│   │   ├── graceful-restart
+│   │   │   └── grace-period <1-1800>
+│   │   ├── graceful-restart-helper
+│   │   │   ├── all
+│   │   │   ├── disable-strict-lsa-checking
+│   │   │   ├── neighbor <x.x.x.x>
+│   │   │   ├── planned-only
+│   │   │   └── supported-grace-time <10-1800>
+│   │   ├── interface <interface>
+│   │   │   ├── advertise-prefix-list <name>
+│   │   │   ├── area <area-id>
+│   │   │   ├── authentication
+│   │   │   │   ├── key <1-65535>
+│   │   │   │   │   ├── algorithm <md5|hmac-sha-1|hmac-sha-256|hmac-sha-384|hmac-sha-512>
+│   │   │   │   │   └── secret <secret>
+│   │   │   │   └── key-chain <name>
+│   │   │   ├── cost <1-65535>
+│   │   │   ├── dead-interval <1-65535>
+│   │   │   ├── graceful-restart-hello-delay <1-1800>
+│   │   │   ├── hello-interval <1-65535>
+│   │   │   ├── instance-id <0-255>
+│   │   │   ├── mtu <1-65535>
+│   │   │   ├── mtu-ignore
+│   │   │   ├── neighbor <fe80::address>
+│   │   │   │   ├── cost <1-65535>
+│   │   │   │   └── poll-interval <1-65535>
+│   │   │   ├── neighbor-options
+│   │   │   │   ├── configured-neighbors-only
+│   │   │   │   ├── connected-prefixes <include|exclude>
+│   │   │   │   └── disable-multicast-hello
+│   │   │   ├── network <broadcast|point-to-point|point-to-multipoint>
+│   │   │   ├── passive
+│   │   │   │   └── disable
+│   │   │   ├── priority <0-255>
+│   │   │   ├── retransmit-interval <1-65535>
+│   │   │   └── transmit-delay <1-3600>
+│   │   ├── log-adjacency-changes
+│   │   │   └── detail
+│   │   ├── maximum-paths <1-256>
+│   │   ├── options
+│   │   │   ├── router-id <x.x.x.x>
+│   │   │   ├── send-extra-data
+│   │   │   └── write-multiplier <1-100>
+│   │   ├── redistribute
+│   │   │   ├── bgp
+│   │   │   │   ├── metric <0-16777214>
+│   │   │   │   ├── metric-type <1|2>
+│   │   │   │   └── route-map <name>
+│   │   │   ├── connected
+│   │   │   │   ├── metric <0-16777214>
+│   │   │   │   ├── metric-type <1|2>
+│   │   │   │   └── route-map <name>
+│   │   │   ├── kernel
+│   │   │   │   ├── metric <0-16777214>
+│   │   │   │   ├── metric-type <1|2>
+│   │   │   │   └── route-map <name>
+│   │   │   ├── local
+│   │   │   │   ├── metric <0-16777214>
+│   │   │   │   ├── metric-type <1|2>
+│   │   │   │   └── route-map <name>
+│   │   │   └── static
+│   │   │       ├── metric <0-16777214>
+│   │   │       ├── metric-type <1|2>
+│   │   │       └── route-map <name>
+│   │   ├── reference-bandwidth <1-4294967>
+│   │   ├── route-distance
+│   │   │   ├── external <1-255>
+│   │   │   ├── inter-area <1-255>
+│   │   │   └── intra-area <1-255>
+│   │   ├── stub-router
+│   │   ├── summary-address <prefix>
+│   │   │   ├── metric <0-16777214>
+│   │   │   ├── metric-type <1|2>
+│   │   │   ├── no-advertise
+│   │   │   └── tag <1-4294967295>
+│   │   └── timers
+│   │       ├── aggregation <5-1800>
+│   │       ├── lsa-min-arrival <0-600000>
+│   │       └── spf
+│   │           ├── delay <0-600000>
+│   │           ├── initial-hold <0-600000>
+│   │           └── maximum-hold <0-600000>
 │   └── static
 │       ├── route <x.x.x.x/x>
 │       │   ├── blackhole
@@ -11380,6 +11687,294 @@ set
         │   │       ├── ttl-security
         │   │       │   └── hops <1-254>
         │   │       └── update-source <interface|address>
+        │   ├── ospf
+        │   │   ├── area <0-4294967295|x.x.x.x>
+        │   │   │   ├── authentication <plaintext|message-digest>
+        │   │   │   ├── default-cost <0-16777215>
+        │   │   │   ├── export-list <name>
+        │   │   │   ├── filter-list
+        │   │   │   │   ├── in <name>
+        │   │   │   │   └── out <name>
+        │   │   │   ├── flood-reduction
+        │   │   │   ├── import-list <name>
+        │   │   │   ├── network <prefix>
+        │   │   │   ├── nssa
+        │   │   │   │   ├── default-information
+        │   │   │   │   │   └── originate
+        │   │   │   │   │       ├── metric <0-16777214>
+        │   │   │   │   │       └── metric-type <1|2>
+        │   │   │   │   ├── no-summary
+        │   │   │   │   ├── range <prefix>
+        │   │   │   │   │   ├── cost <0-16777215>
+        │   │   │   │   │   └── no-advertise
+        │   │   │   │   ├── suppress-forwarding-address
+        │   │   │   │   └── translator-role <candidate|always|never>
+        │   │   │   ├── range <prefix>
+        │   │   │   │   ├── cost <0-16777215>
+        │   │   │   │   ├── no-advertise
+        │   │   │   │   └── substitute <prefix>
+        │   │   │   ├── shortcut <default|enable|disable>
+        │   │   │   └── stub
+        │   │   │       └── no-summary
+        │   │   ├── default-information
+        │   │   │   └── originate
+        │   │   │       ├── always
+        │   │   │       ├── metric <0-16777214>
+        │   │   │       ├── metric-type <1|2>
+        │   │   │       └── route-map <name>
+        │   │   ├── default-metric <0-16777214>
+        │   │   ├── disable-proactive-arp
+        │   │   ├── disable-socket-per-interface
+        │   │   ├── distance <1-255>
+        │   │   ├── distribute-list
+        │   │   │   └── export <source>
+        │   │   │       └── access-list <name>
+        │   │   ├── flood-reduction
+        │   │   ├── forwarding-address-self
+        │   │   ├── graceful-restart
+        │   │   │   └── grace-period <1-1800>
+        │   │   ├── graceful-restart-helper
+        │   │   │   ├── all
+        │   │   │   ├── disable-strict-lsa-checking
+        │   │   │   ├── neighbor <x.x.x.x>
+        │   │   │   ├── planned-only
+        │   │   │   └── supported-grace-time <10-1800>
+        │   │   ├── interface <interface>
+        │   │   │   ├── address <x.x.x.x>
+        │   │   │   │   ├── area <area-id>
+        │   │   │   │   ├── authentication
+        │   │   │   │   │   ├── key-chain <name>
+        │   │   │   │   │   ├── md5
+        │   │   │   │   │   │   └── key <1-255>
+        │   │   │   │   │   │       └── secret <secret>
+        │   │   │   │   │   └── none
+        │   │   │   │   ├── cost <1-65535>
+        │   │   │   │   ├── dead-interval <1-65535>
+        │   │   │   │   ├── disable-opaque-capability
+        │   │   │   │   ├── fast-hello <2-20>
+        │   │   │   │   ├── hello-interval <1-65535>
+        │   │   │   │   ├── mtu-ignore
+        │   │   │   │   ├── neighbor-filter <name>
+        │   │   │   │   ├── passive
+        │   │   │   │   │   └── disable
+        │   │   │   │   ├── prefix-suppression
+        │   │   │   │   ├── priority <0-255>
+        │   │   │   │   ├── retransmit-interval <1-65535>
+        │   │   │   │   ├── retransmit-window <20-1000>
+        │   │   │   │   └── transmit-delay <1-65535>
+        │   │   │   ├── area <area-id>
+        │   │   │   ├── authentication
+        │   │   │   │   ├── key-chain <name>
+        │   │   │   │   ├── md5
+        │   │   │   │   │   └── key <1-255>
+        │   │   │   │   │       └── secret <secret>
+        │   │   │   │   ├── none
+        │   │   │   │   └── plaintext <secret>
+        │   │   │   ├── cost <1-65535>
+        │   │   │   ├── dead-interval <1-65535>
+        │   │   │   ├── dead-timer-reset-any-control
+        │   │   │   ├── disable-opaque-capability
+        │   │   │   ├── dscp
+        │   │   │   │   ├── all <0-63>
+        │   │   │   │   └── low-control <0-63>
+        │   │   │   ├── fast-hello <2-20>
+        │   │   │   ├── graceful-restart-hello-delay <1-1800>
+        │   │   │   ├── hello-interval <1-65535>
+        │   │   │   ├── mtu-ignore
+        │   │   │   ├── neighbor-filter <name>
+        │   │   │   ├── network
+        │   │   │   │   ├── broadcast
+        │   │   │   │   ├── non-broadcast
+        │   │   │   │   ├── point-to-multipoint
+        │   │   │   │   │   ├── delay-reflood
+        │   │   │   │   │   └── non-broadcast
+        │   │   │   │   └── point-to-point
+        │   │   │   ├── passive
+        │   │   │   │   └── disable
+        │   │   │   ├── prefix-suppression
+        │   │   │   ├── priority <0-255>
+        │   │   │   ├── retransmit-interval <1-65535>
+        │   │   │   ├── retransmit-window <20-1000>
+        │   │   │   └── transmit-delay <1-65535>
+        │   │   ├── log-adjacency-changes
+        │   │   │   └── detail
+        │   │   ├── max-metric
+        │   │   │   ├── administrative
+        │   │   │   ├── on-shutdown <5-100>
+        │   │   │   └── on-startup <5-86400>
+        │   │   ├── maximum-paths <1-256>
+        │   │   ├── neighbor <x.x.x.x>
+        │   │   │   ├── poll-interval <1-65535>
+        │   │   │   └── priority <0-255>
+        │   │   ├── options
+        │   │   │   ├── abr-type <cisco|ibm|shortcut|standard>
+        │   │   │   ├── rfc1583-compatibility
+        │   │   │   ├── router-id <x.x.x.x>
+        │   │   │   ├── send-extra-data
+        │   │   │   └── write-multiplier <1-100>
+        │   │   ├── passive-default
+        │   │   ├── redistribute
+        │   │   │   ├── bgp
+        │   │   │   │   ├── metric <0-16777214>
+        │   │   │   │   ├── metric-type <1|2>
+        │   │   │   │   └── route-map <name>
+        │   │   │   ├── connected
+        │   │   │   │   ├── metric <0-16777214>
+        │   │   │   │   ├── metric-type <1|2>
+        │   │   │   │   └── route-map <name>
+        │   │   │   ├── kernel
+        │   │   │   │   ├── metric <0-16777214>
+        │   │   │   │   ├── metric-type <1|2>
+        │   │   │   │   └── route-map <name>
+        │   │   │   ├── local
+        │   │   │   │   ├── metric <0-16777214>
+        │   │   │   │   ├── metric-type <1|2>
+        │   │   │   │   └── route-map <name>
+        │   │   │   ├── static
+        │   │   │   │   ├── metric <0-16777214>
+        │   │   │   │   ├── metric-type <1|2>
+        │   │   │   │   └── route-map <name>
+        │   │   │   ├── table <source-id>
+        │   │   │   │   ├── metric <0-16777214>
+        │   │   │   │   ├── metric-type <1|2>
+        │   │   │   │   └── route-map <name>
+        │   │   │   └── table-direct <source-id>
+        │   │   │       ├── metric <0-16777214>
+        │   │   │       ├── metric-type <1|2>
+        │   │   │       └── route-map <name>
+        │   │   ├── reference-bandwidth <1-4294967>
+        │   │   ├── route-distance
+        │   │   │   ├── external <1-255>
+        │   │   │   ├── inter-area <1-255>
+        │   │   │   └── intra-area <1-255>
+        │   │   ├── shutdown
+        │   │   ├── socket
+        │   │   │   └── buffer
+        │   │   │       ├── all <1-4000000000>
+        │   │   │       ├── receive <1-4000000000>
+        │   │   │       └── send <1-4000000000>
+        │   │   ├── summary-address <prefix>
+        │   │   │   ├── no-advertise
+        │   │   │   └── tag <1-4294967295>
+        │   │   └── timers
+        │   │       ├── aggregation <5-1800>
+        │   │       ├── lsa-generation <0-5000>
+        │   │       ├── lsa-min-arrival <0-5000>
+        │   │       ├── refresh <10-1800>
+        │   │       └── spf
+        │   │           ├── delay <0-600000>
+        │   │           ├── initial-hold <0-600000>
+        │   │           └── maximum-hold <0-600000>
+        │   ├── ospfv3
+        │   │   ├── area <0-4294967295|x.x.x.x>
+        │   │   │   ├── export-list <name>
+        │   │   │   ├── filter-list
+        │   │   │   │   ├── in <name>
+        │   │   │   │   └── out <name>
+        │   │   │   ├── import-list <name>
+        │   │   │   ├── nssa
+        │   │   │   │   ├── default-information
+        │   │   │   │   │   └── originate
+        │   │   │   │   │       ├── metric <0-16777214>
+        │   │   │   │   │       └── metric-type <1|2>
+        │   │   │   │   ├── no-summary
+        │   │   │   │   └── range <prefix>
+        │   │   │   │       ├── cost <0-16777215>
+        │   │   │   │       └── no-advertise
+        │   │   │   ├── range <prefix>
+        │   │   │   │   ├── cost <0-16777215>
+        │   │   │   │   └── no-advertise
+        │   │   │   └── stub
+        │   │   │       └── no-summary
+        │   │   ├── default-information
+        │   │   │   └── originate
+        │   │   │       ├── always
+        │   │   │       ├── metric <0-16777214>
+        │   │   │       ├── metric-type <1|2>
+        │   │   │       └── route-map <name>
+        │   │   ├── distance <1-255>
+        │   │   ├── graceful-restart
+        │   │   │   └── grace-period <1-1800>
+        │   │   ├── graceful-restart-helper
+        │   │   │   ├── all
+        │   │   │   ├── disable-strict-lsa-checking
+        │   │   │   ├── neighbor <x.x.x.x>
+        │   │   │   ├── planned-only
+        │   │   │   └── supported-grace-time <10-1800>
+        │   │   ├── interface <interface>
+        │   │   │   ├── advertise-prefix-list <name>
+        │   │   │   ├── area <area-id>
+        │   │   │   ├── authentication
+        │   │   │   │   ├── key <1-65535>
+        │   │   │   │   │   ├── algorithm <md5|hmac-sha-1|hmac-sha-256|hmac-sha-384|hmac-sha-512>
+        │   │   │   │   │   └── secret <secret>
+        │   │   │   │   └── key-chain <name>
+        │   │   │   ├── cost <1-65535>
+        │   │   │   ├── dead-interval <1-65535>
+        │   │   │   ├── graceful-restart-hello-delay <1-1800>
+        │   │   │   ├── hello-interval <1-65535>
+        │   │   │   ├── instance-id <0-255>
+        │   │   │   ├── mtu <1-65535>
+        │   │   │   ├── mtu-ignore
+        │   │   │   ├── neighbor <fe80::address>
+        │   │   │   │   ├── cost <1-65535>
+        │   │   │   │   └── poll-interval <1-65535>
+        │   │   │   ├── neighbor-options
+        │   │   │   │   ├── configured-neighbors-only
+        │   │   │   │   ├── connected-prefixes <include|exclude>
+        │   │   │   │   └── disable-multicast-hello
+        │   │   │   ├── network <broadcast|point-to-point|point-to-multipoint>
+        │   │   │   ├── passive
+        │   │   │   │   └── disable
+        │   │   │   ├── priority <0-255>
+        │   │   │   ├── retransmit-interval <1-65535>
+        │   │   │   └── transmit-delay <1-3600>
+        │   │   ├── log-adjacency-changes
+        │   │   │   └── detail
+        │   │   ├── maximum-paths <1-256>
+        │   │   ├── options
+        │   │   │   ├── router-id <x.x.x.x>
+        │   │   │   ├── send-extra-data
+        │   │   │   └── write-multiplier <1-100>
+        │   │   ├── redistribute
+        │   │   │   ├── bgp
+        │   │   │   │   ├── metric <0-16777214>
+        │   │   │   │   ├── metric-type <1|2>
+        │   │   │   │   └── route-map <name>
+        │   │   │   ├── connected
+        │   │   │   │   ├── metric <0-16777214>
+        │   │   │   │   ├── metric-type <1|2>
+        │   │   │   │   └── route-map <name>
+        │   │   │   ├── kernel
+        │   │   │   │   ├── metric <0-16777214>
+        │   │   │   │   ├── metric-type <1|2>
+        │   │   │   │   └── route-map <name>
+        │   │   │   ├── local
+        │   │   │   │   ├── metric <0-16777214>
+        │   │   │   │   ├── metric-type <1|2>
+        │   │   │   │   └── route-map <name>
+        │   │   │   └── static
+        │   │   │       ├── metric <0-16777214>
+        │   │   │       ├── metric-type <1|2>
+        │   │   │       └── route-map <name>
+        │   │   ├── reference-bandwidth <1-4294967>
+        │   │   ├── route-distance
+        │   │   │   ├── external <1-255>
+        │   │   │   ├── inter-area <1-255>
+        │   │   │   └── intra-area <1-255>
+        │   │   ├── stub-router
+        │   │   ├── summary-address <prefix>
+        │   │   │   ├── metric <0-16777214>
+        │   │   │   ├── metric-type <1|2>
+        │   │   │   ├── no-advertise
+        │   │   │   └── tag <1-4294967295>
+        │   │   └── timers
+        │   │       ├── aggregation <5-1800>
+        │   │       ├── lsa-min-arrival <0-600000>
+        │   │       └── spf
+        │   │           ├── delay <0-600000>
+        │   │           ├── initial-hold <0-600000>
+        │   │           └── maximum-hold <0-600000>
         │   └── static
         │       ├── route <x.x.x.x/x>
         │       │   ├── blackhole
@@ -12055,6 +12650,34 @@ operational mode
 │   │       └── learned-macs
 │   │           ├── interface <interface>
 │   │           └── vlan <1-4094>
+│   ├── ip
+│   │   └── ospf
+│   │       ├── interface
+│   │       │   └── <interface>
+│   │       ├── neighbor
+│   │       │   └── <router-id>
+│   │       ├── process
+│   │       └── vrf <vrf>
+│   │           ├── interface
+│   │           │   └── <interface>
+│   │           ├── neighbor
+│   │           │   └── <router-id>
+│   │           └── process
+│   ├── ipv6
+│   │   └── ospf
+│   │       ├── auth-counters
+│   │       │   └── interface
+│   │       │       └── <interface>
+│   │       ├── interface
+│   │       │   └── <interface>
+│   │       ├── process
+│   │       └── vrf <vrf>
+│   │           ├── auth-counters
+│   │           │   └── interface
+│   │           │       └── <interface>
+│   │           ├── interface
+│   │           │   └── <interface>
+│   │           └── process
 │   └── route-map
 │       └── counters
 │           └── <name>
@@ -13387,6 +14010,141 @@ operational mode
 │   │   │   └── <name>
 │   │   ├── as-path-access-list
 │   │   │   └── <name>
+│   │   ├── ospf
+│   │   │   ├── border-routers
+│   │   │   ├── database
+│   │   │   │   ├── asbr-summary
+│   │   │   │   │   ├── adv-router <router-id>
+│   │   │   │   │   ├── <link-state-id>
+│   │   │   │   │   │   └── adv-router <router-id>
+│   │   │   │   │   └── self-originate
+│   │   │   │   ├── detail
+│   │   │   │   ├── external
+│   │   │   │   │   ├── adv-router <router-id>
+│   │   │   │   │   ├── <link-state-id>
+│   │   │   │   │   │   └── adv-router <router-id>
+│   │   │   │   │   └── self-originate
+│   │   │   │   ├── max-age
+│   │   │   │   ├── network
+│   │   │   │   │   ├── adv-router <router-id>
+│   │   │   │   │   ├── <link-state-id>
+│   │   │   │   │   │   └── adv-router <router-id>
+│   │   │   │   │   └── self-originate
+│   │   │   │   ├── nssa-external
+│   │   │   │   │   ├── adv-router <router-id>
+│   │   │   │   │   ├── <link-state-id>
+│   │   │   │   │   │   └── adv-router <router-id>
+│   │   │   │   │   └── self-originate
+│   │   │   │   ├── opaque-area
+│   │   │   │   │   ├── adv-router <router-id>
+│   │   │   │   │   ├── <link-state-id>
+│   │   │   │   │   │   └── adv-router <router-id>
+│   │   │   │   │   └── self-originate
+│   │   │   │   ├── opaque-as
+│   │   │   │   │   ├── adv-router <router-id>
+│   │   │   │   │   ├── <link-state-id>
+│   │   │   │   │   │   └── adv-router <router-id>
+│   │   │   │   │   └── self-originate
+│   │   │   │   ├── opaque-link
+│   │   │   │   │   ├── adv-router <router-id>
+│   │   │   │   │   ├── <link-state-id>
+│   │   │   │   │   │   └── adv-router <router-id>
+│   │   │   │   │   └── self-originate
+│   │   │   │   ├── router
+│   │   │   │   │   ├── adv-router <router-id>
+│   │   │   │   │   ├── <link-state-id>
+│   │   │   │   │   │   └── adv-router <router-id>
+│   │   │   │   │   └── self-originate
+│   │   │   │   ├── self-originate
+│   │   │   │   └── summary
+│   │   │   │       ├── adv-router <router-id>
+│   │   │   │       ├── <link-state-id>
+│   │   │   │       │   └── adv-router <router-id>
+│   │   │   │       └── self-originate
+│   │   │   ├── graceful-restart
+│   │   │   │   └── helper
+│   │   │   │       └── detail
+│   │   │   ├── interface
+│   │   │   │   ├── <interface>
+│   │   │   │   └── traffic
+│   │   │   │       └── <interface>
+│   │   │   ├── neighbor
+│   │   │   │   ├── detail
+│   │   │   │   └── <router-id>
+│   │   │   │       └── detail
+│   │   │   ├── reachable-routers
+│   │   │   ├── route
+│   │   │   │   └── detail
+│   │   │   ├── summary-address
+│   │   │   │   └── detail
+│   │   │   ├── vrf <default|all|vrf>
+│   │   │   │   ├── border-routers
+│   │   │   │   ├── database
+│   │   │   │   │   ├── asbr-summary
+│   │   │   │   │   │   ├── adv-router <router-id>
+│   │   │   │   │   │   ├── <link-state-id>
+│   │   │   │   │   │   │   └── adv-router <router-id>
+│   │   │   │   │   │   └── self-originate
+│   │   │   │   │   ├── detail
+│   │   │   │   │   ├── external
+│   │   │   │   │   │   ├── adv-router <router-id>
+│   │   │   │   │   │   ├── <link-state-id>
+│   │   │   │   │   │   │   └── adv-router <router-id>
+│   │   │   │   │   │   └── self-originate
+│   │   │   │   │   ├── max-age
+│   │   │   │   │   ├── network
+│   │   │   │   │   │   ├── adv-router <router-id>
+│   │   │   │   │   │   ├── <link-state-id>
+│   │   │   │   │   │   │   └── adv-router <router-id>
+│   │   │   │   │   │   └── self-originate
+│   │   │   │   │   ├── nssa-external
+│   │   │   │   │   │   ├── adv-router <router-id>
+│   │   │   │   │   │   ├── <link-state-id>
+│   │   │   │   │   │   │   └── adv-router <router-id>
+│   │   │   │   │   │   └── self-originate
+│   │   │   │   │   ├── opaque-area
+│   │   │   │   │   │   ├── adv-router <router-id>
+│   │   │   │   │   │   ├── <link-state-id>
+│   │   │   │   │   │   │   └── adv-router <router-id>
+│   │   │   │   │   │   └── self-originate
+│   │   │   │   │   ├── opaque-as
+│   │   │   │   │   │   ├── adv-router <router-id>
+│   │   │   │   │   │   ├── <link-state-id>
+│   │   │   │   │   │   │   └── adv-router <router-id>
+│   │   │   │   │   │   └── self-originate
+│   │   │   │   │   ├── opaque-link
+│   │   │   │   │   │   ├── adv-router <router-id>
+│   │   │   │   │   │   ├── <link-state-id>
+│   │   │   │   │   │   │   └── adv-router <router-id>
+│   │   │   │   │   │   └── self-originate
+│   │   │   │   │   ├── router
+│   │   │   │   │   │   ├── adv-router <router-id>
+│   │   │   │   │   │   ├── <link-state-id>
+│   │   │   │   │   │   │   └── adv-router <router-id>
+│   │   │   │   │   │   └── self-originate
+│   │   │   │   │   ├── self-originate
+│   │   │   │   │   └── summary
+│   │   │   │   │       ├── adv-router <router-id>
+│   │   │   │   │       ├── <link-state-id>
+│   │   │   │   │       │   └── adv-router <router-id>
+│   │   │   │   │       └── self-originate
+│   │   │   │   ├── graceful-restart
+│   │   │   │   │   └── helper
+│   │   │   │   │       └── detail
+│   │   │   │   ├── interface
+│   │   │   │   │   ├── <interface>
+│   │   │   │   │   └── traffic
+│   │   │   │   │       └── <interface>
+│   │   │   │   ├── neighbor
+│   │   │   │   │   ├── detail
+│   │   │   │   │   └── <router-id>
+│   │   │   │   │       └── detail
+│   │   │   │   ├── reachable-routers
+│   │   │   │   ├── route
+│   │   │   │   │   └── detail
+│   │   │   │   └── summary-address
+│   │   │   │       └── detail
+│   │   │   └── vrfs
 │   │   ├── prefix-list
 │   │   │   ├── detail
 │   │   │   │   └── <name>
@@ -13445,6 +14203,176 @@ operational mode
 │   │   ├── neighbors
 │   │   │   ├── interface <interface>
 │   │   │   └── vrf <default|name>
+│   │   ├── ospf
+│   │   │   ├── border-routers
+│   │   │   ├── database
+│   │   │   │   ├── as-external
+│   │   │   │   │   ├── adv-router <router-id>
+│   │   │   │   │   │   └── linkstate-id <link-state-id>
+│   │   │   │   │   ├── detail
+│   │   │   │   │   ├── linkstate-id <link-state-id>
+│   │   │   │   │   │   └── detail
+│   │   │   │   │   └── self-originated
+│   │   │   │   ├── detail
+│   │   │   │   ├── group-membership
+│   │   │   │   │   ├── adv-router <router-id>
+│   │   │   │   │   │   └── linkstate-id <link-state-id>
+│   │   │   │   │   ├── detail
+│   │   │   │   │   ├── linkstate-id <link-state-id>
+│   │   │   │   │   │   └── detail
+│   │   │   │   │   └── self-originated
+│   │   │   │   ├── inter-prefix
+│   │   │   │   │   ├── adv-router <router-id>
+│   │   │   │   │   │   └── linkstate-id <link-state-id>
+│   │   │   │   │   ├── detail
+│   │   │   │   │   ├── linkstate-id <link-state-id>
+│   │   │   │   │   │   └── detail
+│   │   │   │   │   └── self-originated
+│   │   │   │   ├── inter-router
+│   │   │   │   │   ├── adv-router <router-id>
+│   │   │   │   │   │   └── linkstate-id <link-state-id>
+│   │   │   │   │   ├── detail
+│   │   │   │   │   ├── linkstate-id <link-state-id>
+│   │   │   │   │   │   └── detail
+│   │   │   │   │   └── self-originated
+│   │   │   │   ├── intra-prefix
+│   │   │   │   │   ├── adv-router <router-id>
+│   │   │   │   │   │   └── linkstate-id <link-state-id>
+│   │   │   │   │   ├── detail
+│   │   │   │   │   ├── linkstate-id <link-state-id>
+│   │   │   │   │   │   └── detail
+│   │   │   │   │   └── self-originated
+│   │   │   │   ├── link
+│   │   │   │   │   ├── adv-router <router-id>
+│   │   │   │   │   │   └── linkstate-id <link-state-id>
+│   │   │   │   │   ├── detail
+│   │   │   │   │   ├── linkstate-id <link-state-id>
+│   │   │   │   │   │   └── detail
+│   │   │   │   │   └── self-originated
+│   │   │   │   ├── network
+│   │   │   │   │   ├── adv-router <router-id>
+│   │   │   │   │   │   └── linkstate-id <link-state-id>
+│   │   │   │   │   ├── detail
+│   │   │   │   │   ├── linkstate-id <link-state-id>
+│   │   │   │   │   │   └── detail
+│   │   │   │   │   └── self-originated
+│   │   │   │   ├── router
+│   │   │   │   │   ├── adv-router <router-id>
+│   │   │   │   │   │   └── linkstate-id <link-state-id>
+│   │   │   │   │   ├── detail
+│   │   │   │   │   ├── linkstate-id <link-state-id>
+│   │   │   │   │   │   └── detail
+│   │   │   │   │   └── self-originated
+│   │   │   │   ├── self-originated
+│   │   │   │   └── type-7
+│   │   │   │       ├── adv-router <router-id>
+│   │   │   │       │   └── linkstate-id <link-state-id>
+│   │   │   │       ├── detail
+│   │   │   │       ├── linkstate-id <link-state-id>
+│   │   │   │       │   └── detail
+│   │   │   │       └── self-originated
+│   │   │   ├── graceful-restart
+│   │   │   │   └── helper
+│   │   │   │       └── detail
+│   │   │   ├── interface
+│   │   │   │   ├── <interface>
+│   │   │   │   ├── prefix
+│   │   │   │   └── traffic
+│   │   │   │       └── <interface>
+│   │   │   ├── neighbor
+│   │   │   │   ├── detail
+│   │   │   │   ├── drchoice
+│   │   │   │   └── <router-id>
+│   │   │   ├── route
+│   │   │   │   └── detail
+│   │   │   ├── spf
+│   │   │   │   └── tree
+│   │   │   ├── summary-address
+│   │   │   │   └── detail
+│   │   │   ├── vrf <default|all|vrf>
+│   │   │   │   ├── border-routers
+│   │   │   │   ├── database
+│   │   │   │   │   ├── as-external
+│   │   │   │   │   │   ├── adv-router <router-id>
+│   │   │   │   │   │   │   └── linkstate-id <link-state-id>
+│   │   │   │   │   │   ├── detail
+│   │   │   │   │   │   ├── linkstate-id <link-state-id>
+│   │   │   │   │   │   │   └── detail
+│   │   │   │   │   │   └── self-originated
+│   │   │   │   │   ├── detail
+│   │   │   │   │   ├── group-membership
+│   │   │   │   │   │   ├── adv-router <router-id>
+│   │   │   │   │   │   │   └── linkstate-id <link-state-id>
+│   │   │   │   │   │   ├── detail
+│   │   │   │   │   │   ├── linkstate-id <link-state-id>
+│   │   │   │   │   │   │   └── detail
+│   │   │   │   │   │   └── self-originated
+│   │   │   │   │   ├── inter-prefix
+│   │   │   │   │   │   ├── adv-router <router-id>
+│   │   │   │   │   │   │   └── linkstate-id <link-state-id>
+│   │   │   │   │   │   ├── detail
+│   │   │   │   │   │   ├── linkstate-id <link-state-id>
+│   │   │   │   │   │   │   └── detail
+│   │   │   │   │   │   └── self-originated
+│   │   │   │   │   ├── inter-router
+│   │   │   │   │   │   ├── adv-router <router-id>
+│   │   │   │   │   │   │   └── linkstate-id <link-state-id>
+│   │   │   │   │   │   ├── detail
+│   │   │   │   │   │   ├── linkstate-id <link-state-id>
+│   │   │   │   │   │   │   └── detail
+│   │   │   │   │   │   └── self-originated
+│   │   │   │   │   ├── intra-prefix
+│   │   │   │   │   │   ├── adv-router <router-id>
+│   │   │   │   │   │   │   └── linkstate-id <link-state-id>
+│   │   │   │   │   │   ├── detail
+│   │   │   │   │   │   ├── linkstate-id <link-state-id>
+│   │   │   │   │   │   │   └── detail
+│   │   │   │   │   │   └── self-originated
+│   │   │   │   │   ├── link
+│   │   │   │   │   │   ├── adv-router <router-id>
+│   │   │   │   │   │   │   └── linkstate-id <link-state-id>
+│   │   │   │   │   │   ├── detail
+│   │   │   │   │   │   ├── linkstate-id <link-state-id>
+│   │   │   │   │   │   │   └── detail
+│   │   │   │   │   │   └── self-originated
+│   │   │   │   │   ├── network
+│   │   │   │   │   │   ├── adv-router <router-id>
+│   │   │   │   │   │   │   └── linkstate-id <link-state-id>
+│   │   │   │   │   │   ├── detail
+│   │   │   │   │   │   ├── linkstate-id <link-state-id>
+│   │   │   │   │   │   │   └── detail
+│   │   │   │   │   │   └── self-originated
+│   │   │   │   │   ├── router
+│   │   │   │   │   │   ├── adv-router <router-id>
+│   │   │   │   │   │   │   └── linkstate-id <link-state-id>
+│   │   │   │   │   │   ├── detail
+│   │   │   │   │   │   ├── linkstate-id <link-state-id>
+│   │   │   │   │   │   │   └── detail
+│   │   │   │   │   │   └── self-originated
+│   │   │   │   │   ├── self-originated
+│   │   │   │   │   └── type-7
+│   │   │   │   │       ├── adv-router <router-id>
+│   │   │   │   │       │   └── linkstate-id <link-state-id>
+│   │   │   │   │       ├── detail
+│   │   │   │   │       ├── linkstate-id <link-state-id>
+│   │   │   │   │       │   └── detail
+│   │   │   │   │       └── self-originated
+│   │   │   │   ├── interface
+│   │   │   │   │   ├── <interface>
+│   │   │   │   │   ├── prefix
+│   │   │   │   │   └── traffic
+│   │   │   │   │       └── <interface>
+│   │   │   │   ├── neighbor
+│   │   │   │   │   ├── detail
+│   │   │   │   │   ├── drchoice
+│   │   │   │   │   └── <router-id>
+│   │   │   │   ├── route
+│   │   │   │   │   └── detail
+│   │   │   │   ├── spf
+│   │   │   │   │   └── tree
+│   │   │   │   └── summary-address
+│   │   │   │       └── detail
+│   │   │   └── vrfs
 │   │   ├── prefix-list
 │   │   │   ├── detail
 │   │   │   │   └── <name>

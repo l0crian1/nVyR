@@ -4,14 +4,16 @@ Source: https://github.com/l0crian1/nVyR
 Comment: This describes nVyR source licensing. Runtime dependencies are packaged
  separately and retain their own copyright notices and licenses. The FRR patch
  below is present in the source repository but is not installed as executable
- code by the nvyr-router package; frr-pythontools provides the modified program.
+ code by the nvyr-router package; frr and frr-pythontools provide the modified programs.
 
 Files: *
 Copyright: 2026 L0crian and nVyR contributors
 License: MIT
 
-Files: vendor/frr/reload-ordering.patch
+Files: vendor/frr/reload-ordering.patch vendor/frr/keychain-reload.patch vendor/frr/ospf-reload.patch
 Copyright: 2014 Cumulus Networks, Inc.
+ 2000 Kunihiro Ishiguro
+ 2001 KDD R&D Laboratories, Inc.
  2026 L0crian and nVyR contributors
 License: GPL-2+
 

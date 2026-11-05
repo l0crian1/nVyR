@@ -1,0 +1,34 @@
+# Dual-stack authenticated OSPF shares the BGP transit. dum996 is deliberately
+# distinct from BGP's dum997 advertisement so a successful BGP test cannot hide
+# a missing OSPF route. All of this must survive the acceptance reboot.
+set policy key-chain BOOTOSPF key 1 secret acceptance-ospf-key algorithm hmac-sha-256
+set policy key-chain BOOTOSPF key 1 accept-lifetime start 1993-01-01T00:00:00 infinite
+set policy key-chain BOOTOSPF key 1 send-lifetime start 1993-01-01T00:00:00 infinite
+
+set vrf name BOOTLEFT protocols ospf options router-id 198.18.192.1 write-multiplier 25 send-extra-data
+set vrf name BOOTRIGHT protocols ospf options router-id 198.18.192.2
+set vrf name BOOTLEFT protocols ospf interface veth995 area 0 network point-to-point
+set vrf name BOOTRIGHT protocols ospf interface veth997 area 0 network point-to-point
+set vrf name BOOTLEFT protocols ospf interface veth995 hello-interval 1 dead-interval 4 cost 20 authentication key-chain BOOTOSPF
+set vrf name BOOTRIGHT protocols ospf interface veth997 hello-interval 1 dead-interval 4 cost 20 authentication key-chain BOOTOSPF
+set vrf name BOOTLEFT protocols ospf interface dum996 area 0 passive
+set vrf name BOOTLEFT protocols ospf reference-bandwidth 10000 maximum-paths 4 log-adjacency-changes detail
+set vrf name BOOTLEFT protocols ospf timers spf delay 20 initial-hold 100 maximum-hold 1000
+set vrf name BOOTLEFT protocols ospf timers lsa-generation 100 lsa-min-arrival 50 refresh 20 aggregation 10
+set vrf name BOOTLEFT protocols ospf disable-proactive-arp disable-socket-per-interface
+set vrf name BOOTLEFT protocols ospf socket buffer send 262144 receive 524288
+set vrf name BOOTLEFT protocols ospf graceful-restart grace-period 90
+set vrf name BOOTLEFT protocols ospf graceful-restart-helper all planned-only supported-grace-time 60
+
+set vrf name BOOTLEFT protocols ospfv3 options router-id 198.18.192.1 write-multiplier 25 send-extra-data
+set vrf name BOOTRIGHT protocols ospfv3 options router-id 198.18.192.2
+set vrf name BOOTLEFT protocols ospfv3 interface veth995 area 0 network point-to-point
+set vrf name BOOTRIGHT protocols ospfv3 interface veth997 area 0 network point-to-point
+set vrf name BOOTLEFT protocols ospfv3 interface veth995 hello-interval 1 dead-interval 4 cost 20 authentication key-chain BOOTOSPF
+set vrf name BOOTRIGHT protocols ospfv3 interface veth997 hello-interval 1 dead-interval 4 cost 20 authentication key-chain BOOTOSPF
+set vrf name BOOTLEFT protocols ospfv3 interface dum996 area 0 passive
+set vrf name BOOTLEFT protocols ospfv3 reference-bandwidth 10000 maximum-paths 4 log-adjacency-changes detail
+set vrf name BOOTLEFT protocols ospfv3 timers spf delay 20 initial-hold 100 maximum-hold 1000
+set vrf name BOOTLEFT protocols ospfv3 timers lsa-min-arrival 50 aggregation 10
+set vrf name BOOTLEFT protocols ospfv3 graceful-restart grace-period 90
+set vrf name BOOTLEFT protocols ospfv3 graceful-restart-helper all planned-only supported-grace-time 60

@@ -499,6 +499,58 @@ nVyR `.deb`. Regression coverage lives in
 [`smoketests/test_firewall_interface_patterns.py`](../../smoketests/test_firewall_interface_patterns.py)
 and [`functionaltests/network/test_firewall_flowtable_packets.py`](../../functionaltests/network/test_firewall_flowtable_packets.py).
 
+## FRR-OSPF-001: Deferred configuration and replay limitations
+
+**Status:** Reproduced on FRR 10.7.1, amd64; the affected options are not exposed.
+
+- A virtual link is rejected until ospfd already considers the process an ABR.
+  A valid eventual topology therefore cannot reliably be configured in one
+  initial commit or replayed at boot.
+  Upstream removed this operational-state check in
+  [FRR PR #22979](https://github.com/FRRouting/frr/pull/22979), merged on
+  2026-08-29 after 10.7.1 as
+  [`b29b3372f356d72ddfecc4efddb38fbd05b743e6`](https://github.com/FRRouting/frr/commit/b29b3372f356d72ddfecc4efddb38fbd05b743e6)
+  (fix commit
+  [`92d85af830d2813569d50e319031a4e17b95a070`](https://github.com/FRRouting/frr/commit/92d85af830d2813569d50e319031a4e17b95a070)).
+  When upgrading FRR, check whether that commit or an equivalent backport is
+  included, then retest first-commit configuration and boot replay before
+  enabling virtual links in the schema. The fix retains the prohibition on
+  backbone, stub, and NSSA transit areas; operational activation still depends
+  on SPF reachability to the remote endpoint.
+- Per-address `ip ospf authentication-key KEY ADDRESS` silently omits the key:
+  the command handler advances its argument index past the key when finding
+  the address. Ordinary interface plaintext authentication works.
+- Hidden `ospf lsa-refresh` and `ospf maxage-delay` commands do not survive
+  native configuration readback. The separate `refresh timer` command works.
+- The FRR daemon instance list does not support combining ordinary ospfd with
+  numbered instances using an entry of zero. Numbered instances are deferred.
+
+These are explicit scope deferrals, not readback normalization exceptions.
+Retest first-commit application, replacement, removal and boot replay before
+exposing the affected syntax. No upstream fixes have been incorporated for them.
+
+## FRR-RELOAD-002: Keychain and OSPF reset defects
+
+**Status:** Fixed locally in the FRR 10.7.1 `nvyr2` packages.
+
+Key lifetime whitespace differs between file loading and native readback, and
+the reload script incorrectly negates the full positive command. The native
+operand-free removal handlers also address the wrong YANG paths. The keychain
+patch corrects all three; unrelated commits, replacement and removal are tested.
+
+OSPF aggregation timers, detailed adjacency logging and OSPFv3 graceful restart
+need reset forms different from a simple negation of their positive commands.
+Static OSPFv3 neighbor options must be removed before the neighbor itself;
+otherwise their reset handlers recreate the neighbor. The OSPF reload patch
+corrects the reset commands and deletion ordering, including stub/NSSA removal
+after area default-cost resets. It also prevents the global opaque-extension
+writer from emitting Router Information settings into nondefault VRFs, where
+the native CLI rejects them. The live smoketests verify
+that both creation and cleanup retain the requested native state.
+
+See [patch provenance and retest requirements](../../vendor/frr/README.md).
+No upstream fix is claimed; reevaluate these patches with the next FRR upgrade.
+
 ## Updating this tracker
 
 For each investigation, record:

@@ -59,3 +59,27 @@ def test_all_old_list_entries_precede_new_type(reorder):
         (('no bgp community-list standard TEST seq 20 deny 65000:2',), None),
         after,
     ]
+
+
+@pytest.mark.parametrize('kind', ['accept', 'send'])
+def test_key_lifetime_removal_has_no_time_operands(kind):
+    functions = runpy.run_path('/usr/lib/frr/frr-reload.py')
+    lines = functions['lines_to_config'](
+        ('key chain TEST', 'key 1'),
+        f'{kind}-lifetime 00:00:00 Jan 1 2026 infinite', True)
+
+    assert f'no {kind}-lifetime' in '\n'.join(lines)
+    assert 'Jan' not in '\n'.join(lines)
+
+
+@pytest.mark.parametrize('process,before,after', [
+    ('ospf', 'aggregation timer 10', 'no aggregation timer'),
+    ('ospf6', 'aggregation timer 10', 'no aggregation timer'),
+    ('ospf', 'log-adjacency-changes detail', 'no log-adjacency-changes'),
+    ('ospf6', 'graceful-restart grace-period 90', 'no graceful-restart'),
+])
+def test_ospf_reset_forms(process, before, after):
+    functions = runpy.run_path('/usr/lib/frr/frr-reload.py')
+    lines = functions['lines_to_config']((f'router {process} vrf BLUE',), before, True)
+
+    assert after in [line.strip() for line in lines]

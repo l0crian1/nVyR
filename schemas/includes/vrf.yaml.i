@@ -53,6 +53,15 @@ vrf:
             - file: protocols/bgp.yaml.i
               replace:
                 /script/register/vrf: {tag: name}
+            - file: protocols/ospf.yaml.i
+              remove:
+              - /children/options/children/opaque-lsa
+              - /children/router-info
+              replace:
+                /script/register/vrf: {tag: name}
+            - file: protocols/ospfv3.yaml.i
+              replace:
+                /script/register/vrf: {tag: name}
 
         table:
           kind: leaf_node

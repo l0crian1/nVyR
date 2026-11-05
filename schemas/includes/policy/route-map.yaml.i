@@ -333,6 +333,31 @@ route-map:
           anchor: true
           children:
 
+            tag:
+              kind: leaf_node
+              description: Set the route tag carried by redistributed routes
+              validators:
+                integer-range: {minimum: 0, maximum: 4294967295}
+              hints:
+                0-4294967295: Route tag
+
+            metric-type:
+              kind: leaf_node
+              description: OSPF external metric comparison
+              validators:
+                list: {values: 'type-1 type-2'}
+              choices:
+                type-1: Include the internal path cost
+                type-2: Compare the external metric before internal path cost
+
+            forwarding-address:
+              kind: leaf_node
+              description: IPv6 forwarding address for redistributed OSPFv3 routes
+              validators:
+                ipv6-address: {}
+              hints:
+                h:h::h: IPv6 forwarding address
+
             metric:
               kind: "leaf_node"
               description: "Absolute value or signed adjustment"

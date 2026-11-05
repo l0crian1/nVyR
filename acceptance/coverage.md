@@ -12,6 +12,12 @@ IPv4 addresses and virtual-network traffic checks still run without a cable.
 
 ## Recent configuration additions
 
+OSPFv2 and OSPFv3 in `ospf.set` share the existing BOOTLEFT/BOOTRIGHT transit.
+Both use timed authentication keychains and advertise a destination independent
+of BGP. `check_ospf_ipv4` and `check_ospf_ipv6` verify adjacency, installed routes,
+and operational output; the native FRR snapshot also covers restored options.
+Alternative area types and authentication modes have dedicated smoketests.
+
 DHCPv4 socket selection covers explicit `udp` on the default instance and the
 implicit `raw` default in BOOTLEFT. Both native settings are checked before and
 after reboot; real relayed packet exchange is covered by the isolated Kea suite.

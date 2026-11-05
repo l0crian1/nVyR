@@ -2,7 +2,7 @@
 
 BGP, static routing and routing policies use FRR 10.7.1's `frr-reload.py` through the shared
 [`frr_reload.Manager`](../../src/nvyr/helpers/frr_reload.py). The ISO pins both `frr`
-and `frr-pythontools` at `10.7.1-0~deb13u1+nvyr1`. The builder compiles both from
+and `frr-pythontools` at `10.7.1-0~deb13u1+nvyr2`. The builder compiles both from
 checksum-pinned source with FRR's `pkg.frr.lua` profile, enabling Lua scripting
 while preserving the other Debian build options. Installing only the nVyR
 `.deb` requires these matching FRR packages; `dpkg -i` does not fetch dependencies.

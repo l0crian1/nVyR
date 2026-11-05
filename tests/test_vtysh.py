@@ -68,11 +68,27 @@ def test_clear_passes_literal_star_without_shell_expansion(monkeypatch):
     ['clear', 'route-map', 'counters', 'IMPORT;exit'],
     ['clear', 'route-map', 'counters', 'IMPORT\nconfigure terminal'],
     ['clear', 'route-map', 'counters', 'IMPORT', 'extra'],
+    ['clear', 'ip', 'ospf'], ['clear', 'ipv6', 'ospf6'],
+    ['clear', 'ip', 'ospf', 'process;exit'],
+    ['clear', 'ipv6', 'ospf6', 'interface', 'eth0\nconfigure terminal'],
 ])
 def test_clear_rejects_other_commands_and_embedded_input(monkeypatch, words):
     monkeypatch.setattr(vtysh, 'cmd', lambda argv: pytest.fail('Unsafe reset executed'))
-    with pytest.raises(ValueError, match='single FRR clear bgp or clear route-map counters command'):
+    with pytest.raises(ValueError, match='single FRR clear bgp, ospf, or route-map counters command'):
         vtysh.clear(words)
+
+
+@pytest.mark.parametrize('words', [
+    ['clear', 'ip', 'ospf', 'vrf', 'BLUE', 'process'],
+    ['clear', 'ipv6', 'ospf6', 'process', 'vrf', 'BLUE'],
+])
+def test_clear_ospf_preserves_native_token_order(monkeypatch, words):
+    calls = []
+    monkeypatch.setattr(vtysh, 'cmd', lambda argv: calls.append(argv) or '')
+
+    vtysh.clear(words)
+
+    assert calls == [['vtysh', '-c', ' '.join(words)]]
 
 
 def test_clear_route_map_all_or_named(monkeypatch):

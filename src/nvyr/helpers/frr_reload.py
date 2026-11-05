@@ -13,6 +13,7 @@ import re
 import signal
 import subprocess
 import tempfile
+import time
 
 from nvyr.errors import RecoveryError, RouterError
 from nvyr.storage import atomic_json
@@ -93,8 +94,13 @@ class Manager:
         self.reload(target)
         self.check_daemons(daemons)
         self.check_candidates()
-        if adapter.select(self.snapshot(), scopes) != desired:
-            raise RouterError('FRR running configuration does not match the requested configuration')
+        settle = getattr(adapter, 'settle_timeout', None)
+        timeout = settle(current, desired) if settle else 0
+        deadline = time.monotonic() + timeout
+        while adapter.select(self.snapshot(), scopes) != desired:
+            if time.monotonic() >= deadline:
+                raise RouterError('FRR running configuration does not match the requested configuration')
+            time.sleep(min(0.1, max(0, deadline - time.monotonic())))
 
     def apply(self, owner, desired, state_directory, *, adapter, daemons=(), recovery=False):
         """Apply one owner's complete state while retaining every other section.

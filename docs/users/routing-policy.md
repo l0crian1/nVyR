@@ -6,6 +6,11 @@ Routing policies live under `policy`, independently of any routing protocol or
 VRF. Access lists, prefix-lists, and route-maps share one configuration owner.
 This implementation creates no BGP instances, neighbors, or address families.
 
+Shared `policy key-chain` definitions provide authentication keys and optional
+send/accept lifetimes for routing protocols. See [OSPF authentication](ospf.md)
+for configuration examples. Route-maps also support OSPF external metric types,
+route tags, and OSPFv3 forwarding addresses.
+
 ## Access lists
 
 ```text

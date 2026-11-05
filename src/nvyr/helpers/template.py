@@ -25,6 +25,7 @@ from nvyr.helpers.validators import container_memory_bytes
 from nvyr.helpers import policy_formatters
 from nvyr.helpers import bgp_formatters, bgp_parameters, bgp_peer
 from nvyr.helpers import frr_static
+from nvyr.helpers import ospf_formatters
 from nvyr.render import json_text
 from nvyr.storage import sync_directory
 
@@ -66,6 +67,11 @@ class TemplateRenderer:
                            'policy_filter_operand': policy_formatters.filter_operand,
                            'policy_matches': policy_formatters.matches,
                            'policy_actions': policy_formatters.actions,
+                           'policy_key_lifetime': policy_formatters.key_lifetime,
+                           'ospf_area_id': ospf_formatters.area_id,
+                           'ospf_metric_options': ospf_formatters.metric_options,
+                           'ospf_authentication': ospf_formatters.authentication,
+                           'ospf_interface_commands': ospf_formatters.interface_commands,
                            'bgp_parameter_commands': bgp_parameters.commands,
                            'bgp_enabled': bgp_parameters.enabled,
                            'bgp_families': bgp_parameters.families,

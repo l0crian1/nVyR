@@ -7,10 +7,14 @@ relicense third-party code, packages, container images or data.
 
 ## FRR reload patch
 
-`vendor/frr/reload-ordering.patch` contains changes to and context from
-FRRouting's `tools/frr-reload.py` at tag `frr-10.7.1`:
+`vendor/frr/reload-ordering.patch`, `vendor/frr/keychain-reload.patch`, and
+`vendor/frr/ospf-reload.patch` contain changes to and context from
+FRRouting's `tools/frr-reload.py`, `lib/keychain_cli.c`, and
+`ospfd/ospf_opaque.c` at tag `frr-10.7.1`:
 
 - Upstream copyright: Copyright (C) 2014 Cumulus Networks, Inc.
+- Native keychain copyright: Copyright (C) 2000 Kunihiro Ishiguro.
+- Native opaque-extension copyright: Copyright (C) 2001 KDD R&D Laboratories, Inc.
 - nVyR changes: Copyright (c) 2026 L0crian and nVyR contributors.
 - License: **GPL-2.0-or-later**.
 - Source: https://github.com/FRRouting/frr/blob/frr-10.7.1/tools/frr-reload.py
@@ -19,8 +23,9 @@ FRRouting's `tools/frr-reload.py` at tag `frr-10.7.1`:
 
 The patch and modified upstream program remain under GPL-2.0-or-later.
 The patch is included in the Git repository and Python source distribution.
-The modified program is installed by the separately built `frr-pythontools`
-package, not by the nVyR Python wheel or `nvyr-router` Debian package.
+The modified programs are installed by the separately built `frr` and
+`frr-pythontools` packages, not by the nVyR Python wheel or `nvyr-router` Debian
+package.
 
 Python wheels declare `MIT` in their SPDX license metadata. Source archives
 declare `MIT AND GPL-2.0-or-later` because they also contain the FRR patch;

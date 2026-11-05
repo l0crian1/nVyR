@@ -354,7 +354,8 @@ def check_dhcp6_server(options):
 def check_vrf_dhcp4_server(options):
     """A second IPv4 instance binds the recreated VRF member and its own lease scope."""
     server = server_configuration(4, 'BOOTLEFT')
-    assert_equal(server['interfaces-config']['dhcp-socket-type'], 'raw')
+    # Kea omits this native default from config-get when no override was supplied.
+    assert_equal(server['interfaces-config'].get('dhcp-socket-type', 'raw'), 'raw')
     assert_equal(server['shared-networks'][0]['subnet4'][0]['subnet'], '198.18.193.0/24')
 
 
@@ -666,6 +667,24 @@ def check_complete_rule_inventory(options):
             assert_in(('set', f'{kind.replace("-", "_")}_{name}'), objects)
 
 
+def check_ospf_ipv4(options):
+    """Require authenticated adjacency and an OSPF-only prefix after boot."""
+    wait_for(lambda: cmd(['vtysh', '-c', 'show ip ospf vrf BOOTRIGHT neighbor']),
+             lambda output: '198.18.192.1' in output and 'Full' in output,
+             description='OSPFv2 acceptance adjacency', timeout=20)
+    assert_kernel_route('198.18.196.0/24', 'proto ospf', vrf='BOOTRIGHT')
+    assert_operational_output('show ip ospf vrf BOOTRIGHT neighbor', '198.18.192.1')
+
+
+def check_ospf_ipv6(options):
+    """Require the IPv6 adjacency independently of BGP and OSPFv2."""
+    wait_for(lambda: cmd(['vtysh', '-c', 'show ipv6 ospf6 vrf BOOTRIGHT neighbor']),
+             lambda output: '198.18.192.1' in output and 'Full' in output,
+             description='OSPFv3 acceptance adjacency', timeout=20)
+    assert_kernel_route('2001:db8:196::/64', 'proto ospf', vrf='BOOTRIGHT')
+    assert_operational_output('show ipv6 ospf vrf BOOTRIGHT neighbor', '198.18.192.1')
+
+
 CHECKS = (
     check_kernel_release, check_operational_inventory,
     check_system_hostname, check_static_host_mapping, check_system_timezone, check_system_tasks, check_cpu_policy, check_vrfs,
@@ -676,7 +695,7 @@ CHECKS = (
     check_static_ipv4, check_static_ipv6, check_multipath_ipv4, check_multipath_ipv6,
     check_vrf_static_ipv4, check_vrf_static_ipv6, check_routing_policies,
     check_bgp_ipv4_session, check_bgp_ipv6_session, check_bgp_ipv4_policy_result, check_bgp_ipv6_policy_result,
-    check_bgp_unicast_options,
+    check_bgp_unicast_options, check_ospf_ipv4, check_ospf_ipv6,
     check_dhcp4_server, check_dhcp6_server, check_vrf_dhcp4_server, check_vrf_dhcp6_server,
     check_dhcp_hostfile_hook, check_dhcp_ha, check_dhcp_client_lease, check_container_workload, check_container_network_ipv4,
     check_container_network_ipv6, check_container_persistence, check_container_pod,

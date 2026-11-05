@@ -11,6 +11,7 @@ images/container-sources.lock text eol=lf
 packaging/debian/* text eol=lf
 packaging/nvyr-dhcp-hosts-hook text eol=lf
 src/nvyr/op_scripts/*.py text eol=lf
-vendor/frr/*.patch text eol=lf whitespace=-blank-at-eol
+# Unified-diff context prefixes are not source indentation or trailing whitespace.
+vendor/frr/*.patch text eol=lf whitespace=-blank-at-eol,-blank-at-eof,-space-before-tab
 packaging/initramfs/** text eol=lf
 images/bootloaders/**/*.cfg text eol=lf

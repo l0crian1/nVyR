@@ -7,6 +7,7 @@ policy:
   children:
 
     include_schema:
+    - file: policy/key-chain.yaml.i
     - file: policy/access-list.yaml.i
     - file: policy/prefix-list.yaml.i
     - file: policy/as-path-list.yaml.i

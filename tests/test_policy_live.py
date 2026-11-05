@@ -67,6 +67,30 @@ def test_native_ipv4_filters_update_and_remove(native):
         assert 'RELOAD_POLICY' not in running(daemon)
 
 
+def test_native_key_lifetimes_survive_unrelated_changes_and_replace(native):
+    """Single-digit dates must compare equally and removal uses bare no commands."""
+    key = {'secret': 'reload-test', 'algorithm': 'hmac-sha-256',
+           'accept-lifetime': {'start': '2026-01-01T00:00:00', 'infinite': {}},
+           'send-lifetime': {'start': '2026-01-02T00:00:00', 'duration': '86400'}}
+    configuration = {'key-chain': {'RELOAD_POLICY': {'key': {'1': key}}}}
+    desired = apply(native, configuration)
+    assert adapter.select(native[0].snapshot(), desired) == desired
+
+    configuration['prefix-list'] = {'ipv4': {'RELOAD_POLICY': {'rule': {
+        '10': {'action': 'permit', 'prefix': '192.0.2.0/24'}}}}}
+    desired = apply(native, configuration)
+    assert adapter.select(native[0].snapshot(), desired) == desired
+
+    key['accept-lifetime'] = {'start': '2026-02-03T12:00:00', 'end': '2027-03-04T12:00:00'}
+    del key['send-lifetime']
+    desired = apply(native, configuration)
+    assert adapter.select(native[0].snapshot(), desired) == desired
+
+    del key['accept-lifetime']
+    desired = apply(native, configuration)
+    assert adapter.select(native[0].snapshot(), desired) == desired
+
+
 def test_native_ipv6_filters_update_and_remove(native):
     """IPv6 ACLs and prefix-lists retain their independent family and bounds."""
     configuration = {'access-list': {'ipv6': {'RELOAD_POLICY': {'rule': {

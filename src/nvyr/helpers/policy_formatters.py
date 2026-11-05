@@ -83,8 +83,31 @@ def matches(values):
     return commands
 
 
+def key_lifetime(values):
+    """Translate router-local times to FRR's fixed English month syntax."""
+    from datetime import datetime
+
+    def native_time(value):
+        instant = datetime.fromisoformat(value)
+        month = ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec')[instant.month - 1]
+        return f'{instant:%H:%M:%S} {month} {instant.day} {instant.year}'
+
+    start = native_time(values['start'])
+    if 'end' in values:
+        return start + ' ' + native_time(values['end'])
+    if 'duration' in values:
+        return start + ' duration ' + str(int(values['duration']))
+    return start + ' infinite'
+
+
 def actions(values):
     commands = []
+    for key in ('metric-type', 'forwarding-address'):
+        if key in values:
+            commands.append(f'set {key} {values[key]}')
+    if 'tag' in values:
+        commands.append(f"set tag {int(values['tag'])}")
     for key in ('metric', 'local-preference', 'weight'):
         if key in values:
             value = values[key]

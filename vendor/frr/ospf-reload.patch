@@ -1,0 +1,56 @@
+--- a/tools/frr-reload.py
++++ b/tools/frr-reload.py
+@@ -839,6 +839,14 @@
+         # If we need to remove this line we do so by adding "bgp default ipv4-unicast",
+         # not by doing a "no no bgp default ipv4-unicast"
+         if delete:
++            # OSPF reset forms do not all accept their positive-form operands.
++            if len(ctx_keys) == 1 and ctx_keys[0].startswith(("router ospf", "router ospf6")):
++                if line.startswith("aggregation timer "):
++                    line = "aggregation timer"
++                elif line == "log-adjacency-changes detail":
++                    line = "log-adjacency-changes"
++                elif ctx_keys[0].startswith("router ospf6") and line.startswith("graceful-restart grace-period "):
++                    line = "graceful-restart"
+             # Lifetime removal takes no operands, unlike its positive form.
+             if (len(ctx_keys) == 2 and ctx_keys[0].startswith("key chain ")
+                     and ctx_keys[1].startswith("key ")
+@@ -2100,6 +2108,25 @@
+     lines_to_add, lines_to_del = ignore_delete_re_add_lines(lines_to_add, lines_to_del)
+     lines_to_add, lines_to_del = delete_move_lines(lines_to_add, lines_to_del)
+     lines_to_add, lines_to_del = ignore_unconfigurable_lines(lines_to_add, lines_to_del)
++
++    # OSPF parent state must outlive its dependent option resets. Resetting
++    # neighbor options recreates a deleted neighbor; default-cost requires the
++    # area to remain stub/NSSA until its own removal has completed.
++    ospf_parents = []
++    other_deletions = []
++    for ctx_keys, line in lines_to_del:
++        parent = False
++        if len(ctx_keys) == 1 and line:
++            if ctx_keys[0].startswith("interface "):
++                parent = bool(re.fullmatch(r"ipv6 ospf6 neighbor \S+", line))
++            elif ctx_keys[0].startswith("router ospf"):
++                parent = bool(re.match(r"area \S+ (?:stub|nssa)(?: |$)", line)
++                              and not re.match(r"area \S+ nssa range ", line))
++        if parent:
++            ospf_parents.append((ctx_keys, line))
++        else:
++            other_deletions.append((ctx_keys, line))
++    lines_to_del = other_deletions + ospf_parents
+ 
+     return (lines_to_add, lines_to_del)
+ 
+--- a/ospfd/ospf_opaque.c
++++ b/ospfd/ospf_opaque.c
+@@ -1191,6 +1191,10 @@
+ void ospf_opaque_config_write_router(struct vty *vty, struct ospf *ospf)
+ {
+ 	struct list *funclist;
++
++	/* Opaque extensions are global and configurable only in the default VRF. */
++	if (ospf->vrf_id != VRF_DEFAULT)
++		return;
+ 
+ 	if (CHECK_FLAG(ospf->config, OSPF_OPAQUE_CAPABLE))
+ 		vty_out(vty, " capability opaque\n");

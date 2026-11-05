@@ -11,8 +11,20 @@ POLICY_LINE = re.compile(
 def configuration_lines(text):
     """Associate route-map bodies and single-line filters with their named owner."""
     route_map = None
+    key_chain = None
     for line in text.splitlines():
         stripped = line.strip()
+        if line.startswith('key chain '):
+            key_chain = line
+            route_map = None
+            yield line, key_chain
+            continue
+        if key_chain is not None and (line[:1].isspace() or line == 'exit'):
+            yield line, key_chain
+            if line == 'exit':
+                key_chain = None
+            continue
+        key_chain = None
         match = POLICY_LINE.match(line)
         if match:
             kind = re.sub(r' (standard|expanded)$', '', match[1])
@@ -38,9 +50,20 @@ class Policies:
         """Normalize writer ordering without losing route-map sequence boundaries."""
         result = {scope: [] for scope in scopes}
         entry = None
+        keys = {}
         for line, scope in configuration_lines(text):
             if scope not in result:
                 entry = None
+                continue
+
+            if scope.startswith('key chain '):
+                if line.startswith('key chain '):
+                    keys[scope] = {}
+                elif line.strip().startswith('key '):
+                    entry = []
+                    keys[scope][int(line.split()[1])] = entry
+                elif line.strip() != 'exit' and entry is not None:
+                    entry.append(' '.join(line.split()))
                 continue
 
             if line.startswith('route-map '):
@@ -56,6 +79,14 @@ class Policies:
         normalized = {}
         for scope, entries in result.items():
             normalized[scope] = sorted('\n'.join([entry[0], *sorted(entry[1:])]) for entry in entries)
+        for scope, chain in keys.items():
+            lines = [scope]
+            for identifier, commands in sorted(chain.items()):
+                lines.append(f' key {identifier}')
+                lines.extend('  ' + command for command in sorted(commands))
+                lines.append(' exit')
+            lines.append('exit')
+            normalized[scope] = ['\n'.join(lines)]
         return normalized
 
     def replace(self, text, desired):

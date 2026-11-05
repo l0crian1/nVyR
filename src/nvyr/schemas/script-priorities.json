@@ -151,6 +151,22 @@
     ]
   },
   {
+    "script": "ospf",
+    "priority": 46,
+    "paths": [
+      "protocols ospf",
+      "vrf name <name> protocols ospf"
+    ]
+  },
+  {
+    "script": "ospfv3",
+    "priority": 47,
+    "paths": [
+      "protocols ospfv3",
+      "vrf name <name> protocols ospfv3"
+    ]
+  },
+  {
     "script": "ssh",
     "priority": 50,
     "paths": [

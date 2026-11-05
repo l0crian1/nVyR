@@ -6,3 +6,5 @@ protocols:
     include_schema:
     - file: protocols/static.yaml.i
     - file: protocols/bgp.yaml.i
+    - file: protocols/ospf.yaml.i
+    - file: protocols/ospfv3.yaml.i

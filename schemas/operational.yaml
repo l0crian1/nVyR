@@ -123,6 +123,7 @@ children: # operational
         children: # ip
 
           include_schema:
+          - file: operational/ospf-display.yaml.i
           - file: operational/policy-filters.yaml.i
             as: null
           - file: operational/policy-as-path.yaml.i
@@ -147,6 +148,7 @@ children: # operational
                 as: null
 
           include_schema:
+          - file: operational/ospfv3-display.yaml.i
           - file: operational/policy-filters.yaml.i
             as: null
             replace:

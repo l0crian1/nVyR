@@ -1,3 +1,16 @@
+{% for name, values in configuration.get('key-chain', {}).items() | sort(case_sensitive=true) -%}
+key chain {{ name }}
+{% for identifier, key in numeric_items(values['key']) %} key {{ identifier | int }}
+  key-string {{ key['secret'] }}
+  cryptographic-algorithm {{ key['algorithm'] }}
+{% for direction in ('accept', 'send') -%}
+{% if direction ~ '-lifetime' in key %}  {{ direction }}-lifetime {{ policy_key_lifetime(key[direction ~ '-lifetime']) }}
+{% endif -%}
+{% endfor %} exit
+{% endfor -%}
+exit
+{% endfor -%}
+
 {% for kind in ('access-list', 'prefix-list') -%}
 {% for family, lists in configuration.get(kind, {}).items() | sort(case_sensitive=true) -%}
 {% set prefix = 'ipv6 ' if family == 'ipv6' else 'ip ' if kind == 'prefix-list' else '' -%}

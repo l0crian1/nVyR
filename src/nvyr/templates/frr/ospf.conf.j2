@@ -1,0 +1,111 @@
+{% set native = 'ospf6' if version == 3 else 'ospf' -%}
+{% for vrf, settings in configuration['instances'].items() | sort(case_sensitive=true) -%}
+router {{ native }}{{ ' vrf ' ~ vrf if vrf != 'default' else '' }}
+{% for key, value in settings.get('options', {}).items() -%}
+{% if key == 'send-extra-data' %} {{ native }} send-extra-data zebra
+{% elif key == 'opaque-lsa' %} capability opaque
+{% elif key == 'rfc1583-compatibility' %} compatible rfc1583
+{% elif key == 'write-multiplier' and version == 3 %} write-multiplier {{ value | int }}
+{% else %} {{ native }} {{ key }} {{ value }}
+{% endif -%}
+{% endfor -%}
+{% if 'reference-bandwidth' in settings %} auto-cost reference-bandwidth {{ settings['reference-bandwidth'] | int }}
+{% endif -%}
+{% for key in ('maximum-paths', 'distance', 'default-metric') -%}
+{% if key in settings %} {{ key }} {{ settings[key] | int }}
+{% endif -%}
+{% endfor -%}
+{% if 'route-distance' in settings %} distance {{ native }}{% for key in ('intra-area', 'inter-area', 'external') %}{% if key in settings['route-distance'] %} {{ key }} {{ settings['route-distance'][key] | int }}{% endif %}{% endfor %}
+{% endif -%}
+{% if 'log-adjacency-changes' in settings %} log-adjacency-changes{{ ' detail' if 'detail' in settings['log-adjacency-changes'] else '' }}
+{% endif -%}
+{% for key in ('shutdown', 'forwarding-address-self', 'flood-reduction') -%}
+{% if key in settings %} {{ key }}
+{% endif -%}
+{% endfor -%}
+{% if 'passive-default' in settings %} passive-interface default
+{% endif -%}
+{% if 'stub-router' in settings %} stub-router administrative
+{% endif -%}
+{% if 'disable-proactive-arp' in settings %} no proactive-arp
+{% endif -%}
+{% if 'disable-socket-per-interface' in settings %} no socket-per-interface
+{% endif -%}
+{% for direction, size in settings.get('socket', {}).get('buffer', {}).items() %} socket buffer {{ 'recv' if direction == 'receive' else direction }} {{ size | int }}
+{% endfor -%}
+{% if 'router-info' in settings %} router-info {{ settings['router-info'] }}
+{% endif -%}
+{% for kind, value in settings.get('max-metric', {}).items() %} max-metric router-lsa {{ kind }}{{ ' ' ~ (value | int) if kind != 'administrative' else '' }}
+{% endfor -%}
+{% set timers = settings.get('timers', {}) -%}
+{% if 'spf' in timers %} timers throttle spf {{ timers['spf']['delay'] | int }} {{ timers['spf']['initial-hold'] | int }} {{ timers['spf']['maximum-hold'] | int }}
+{% endif -%}
+{% if 'lsa-generation' in timers %} timers throttle lsa all {{ timers['lsa-generation'] | int }}
+{% endif -%}
+{% if 'lsa-min-arrival' in timers %} timers lsa min-arrival {{ timers['lsa-min-arrival'] | int }}
+{% endif -%}
+{% if 'aggregation' in timers %} aggregation timer {{ timers['aggregation'] | int }}
+{% endif -%}
+{% if 'refresh' in timers %} refresh timer {{ timers['refresh'] | int }}
+{% endif -%}
+{% if 'graceful-restart' in settings %} graceful-restart{{ ' grace-period ' ~ (settings['graceful-restart']['grace-period'] | int) if 'grace-period' in settings['graceful-restart'] else '' }}
+{% endif -%}
+{% set helper = settings.get('graceful-restart-helper', {}) -%}
+{% if 'all' in helper %} graceful-restart helper enable
+{% endif -%}
+{% for neighbor in helper.get('neighbor', []) %} graceful-restart helper enable {{ neighbor }}
+{% endfor -%}
+{% if 'planned-only' in helper %} graceful-restart helper planned-only
+{% endif -%}
+{% if 'disable-strict-lsa-checking' in helper %} {{ 'graceful-restart helper lsa-check-disable' if version == 3 else 'no graceful-restart helper strict-lsa-checking' }}
+{% endif -%}
+{% if 'supported-grace-time' in helper %} graceful-restart helper supported-grace-time {{ helper['supported-grace-time'] | int }}
+{% endif -%}
+{% for source, values in settings.get('redistribute', {}).items() | sort(case_sensitive=true) -%}
+{% if source in ('table', 'table-direct') -%}
+{% for identifier, options in numeric_items(values) %} redistribute {{ source }} {{ identifier | int }} {{ ospf_metric_options(options) }}
+{% endfor -%}
+{% else %} redistribute {{ source }} {{ ospf_metric_options(values) }}
+{% endif -%}
+{% endfor -%}
+{% for source, values in settings.get('distribute-list', {}).get('export', {}).items() %} distribute-list {{ values['access-list'] }} out {{ source }}
+{% endfor -%}
+{% if 'originate' in settings.get('default-information', {}) -%}
+{% set originate = settings['default-information']['originate'] %} default-information originate{{ ' always' if 'always' in originate else '' }} {{ ospf_metric_options(originate) }}
+{% endif -%}
+{% for prefix, summary in settings.get('summary-address', {}).items() | sort(case_sensitive=true) %} summary-address {{ ip_network(prefix, strict=false) }}{{ ' tag ' ~ (summary['tag'] | int) if 'tag' in summary else '' }}{{ ' metric ' ~ (summary['metric'] | int) if 'metric' in summary else '' }}{{ ' metric-type ' ~ (summary['metric-type'] | int) if 'metric-type' in summary else '' }}{{ ' no-advertise' if 'no-advertise' in summary else '' }}
+{% endfor -%}
+{% for address, neighbor in settings.get('neighbor', {}).items() | sort(case_sensitive=true) %} neighbor {{ address }}{% for key in ('priority', 'poll-interval') %}{% if key in neighbor %} {{ key }} {{ neighbor[key] | int }}{% endif %}{% endfor %}
+{% endfor -%}
+{% for identifier, area in settings.get('area', {}).items() | sort(case_sensitive=true) -%}
+{% set base = 'area ' ~ ospf_area_id(identifier) -%}
+{% for prefix in area.get('network', []) %} network {{ ip_network(prefix, strict=false) }} area {{ ospf_area_id(identifier) }}
+{% endfor -%}
+{% if 'stub' in area %} {{ base }} stub{{ ' no-summary' if 'no-summary' in area['stub'] else '' }}
+{% endif -%}
+{% if 'nssa' in area -%}
+{% set nssa = area['nssa'] %} {{ base }} nssa{{ ' translate-' ~ nssa['translator-role'] if nssa.get('translator-role', 'candidate') != 'candidate' else '' }}{{ ' default-information-originate' if 'originate' in nssa.get('default-information', {}) else '' }}{% if 'originate' in nssa.get('default-information', {}) %} {{ ospf_metric_options(nssa['default-information']['originate']) }}{% endif %}{{ ' no-summary' if 'no-summary' in nssa else '' }}{{ ' suppress-fa' if 'suppress-forwarding-address' in nssa else '' }}
+{% for prefix, summary in nssa.get('range', {}).items() %} {{ base }} nssa range {{ ip_network(prefix, strict=false) }}{{ ' cost ' ~ (summary['cost'] | int) if 'cost' in summary else '' }}{{ ' not-advertise' if 'no-advertise' in summary else '' }}
+{% endfor -%}
+{% endif -%}
+{% if 'authentication' in area %} {{ base }} authentication{{ ' message-digest' if area['authentication'] == 'message-digest' else '' }}
+{% endif -%}
+{% for key in ('default-cost', 'shortcut', 'import-list', 'export-list') -%}
+{% if key in area %} {{ base }} {{ key }} {{ area[key] }}
+{% endif -%}
+{% endfor -%}
+{% if 'flood-reduction' in area %} {{ base }} flood-reduction
+{% endif -%}
+{% for direction, name in area.get('filter-list', {}).items() %} {{ base }} filter-list prefix {{ name }} {{ direction }}
+{% endfor -%}
+{% for prefix, summary in area.get('range', {}).items() %} {{ base }} range {{ ip_network(prefix, strict=false) }}{{ ' cost ' ~ (summary['cost'] | int) if 'cost' in summary else '' }}{{ ' not-advertise' if 'no-advertise' in summary else '' }}{{ ' substitute ' ~ ip_network(summary['substitute'], strict=false) if 'substitute' in summary else '' }}
+{% endfor -%}
+{% endfor -%}
+exit
+{% for name, interface in settings.get('interface', {}).items() | sort(case_sensitive=true) -%}
+interface {{ name }}
+{% for command in ospf_interface_commands(interface, version) %} {{ command }}
+{% endfor -%}
+exit
+{% endfor -%}
+{% endfor -%}

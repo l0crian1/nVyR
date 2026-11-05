@@ -1,0 +1,46 @@
+--- a/tools/frr-reload.py
++++ b/tools/frr-reload.py
+@@ -514,6 +514,11 @@
+         for line in config_text.split("\n"):
+             line = line.strip()
+ 
++            # The keychain writer pads single-digit days; file loading collapses
++            # that padding. Compare lifetimes using the same representation.
++            if line.startswith(("accept-lifetime ", "send-lifetime ")):
++                line = " ".join(line.split())
++
+             if (
+                 line == "Building configuration..."
+                 or line == "Current configuration:"
+@@ -834,6 +839,11 @@
+         # If we need to remove this line we do so by adding "bgp default ipv4-unicast",
+         # not by doing a "no no bgp default ipv4-unicast"
+         if delete:
++            # Lifetime removal takes no operands, unlike its positive form.
++            if (len(ctx_keys) == 2 and ctx_keys[0].startswith("key chain ")
++                    and ctx_keys[1].startswith("key ")
++                    and line.startswith(("accept-lifetime ", "send-lifetime "))):
++                line = line.split()[0]
+             if line.startswith("no "):
+                 cmd.append("%s%s" % (indent, line[3:]))
+             else:
+--- a/lib/keychain_cli.c
++++ b/lib/keychain_cli.c
+@@ -485,7 +485,7 @@
+        NO_STR
+        "Unset accept-lifetime\n")
+ {
+-	nb_cli_enqueue_change(vty, "accept-lifetime", NB_OP_DESTROY, NULL);
++	nb_cli_enqueue_change(vty, "./lifetime/accept-lifetime", NB_OP_DESTROY, NULL);
+ 	return nb_cli_apply_changes(vty, NULL);
+ }
+ 
+@@ -705,7 +705,7 @@
+        NO_STR
+        "Unset send-lifetime\n")
+ {
+-	nb_cli_enqueue_change(vty, "send-lifetime", NB_OP_DESTROY, NULL);
++	nb_cli_enqueue_change(vty, "./lifetime/send-lifetime", NB_OP_DESTROY, NULL);
+ 	return nb_cli_apply_changes(vty, NULL);
+ }
+ 

@@ -1,6 +1,7 @@
 """Reusable value validators, registered by schema name."""
 
 from difflib import get_close_matches
+from datetime import datetime
 from functools import lru_cache
 import ipaddress
 import re
@@ -193,6 +194,28 @@ def register(name, label, *, prepare=None):
         return function
 
     return decorate
+
+
+@register('ospf-area', 'an area ID from 0 through 4294967295, or in dotted decimal such as 0.0.0.1')
+def ospf_area(value):
+    if re.fullmatch(r'[0-9]{1,10}', value):
+        return int(value) <= 4294967295
+    try:
+        ipaddress.IPv4Address(value)
+        return True
+    except ipaddress.AddressValueError:
+        return False
+
+
+@register('routing-key-time', 'a router-local date and time as YYYY-MM-DDTHH:MM:SS, with year 1993 through 2035')
+def routing_key_time(value):
+    if re.fullmatch(r'[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}', value) is None:
+        return False
+    try:
+        instant = datetime.fromisoformat(value)
+        return 1993 <= instant.year <= 2035
+    except ValueError:
+        return False
 
 
 DURATION_UNITS = {'s': 1, 'm': 60, 'h': 3600, 'd': 86400}

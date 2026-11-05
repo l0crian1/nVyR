@@ -13,7 +13,7 @@ from acceptance.checks import CHECKS
 
 
 CONFIG = Path(__file__).parent / 'config'
-CONFIG_FILES = ('interfaces.set', 'routing.set', 'services.set', 'firewall.set')
+CONFIG_FILES = ('interfaces.set', 'routing.set', 'ospf.set', 'services.set', 'firewall.set')
 LINKS = ('BOOTLEFT', 'BOOTRIGHT', 'dum992', 'dum995', 'dum996', 'dum997', 'dum998',
          'dum999', 'veth993', 'veth994', 'veth995', 'veth997', 'br994', 'br995', 'bond995', 'dum994',
          'pd-BOOTNET', 'pd-BOOTVRF', 'pd-BOOTBOX-0', 'pd-BOOTBOX-1', 'pd-BOOTPOD-0')

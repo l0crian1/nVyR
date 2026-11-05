@@ -32,10 +32,11 @@ def test_stage_complete_verified_cache(cache, tmp_path):
         assert (destination / path.name).read_bytes() == path.read_bytes()
 
 
-def test_changed_patch_invalidates_cached_build(cache, tmp_path, monkeypatch):
+@pytest.mark.parametrize('attribute', ['PATCH', 'KEYCHAIN_PATCH', 'OSPF_PATCH'])
+def test_changed_patch_invalidates_cached_build(cache, tmp_path, monkeypatch, attribute):
     patch = tmp_path / 'patch'
-    patch.write_text(frr_packages.PATCH.read_text() + '\n')
-    monkeypatch.setattr(frr_packages, 'PATCH', patch)
+    patch.write_text(getattr(frr_packages, attribute).read_text() + '\n')
+    monkeypatch.setattr(frr_packages, attribute, patch)
 
     with pytest.raises(RuntimeError, match='recipe changed.*Rebuild nvyr-image-builder'):
         frr_packages.stage(cache, tmp_path / 'output')

@@ -30,11 +30,12 @@ def clear(words):
     """Execute one schema-approved peer or policy-counter reset."""
     bgp = tuple(words[:2]) == ('clear', 'bgp') and len(words) >= 3
     route_map = tuple(words[:3]) == ('clear', 'route-map', 'counters') and len(words) in {3, 4}
-    if (not (bgp or route_map)
+    ospf = tuple(words[:3]) in {('clear', 'ip', 'ospf'), ('clear', 'ipv6', 'ospf6')} and len(words) >= 4
+    if (not (bgp or route_map or ospf)
             or any(not isinstance(word, str)
                    or not (bgp and word == '*') and not re.fullmatch(r'[a-zA-Z0-9_.:/%-]+', word)
                    for word in words)):
-        raise ValueError('Expected a single FRR clear bgp or clear route-map counters command')
+        raise ValueError('Expected a single FRR clear bgp, ospf, or route-map counters command')
 
     return cmd(['vtysh', '-c', ' '.join(words)])
 
