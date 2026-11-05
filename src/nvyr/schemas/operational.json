@@ -38535,6 +38535,17 @@
                     ]
                   }
                 },
+                "ospf": {
+                  "kind": "node",
+                  "description": "Routes learned through OSPFv2",
+                  "command": {
+                    "argv": [
+                      "static.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  }
+                },
                 "tag": {
                   "kind": "leaf_node",
                   "description": "Routes with a specific route tag",
@@ -38793,6 +38804,17 @@
                         ]
                       }
                     },
+                    "ospf": {
+                      "kind": "node",
+                      "description": "Routes learned through OSPFv2",
+                      "command": {
+                        "argv": [
+                          "static.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      }
+                    },
                     "tag": {
                       "kind": "leaf_node",
                       "description": "Routes with a specific route tag",
@@ -39043,6 +39065,17 @@
                     "local": {
                       "kind": "node",
                       "description": "Routes to addresses owned by this router",
+                      "command": {
+                        "argv": [
+                          "static.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      }
+                    },
+                    "ospf": {
+                      "kind": "node",
+                      "description": "Routes learned through OSPFv2",
                       "command": {
                         "argv": [
                           "static.nvyr.op",
@@ -42276,6 +42309,17 @@
                     ]
                   }
                 },
+                "ospf6": {
+                  "kind": "node",
+                  "description": "Routes learned through OSPFv3",
+                  "command": {
+                    "argv": [
+                      "static.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  }
+                },
                 "tag": {
                   "kind": "leaf_node",
                   "description": "Routes with a specific route tag",
@@ -42534,6 +42578,17 @@
                         ]
                       }
                     },
+                    "ospf6": {
+                      "kind": "node",
+                      "description": "Routes learned through OSPFv3",
+                      "command": {
+                        "argv": [
+                          "static.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      }
+                    },
                     "tag": {
                       "kind": "leaf_node",
                       "description": "Routes with a specific route tag",
@@ -42784,6 +42839,17 @@
                     "local": {
                       "kind": "node",
                       "description": "Routes to addresses owned by this router",
+                      "command": {
+                        "argv": [
+                          "static.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      }
+                    },
+                    "ospf6": {
+                      "kind": "node",
+                      "description": "Routes learned through OSPFv3",
                       "command": {
                         "argv": [
                           "static.nvyr.op",

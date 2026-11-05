@@ -20,6 +20,16 @@ children: # Native FRR route selectors
     description: Routes to addresses owned by this router
     command: ['static.nvyr.op', 'show', '@line']
 
+  ospf:
+    kind: node
+    description: Routes learned through OSPFv2
+    command: ['static.nvyr.op', 'show', '@line']
+
+  ospf6:
+    kind: node
+    description: Routes learned through OSPFv3
+    command: ['static.nvyr.op', 'show', '@line']
+
   tag:
     kind: leaf_node
     description: Routes with a specific route tag

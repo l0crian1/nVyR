@@ -13,6 +13,12 @@ from nvyr.op_scripts import static
     ('show ipv6 route', ('show', 'ipv6', 'route')),
     ('show ip route bgp', ('show', 'ip', 'route', 'bgp')),
     ('show ipv6 route bgp', ('show', 'ipv6', 'route', 'bgp')),
+    ('show ip route ospf', ('show', 'ip', 'route', 'ospf')),
+    ('show ipv6 route ospf6', ('show', 'ipv6', 'route', 'ospf6')),
+    ('show ip route vrf BLUE ospf', ('show', 'ip', 'route', 'vrf', 'BLUE', 'ospf')),
+    ('show ipv6 route vrf BLUE ospf6', ('show', 'ipv6', 'route', 'vrf', 'BLUE', 'ospf6')),
+    ('show ip route table 254 ospf', ('show', 'ip', 'route', 'table', '254', 'ospf')),
+    ('show ipv6 route table 254 ospf6', ('show', 'ipv6', 'route', 'table', '254', 'ospf6')),
     ('show ip route connected', ('show', 'ip', 'route', 'connected')),
     ('show ipv6 route connected', ('show', 'ipv6', 'route', 'connected')),
     ('show ip route kernel', ('show', 'ip', 'route', 'kernel')),
@@ -65,6 +71,7 @@ def test_wrapper_canonicalizes_commands_and_passes_raw(monkeypatch, line, words,
     'show ip route destination 192.0.2.0/24',
     'show ip route 192.0.2.0/24 vrf BLUE', 'show ip route 192.0.2.1 longer-prefixes',
     'show ip route tag', 'show ipv6 route tag 0', 'show ip route tag 4294967296',
+    'show ip route ospf6', 'show ip route vrf BLUE ospf6', 'show ip route table 254 ospf6',
 ])
 def test_wrapper_rejects_incomplete_or_unrelated_commands(monkeypatch, line):
     monkeypatch.setattr(static.vtysh, 'show', lambda *args, **kwargs: pytest.fail('Invalid command executed'))
@@ -130,6 +137,14 @@ def test_prefix_hints_and_completion_follow_vrf(controller):
 
     help = controller.completion('show ipv6 route vrf BLUE 2001:db8::/32 ', explicit=True)
     assert {'longer-prefixes', '<Enter>'} <= dict(help['candidates']).keys()
+
+
+@pytest.mark.parametrize('scope', ['', 'vrf BLUE ', 'table 254 '])
+def test_route_completion_has_the_family_specific_ospf_selector(controller, scope):
+    for family, expected, excluded in [('ip', 'ospf', 'ospf6'), ('ipv6', 'ospf6', 'ospf')]:
+        candidates = dict(controller.completion(f'show {family} route {scope}', explicit=True)['candidates'])
+        assert expected in candidates
+        assert excluded not in candidates
 
 
 def test_internal_raw_option_prints_json_through_opmode(monkeypatch, capsys):

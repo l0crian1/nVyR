@@ -128,6 +128,10 @@ children: # operational
             as: null
           - file: operational/policy-as-path.yaml.i
           - file: operational/route-display.yaml.i
+            remove:
+            - /children/ospf6
+            - /children/vrf/children/ospf6
+            - /children/table/children/ospf6
             replace:
               /description: IPv4 routing table from FRR
         description: IPv4 state
@@ -161,6 +165,10 @@ children: # operational
               /prefix-list/children/name/children/prefix/hints:
                 x:x:x:x:x:x/x: IPv6 prefix
           - file: operational/route-display.yaml.i
+            remove:
+            - /children/ospf
+            - /children/vrf/children/ospf
+            - /children/table/children/ospf
             replace:
               /description: IPv6 routing table from FRR
               /children/destination/validators:

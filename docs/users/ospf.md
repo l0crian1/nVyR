@@ -150,11 +150,14 @@ show ip ospf neighbor detail
 show ip ospf interface eth1
 show ip ospf database router
 show ip ospf route
+show ip route ospf
 
 show ipv6 ospf neighbor
 show ipv6 ospf interface traffic
 show ipv6 ospf database router detail
 show ipv6 ospf vrf BLUE route
+show ipv6 route ospf6
+show ipv6 route vrf BLUE ospf6
 
 clear ip ospf neighbor 192.0.2.2
 clear ipv6 ospf vrf BLUE process

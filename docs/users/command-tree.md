@@ -14164,6 +14164,7 @@ operational mode
 │   │       ├── failed
 │   │       ├── kernel
 │   │       ├── local
+│   │       ├── ospf
 │   │       ├── static
 │   │       │   └── failed
 │   │       ├── summary
@@ -14178,6 +14179,7 @@ operational mode
 │   │       │   │       └── static
 │   │       │   ├── kernel
 │   │       │   ├── local
+│   │       │   ├── ospf
 │   │       │   ├── static
 │   │       │   └── tag <1-4294967295>
 │   │       ├── tag <1-4294967295>
@@ -14190,6 +14192,7 @@ operational mode
 │   │           ├── failed
 │   │           ├── kernel
 │   │           ├── local
+│   │           ├── ospf
 │   │           ├── static
 │   │           │   └── failed
 │   │           ├── summary
@@ -14392,6 +14395,7 @@ operational mode
 │   │       ├── failed
 │   │       ├── kernel
 │   │       ├── local
+│   │       ├── ospf6
 │   │       ├── static
 │   │       │   └── failed
 │   │       ├── summary
@@ -14406,6 +14410,7 @@ operational mode
 │   │       │   │       └── static
 │   │       │   ├── kernel
 │   │       │   ├── local
+│   │       │   ├── ospf6
 │   │       │   ├── static
 │   │       │   └── tag <1-4294967295>
 │   │       ├── tag <1-4294967295>
@@ -14418,6 +14423,7 @@ operational mode
 │   │           ├── failed
 │   │           ├── kernel
 │   │           ├── local
+│   │           ├── ospf6
 │   │           ├── static
 │   │           │   └── failed
 │   │           ├── summary
