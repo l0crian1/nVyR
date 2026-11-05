@@ -14,7 +14,7 @@ import dns.rdatatype
 import dns.rrset
 import pytest
 
-from nvyr.helpers.process import CommandError, CommandResult
+from nvyr.helpers.process import CommandResult
 
 
 @pytest.fixture
@@ -98,8 +98,26 @@ def test_http_statuses_and_literal_notification_body(helpers, http_server):
     message = '@not-a-file\nQuotes " and shell text $(echo ignored); stay literal.'
     assert helpers.ntfy(message, url + '/200', source_address='127.0.0.1') is None
     assert received == [message.encode()]
-    with pytest.raises(CommandError):
-        helpers.ntfy('rejected', url + '/500')
+    assert helpers.ntfy('rejected', url + '/500') is None
+
+    with socket.socket() as closed:
+        closed.bind(('127.0.0.1', 0))
+        assert helpers.ntfy('unreachable', f'http://127.0.0.1:{closed.getsockname()[1]}') is None
+
+
+def test_notification_timeout_does_not_abort_caller(helpers, monkeypatch):
+    calls = []
+
+    def run(arguments, **options):
+        calls.append((arguments, options))
+        return 28  # curl's timeout exit status must not interrupt the caller.
+
+    monkeypatch.setattr(helpers, 'run', run)
+
+    assert helpers.ntfy('ISP checks failed.', 'http://10.0.95.80/bgp', source_address='eth0') is None
+    assert calls == [(['curl', '--data-raw', 'ISP checks failed.', '--url',
+                      'http://10.0.95.80/bgp', '--interface', 'eth0'],
+                     {'stream': True, 'timeout': None})]
 
 
 def test_http_partial_response_is_not_success(helpers, monkeypatch):

@@ -11,7 +11,7 @@ from time import sleep
 import dns.exception
 import dns.resolver
 
-from nvyr.helpers.process import cmd, cli_cmd, run
+from nvyr.helpers.process import cli_cmd, run
 
 
 # Retained from the supplied helper; callers choose which targets suit their uplink.
@@ -35,18 +35,17 @@ ping_targets = {
 }
 
 
-def ntfy(message, url, source_address="", *, timeout=10):
-    """POST literal message text to an ntfy topic; raise CommandError on failure.
+def ntfy(message, url, source_address=""):
+    """POST a message, leaving curl output visible and ignoring its exit status.
 
     source_address may be a local address or interface name, as accepted by curl.
-    A successful request returns None. The request is bounded by timeout seconds.
+    Like the original helper, this returns None and imposes no transfer timeout.
     """
-    arguments = ['curl', '--silent', '--show-error', '--fail', '--max-time', str(timeout),
-                 '--data-raw', message, '--url', url]
+    arguments = ['curl', '--data-raw', message, '--url', url]
     if source_address:
         arguments.extend(['--interface', source_address])
 
-    cmd(arguments, timeout=timeout + 2)
+    run(arguments, stream=True, timeout=None)
 
 
 def log_message(message, process, level=LOG_INFO):

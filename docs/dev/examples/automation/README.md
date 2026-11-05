@@ -26,7 +26,7 @@ counts total rounds, not extra attempts. Ping, DNS and TCP wait only between
 rounds; HTTP keeps the original helper's immediate retries. An empty target list
 cannot succeed. Checking an AAAA record does not itself prove IPv6 connectivity.
 
-Ping, curl and notifications accept a source IP or interface name. DNS and TCP
+Ping, HTTP checks and notifications accept a source IP or interface name. DNS and TCP
 take a source IP address. A source address does not force a route or select a
 VRF; run the caller in the intended routing context when necessary. DNS ignores
 the router's resolver list and queries only the supplied servers.
@@ -40,7 +40,7 @@ the application protocol or test UDP.
 Missing executables and subprocess launch errors remain exceptions. The nVyR
 process wrapper also raises `CommandError` if its outer execution deadline is
 exceeded. Ping uses the wrapper's 15-second outer deadline, independently of
-its 0.5-second reply wait. HTTP and notifications allow two additional seconds
+its 0.5-second reply wait. HTTP checks allow two additional seconds
 beyond curl's transfer deadline. TCP uses `nc -z` with its connection timeout
 rounded up to whole seconds. That timeout applies per resolved address;
 hostname resolution and a complete retry sequence can take longer.
@@ -81,13 +81,15 @@ from nvyr_helpers import log_message, ntfy
 
 log_message('Uplink check completed', 'uplink-check')
 
-ntfy('Uplink check completed', 'https://ntfy.example.org/router-status', timeout=10)
+ntfy('Uplink check completed', 'https://ntfy.example.org/router-status')
 ```
 
 `ntfy()` sends the message literally, including quotes, newlines and leading
-`@` characters. It returns `None` on success and raises `CommandError` for a
-failed transfer or HTTP error. A notification failure can therefore be handled
-separately from the configuration commit by the calling script.
+`@` characters. As in the original helper, it returns `None`, leaves curl's
+output visible, and ignores curl's exit status so transfer failures do not
+abort the calling script. It imposes no transfer timeout, so an unreachable
+endpoint can delay the caller until curl exits. Failure to launch curl still
+raises `CommandError`.
 
 `log_message()` uses local syslog. Its custom process name normally appears in
 `show log system`, subject to the configured severity threshold.
