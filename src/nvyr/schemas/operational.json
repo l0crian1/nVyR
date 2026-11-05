@@ -10160,8 +10160,7 @@
               "logs.nvyr.op",
               "show",
               "system"
-            ],
-            "stream": true
+            ]
           },
           "children": {
             "nat": {
@@ -10172,8 +10171,7 @@
                   "logs.nvyr.op",
                   "show",
                   "@3"
-                ],
-                "stream": true
+                ]
               },
               "children": {
                 "follow": {
@@ -10199,8 +10197,7 @@
                       "@3",
                       "--direction",
                       "source"
-                    ],
-                    "stream": true
+                    ]
                   },
                   "children": {
                     "follow": {
@@ -10245,8 +10242,7 @@
                           "source",
                           "--rule",
                           "@6"
-                        ],
-                        "stream": true
+                        ]
                       },
                       "children": {
                         "follow": {
@@ -10280,8 +10276,7 @@
                       "@3",
                       "--direction",
                       "destination"
-                    ],
-                    "stream": true
+                    ]
                   },
                   "children": {
                     "follow": {
@@ -10326,8 +10321,7 @@
                           "destination",
                           "--rule",
                           "@6"
-                        ],
-                        "stream": true
+                        ]
                       },
                       "children": {
                         "follow": {
@@ -10361,8 +10355,7 @@
                   "logs.nvyr.op",
                   "show",
                   "@3"
-                ],
-                "stream": true
+                ]
               },
               "children": {
                 "follow": {
@@ -10388,8 +10381,7 @@
                       "@3",
                       "--direction",
                       "source"
-                    ],
-                    "stream": true
+                    ]
                   },
                   "children": {
                     "follow": {
@@ -10434,8 +10426,7 @@
                           "source",
                           "--rule",
                           "@6"
-                        ],
-                        "stream": true
+                        ]
                       },
                       "children": {
                         "follow": {
@@ -10469,8 +10460,7 @@
                       "@3",
                       "--direction",
                       "destination"
-                    ],
-                    "stream": true
+                    ]
                   },
                   "children": {
                     "follow": {
@@ -10515,8 +10505,7 @@
                           "destination",
                           "--rule",
                           "@6"
-                        ],
-                        "stream": true
+                        ]
                       },
                       "children": {
                         "follow": {
@@ -10573,8 +10562,7 @@
                   "tasks.nvyr.op",
                   "logs",
                   "@4"
-                ],
-                "stream": true
+                ]
               }
             },
             "system": {
@@ -10585,8 +10573,7 @@
                   "logs.nvyr.op",
                   "show",
                   "system"
-                ],
-                "stream": true
+                ]
               },
               "children": {
                 "follow": {
@@ -10616,8 +10603,7 @@
                       "logs.nvyr.op",
                       "show",
                       "dns-forwarding"
-                    ],
-                    "stream": true
+                    ]
                   },
                   "children": {
                     "follow": {
@@ -10665,8 +10651,7 @@
                           "dns-forwarding",
                           "--vrf",
                           "@6"
-                        ],
-                        "stream": true
+                        ]
                       },
                       "children": {
                         "follow": {
@@ -10698,8 +10683,7 @@
                   "logs.nvyr.op",
                   "show",
                   "kernel"
-                ],
-                "stream": true
+                ]
               },
               "children": {
                 "follow": {
@@ -10725,8 +10709,7 @@
                   "logs.nvyr.op",
                   "show",
                   "authentication"
-                ],
-                "stream": true
+                ]
               },
               "children": {
                 "follow": {
@@ -10752,8 +10735,7 @@
                   "logs.nvyr.op",
                   "show",
                   "configd"
-                ],
-                "stream": true
+                ]
               },
               "children": {
                 "follow": {
@@ -10779,8 +10761,7 @@
                   "logs.nvyr.op",
                   "show",
                   "netlinkd"
-                ],
-                "stream": true
+                ]
               },
               "children": {
                 "follow": {
@@ -10806,8 +10787,7 @@
                   "logs.nvyr.op",
                   "show",
                   "bgp"
-                ],
-                "stream": true
+                ]
               },
               "children": {
                 "follow": {
@@ -10833,8 +10813,7 @@
                   "logs.nvyr.op",
                   "show",
                   "static"
-                ],
-                "stream": true
+                ]
               },
               "children": {
                 "follow": {
@@ -10860,8 +10839,7 @@
                   "logs.nvyr.op",
                   "show",
                   "zebra"
-                ],
-                "stream": true
+                ]
               },
               "children": {
                 "follow": {
@@ -10887,8 +10865,7 @@
                   "logs.nvyr.op",
                   "show",
                   "ospf"
-                ],
-                "stream": true
+                ]
               },
               "children": {
                 "follow": {
@@ -10914,8 +10891,7 @@
                   "logs.nvyr.op",
                   "show",
                   "ntp"
-                ],
-                "stream": true
+                ]
               },
               "children": {
                 "follow": {
@@ -10941,8 +10917,7 @@
                   "logs.nvyr.op",
                   "show",
                   "ssh"
-                ],
-                "stream": true
+                ]
               },
               "children": {
                 "follow": {
@@ -10968,8 +10943,7 @@
                   "logs.nvyr.op",
                   "show",
                   "dhcp-server"
-                ],
-                "stream": true
+                ]
               },
               "children": {
                 "follow": {
@@ -10998,8 +10972,7 @@
                       "dhcp-server",
                       "--vrf",
                       "@5"
-                    ],
-                    "stream": true
+                    ]
                   },
                   "children": {
                     "follow": {
@@ -11048,8 +11021,7 @@
                   "logs.nvyr.op",
                   "show",
                   "dhcpv6-server"
-                ],
-                "stream": true
+                ]
               },
               "children": {
                 "follow": {
@@ -11078,8 +11050,7 @@
                       "dhcpv6-server",
                       "--vrf",
                       "@5"
-                    ],
-                    "stream": true
+                    ]
                   },
                   "children": {
                     "follow": {
@@ -11133,8 +11104,7 @@
                   "container",
                   "--name",
                   "@4"
-                ],
-                "stream": true
+                ]
               },
               "children": {
                 "follow": {
@@ -11181,8 +11151,7 @@
                   "logs.nvyr.op",
                   "show",
                   "firewall"
-                ],
-                "stream": true
+                ]
               },
               "children": {
                 "follow": {
@@ -11211,8 +11180,7 @@
                       "firewall",
                       "--group",
                       "@5"
-                    ],
-                    "stream": true
+                    ]
                   },
                   "children": {
                     "follow": {
@@ -11261,8 +11229,7 @@
                       "firewall",
                       "--family",
                       "ipv4"
-                    ],
-                    "stream": true
+                    ]
                   },
                   "children": {
                     "follow": {
@@ -11292,8 +11259,7 @@
                           "ipv4",
                           "--hook",
                           "input"
-                        ],
-                        "stream": true
+                        ]
                       },
                       "children": {
                         "follow": {
@@ -11327,8 +11293,7 @@
                               "input",
                               "--stage",
                               "filter"
-                            ],
-                            "stream": true
+                            ]
                           },
                           "children": {
                             "follow": {
@@ -11369,8 +11334,7 @@
                                   "filter",
                                   "--rule",
                                   "@8"
-                                ],
-                                "stream": true
+                                ]
                               },
                               "children": {
                                 "follow": {
@@ -11432,8 +11396,7 @@
                           "ipv4",
                           "--hook",
                           "ingress"
-                        ],
-                        "stream": true
+                        ]
                       },
                       "children": {
                         "follow": {
@@ -11467,8 +11430,7 @@
                               "ingress",
                               "--stage",
                               "filter"
-                            ],
-                            "stream": true
+                            ]
                           },
                           "children": {
                             "follow": {
@@ -11509,8 +11471,7 @@
                                   "filter",
                                   "--rule",
                                   "@8"
-                                ],
-                                "stream": true
+                                ]
                               },
                               "children": {
                                 "follow": {
@@ -11572,8 +11533,7 @@
                           "ipv4",
                           "--hook",
                           "forward"
-                        ],
-                        "stream": true
+                        ]
                       },
                       "children": {
                         "follow": {
@@ -11607,8 +11567,7 @@
                               "forward",
                               "--stage",
                               "filter"
-                            ],
-                            "stream": true
+                            ]
                           },
                           "children": {
                             "follow": {
@@ -11649,8 +11608,7 @@
                                   "filter",
                                   "--rule",
                                   "@8"
-                                ],
-                                "stream": true
+                                ]
                               },
                               "children": {
                                 "follow": {
@@ -11712,8 +11670,7 @@
                           "ipv4",
                           "--hook",
                           "output"
-                        ],
-                        "stream": true
+                        ]
                       },
                       "children": {
                         "follow": {
@@ -11747,8 +11704,7 @@
                               "output",
                               "--stage",
                               "filter"
-                            ],
-                            "stream": true
+                            ]
                           },
                           "children": {
                             "follow": {
@@ -11789,8 +11745,7 @@
                                   "filter",
                                   "--rule",
                                   "@8"
-                                ],
-                                "stream": true
+                                ]
                               },
                               "children": {
                                 "follow": {
@@ -11852,8 +11807,7 @@
                               "output",
                               "--stage",
                               "raw"
-                            ],
-                            "stream": true
+                            ]
                           },
                           "children": {
                             "follow": {
@@ -11894,8 +11848,7 @@
                                   "raw",
                                   "--rule",
                                   "@8"
-                                ],
-                                "stream": true
+                                ]
                               },
                               "children": {
                                 "follow": {
@@ -11957,8 +11910,7 @@
                           "ipv4",
                           "--hook",
                           "prerouting"
-                        ],
-                        "stream": true
+                        ]
                       },
                       "children": {
                         "follow": {
@@ -11992,8 +11944,7 @@
                               "prerouting",
                               "--stage",
                               "raw"
-                            ],
-                            "stream": true
+                            ]
                           },
                           "children": {
                             "follow": {
@@ -12034,8 +11985,7 @@
                                   "raw",
                                   "--rule",
                                   "@8"
-                                ],
-                                "stream": true
+                                ]
                               },
                               "children": {
                                 "follow": {
@@ -12100,8 +12050,7 @@
                           "ipv4",
                           "--chain",
                           "@6"
-                        ],
-                        "stream": true
+                        ]
                       },
                       "children": {
                         "follow": {
@@ -12138,8 +12087,7 @@
                               "@6",
                               "--rule",
                               "@8"
-                            ],
-                            "stream": true
+                            ]
                           },
                           "children": {
                             "follow": {
@@ -12208,8 +12156,7 @@
                       "firewall",
                       "--family",
                       "inet"
-                    ],
-                    "stream": true
+                    ]
                   },
                   "children": {
                     "follow": {
@@ -12239,8 +12186,7 @@
                           "inet",
                           "--hook",
                           "input"
-                        ],
-                        "stream": true
+                        ]
                       },
                       "children": {
                         "follow": {
@@ -12274,8 +12220,7 @@
                               "input",
                               "--stage",
                               "filter"
-                            ],
-                            "stream": true
+                            ]
                           },
                           "children": {
                             "follow": {
@@ -12316,8 +12261,7 @@
                                   "filter",
                                   "--rule",
                                   "@8"
-                                ],
-                                "stream": true
+                                ]
                               },
                               "children": {
                                 "follow": {
@@ -12379,8 +12323,7 @@
                           "inet",
                           "--hook",
                           "ingress"
-                        ],
-                        "stream": true
+                        ]
                       },
                       "children": {
                         "follow": {
@@ -12414,8 +12357,7 @@
                               "ingress",
                               "--stage",
                               "filter"
-                            ],
-                            "stream": true
+                            ]
                           },
                           "children": {
                             "follow": {
@@ -12456,8 +12398,7 @@
                                   "filter",
                                   "--rule",
                                   "@8"
-                                ],
-                                "stream": true
+                                ]
                               },
                               "children": {
                                 "follow": {
@@ -12519,8 +12460,7 @@
                           "inet",
                           "--hook",
                           "forward"
-                        ],
-                        "stream": true
+                        ]
                       },
                       "children": {
                         "follow": {
@@ -12554,8 +12494,7 @@
                               "forward",
                               "--stage",
                               "filter"
-                            ],
-                            "stream": true
+                            ]
                           },
                           "children": {
                             "follow": {
@@ -12596,8 +12535,7 @@
                                   "filter",
                                   "--rule",
                                   "@8"
-                                ],
-                                "stream": true
+                                ]
                               },
                               "children": {
                                 "follow": {
@@ -12659,8 +12597,7 @@
                           "inet",
                           "--hook",
                           "output"
-                        ],
-                        "stream": true
+                        ]
                       },
                       "children": {
                         "follow": {
@@ -12694,8 +12631,7 @@
                               "output",
                               "--stage",
                               "filter"
-                            ],
-                            "stream": true
+                            ]
                           },
                           "children": {
                             "follow": {
@@ -12736,8 +12672,7 @@
                                   "filter",
                                   "--rule",
                                   "@8"
-                                ],
-                                "stream": true
+                                ]
                               },
                               "children": {
                                 "follow": {
@@ -12799,8 +12734,7 @@
                               "output",
                               "--stage",
                               "raw"
-                            ],
-                            "stream": true
+                            ]
                           },
                           "children": {
                             "follow": {
@@ -12841,8 +12775,7 @@
                                   "raw",
                                   "--rule",
                                   "@8"
-                                ],
-                                "stream": true
+                                ]
                               },
                               "children": {
                                 "follow": {
@@ -12904,8 +12837,7 @@
                           "inet",
                           "--hook",
                           "prerouting"
-                        ],
-                        "stream": true
+                        ]
                       },
                       "children": {
                         "follow": {
@@ -12939,8 +12871,7 @@
                               "prerouting",
                               "--stage",
                               "raw"
-                            ],
-                            "stream": true
+                            ]
                           },
                           "children": {
                             "follow": {
@@ -12981,8 +12912,7 @@
                                   "raw",
                                   "--rule",
                                   "@8"
-                                ],
-                                "stream": true
+                                ]
                               },
                               "children": {
                                 "follow": {
@@ -13047,8 +12977,7 @@
                           "inet",
                           "--chain",
                           "@6"
-                        ],
-                        "stream": true
+                        ]
                       },
                       "children": {
                         "follow": {
@@ -13085,8 +13014,7 @@
                               "@6",
                               "--rule",
                               "@8"
-                            ],
-                            "stream": true
+                            ]
                           },
                           "children": {
                             "follow": {
@@ -13155,8 +13083,7 @@
                       "firewall",
                       "--family",
                       "ipv6"
-                    ],
-                    "stream": true
+                    ]
                   },
                   "children": {
                     "follow": {
@@ -13186,8 +13113,7 @@
                           "ipv6",
                           "--hook",
                           "input"
-                        ],
-                        "stream": true
+                        ]
                       },
                       "children": {
                         "follow": {
@@ -13221,8 +13147,7 @@
                               "input",
                               "--stage",
                               "filter"
-                            ],
-                            "stream": true
+                            ]
                           },
                           "children": {
                             "follow": {
@@ -13263,8 +13188,7 @@
                                   "filter",
                                   "--rule",
                                   "@8"
-                                ],
-                                "stream": true
+                                ]
                               },
                               "children": {
                                 "follow": {
@@ -13326,8 +13250,7 @@
                           "ipv6",
                           "--hook",
                           "ingress"
-                        ],
-                        "stream": true
+                        ]
                       },
                       "children": {
                         "follow": {
@@ -13361,8 +13284,7 @@
                               "ingress",
                               "--stage",
                               "filter"
-                            ],
-                            "stream": true
+                            ]
                           },
                           "children": {
                             "follow": {
@@ -13403,8 +13325,7 @@
                                   "filter",
                                   "--rule",
                                   "@8"
-                                ],
-                                "stream": true
+                                ]
                               },
                               "children": {
                                 "follow": {
@@ -13466,8 +13387,7 @@
                           "ipv6",
                           "--hook",
                           "forward"
-                        ],
-                        "stream": true
+                        ]
                       },
                       "children": {
                         "follow": {
@@ -13501,8 +13421,7 @@
                               "forward",
                               "--stage",
                               "filter"
-                            ],
-                            "stream": true
+                            ]
                           },
                           "children": {
                             "follow": {
@@ -13543,8 +13462,7 @@
                                   "filter",
                                   "--rule",
                                   "@8"
-                                ],
-                                "stream": true
+                                ]
                               },
                               "children": {
                                 "follow": {
@@ -13606,8 +13524,7 @@
                           "ipv6",
                           "--hook",
                           "output"
-                        ],
-                        "stream": true
+                        ]
                       },
                       "children": {
                         "follow": {
@@ -13641,8 +13558,7 @@
                               "output",
                               "--stage",
                               "filter"
-                            ],
-                            "stream": true
+                            ]
                           },
                           "children": {
                             "follow": {
@@ -13683,8 +13599,7 @@
                                   "filter",
                                   "--rule",
                                   "@8"
-                                ],
-                                "stream": true
+                                ]
                               },
                               "children": {
                                 "follow": {
@@ -13746,8 +13661,7 @@
                               "output",
                               "--stage",
                               "raw"
-                            ],
-                            "stream": true
+                            ]
                           },
                           "children": {
                             "follow": {
@@ -13788,8 +13702,7 @@
                                   "raw",
                                   "--rule",
                                   "@8"
-                                ],
-                                "stream": true
+                                ]
                               },
                               "children": {
                                 "follow": {
@@ -13851,8 +13764,7 @@
                           "ipv6",
                           "--hook",
                           "prerouting"
-                        ],
-                        "stream": true
+                        ]
                       },
                       "children": {
                         "follow": {
@@ -13886,8 +13798,7 @@
                               "prerouting",
                               "--stage",
                               "raw"
-                            ],
-                            "stream": true
+                            ]
                           },
                           "children": {
                             "follow": {
@@ -13928,8 +13839,7 @@
                                   "raw",
                                   "--rule",
                                   "@8"
-                                ],
-                                "stream": true
+                                ]
                               },
                               "children": {
                                 "follow": {
@@ -13994,8 +13904,7 @@
                           "ipv6",
                           "--chain",
                           "@6"
-                        ],
-                        "stream": true
+                        ]
                       },
                       "children": {
                         "follow": {
@@ -14032,8 +13941,7 @@
                               "@6",
                               "--rule",
                               "@8"
-                            ],
-                            "stream": true
+                            ]
                           },
                           "children": {
                             "follow": {

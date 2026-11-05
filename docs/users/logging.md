@@ -173,6 +173,8 @@ numbered archives remain on disk. There is no `lines` option or implicit tail
 limit. Use the normal output controls:
 
 ```text
+show log | match isp
+show log firewall ipv4 input filter rule 10 | count
 show log bgp | more
 show log firewall ipv4 input filter rule 10 | no-more
 ```

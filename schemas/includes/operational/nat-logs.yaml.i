@@ -2,7 +2,6 @@ nat:
   kind: node
   description: Source and destination NAT packet logs
   command: ['logs.nvyr.op', 'show', '@3']
-  stream: true
   children:
 
     follow:
@@ -15,7 +14,6 @@ nat:
       kind: node
       description: Source NAT packet logs
       command: ['logs.nvyr.op', 'show', '@3', '--direction', 'source']
-      stream: true
       children:
 
         follow:
@@ -32,7 +30,6 @@ nat:
           validators:
             integer-range: {minimum: 1, maximum: 999999}
           command: ['logs.nvyr.op', 'show', '@3', '--direction', 'source', '--rule', '@6']
-          stream: true
           children:
 
             follow:
@@ -45,7 +42,6 @@ nat:
       kind: node
       description: Destination NAT packet logs
       command: ['logs.nvyr.op', 'show', '@3', '--direction', 'destination']
-      stream: true
       children:
 
         follow:
@@ -62,7 +58,6 @@ nat:
           validators:
             integer-range: {minimum: 1, maximum: 999999}
           command: ['logs.nvyr.op', 'show', '@3', '--direction', 'destination', '--rule', '@6']
-          stream: true
           children:
 
             follow:

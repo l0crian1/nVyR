@@ -2,7 +2,6 @@ log:
   kind: node
   description: Section-specific local logs
   command: ["logs.nvyr.op", "show", "system"]
-  stream: true
 
   children:
 
@@ -24,13 +23,11 @@ log:
       suggestors:
         config-path: {path: system task}
       command: ['tasks.nvyr.op', 'logs', '@4']
-      stream: true
 
     system:
       kind: node
       description: system log
       command: ["logs.nvyr.op", "show", "system"]
-      stream: true
 
       children:
 
@@ -49,7 +46,6 @@ log:
           kind: node
           description: DNS forwarding logs
           command: ['logs.nvyr.op', 'show', 'dns-forwarding']
-          stream: true
           children:
 
             follow:
@@ -68,7 +64,6 @@ log:
               suggestors:
                 config-path: {path: vrf name}
               command: ['logs.nvyr.op', 'show', 'dns-forwarding', '--vrf', '@6']
-              stream: true
               children:
 
                 follow:
@@ -81,7 +76,6 @@ log:
       kind: node
       description: kernel log
       command: ["logs.nvyr.op", "show", "kernel"]
-      stream: true
 
       children:
 
@@ -95,7 +89,6 @@ log:
       kind: node
       description: authentication log
       command: ["logs.nvyr.op", "show", "authentication"]
-      stream: true
 
       children:
 
@@ -109,7 +102,6 @@ log:
       kind: node
       description: configd log
       command: ["logs.nvyr.op", "show", "configd"]
-      stream: true
 
       children:
 
@@ -123,7 +115,6 @@ log:
       kind: node
       description: netlinkd log
       command: ["logs.nvyr.op", "show", "netlinkd"]
-      stream: true
 
       children:
 
@@ -137,7 +128,6 @@ log:
       kind: node
       description: bgp log
       command: ["logs.nvyr.op", "show", "bgp"]
-      stream: true
 
       children:
 
@@ -151,7 +141,6 @@ log:
       kind: node
       description: static log
       command: ["logs.nvyr.op", "show", "static"]
-      stream: true
 
       children:
 
@@ -165,7 +154,6 @@ log:
       kind: node
       description: zebra log
       command: ["logs.nvyr.op", "show", "zebra"]
-      stream: true
 
       children:
 
@@ -179,7 +167,6 @@ log:
       kind: node
       description: ospf log
       command: ["logs.nvyr.op", "show", "ospf"]
-      stream: true
 
       children:
 
@@ -193,7 +180,6 @@ log:
       kind: node
       description: ntp log
       command: ["logs.nvyr.op", "show", "ntp"]
-      stream: true
 
       children:
 
@@ -207,7 +193,6 @@ log:
       kind: node
       description: ssh log
       command: ["logs.nvyr.op", "show", "ssh"]
-      stream: true
 
       children:
 
@@ -221,7 +206,6 @@ log:
       kind: node
       description: dhcp-server log in the default routing instance
       command: ["logs.nvyr.op", "show", "dhcp-server"]
-      stream: true
 
       children:
 
@@ -237,7 +221,6 @@ log:
           hints:
             name: Configured VRF name
           command: ["logs.nvyr.op", "show", "dhcp-server", "--vrf", "@5"]
-          stream: true
 
           children:
 
@@ -257,7 +240,6 @@ log:
       kind: node
       description: dhcpv6-server log in the default routing instance
       command: ["logs.nvyr.op", "show", "dhcpv6-server"]
-      stream: true
 
       children:
 
@@ -273,7 +255,6 @@ log:
           hints:
             name: Configured VRF name
           command: ["logs.nvyr.op", "show", "dhcpv6-server", "--vrf", "@5"]
-          stream: true
 
           children:
 
@@ -295,7 +276,6 @@ log:
       hints:
         name: Configured container name
       command: ["logs.nvyr.op", "show", "container", "--name", "@4"]
-      stream: true
 
       children:
 
@@ -315,7 +295,6 @@ log:
       kind: node
       description: Firewall packet logs
       command: ["logs.nvyr.op", "show", "firewall"]
-      stream: true
 
       children:
 
@@ -331,7 +310,6 @@ log:
           hints:
             name: Configured log-group name
           command: ["logs.nvyr.op", "show", "firewall", "--group", "@5"]
-          stream: true
 
           children:
 
@@ -351,7 +329,6 @@ log:
           kind: node
           description: IPv4 packet logs
           command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv4"]
-          stream: true
 
           children:
 
@@ -365,7 +342,6 @@ log:
               kind: node
               description: input packet logs
               command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv4", "--hook", "input"]
-              stream: true
 
               children:
 
@@ -379,7 +355,6 @@ log:
                   kind: node
                   description: filter packet logs
                   command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv4", "--hook", "input", "--stage", "filter"]
-                  stream: true
 
                   children:
 
@@ -395,7 +370,6 @@ log:
                       hints:
                         1-999999: Firewall rule number
                       command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv4", "--hook", "input", "--stage", "filter", "--rule", "@8"]
-                      stream: true
 
                       children:
 
@@ -416,7 +390,6 @@ log:
               kind: node
               description: ingress packet logs
               command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv4", "--hook", "ingress"]
-              stream: true
 
               children:
 
@@ -430,7 +403,6 @@ log:
                   kind: node
                   description: filter packet logs
                   command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv4", "--hook", "ingress", "--stage", "filter"]
-                  stream: true
 
                   children:
 
@@ -446,7 +418,6 @@ log:
                       hints:
                         1-999999: Firewall rule number
                       command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv4", "--hook", "ingress", "--stage", "filter", "--rule", "@8"]
-                      stream: true
 
                       children:
 
@@ -467,7 +438,6 @@ log:
               kind: node
               description: forward packet logs
               command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv4", "--hook", "forward"]
-              stream: true
 
               children:
 
@@ -481,7 +451,6 @@ log:
                   kind: node
                   description: filter packet logs
                   command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv4", "--hook", "forward", "--stage", "filter"]
-                  stream: true
 
                   children:
 
@@ -497,7 +466,6 @@ log:
                       hints:
                         1-999999: Firewall rule number
                       command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv4", "--hook", "forward", "--stage", "filter", "--rule", "@8"]
-                      stream: true
 
                       children:
 
@@ -518,7 +486,6 @@ log:
               kind: node
               description: output packet logs
               command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv4", "--hook", "output"]
-              stream: true
 
               children:
 
@@ -532,7 +499,6 @@ log:
                   kind: node
                   description: filter packet logs
                   command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv4", "--hook", "output", "--stage", "filter"]
-                  stream: true
 
                   children:
 
@@ -548,7 +514,6 @@ log:
                       hints:
                         1-999999: Firewall rule number
                       command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv4", "--hook", "output", "--stage", "filter", "--rule", "@8"]
-                      stream: true
 
                       children:
 
@@ -569,7 +534,6 @@ log:
                   kind: node
                   description: raw packet logs
                   command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv4", "--hook", "output", "--stage", "raw"]
-                  stream: true
 
                   children:
 
@@ -585,7 +549,6 @@ log:
                       hints:
                         1-999999: Firewall rule number
                       command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv4", "--hook", "output", "--stage", "raw", "--rule", "@8"]
-                      stream: true
 
                       children:
 
@@ -606,7 +569,6 @@ log:
               kind: node
               description: prerouting packet logs
               command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv4", "--hook", "prerouting"]
-              stream: true
 
               children:
 
@@ -620,7 +582,6 @@ log:
                   kind: node
                   description: raw packet logs
                   command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv4", "--hook", "prerouting", "--stage", "raw"]
-                  stream: true
 
                   children:
 
@@ -636,7 +597,6 @@ log:
                       hints:
                         1-999999: Firewall rule number
                       command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv4", "--hook", "prerouting", "--stage", "raw", "--rule", "@8"]
-                      stream: true
 
                       children:
 
@@ -659,7 +619,6 @@ log:
               hints:
                 name: Configured named firewall chain
               command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv4", "--chain", "@6"]
-              stream: true
 
               children:
 
@@ -675,7 +634,6 @@ log:
                   hints:
                     1-999999: Rule number within this named chain
                   command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv4", "--chain", "@6", "--rule", "@8"]
-                  stream: true
 
                   children:
 
@@ -699,7 +657,6 @@ log:
           kind: node
           description: Family-neutral packet logs
           command: ["logs.nvyr.op", "show", "firewall", "--family", "inet"]
-          stream: true
 
           children:
 
@@ -713,7 +670,6 @@ log:
               kind: node
               description: input packet logs
               command: ["logs.nvyr.op", "show", "firewall", "--family", "inet", "--hook", "input"]
-              stream: true
 
               children:
 
@@ -727,7 +683,6 @@ log:
                   kind: node
                   description: filter packet logs
                   command: ["logs.nvyr.op", "show", "firewall", "--family", "inet", "--hook", "input", "--stage", "filter"]
-                  stream: true
 
                   children:
 
@@ -743,7 +698,6 @@ log:
                       hints:
                         1-999999: Firewall rule number
                       command: ["logs.nvyr.op", "show", "firewall", "--family", "inet", "--hook", "input", "--stage", "filter", "--rule", "@8"]
-                      stream: true
 
                       children:
 
@@ -764,7 +718,6 @@ log:
               kind: node
               description: ingress packet logs
               command: ["logs.nvyr.op", "show", "firewall", "--family", "inet", "--hook", "ingress"]
-              stream: true
 
               children:
 
@@ -778,7 +731,6 @@ log:
                   kind: node
                   description: filter packet logs
                   command: ["logs.nvyr.op", "show", "firewall", "--family", "inet", "--hook", "ingress", "--stage", "filter"]
-                  stream: true
 
                   children:
 
@@ -794,7 +746,6 @@ log:
                       hints:
                         1-999999: Firewall rule number
                       command: ["logs.nvyr.op", "show", "firewall", "--family", "inet", "--hook", "ingress", "--stage", "filter", "--rule", "@8"]
-                      stream: true
 
                       children:
 
@@ -815,7 +766,6 @@ log:
               kind: node
               description: forward packet logs
               command: ["logs.nvyr.op", "show", "firewall", "--family", "inet", "--hook", "forward"]
-              stream: true
 
               children:
 
@@ -829,7 +779,6 @@ log:
                   kind: node
                   description: filter packet logs
                   command: ["logs.nvyr.op", "show", "firewall", "--family", "inet", "--hook", "forward", "--stage", "filter"]
-                  stream: true
 
                   children:
 
@@ -845,7 +794,6 @@ log:
                       hints:
                         1-999999: Firewall rule number
                       command: ["logs.nvyr.op", "show", "firewall", "--family", "inet", "--hook", "forward", "--stage", "filter", "--rule", "@8"]
-                      stream: true
 
                       children:
 
@@ -866,7 +814,6 @@ log:
               kind: node
               description: output packet logs
               command: ["logs.nvyr.op", "show", "firewall", "--family", "inet", "--hook", "output"]
-              stream: true
 
               children:
 
@@ -880,7 +827,6 @@ log:
                   kind: node
                   description: filter packet logs
                   command: ["logs.nvyr.op", "show", "firewall", "--family", "inet", "--hook", "output", "--stage", "filter"]
-                  stream: true
 
                   children:
 
@@ -896,7 +842,6 @@ log:
                       hints:
                         1-999999: Firewall rule number
                       command: ["logs.nvyr.op", "show", "firewall", "--family", "inet", "--hook", "output", "--stage", "filter", "--rule", "@8"]
-                      stream: true
 
                       children:
 
@@ -917,7 +862,6 @@ log:
                   kind: node
                   description: raw packet logs
                   command: ["logs.nvyr.op", "show", "firewall", "--family", "inet", "--hook", "output", "--stage", "raw"]
-                  stream: true
 
                   children:
 
@@ -933,7 +877,6 @@ log:
                       hints:
                         1-999999: Firewall rule number
                       command: ["logs.nvyr.op", "show", "firewall", "--family", "inet", "--hook", "output", "--stage", "raw", "--rule", "@8"]
-                      stream: true
 
                       children:
 
@@ -954,7 +897,6 @@ log:
               kind: node
               description: prerouting packet logs
               command: ["logs.nvyr.op", "show", "firewall", "--family", "inet", "--hook", "prerouting"]
-              stream: true
 
               children:
 
@@ -968,7 +910,6 @@ log:
                   kind: node
                   description: raw packet logs
                   command: ["logs.nvyr.op", "show", "firewall", "--family", "inet", "--hook", "prerouting", "--stage", "raw"]
-                  stream: true
 
                   children:
 
@@ -984,7 +925,6 @@ log:
                       hints:
                         1-999999: Firewall rule number
                       command: ["logs.nvyr.op", "show", "firewall", "--family", "inet", "--hook", "prerouting", "--stage", "raw", "--rule", "@8"]
-                      stream: true
 
                       children:
 
@@ -1007,7 +947,6 @@ log:
               hints:
                 name: Configured named firewall chain
               command: ["logs.nvyr.op", "show", "firewall", "--family", "inet", "--chain", "@6"]
-              stream: true
 
               children:
 
@@ -1023,7 +962,6 @@ log:
                   hints:
                     1-999999: Rule number within this named chain
                   command: ["logs.nvyr.op", "show", "firewall", "--family", "inet", "--chain", "@6", "--rule", "@8"]
-                  stream: true
 
                   children:
 
@@ -1047,7 +985,6 @@ log:
           kind: node
           description: IPv6 packet logs
           command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv6"]
-          stream: true
 
           children:
 
@@ -1061,7 +998,6 @@ log:
               kind: node
               description: input packet logs
               command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv6", "--hook", "input"]
-              stream: true
 
               children:
 
@@ -1075,7 +1011,6 @@ log:
                   kind: node
                   description: filter packet logs
                   command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv6", "--hook", "input", "--stage", "filter"]
-                  stream: true
 
                   children:
 
@@ -1091,7 +1026,6 @@ log:
                       hints:
                         1-999999: Firewall rule number
                       command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv6", "--hook", "input", "--stage", "filter", "--rule", "@8"]
-                      stream: true
 
                       children:
 
@@ -1112,7 +1046,6 @@ log:
               kind: node
               description: ingress packet logs
               command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv6", "--hook", "ingress"]
-              stream: true
 
               children:
 
@@ -1126,7 +1059,6 @@ log:
                   kind: node
                   description: filter packet logs
                   command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv6", "--hook", "ingress", "--stage", "filter"]
-                  stream: true
 
                   children:
 
@@ -1142,7 +1074,6 @@ log:
                       hints:
                         1-999999: Firewall rule number
                       command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv6", "--hook", "ingress", "--stage", "filter", "--rule", "@8"]
-                      stream: true
 
                       children:
 
@@ -1163,7 +1094,6 @@ log:
               kind: node
               description: forward packet logs
               command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv6", "--hook", "forward"]
-              stream: true
 
               children:
 
@@ -1177,7 +1107,6 @@ log:
                   kind: node
                   description: filter packet logs
                   command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv6", "--hook", "forward", "--stage", "filter"]
-                  stream: true
 
                   children:
 
@@ -1193,7 +1122,6 @@ log:
                       hints:
                         1-999999: Firewall rule number
                       command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv6", "--hook", "forward", "--stage", "filter", "--rule", "@8"]
-                      stream: true
 
                       children:
 
@@ -1214,7 +1142,6 @@ log:
               kind: node
               description: output packet logs
               command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv6", "--hook", "output"]
-              stream: true
 
               children:
 
@@ -1228,7 +1155,6 @@ log:
                   kind: node
                   description: filter packet logs
                   command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv6", "--hook", "output", "--stage", "filter"]
-                  stream: true
 
                   children:
 
@@ -1244,7 +1170,6 @@ log:
                       hints:
                         1-999999: Firewall rule number
                       command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv6", "--hook", "output", "--stage", "filter", "--rule", "@8"]
-                      stream: true
 
                       children:
 
@@ -1265,7 +1190,6 @@ log:
                   kind: node
                   description: raw packet logs
                   command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv6", "--hook", "output", "--stage", "raw"]
-                  stream: true
 
                   children:
 
@@ -1281,7 +1205,6 @@ log:
                       hints:
                         1-999999: Firewall rule number
                       command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv6", "--hook", "output", "--stage", "raw", "--rule", "@8"]
-                      stream: true
 
                       children:
 
@@ -1302,7 +1225,6 @@ log:
               kind: node
               description: prerouting packet logs
               command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv6", "--hook", "prerouting"]
-              stream: true
 
               children:
 
@@ -1316,7 +1238,6 @@ log:
                   kind: node
                   description: raw packet logs
                   command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv6", "--hook", "prerouting", "--stage", "raw"]
-                  stream: true
 
                   children:
 
@@ -1332,7 +1253,6 @@ log:
                       hints:
                         1-999999: Firewall rule number
                       command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv6", "--hook", "prerouting", "--stage", "raw", "--rule", "@8"]
-                      stream: true
 
                       children:
 
@@ -1355,7 +1275,6 @@ log:
               hints:
                 name: Configured named firewall chain
               command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv6", "--chain", "@6"]
-              stream: true
 
               children:
 
@@ -1371,7 +1290,6 @@ log:
                   hints:
                     1-999999: Rule number within this named chain
                   command: ["logs.nvyr.op", "show", "firewall", "--family", "ipv6", "--chain", "@6", "--rule", "@8"]
-                  stream: true
 
                   children:
 

@@ -30,8 +30,9 @@ def test_quoted_completion_and_unattended_grammar(controller, session):
     prefix = "set system task TEST op-command 'update firewall ge"
     assert 'update firewall geoip' in dict(controller.completion(prefix, session, tab=True)['candidates'])
     assert task_commands.resolve('update firewall geoip')[0] == ['geoip.nvyr.op', 'update']
+    assert task_commands.resolve('show log task example') == (['tasks.nvyr.op', 'logs', 'example'], 15)
     for line in ('shell', 'shellcmd id', 'connect container web', 'show log system follow',
-                 'show version | commands', 'configure', 'reboot', 'show log task example', 'show'):
+                 'show version | commands', 'configure', 'reboot', 'show'):
         with pytest.raises(RouterError):
             task_commands.resolve(line)
 

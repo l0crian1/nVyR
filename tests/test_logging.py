@@ -195,8 +195,7 @@ def test_logging_empty_output_is_readable(monkeypatch, tmp_path, capsys):
 
 
 def test_operational_scopes_and_follow_dispatch():
-    # Parse directly: these paths require an explicit rule number and keep the
-    # existing stream/pager execution path rather than adding a lines option.
+    # Exact scopes are finite reads unless follow is explicitly requested.
     schema = Schema.bundled('operational')
     from nvyr.lexer import lex
     cursor = schema.operational(lex('show log firewall ipv4 input filter rule 10'))
@@ -206,8 +205,42 @@ def test_operational_scopes_and_follow_dispatch():
     assert followed.node['command']['stream'] is True
 
 
+def test_only_follow_log_commands_stream():
+    """Every finite log scope must remain available to output modifiers."""
+    schema = Schema.bundled('operational')
+    pending = [schema.root['children']['show']['children']['log']]
+    while pending:
+        node = pending.pop()
+        command = node.get('command')
+        if command:
+            assert bool(command.get('stream')) == ('--follow' in command['argv']), command['argv']
+
+        pending.extend(node.get('children', {}).values())
+
+
+@pytest.mark.parametrize('configuration_mode', [False, True])
+@pytest.mark.parametrize('scope', ['', 'system', 'container ntopng', 'task ispcheck',
+                                 'firewall ipv4 input filter rule 10', 'nat66 source rule 10'])
+def test_log_output_modifiers(controller, session, monkeypatch, configuration_mode, scope):
+    calls = []
+    output = 'ispcheck: upstream down\nconfigd: commit complete\nispcheck: upstream restored\n'
+    monkeypatch.setattr('nvyr.controller.cmd', lambda argv, **kwargs: calls.append(argv) or output)
+    line = 'show log ' + scope
+    active_session = session if configuration_mode else None
+    if configuration_mode:
+        line = 'run ' + line
+
+    result = controller.execute(line + ' | match isp | no-more', active_session)
+    assert result['text'] == 'ispcheck: upstream down\nispcheck: upstream restored\n'
+    assert 'event' not in result
+    assert len(calls) == 1
+
+    result = controller.execute(line + ' | match isp | count', active_session)
+    assert result['text'] == '2\n'
+
+
 def test_operator_dispatches_exact_log_scope_in_both_cli_modes(controller, session):
-    """Reading and following logs use the existing privileged stream boundary."""
+    """Following logs keeps the existing privileged stream boundary."""
     from nvyr.helpers import access
 
     token = access.role.set('read-only')
