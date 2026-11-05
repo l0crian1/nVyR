@@ -19,13 +19,12 @@ Use the [local test container](testing.md) to run regression tests and build the
 Use the published builder without compiling its cached packages locally:
 
 ```sh
-docker pull l0crian/nvyr-image-builder:0.1.1
-docker tag l0crian/nvyr-image-builder:0.1.1 nvyr-image-builder
+docker pull l0crian/nvyr-image-builder:latest
+docker tag l0crian/nvyr-image-builder:latest nvyr-image-builder
 ```
 
-The local tag lets you use the commands below unchanged. Use a published version
-matching your checkout's `images/Dockerfile` marker, or `latest` for the most
-recent published builder.
+The local tag lets you use the commands below unchanged. Repeat both commands
+to update it to the latest published builder.
 
 To build it locally instead:
 
