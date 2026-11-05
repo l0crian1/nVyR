@@ -72,8 +72,13 @@ commands. The fixtures are deliberately readable and reviewable:
   multipath, preference/tag/metric, disabled and source-specific static routes;
   default and cross-VRF next hops; ACLs including inverse masks, prefix lists,
   standard/expanded community and large-community lists, AS-path lists,
-  route-map matches/setters/call/next/goto; a default BGP instance with behavior
-  parameters and dynamic listening, plus actual IPv4/IPv6 eBGP peers in two VRFs.
+  route-map matches/setters/call/next/goto; IPv4/IPv6 eBGP between the default
+  instance and BOOTLEFT, with policy attributes, installed routes and traffic
+  checked in both directions, plus process parameters and dynamic listening.
+- [OSPF](config/ospf.set): authenticated OSPFv2/v3 on the same default/BOOTLEFT
+  transit, with separate destinations from BGP. Both sides must form adjacencies,
+  install OSPF routes and exchange traffic before and after reboot. Global opaque
+  capability and router-info coexist with the VRF configuration.
 - [Services and containers](config/services.set): four Kea instances (IPv4/IPv6
   in the default VRF and BOOTLEFT), disjoint pools, IPv4/IPv6 reservations,
   inherited/overridden options and lifetimes, default-VRF hostfile hook recovery;

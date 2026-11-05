@@ -12,10 +12,15 @@ IPv4 addresses and virtual-network traffic checks still run without a cable.
 
 ## Recent configuration additions
 
-OSPFv2 and OSPFv3 in `ospf.set` share the existing BOOTLEFT/BOOTRIGHT transit.
-Both use timed authentication keychains and advertise a destination independent
-of BGP. `check_ospf_ipv4` and `check_ospf_ipv6` verify adjacency, installed routes,
+OSPFv2 and OSPFv3 in `ospf.set` share BGP's default-instance/BOOTLEFT transit.
+Both use timed authentication keychains and advertise destinations independent
+of BGP: `dum996` from BOOTLEFT and `lo` from the default instance. Their checks
+verify both adjacencies, main-table and VRF routes, traffic in both directions,
 and operational output; the native FRR snapshot also covers restored options.
+Global opaque capability and router-info coexist with the named-VRF process.
+Graceful restart uses 15 seconds: both peers reboot together and cannot supply
+each other's pre-restart LSDB, so recovery can require the full grace-period
+expiry. The short period keeps that expected behavior within the route deadline.
 Alternative area types and authentication modes have dedicated smoketests.
 
 DHCPv4 socket selection covers explicit `udp` on the default instance and the
@@ -35,14 +40,18 @@ aggregate, delegated length, and reservation after configuration and reboot.
 
 BGP unicast additions in `routing.set` exercise negotiated capabilities and roles,
 prefix limits, AS-path filters and next-hop selection on the existing active
-IPv4/IPv6 pair. Separate shut-down peers retain alternate local AS, transport
+IPv4/IPv6 pair between the default instance and BOOTLEFT. Both sides must learn
+the expected policy attributes, install BGP routes and exchange traffic. Export
+prefix filters keep OSPF-only destinations out of BGP; aggregate suppression uses
+a separate static prefix so it cannot suppress the live test destinations.
+Separate shut-down peers retain alternate local AS, transport
 overrides, graceful shutdown, capability alternatives, route-server settings,
 AS-path transformations, conditional advertisements and AddPath alternatives.
 Interface/link-local peers, aggregate attributes, redistribution metrics and
 administrative distances are also saved. `check_bgp_unicast_options` checks
 negotiated state and representative native commands; complete FRR snapshots
-are compared across reboot. The revised fixture passes local validation; a new
-full appliance reboot run is still required for qualification.
+are compared across reboot. BOOTRIGHT remains for VLAN, DHCP, container and
+cross-VRF static-route coverage; the base routing transit is in the default instance.
 
 | Feature | Fixture | Native evidence before and after reboot |
 | --- | --- | --- |

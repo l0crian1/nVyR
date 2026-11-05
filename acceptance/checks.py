@@ -176,7 +176,7 @@ def check_dummy_and_disabled(options):
 def check_veth_pair(options):
     """Peer relationships and VRF attachments must be valid in both directions."""
     assert_link('veth995', kind='veth', peer='veth997', mtu=1400, master='BOOTLEFT', up=True)
-    assert_link('veth997', kind='veth', peer='veth995', mtu=1400, master='BOOTRIGHT', up=True)
+    assert_link('veth997', kind='veth', peer='veth995', mtu=1400, master='', up=True)
 
 
 def check_bond(options):
@@ -268,27 +268,41 @@ def check_routing_policies(options):
 def check_bgp_ipv4_session(options):
     """Both ends must establish a new IPv4 session, not merely retain a configured peer."""
     assert_bgp_neighbor('BOOTLEFT', '198.18.192.2')
-    assert_bgp_neighbor('BOOTRIGHT', '198.18.192.1')
+    assert_bgp_neighbor('default', '198.18.192.1')
 
 
 def check_bgp_ipv6_session(options):
     """IPv6 activation and peer-group inheritance must produce established peers."""
     assert_bgp_neighbor('BOOTLEFT', '2001:db8:192::2')
-    assert_bgp_neighbor('BOOTRIGHT', '2001:db8:192::1')
+    assert_bgp_neighbor('default', '2001:db8:192::1')
 
 
 def check_bgp_ipv4_policy_result(options):
-    """Route-map export, list matches and import setters affect an actual received prefix."""
-    assert_bgp_path('BOOTRIGHT', 'ipv4', '198.18.208.0/24', attributes={
+    """Policy attributes, main/VRF installation and traffic work in both directions."""
+    assert_bgp_path('default', 'ipv4', '198.18.208.0/24', attributes={
         'locPrf': 250, 'community.string': '65095:100', 'largeCommunity.string': '65095:100:200'})
-    assert_kernel_route('198.18.208.0/24', 'via 198.18.192.1', vrf='BOOTRIGHT')
+    assert_kernel_route('198.18.208.0/24', 'proto bgp', 'via 198.18.192.1')
+    assert_bgp_path('BOOTLEFT', 'ipv4', '198.18.195.0/24', attributes={
+        'locPrf': 240, 'community.string': '65095:100', 'largeCommunity.string': '65095:100:200'})
+    assert_kernel_route('198.18.195.0/24', 'proto bgp', 'via 198.18.192.2', vrf='BOOTLEFT')
+
+    cmd(['ping', '-4', '-I', '198.18.195.1', '-c', '1', '-W', '3', '198.18.208.1'])
+    cmd(['ip', 'vrf', 'exec', 'BOOTLEFT', 'ping', '-4', '-I', '198.18.208.1',
+         '-c', '1', '-W', '3', '198.18.195.1'])
 
 
 def check_bgp_ipv6_policy_result(options):
     """IPv6 policy and route installation must recover independently of IPv4."""
-    assert_bgp_path('BOOTRIGHT', 'ipv6', '2001:db8:208::/64', attributes={
+    assert_bgp_path('default', 'ipv6', '2001:db8:208::/64', attributes={
         'locPrf': 250, 'community.string': '65095:100', 'largeCommunity.string': '65095:100:200'})
-    assert_kernel_route('2001:db8:208::/64', 'dev veth997', vrf='BOOTRIGHT')
+    assert_kernel_route('2001:db8:208::/64', 'proto bgp', 'dev veth997')
+    assert_bgp_path('BOOTLEFT', 'ipv6', '2001:db8:195::/64', attributes={
+        'locPrf': 240, 'community.string': '65095:100', 'largeCommunity.string': '65095:100:200'})
+    assert_kernel_route('2001:db8:195::/64', 'proto bgp', 'dev veth995', vrf='BOOTLEFT')
+
+    cmd(['ping', '-6', '-I', '2001:db8:195::1', '-c', '1', '-W', '3', '2001:db8:208::1'])
+    cmd(['ip', 'vrf', 'exec', 'BOOTLEFT', 'ping', '-6', '-I', '2001:db8:208::1',
+         '-c', '1', '-W', '3', '2001:db8:195::1'])
 
 
 def check_bgp_unicast_options(options):
@@ -300,9 +314,9 @@ def check_bgp_unicast_options(options):
     assert peer['remoteRole'] == 'customer'
     assert peer['bgpTcpMssConfigured'] == 1200
     assert_bgp_commands('neighbor 198.18.192.1 maximum-prefix 1000 90 warning-only force',
-                        'neighbor 198.18.192.1 filter-list BOOTAS in', vrf='BOOTRIGHT', family='ipv4')
+                        'neighbor 198.18.192.1 filter-list BOOTAS in', vrf='default', family='ipv4')
     assert_bgp_commands('neighbor 2001:db8:192::1 maximum-prefix 1000 90 warning-only force',
-                        'neighbor 2001:db8:192::1 filter-list BOOTAS in', vrf='BOOTRIGHT', family='ipv6')
+                        'neighbor 2001:db8:192::1 filter-list BOOTAS in', vrf='default', family='ipv6')
     assert_bgp_commands('neighbor 198.18.207.2 local-as 65197 no-prepend replace-as dual-as',
                         'neighbor dum995 interface v6only remote-as external',
                         'neighbor fe80::995 interface dum995', vrf='default')
@@ -668,21 +682,33 @@ def check_complete_rule_inventory(options):
 
 
 def check_ospf_ipv4(options):
-    """Require authenticated adjacency and an OSPF-only prefix after boot."""
-    wait_for(lambda: cmd(['vtysh', '-c', 'show ip ospf vrf BOOTRIGHT neighbor']),
-             lambda output: '198.18.192.1' in output and 'Full' in output,
-             description='OSPFv2 acceptance adjacency', timeout=20)
-    assert_kernel_route('198.18.196.0/24', 'proto ospf', vrf='BOOTRIGHT')
-    assert_operational_output('show ip ospf vrf BOOTRIGHT neighbor', '198.18.192.1')
+    """Both instances must recover authenticated adjacency and OSPF-only routes."""
+    for scope, peer in (('', '198.18.192.1'), (' vrf BOOTLEFT', '198.18.192.2')):
+        wait_for(lambda: cmd(['vtysh', '-c', f'show ip ospf{scope} neighbor']),
+                 lambda output: peer in output and 'Full' in output,
+                 description=f'OSPFv2{scope} acceptance adjacency', timeout=20)
+        assert_operational_output(f'show ip ospf{scope} neighbor', peer)
+
+    assert_kernel_route('198.18.196.0/24', 'proto ospf', 'dev veth997')
+    assert_kernel_route('198.18.207.1/32', 'proto ospf', 'dev veth995', vrf='BOOTLEFT')
+    cmd(['ping', '-4', '-I', '198.18.207.1', '-c', '1', '-W', '3', '198.18.196.1'])
+    cmd(['ip', 'vrf', 'exec', 'BOOTLEFT', 'ping', '-4', '-I', '198.18.196.1',
+         '-c', '1', '-W', '3', '198.18.207.1'])
 
 
 def check_ospf_ipv6(options):
-    """Require the IPv6 adjacency independently of BGP and OSPFv2."""
-    wait_for(lambda: cmd(['vtysh', '-c', 'show ipv6 ospf6 vrf BOOTRIGHT neighbor']),
-             lambda output: '198.18.192.1' in output and 'Full' in output,
-             description='OSPFv3 acceptance adjacency', timeout=20)
-    assert_kernel_route('2001:db8:196::/64', 'proto ospf', vrf='BOOTRIGHT')
-    assert_operational_output('show ipv6 ospf vrf BOOTRIGHT neighbor', '198.18.192.1')
+    """IPv6 must recover in the main table and the VRF independently of BGP."""
+    for scope, peer in (('', '198.18.192.1'), (' vrf BOOTLEFT', '198.18.192.2')):
+        wait_for(lambda: cmd(['vtysh', '-c', f'show ipv6 ospf6{scope} neighbor']),
+                 lambda output: peer in output and 'Full' in output,
+                 description=f'OSPFv3{scope} acceptance adjacency', timeout=20)
+        assert_operational_output(f'show ipv6 ospf{scope} neighbor', peer)
+
+    assert_kernel_route('2001:db8:196::/64', 'proto ospf', 'dev veth997')
+    assert_kernel_route('2001:db8:207::1/128', 'proto ospf', 'dev veth995', vrf='BOOTLEFT')
+    cmd(['ping', '-6', '-I', '2001:db8:207::1', '-c', '1', '-W', '3', '2001:db8:196::1'])
+    cmd(['ip', 'vrf', 'exec', 'BOOTLEFT', 'ping', '-6', '-I', '2001:db8:196::1',
+         '-c', '1', '-W', '3', '2001:db8:207::1'])
 
 
 CHECKS = (

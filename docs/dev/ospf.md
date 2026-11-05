@@ -84,5 +84,7 @@ redistribution and deliberate policy withdrawal. Only incompatible changes
 require a case reset; links and VRFs remain instantiated.
 
 `acceptance/config/ospf.set` adds dual-stack routing and timed keychains to the
-combined preboot/postboot configuration. The OSPF checks require routes not
-advertised by BGP, plus working operational commands after recovery.
+combined preboot/postboot configuration, with the default instance peering with
+BOOTLEFT. Both sides require authenticated adjacency, OSPF-only routes, working
+traffic and operational commands after recovery. BGP export filters exclude the
+OSPF destinations so another protocol cannot mask failed OSPF route installation.
