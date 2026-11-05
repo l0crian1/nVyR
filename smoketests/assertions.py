@@ -717,7 +717,7 @@ def assert_firewall_rule_absent(chain, number):
 
 
 def assert_firewall_commit_rejected(config, message):
-    """A verify failure must preserve both running configuration and installed rules."""
+    """A rejected commit must preserve running configuration and installed rules."""
     from nvyr.config_session import CommitError
 
     running = config.get_config()

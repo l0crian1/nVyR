@@ -1,4 +1,4 @@
-"""Live schema and verify rejection tests; failed candidates must not change the kernel."""
+"""Live schema, verify and native rejection tests; failures must not change the kernel."""
 
 import pytest
 
@@ -718,16 +718,16 @@ def test_group_verify_rejection_entry_duplicate(config):
     config.set('set firewall group match-group ipv4 TEST entry first source-address 192.0.2.1')
     config.set('set firewall group match-group ipv4 TEST entry second source-address 192.0.2.1')
 
-    assert_firewall_commit_rejected(config, 'duplicate or overlapping')
+    assert_firewall_commit_rejected(config, 'duplicate lookup keys')
 
 
-def test_group_verify_rejection_entry_overlap(config):
-    """Reject entry overlap even when the group is not referenced by a rule."""
+def test_group_native_rejection_entry_overlap(config):
+    """Native rejection of nested single-field intervals preserves installed state."""
     config.set('set firewall group match-group ipv4 TEST match source-address')
     config.set('set firewall group match-group ipv4 TEST entry first source-address 192.0.2.0/24')
     config.set('set firewall group match-group ipv4 TEST entry second source-address 192.0.2.128/25')
 
-    assert_firewall_commit_rejected(config, 'duplicate or overlapping')
+    assert_firewall_commit_rejected(config, 'conflicting intervals specified')
 
 
 def test_group_verify_rejection_entry_port_protocol(config):
