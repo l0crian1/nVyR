@@ -29,6 +29,7 @@ mtr-tiny
 curl
 iproute2
 net-tools
+netcat-openbsd
 procps
 iputils-ping
 traceroute

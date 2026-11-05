@@ -307,6 +307,11 @@ These locks do not freeze every Debian userspace package. Updating the pinned
 components is an explicit maintenance task; they do not automatically follow
 upstream releases. Detailed FRR integration belongs in [frr.md](frr.md).
 
+The image includes `netcat-openbsd` for `nc` diagnostics and scripts. Use the
+[Debian-maintained trixie package](https://packages.debian.org/trixie/netcat-openbsd)
+of [OpenBSD's nc](https://man.openbsd.org/nc.1), following Debian's updates for
+this supplementary tool rather than pinning a separate source build.
+
 ## Troubleshooting
 
 ### Builder reports missing tools or stale cached packages
