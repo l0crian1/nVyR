@@ -167,6 +167,22 @@
     ]
   },
   {
+    "script": "rip",
+    "priority": 48,
+    "paths": [
+      "protocols rip",
+      "vrf name <name> protocols rip"
+    ]
+  },
+  {
+    "script": "ripng",
+    "priority": 49,
+    "paths": [
+      "protocols ripng",
+      "vrf name <name> protocols ripng"
+    ]
+  },
+  {
     "script": "ssh",
     "priority": 50,
     "paths": [

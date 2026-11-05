@@ -1,0 +1,96 @@
+# RIP and RIPng share the existing BGP/OSPF transit; only these dedicated prefixes are redistributed.
+# Both global and named-VRF instances must recover after reboot.
+set interfaces dummy dum995 address 198.18.209.101/32 address 2001:db8:209::101/128
+set interfaces dummy dum997 address 198.18.209.102/32 address 2001:db8:209::102/128
+set policy key-chain BOOTRIP key 1 secret acceptance-rip algorithm md5
+set policy prefix-list ipv4 BOOTRIP rule 10 action permit prefix 198.18.209.101/32
+set policy prefix-list ipv4 BOOTRIP rule 20 action permit prefix 198.18.209.102/32
+set policy route-map BOOTRIP4 rule 10 action permit match ipv4 prefix-list BOOTRIP
+set policy route-map BOOTRIP4 rule 10 set metric 3 tag 209
+set protocols rip maximum-paths 4 default-metric 2
+set protocols rip timers update 2 timeout 12 garbage-collection 8
+set protocols rip redistribute connected route-map BOOTRIP4
+set protocols rip interface veth997 passive disable
+set protocols rip interface veth997 distribute-list in prefix-list BOOTRIP
+set protocols rip version 2 passive-default log-neighbor-changes
+set protocols rip interface veth997 authentication mode md5 key-chain BOOTRIP md5-auth-length rfc
+set vrf name BOOTLEFT protocols rip maximum-paths 4 default-metric 2
+set vrf name BOOTLEFT protocols rip timers update 2 timeout 12 garbage-collection 8
+set vrf name BOOTLEFT protocols rip redistribute connected route-map BOOTRIP4
+set vrf name BOOTLEFT protocols rip interface veth995 passive disable
+set vrf name BOOTLEFT protocols rip interface veth995 distribute-list in prefix-list BOOTRIP
+set vrf name BOOTLEFT protocols rip version 2 passive-default log-neighbor-changes
+set vrf name BOOTLEFT protocols rip interface veth995 authentication mode md5 key-chain BOOTRIP md5-auth-length rfc
+set policy prefix-list ipv6 BOOTRIP rule 10 action permit prefix 2001:db8:209::101/128
+set policy prefix-list ipv6 BOOTRIP rule 20 action permit prefix 2001:db8:209::102/128
+set policy route-map BOOTRIP6 rule 10 action permit match ipv6 prefix-list BOOTRIP
+set policy route-map BOOTRIP6 rule 10 set metric 3 tag 209
+set protocols ripng maximum-paths 4 default-metric 2
+set protocols ripng timers update 2 timeout 12 garbage-collection 8
+set protocols ripng redistribute connected route-map BOOTRIP6
+set protocols ripng interface veth997 passive disable
+set protocols ripng interface veth997 distribute-list in prefix-list BOOTRIP
+set vrf name BOOTLEFT protocols ripng maximum-paths 4 default-metric 2
+set vrf name BOOTLEFT protocols ripng timers update 2 timeout 12 garbage-collection 8
+set vrf name BOOTLEFT protocols ripng redistribute connected route-map BOOTRIP6
+set vrf name BOOTLEFT protocols ripng interface veth995 passive disable
+set vrf name BOOTLEFT protocols ripng interface veth995 distribute-list in prefix-list BOOTRIP
+
+# Compatibility and advertisement settings are isolated in BOOTRIGHT, without an active RIP peer.
+set policy access-list ipv4 BOOTRIP rule 10 action permit prefix 198.18.209.101/32
+set policy access-list ipv6 BOOTRIP rule 10 action permit prefix 2001:db8:209::101/128
+set protocols rip distance 120
+set protocols rip source-distance 198.18.192.1/32 distance 121 access-list BOOTRIP
+set vrf name BOOTRIGHT protocols rip version 1 neighbor 198.18.209.1
+set vrf name BOOTRIGHT protocols rip default-information originate
+set vrf name BOOTRIGHT protocols rip route 198.18.209.201/32
+set vrf name BOOTRIGHT protocols rip network 198.18.209.0/30
+set vrf name BOOTRIGHT protocols rip interface veth997.195 passive
+set vrf name BOOTRIGHT protocols rip interface veth997.195 send-version both receive-version none v2-broadcast
+set vrf name BOOTRIGHT protocols rip interface veth997.195 authentication mode text password acceptance-rip
+set vrf name BOOTRIGHT protocols rip interface veth997.195 split-horizon poisoned-reverse
+set vrf name BOOTRIGHT protocols ripng default-information originate
+set vrf name BOOTRIGHT protocols ripng route 2001:db8:209::201/128
+set vrf name BOOTRIGHT protocols ripng aggregate-address 2001:db8:209::/64
+set vrf name BOOTRIGHT protocols ripng network 2001:db8:209::/64
+set vrf name BOOTRIGHT protocols ripng interface veth997.195 passive
+set vrf name BOOTRIGHT protocols ripng interface veth997.195 split-horizon disable
+set vrf name BOOTRIGHT protocols rip redistribute kernel metric 4 route-map BOOTRIP4
+set vrf name BOOTRIGHT protocols rip redistribute connected metric 4 route-map BOOTRIP4
+set vrf name BOOTRIGHT protocols rip redistribute local metric 4 route-map BOOTRIP4
+set vrf name BOOTRIGHT protocols rip redistribute static metric 4 route-map BOOTRIP4
+set vrf name BOOTRIGHT protocols rip redistribute ospf metric 4 route-map BOOTRIP4
+set vrf name BOOTRIGHT protocols rip redistribute isis metric 4 route-map BOOTRIP4
+set vrf name BOOTRIGHT protocols rip redistribute bgp metric 4 route-map BOOTRIP4
+set vrf name BOOTRIGHT protocols rip redistribute nhrp metric 4 route-map BOOTRIP4
+set vrf name BOOTRIGHT protocols rip redistribute babel metric 4 route-map BOOTRIP4
+set vrf name BOOTRIGHT protocols rip redistribute openfabric metric 4 route-map BOOTRIP4
+set vrf name BOOTRIGHT protocols rip redistribute eigrp metric 4 route-map BOOTRIP4
+set vrf name BOOTRIGHT protocols rip distribute-list in access-list BOOTRIP prefix-list BOOTRIP
+set vrf name BOOTRIGHT protocols rip offset-list in access-list BOOTRIP metric 1
+set vrf name BOOTRIGHT protocols rip distribute-list out access-list BOOTRIP prefix-list BOOTRIP
+set vrf name BOOTRIGHT protocols rip offset-list out access-list BOOTRIP metric 1
+set vrf name BOOTRIGHT protocols rip interface veth997.195 distribute-list in access-list BOOTRIP prefix-list BOOTRIP
+set vrf name BOOTRIGHT protocols rip interface veth997.195 offset-list in access-list BOOTRIP metric 1
+set vrf name BOOTRIGHT protocols rip interface veth997.195 distribute-list out access-list BOOTRIP prefix-list BOOTRIP
+set vrf name BOOTRIGHT protocols rip interface veth997.195 offset-list out access-list BOOTRIP metric 1
+set vrf name BOOTRIGHT protocols rip interface veth997.195 route-map in BOOTRIP4 out BOOTRIP4
+set vrf name BOOTRIGHT protocols ripng redistribute kernel metric 4 route-map BOOTRIP6
+set vrf name BOOTRIGHT protocols ripng redistribute connected metric 4 route-map BOOTRIP6
+set vrf name BOOTRIGHT protocols ripng redistribute local metric 4 route-map BOOTRIP6
+set vrf name BOOTRIGHT protocols ripng redistribute static metric 4 route-map BOOTRIP6
+set vrf name BOOTRIGHT protocols ripng redistribute ospfv3 metric 4 route-map BOOTRIP6
+set vrf name BOOTRIGHT protocols ripng redistribute isis metric 4 route-map BOOTRIP6
+set vrf name BOOTRIGHT protocols ripng redistribute bgp metric 4 route-map BOOTRIP6
+set vrf name BOOTRIGHT protocols ripng redistribute nhrp metric 4 route-map BOOTRIP6
+set vrf name BOOTRIGHT protocols ripng redistribute babel metric 4 route-map BOOTRIP6
+set vrf name BOOTRIGHT protocols ripng redistribute openfabric metric 4 route-map BOOTRIP6
+set vrf name BOOTRIGHT protocols ripng distribute-list in access-list BOOTRIP prefix-list BOOTRIP
+set vrf name BOOTRIGHT protocols ripng offset-list in access-list BOOTRIP metric 1
+set vrf name BOOTRIGHT protocols ripng distribute-list out access-list BOOTRIP prefix-list BOOTRIP
+set vrf name BOOTRIGHT protocols ripng offset-list out access-list BOOTRIP metric 1
+set vrf name BOOTRIGHT protocols ripng interface veth997.195 distribute-list in access-list BOOTRIP prefix-list BOOTRIP
+set vrf name BOOTRIGHT protocols ripng interface veth997.195 offset-list in access-list BOOTRIP metric 1
+set vrf name BOOTRIGHT protocols ripng interface veth997.195 distribute-list out access-list BOOTRIP prefix-list BOOTRIP
+set vrf name BOOTRIGHT protocols ripng interface veth997.195 offset-list out access-list BOOTRIP metric 1
+set vrf name BOOTRIGHT protocols ripng interface veth997.195 route-map in BOOTRIP6 out BOOTRIP6

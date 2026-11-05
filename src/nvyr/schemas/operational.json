@@ -794,6 +794,128 @@
       "kind": "node",
       "description": "Reset operational state",
       "children": {
+        "rip": {
+          "kind": "node",
+          "description": "Clear learned RIP routes",
+          "access": "net-admin",
+          "command": {
+            "argv": [
+              "rip.nvyr.op",
+              "clear",
+              "@line"
+            ]
+          },
+          "children": {
+            "vrf": {
+              "kind": "tag_node",
+              "description": "Routing instance",
+              "validators": {
+                "mode": "AND",
+                "checks": {
+                  "regex": {
+                    "name": "regex",
+                    "args": {
+                      "pattern": "[A-Za-z][A-Za-z0-9_.-]{0,14}"
+                    }
+                  }
+                }
+              },
+              "hints": {
+                "vrf": "Routing instance name"
+              },
+              "choices": {
+                "default": "Default routing instance"
+              },
+              "suggestors": [
+                {
+                  "name": "config-path",
+                  "args": {
+                    "path": "vrf name"
+                  }
+                }
+              ],
+              "command": {
+                "argv": [
+                  "rip.nvyr.op",
+                  "clear",
+                  "@line"
+                ]
+              }
+            },
+            "all": {
+              "kind": "node",
+              "description": "Clear routes in every routing instance",
+              "command": {
+                "argv": [
+                  "rip.nvyr.op",
+                  "clear",
+                  "@line"
+                ]
+              }
+            }
+          }
+        },
+        "ripng": {
+          "kind": "node",
+          "description": "Clear learned RIPNG routes",
+          "access": "net-admin",
+          "command": {
+            "argv": [
+              "rip.nvyr.op",
+              "clear",
+              "@line"
+            ]
+          },
+          "children": {
+            "vrf": {
+              "kind": "tag_node",
+              "description": "Routing instance",
+              "validators": {
+                "mode": "AND",
+                "checks": {
+                  "regex": {
+                    "name": "regex",
+                    "args": {
+                      "pattern": "[A-Za-z][A-Za-z0-9_.-]{0,14}"
+                    }
+                  }
+                }
+              },
+              "hints": {
+                "vrf": "Routing instance name"
+              },
+              "choices": {
+                "default": "Default routing instance"
+              },
+              "suggestors": [
+                {
+                  "name": "config-path",
+                  "args": {
+                    "path": "vrf name"
+                  }
+                }
+              ],
+              "command": {
+                "argv": [
+                  "rip.nvyr.op",
+                  "clear",
+                  "@line"
+                ]
+              }
+            },
+            "all": {
+              "kind": "node",
+              "description": "Clear routes in every routing instance",
+              "command": {
+                "argv": [
+                  "rip.nvyr.op",
+                  "clear",
+                  "@line"
+                ]
+              }
+            }
+          }
+        },
         "bgp": {
           "kind": "node",
           "description": "Reset BGP sessions or refresh routes",
@@ -14084,6 +14206,58 @@
                   "--follow"
                 ],
                 "stream": true
+              }
+            },
+            "rip": {
+              "kind": "node",
+              "description": "RIP service logs",
+              "command": {
+                "argv": [
+                  "logs.nvyr.op",
+                  "show",
+                  "rip"
+                ]
+              },
+              "children": {
+                "follow": {
+                  "kind": "node",
+                  "description": "Follow new RIP log entries",
+                  "command": {
+                    "argv": [
+                      "logs.nvyr.op",
+                      "show",
+                      "rip",
+                      "--follow"
+                    ],
+                    "stream": true
+                  }
+                }
+              }
+            },
+            "ripng": {
+              "kind": "node",
+              "description": "RIPNG service logs",
+              "command": {
+                "argv": [
+                  "logs.nvyr.op",
+                  "show",
+                  "ripng"
+                ]
+              },
+              "children": {
+                "follow": {
+                  "kind": "node",
+                  "description": "Follow new RIPNG log entries",
+                  "command": {
+                    "argv": [
+                      "logs.nvyr.op",
+                      "show",
+                      "ripng",
+                      "--follow"
+                    ],
+                    "stream": true
+                  }
+                }
               }
             }
           }
@@ -36420,6 +36594,80 @@
         "ip": {
           "kind": "node",
           "children": {
+            "rip": {
+              "kind": "node",
+              "description": "RIP routes",
+              "command": {
+                "argv": [
+                  "rip.nvyr.op",
+                  "show",
+                  "@line"
+                ]
+              },
+              "children": {
+                "status": {
+                  "kind": "node",
+                  "description": "Protocol timers, interfaces and routing sources",
+                  "command": {
+                    "argv": [
+                      "rip.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  }
+                },
+                "vrf": {
+                  "kind": "tag_node",
+                  "description": "Routing instance",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[A-Za-z][A-Za-z0-9_.-]{0,14}"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "vrf": "Routing instance name"
+                  },
+                  "choices": {
+                    "default": "Default routing instance",
+                    "all": "All routing instances"
+                  },
+                  "suggestors": [
+                    {
+                      "name": "config-path",
+                      "args": {
+                        "path": "vrf name"
+                      }
+                    }
+                  ],
+                  "command": {
+                    "argv": [
+                      "rip.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  },
+                  "children": {
+                    "status": {
+                      "kind": "node",
+                      "description": "Protocol timers, interfaces and routing sources",
+                      "command": {
+                        "argv": [
+                          "rip.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            },
             "ospf": {
               "kind": "node",
               "description": "OSPFv2 routing state",
@@ -39240,6 +39488,17 @@
                     ]
                   }
                 },
+                "rip": {
+                  "kind": "node",
+                  "description": "Routes learned through RIP",
+                  "command": {
+                    "argv": [
+                      "static.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  }
+                },
                 "static": {
                   "kind": "node",
                   "description": "Static routes in Zebra's routing table",
@@ -39501,6 +39760,17 @@
                           }
                         }
                       },
+                      "command": {
+                        "argv": [
+                          "static.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      }
+                    },
+                    "rip": {
+                      "kind": "node",
+                      "description": "Routes learned through RIP",
                       "command": {
                         "argv": [
                           "static.nvyr.op",
@@ -39778,6 +40048,17 @@
                         ]
                       }
                     },
+                    "rip": {
+                      "kind": "node",
+                      "description": "Routes learned through RIP",
+                      "command": {
+                        "argv": [
+                          "static.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      }
+                    },
                     "static": {
                       "kind": "node",
                       "description": "Static routes in this table",
@@ -39861,6 +40142,80 @@
                   ],
                   "hints": {
                     "name": "VRF name"
+                  }
+                }
+              }
+            },
+            "ripng": {
+              "kind": "node",
+              "description": "RIPNG routes",
+              "command": {
+                "argv": [
+                  "rip.nvyr.op",
+                  "show",
+                  "@line"
+                ]
+              },
+              "children": {
+                "status": {
+                  "kind": "node",
+                  "description": "Protocol timers, interfaces and routing sources",
+                  "command": {
+                    "argv": [
+                      "rip.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  }
+                },
+                "vrf": {
+                  "kind": "tag_node",
+                  "description": "Routing instance",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[A-Za-z][A-Za-z0-9_.-]{0,14}"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "vrf": "Routing instance name"
+                  },
+                  "choices": {
+                    "default": "Default routing instance",
+                    "all": "All routing instances"
+                  },
+                  "suggestors": [
+                    {
+                      "name": "config-path",
+                      "args": {
+                        "path": "vrf name"
+                      }
+                    }
+                  ],
+                  "command": {
+                    "argv": [
+                      "rip.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  },
+                  "children": {
+                    "status": {
+                      "kind": "node",
+                      "description": "Protocol timers, interfaces and routing sources",
+                      "command": {
+                        "argv": [
+                          "rip.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      }
+                    }
                   }
                 }
               }
@@ -43014,6 +43369,17 @@
                     ]
                   }
                 },
+                "ripng": {
+                  "kind": "node",
+                  "description": "Routes learned through RIPNG",
+                  "command": {
+                    "argv": [
+                      "static.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  }
+                },
                 "static": {
                   "kind": "node",
                   "description": "Static routes in Zebra's routing table",
@@ -43283,6 +43649,17 @@
                         ]
                       }
                     },
+                    "ripng": {
+                      "kind": "node",
+                      "description": "Routes learned through RIPNG",
+                      "command": {
+                        "argv": [
+                          "static.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      }
+                    },
                     "static": {
                       "kind": "node",
                       "description": "Static routes in Zebra's routing table",
@@ -43544,6 +43921,17 @@
                           }
                         }
                       },
+                      "command": {
+                        "argv": [
+                          "static.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      }
+                    },
+                    "ripng": {
+                      "kind": "node",
+                      "description": "Routes learned through RIPNG",
                       "command": {
                         "argv": [
                           "static.nvyr.op",

@@ -1,6 +1,7 @@
 # FRR reload fixes
 
-`reload-ordering.patch`, `keychain-reload.patch`, and `ospf-reload.patch` modify FRRouting's `tools/frr-reload.py` from tag
+`reload-ordering.patch`, `keychain-reload.patch`, `ospf-reload.patch`, and
+`rip-reload.patch` modify FRRouting's `tools/frr-reload.py` from tag
 `frr-10.7.1`, licensed GPL-2.0-or-later. `COPYING` contains GPL version 2.
 
 Upstream copyright: Copyright (C) 2014 Cumulus Networks, Inc.
@@ -60,3 +61,11 @@ setting is written into every VRF process and cannot be replayed there.
 Inc. Source: https://github.com/FRRouting/frr/blob/frr-10.7.1/ospfd/ospf_opaque.c
 
 Area stub/NSSA state is also removed after dependent default-cost settings.
+
+`rip-reload.patch` restores a removed per-interface passive exception to the
+target RIP process's passive default. Simply reversing a negative exception
+would make that interface passive even when the same reload removes
+`passive-interface default`. Resets run after process-default changes, and
+explicit replacement exceptions retain their normal handling. Native coverage
+in `tests/test_rip_native.py` exercises both transitions and verifies configuration
+readback. Reevaluate this patch when upgrading FRR.

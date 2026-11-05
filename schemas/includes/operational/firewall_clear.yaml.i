@@ -4,6 +4,8 @@ clear:
   children: # clear
 
     include_schema:
+    - file: operational/rip-clear.yaml.i
+    - file: operational/ripng-clear.yaml.i
     - file: operational/bgp-clear.yaml.i
     - file: operational/dns-clear.yaml.i
     - file: operational/ospf-clear.yaml.i

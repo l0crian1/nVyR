@@ -10,7 +10,7 @@ Files: *
 Copyright: 2026 L0crian and nVyR contributors
 License: MIT
 
-Files: vendor/frr/reload-ordering.patch vendor/frr/keychain-reload.patch vendor/frr/ospf-reload.patch
+Files: vendor/frr/reload-ordering.patch vendor/frr/keychain-reload.patch vendor/frr/ospf-reload.patch vendor/frr/rip-reload.patch
 Copyright: 2014 Cumulus Networks, Inc.
  2000 Kunihiro Ishiguro
  2001 KDD R&D Laboratories, Inc.

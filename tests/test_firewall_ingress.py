@@ -191,9 +191,13 @@ def test_ingress_operational_dispatch(controller, session, monkeypatch, family):
     assert calls.pop() == ['firewall.nvyr.op', 'runtime', 'quota', '--family', family, '--hook', 'ingress',
                            '--stage', 'filter']
     result = controller.execute(f'show log firewall {family} ingress filter rule 10')
+    assert 'event' not in result
+    assert calls.pop() == ['logs.nvyr.op', 'show', 'firewall', '--family', family, '--hook', 'ingress',
+                           '--stage', 'filter', '--rule', '10']
+    result = controller.execute(f'show log firewall {family} ingress filter rule 10 follow')
     assert result['event'] == 'command'
     assert result['argv'] == ['logs.nvyr.op', 'show', 'firewall', '--family', family, '--hook', 'ingress',
-                              '--stage', 'filter', '--rule', '10']
+                              '--stage', 'filter', '--rule', '10', '--follow']
 
 
 def test_ingress_summary_does_not_call_dispatch_a_state_policy(monkeypatch, capsys):

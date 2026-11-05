@@ -923,7 +923,7 @@ def assert_kernel_route(prefix, *expected, absent=(), vrf='default', source=None
     )
 
 
-def assert_kernel_route_absent(prefix, *, vrf='default', source=None):
+def assert_kernel_route_absent(prefix, *, vrf='default', source=None, timeout=10):
     """Wait for a destination/source route to be removed from the selected VRF."""
     def read_route():
         """Fetch the routes whose withdrawal the caller is asserting."""
@@ -933,7 +933,7 @@ def assert_kernel_route_absent(prefix, *, vrf='default', source=None):
         """Whitespace alone does not represent an installed route."""
         return not output.strip()
 
-    wait_for(read_route, route_is_removed, description=f'withdrawal of {prefix} in VRF {vrf}')
+    wait_for(read_route, route_is_removed, description=f'withdrawal of {prefix} in VRF {vrf}', timeout=timeout)
 
 
 def assert_kernel_multipath_weights(prefix, weights, *, vrf='default'):

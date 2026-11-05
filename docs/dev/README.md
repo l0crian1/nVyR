@@ -33,6 +33,7 @@ operational commands, use the [user documentation](../users/README.md).
 - [BGP operational commands: implementation and maintenance](bgp-operations.md)
 - [BGP unicast: implementation and maintenance](bgp.md)
 - [OSPFv2 and OSPFv3: ownership, rendering and tests](ospf.md)
+- [RIP and RIPng: ownership, native reload and tests](rip.md)
 - [Bridge interfaces: implementation and maintenance](bridges.md)
 - [Bond interfaces: kernel attributes and reconciliation](bonds.md)
 - [Connection tracking operations: implementation and maintenance](conntrack-operations.md)

@@ -32,7 +32,7 @@ def test_stage_complete_verified_cache(cache, tmp_path):
         assert (destination / path.name).read_bytes() == path.read_bytes()
 
 
-@pytest.mark.parametrize('attribute', ['PATCH', 'KEYCHAIN_PATCH', 'OSPF_PATCH'])
+@pytest.mark.parametrize('attribute', ['PATCH', 'KEYCHAIN_PATCH', 'OSPF_PATCH', 'RIP_PATCH'])
 def test_changed_patch_invalidates_cached_build(cache, tmp_path, monkeypatch, attribute):
     patch = tmp_path / 'patch'
     patch.write_text(getattr(frr_packages, attribute).read_text() + '\n')

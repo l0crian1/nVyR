@@ -11032,6 +11032,184 @@ set
 │   │           ├── delay <0-600000>
 │   │           ├── initial-hold <0-600000>
 │   │           └── maximum-hold <0-600000>
+│   ├── rip
+│   │   ├── default-information
+│   │   │   └── originate
+│   │   ├── default-metric <1-16>
+│   │   ├── distance <1-255>
+│   │   ├── distribute-list
+│   │   │   ├── in
+│   │   │   │   ├── access-list <name>
+│   │   │   │   └── prefix-list <name>
+│   │   │   └── out
+│   │   │       ├── access-list <name>
+│   │   │       └── prefix-list <name>
+│   │   ├── interface <interface>
+│   │   │   ├── authentication
+│   │   │   │   ├── key-chain <name>
+│   │   │   │   ├── md5-auth-length <rfc|old-ripd>
+│   │   │   │   ├── mode <text|md5>
+│   │   │   │   └── password <secret>
+│   │   │   ├── distribute-list
+│   │   │   │   ├── in
+│   │   │   │   │   ├── access-list <name>
+│   │   │   │   │   └── prefix-list <name>
+│   │   │   │   └── out
+│   │   │   │       ├── access-list <name>
+│   │   │   │       └── prefix-list <name>
+│   │   │   ├── offset-list
+│   │   │   │   ├── in
+│   │   │   │   │   ├── access-list <name>
+│   │   │   │   │   └── metric <0-16>
+│   │   │   │   └── out
+│   │   │   │       ├── access-list <name>
+│   │   │   │       └── metric <0-16>
+│   │   │   ├── passive
+│   │   │   │   └── disable
+│   │   │   ├── receive-version <1|2|both|none>
+│   │   │   ├── route-map
+│   │   │   │   ├── in <name>
+│   │   │   │   └── out <name>
+│   │   │   ├── send-version <1|2|both|none>
+│   │   │   ├── split-horizon
+│   │   │   │   ├── disable
+│   │   │   │   └── poisoned-reverse
+│   │   │   └── v2-broadcast
+│   │   ├── log-neighbor-changes
+│   │   ├── maximum-paths <1-255>
+│   │   ├── neighbor <x.x.x.x>
+│   │   ├── network <prefix>
+│   │   ├── offset-list
+│   │   │   ├── in
+│   │   │   │   ├── access-list <name>
+│   │   │   │   └── metric <0-16>
+│   │   │   └── out
+│   │   │       ├── access-list <name>
+│   │   │       └── metric <0-16>
+│   │   ├── passive-default
+│   │   ├── redistribute
+│   │   │   ├── babel
+│   │   │   │   ├── metric <0-16>
+│   │   │   │   └── route-map <name>
+│   │   │   ├── bgp
+│   │   │   │   ├── metric <0-16>
+│   │   │   │   └── route-map <name>
+│   │   │   ├── connected
+│   │   │   │   ├── metric <0-16>
+│   │   │   │   └── route-map <name>
+│   │   │   ├── eigrp
+│   │   │   │   ├── metric <0-16>
+│   │   │   │   └── route-map <name>
+│   │   │   ├── isis
+│   │   │   │   ├── metric <0-16>
+│   │   │   │   └── route-map <name>
+│   │   │   ├── kernel
+│   │   │   │   ├── metric <0-16>
+│   │   │   │   └── route-map <name>
+│   │   │   ├── local
+│   │   │   │   ├── metric <0-16>
+│   │   │   │   └── route-map <name>
+│   │   │   ├── nhrp
+│   │   │   │   ├── metric <0-16>
+│   │   │   │   └── route-map <name>
+│   │   │   ├── openfabric
+│   │   │   │   ├── metric <0-16>
+│   │   │   │   └── route-map <name>
+│   │   │   ├── ospf
+│   │   │   │   ├── metric <0-16>
+│   │   │   │   └── route-map <name>
+│   │   │   └── static
+│   │   │       ├── metric <0-16>
+│   │   │       └── route-map <name>
+│   │   ├── route <prefix>
+│   │   ├── source-distance <prefix>
+│   │   │   ├── access-list <name>
+│   │   │   └── distance <1-255>
+│   │   ├── timers
+│   │   │   ├── garbage-collection <1-32767>
+│   │   │   ├── timeout <1-32767>
+│   │   │   └── update <1-32767>
+│   │   └── version <1|2>
+│   ├── ripng
+│   │   ├── aggregate-address <prefix>
+│   │   ├── default-information
+│   │   │   └── originate
+│   │   ├── default-metric <1-16>
+│   │   ├── distribute-list
+│   │   │   ├── in
+│   │   │   │   ├── access-list <name>
+│   │   │   │   └── prefix-list <name>
+│   │   │   └── out
+│   │   │       ├── access-list <name>
+│   │   │       └── prefix-list <name>
+│   │   ├── interface <interface>
+│   │   │   ├── distribute-list
+│   │   │   │   ├── in
+│   │   │   │   │   ├── access-list <name>
+│   │   │   │   │   └── prefix-list <name>
+│   │   │   │   └── out
+│   │   │   │       ├── access-list <name>
+│   │   │   │       └── prefix-list <name>
+│   │   │   ├── offset-list
+│   │   │   │   ├── in
+│   │   │   │   │   ├── access-list <name>
+│   │   │   │   │   └── metric <0-16>
+│   │   │   │   └── out
+│   │   │   │       ├── access-list <name>
+│   │   │   │       └── metric <0-16>
+│   │   │   ├── passive
+│   │   │   │   └── disable
+│   │   │   ├── route-map
+│   │   │   │   ├── in <name>
+│   │   │   │   └── out <name>
+│   │   │   └── split-horizon
+│   │   │       ├── disable
+│   │   │       └── poisoned-reverse
+│   │   ├── maximum-paths <1-255>
+│   │   ├── network <prefix>
+│   │   ├── offset-list
+│   │   │   ├── in
+│   │   │   │   ├── access-list <name>
+│   │   │   │   └── metric <0-16>
+│   │   │   └── out
+│   │   │       ├── access-list <name>
+│   │   │       └── metric <0-16>
+│   │   ├── redistribute
+│   │   │   ├── babel
+│   │   │   │   ├── metric <0-16>
+│   │   │   │   └── route-map <name>
+│   │   │   ├── bgp
+│   │   │   │   ├── metric <0-16>
+│   │   │   │   └── route-map <name>
+│   │   │   ├── connected
+│   │   │   │   ├── metric <0-16>
+│   │   │   │   └── route-map <name>
+│   │   │   ├── isis
+│   │   │   │   ├── metric <0-16>
+│   │   │   │   └── route-map <name>
+│   │   │   ├── kernel
+│   │   │   │   ├── metric <0-16>
+│   │   │   │   └── route-map <name>
+│   │   │   ├── local
+│   │   │   │   ├── metric <0-16>
+│   │   │   │   └── route-map <name>
+│   │   │   ├── nhrp
+│   │   │   │   ├── metric <0-16>
+│   │   │   │   └── route-map <name>
+│   │   │   ├── openfabric
+│   │   │   │   ├── metric <0-16>
+│   │   │   │   └── route-map <name>
+│   │   │   ├── ospfv3
+│   │   │   │   ├── metric <0-16>
+│   │   │   │   └── route-map <name>
+│   │   │   └── static
+│   │   │       ├── metric <0-16>
+│   │   │       └── route-map <name>
+│   │   ├── route <prefix>
+│   │   └── timers
+│   │       ├── garbage-collection <1-65535>
+│   │       ├── timeout <1-65535>
+│   │       └── update <1-65535>
 │   └── static
 │       ├── route <x.x.x.x/x>
 │       │   ├── blackhole
@@ -11340,7 +11518,7 @@ set
 │   │   ├── rotation
 │   │   │   ├── count <1-1000>
 │   │   │   └── size <size>
-│   │   └── service <system|kernel|authentication|configd|netlinkd|bgp|static|zebra|ospf|
+│   │   └── service <system|kernel|authentication|configd|netlinkd|bgp|static|zebra|ospf|rip|ripng|
 │   │                dhcp-server|dhcpv6-server|ntp|lldp|dns-forwarding|ssh>
 │   │       └── level <emerg|alert|crit|err|warn|notice|info|debug>
 │   ├── login
@@ -12119,6 +12297,184 @@ set
         │   │           ├── delay <0-600000>
         │   │           ├── initial-hold <0-600000>
         │   │           └── maximum-hold <0-600000>
+        │   ├── rip
+        │   │   ├── default-information
+        │   │   │   └── originate
+        │   │   ├── default-metric <1-16>
+        │   │   ├── distance <1-255>
+        │   │   ├── distribute-list
+        │   │   │   ├── in
+        │   │   │   │   ├── access-list <name>
+        │   │   │   │   └── prefix-list <name>
+        │   │   │   └── out
+        │   │   │       ├── access-list <name>
+        │   │   │       └── prefix-list <name>
+        │   │   ├── interface <interface>
+        │   │   │   ├── authentication
+        │   │   │   │   ├── key-chain <name>
+        │   │   │   │   ├── md5-auth-length <rfc|old-ripd>
+        │   │   │   │   ├── mode <text|md5>
+        │   │   │   │   └── password <secret>
+        │   │   │   ├── distribute-list
+        │   │   │   │   ├── in
+        │   │   │   │   │   ├── access-list <name>
+        │   │   │   │   │   └── prefix-list <name>
+        │   │   │   │   └── out
+        │   │   │   │       ├── access-list <name>
+        │   │   │   │       └── prefix-list <name>
+        │   │   │   ├── offset-list
+        │   │   │   │   ├── in
+        │   │   │   │   │   ├── access-list <name>
+        │   │   │   │   │   └── metric <0-16>
+        │   │   │   │   └── out
+        │   │   │   │       ├── access-list <name>
+        │   │   │   │       └── metric <0-16>
+        │   │   │   ├── passive
+        │   │   │   │   └── disable
+        │   │   │   ├── receive-version <1|2|both|none>
+        │   │   │   ├── route-map
+        │   │   │   │   ├── in <name>
+        │   │   │   │   └── out <name>
+        │   │   │   ├── send-version <1|2|both|none>
+        │   │   │   ├── split-horizon
+        │   │   │   │   ├── disable
+        │   │   │   │   └── poisoned-reverse
+        │   │   │   └── v2-broadcast
+        │   │   ├── log-neighbor-changes
+        │   │   ├── maximum-paths <1-255>
+        │   │   ├── neighbor <x.x.x.x>
+        │   │   ├── network <prefix>
+        │   │   ├── offset-list
+        │   │   │   ├── in
+        │   │   │   │   ├── access-list <name>
+        │   │   │   │   └── metric <0-16>
+        │   │   │   └── out
+        │   │   │       ├── access-list <name>
+        │   │   │       └── metric <0-16>
+        │   │   ├── passive-default
+        │   │   ├── redistribute
+        │   │   │   ├── babel
+        │   │   │   │   ├── metric <0-16>
+        │   │   │   │   └── route-map <name>
+        │   │   │   ├── bgp
+        │   │   │   │   ├── metric <0-16>
+        │   │   │   │   └── route-map <name>
+        │   │   │   ├── connected
+        │   │   │   │   ├── metric <0-16>
+        │   │   │   │   └── route-map <name>
+        │   │   │   ├── eigrp
+        │   │   │   │   ├── metric <0-16>
+        │   │   │   │   └── route-map <name>
+        │   │   │   ├── isis
+        │   │   │   │   ├── metric <0-16>
+        │   │   │   │   └── route-map <name>
+        │   │   │   ├── kernel
+        │   │   │   │   ├── metric <0-16>
+        │   │   │   │   └── route-map <name>
+        │   │   │   ├── local
+        │   │   │   │   ├── metric <0-16>
+        │   │   │   │   └── route-map <name>
+        │   │   │   ├── nhrp
+        │   │   │   │   ├── metric <0-16>
+        │   │   │   │   └── route-map <name>
+        │   │   │   ├── openfabric
+        │   │   │   │   ├── metric <0-16>
+        │   │   │   │   └── route-map <name>
+        │   │   │   ├── ospf
+        │   │   │   │   ├── metric <0-16>
+        │   │   │   │   └── route-map <name>
+        │   │   │   └── static
+        │   │   │       ├── metric <0-16>
+        │   │   │       └── route-map <name>
+        │   │   ├── route <prefix>
+        │   │   ├── source-distance <prefix>
+        │   │   │   ├── access-list <name>
+        │   │   │   └── distance <1-255>
+        │   │   ├── timers
+        │   │   │   ├── garbage-collection <1-32767>
+        │   │   │   ├── timeout <1-32767>
+        │   │   │   └── update <1-32767>
+        │   │   └── version <1|2>
+        │   ├── ripng
+        │   │   ├── aggregate-address <prefix>
+        │   │   ├── default-information
+        │   │   │   └── originate
+        │   │   ├── default-metric <1-16>
+        │   │   ├── distribute-list
+        │   │   │   ├── in
+        │   │   │   │   ├── access-list <name>
+        │   │   │   │   └── prefix-list <name>
+        │   │   │   └── out
+        │   │   │       ├── access-list <name>
+        │   │   │       └── prefix-list <name>
+        │   │   ├── interface <interface>
+        │   │   │   ├── distribute-list
+        │   │   │   │   ├── in
+        │   │   │   │   │   ├── access-list <name>
+        │   │   │   │   │   └── prefix-list <name>
+        │   │   │   │   └── out
+        │   │   │   │       ├── access-list <name>
+        │   │   │   │       └── prefix-list <name>
+        │   │   │   ├── offset-list
+        │   │   │   │   ├── in
+        │   │   │   │   │   ├── access-list <name>
+        │   │   │   │   │   └── metric <0-16>
+        │   │   │   │   └── out
+        │   │   │   │       ├── access-list <name>
+        │   │   │   │       └── metric <0-16>
+        │   │   │   ├── passive
+        │   │   │   │   └── disable
+        │   │   │   ├── route-map
+        │   │   │   │   ├── in <name>
+        │   │   │   │   └── out <name>
+        │   │   │   └── split-horizon
+        │   │   │       ├── disable
+        │   │   │       └── poisoned-reverse
+        │   │   ├── maximum-paths <1-255>
+        │   │   ├── network <prefix>
+        │   │   ├── offset-list
+        │   │   │   ├── in
+        │   │   │   │   ├── access-list <name>
+        │   │   │   │   └── metric <0-16>
+        │   │   │   └── out
+        │   │   │       ├── access-list <name>
+        │   │   │       └── metric <0-16>
+        │   │   ├── redistribute
+        │   │   │   ├── babel
+        │   │   │   │   ├── metric <0-16>
+        │   │   │   │   └── route-map <name>
+        │   │   │   ├── bgp
+        │   │   │   │   ├── metric <0-16>
+        │   │   │   │   └── route-map <name>
+        │   │   │   ├── connected
+        │   │   │   │   ├── metric <0-16>
+        │   │   │   │   └── route-map <name>
+        │   │   │   ├── isis
+        │   │   │   │   ├── metric <0-16>
+        │   │   │   │   └── route-map <name>
+        │   │   │   ├── kernel
+        │   │   │   │   ├── metric <0-16>
+        │   │   │   │   └── route-map <name>
+        │   │   │   ├── local
+        │   │   │   │   ├── metric <0-16>
+        │   │   │   │   └── route-map <name>
+        │   │   │   ├── nhrp
+        │   │   │   │   ├── metric <0-16>
+        │   │   │   │   └── route-map <name>
+        │   │   │   ├── openfabric
+        │   │   │   │   ├── metric <0-16>
+        │   │   │   │   └── route-map <name>
+        │   │   │   ├── ospfv3
+        │   │   │   │   ├── metric <0-16>
+        │   │   │   │   └── route-map <name>
+        │   │   │   └── static
+        │   │   │       ├── metric <0-16>
+        │   │   │       └── route-map <name>
+        │   │   ├── route <prefix>
+        │   │   └── timers
+        │   │       ├── garbage-collection <1-65535>
+        │   │       ├── timeout <1-65535>
+        │   │       └── update <1-65535>
         │   └── static
         │       ├── route <x.x.x.x/x>
         │       │   ├── blackhole
@@ -12897,6 +13253,12 @@ operational mode
 │   │           ├── interface
 │   │           │   └── <interface>
 │   │           └── process
+│   ├── rip
+│   │   ├── all
+│   │   └── vrf <default|vrf>
+│   ├── ripng
+│   │   ├── all
+│   │   └── vrf <default|vrf>
 │   └── route-map
 │       └── counters
 │           └── <name>
@@ -14389,6 +14751,10 @@ operational mode
 │   │   │   │   └── seq <number>
 │   │   │   └── summary
 │   │   │       └── <name>
+│   │   ├── rip
+│   │   │   ├── status
+│   │   │   └── vrf <default|all|vrf>
+│   │   │       └── status
 │   │   └── route
 │   │       ├── bgp
 │   │       ├── connected
@@ -14399,6 +14765,7 @@ operational mode
 │   │       ├── kernel
 │   │       ├── local
 │   │       ├── ospf
+│   │       ├── rip
 │   │       ├── static
 │   │       │   └── failed
 │   │       ├── summary
@@ -14414,6 +14781,7 @@ operational mode
 │   │       │   ├── kernel
 │   │       │   ├── local
 │   │       │   ├── ospf
+│   │       │   ├── rip
 │   │       │   ├── static
 │   │       │   └── tag <1-4294967295>
 │   │       ├── tag <1-4294967295>
@@ -14427,6 +14795,7 @@ operational mode
 │   │           ├── kernel
 │   │           ├── local
 │   │           ├── ospf
+│   │           ├── rip
 │   │           ├── static
 │   │           │   └── failed
 │   │           ├── summary
@@ -14620,6 +14989,10 @@ operational mode
 │   │   │   │   └── seq <number>
 │   │   │   └── summary
 │   │   │       └── <name>
+│   │   ├── ripng
+│   │   │   ├── status
+│   │   │   └── vrf <default|all|vrf>
+│   │   │       └── status
 │   │   └── route
 │   │       ├── bgp
 │   │       ├── connected
@@ -14630,6 +15003,7 @@ operational mode
 │   │       ├── kernel
 │   │       ├── local
 │   │       ├── ospf6
+│   │       ├── ripng
 │   │       ├── static
 │   │       │   └── failed
 │   │       ├── summary
@@ -14645,6 +15019,7 @@ operational mode
 │   │       │   ├── kernel
 │   │       │   ├── local
 │   │       │   ├── ospf6
+│   │       │   ├── ripng
 │   │       │   ├── static
 │   │       │   └── tag <1-4294967295>
 │   │       ├── tag <1-4294967295>
@@ -14658,6 +15033,7 @@ operational mode
 │   │           ├── kernel
 │   │           ├── local
 │   │           ├── ospf6
+│   │           ├── ripng
 │   │           ├── static
 │   │           │   └── failed
 │   │           ├── summary
@@ -14852,6 +15228,10 @@ operational mode
 │   │   ├── ntp
 │   │   │   └── follow
 │   │   ├── ospf
+│   │   │   └── follow
+│   │   ├── rip
+│   │   │   └── follow
+│   │   ├── ripng
 │   │   │   └── follow
 │   │   ├── ssh
 │   │   │   └── follow

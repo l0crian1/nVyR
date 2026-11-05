@@ -38,3 +38,13 @@ children: # Native FRR route selectors
     validators:
       integer-range: {minimum: 1, maximum: 4294967295}
     command: ['static.nvyr.op', 'show', '@line']
+
+  rip:
+    kind: node
+    description: Routes learned through RIP
+    command: ['static.nvyr.op', 'show', '@line']
+
+  ripng:
+    kind: node
+    description: Routes learned through RIPNG
+    command: ['static.nvyr.op', 'show', '@line']

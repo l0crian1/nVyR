@@ -1326,3 +1326,27 @@ log:
       description: Follow new log entries until Ctrl-C
       command: ["logs.nvyr.op", "show", "system", "--follow"]
       stream: true
+
+    rip:
+      kind: node
+      description: RIP service logs
+      command: ['logs.nvyr.op', 'show', 'rip']
+      children:
+
+        follow:
+          kind: node
+          description: Follow new RIP log entries
+          stream: true
+          command: ['logs.nvyr.op', 'show', 'rip', '--follow']
+
+    ripng:
+      kind: node
+      description: RIPNG service logs
+      command: ['logs.nvyr.op', 'show', 'ripng']
+      children:
+
+        follow:
+          kind: node
+          description: Follow new RIPNG log entries
+          stream: true
+          command: ['logs.nvyr.op', 'show', 'ripng', '--follow']

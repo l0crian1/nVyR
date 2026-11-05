@@ -63,7 +63,7 @@ def test_all_command_permissions_follow_operational_contract(controller, role):
                 expected = 'dev-admin'
             elif path[:3] in {('monitor', 'firewall', 'trace'), ('show', 'firewall', 'trace'), ('show', 'log', 'task')}:
                 expected = 'net-admin'
-            elif path[0] in readable or path[:2] == ('set', 'terminal'):
+            elif path[0] in readable or path[:2] in {('set', 'terminal'), ('monitor', 'lldp')}:
                 expected = 'read-only'
             elif path[0] in administrative or path[:2] == ('set', 'system'):
                 expected = 'net-admin'

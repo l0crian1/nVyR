@@ -66,6 +66,13 @@ vrf:
               replace:
                 /script/register/vrf: {tag: name}
 
+            - file: protocols/rip.yaml.i
+              replace:
+                /script/register/vrf: {tag: name}
+            - file: protocols/ripng.yaml.i
+              replace:
+                /script/register/vrf: {tag: name}
+
         table:
           kind: leaf_node
           description: Unique routing table ID for this VRF

@@ -18,6 +18,7 @@ COPY images/frr-sources.lock /opt/nvyr-build/images/frr-sources.lock
 COPY vendor/frr/reload-ordering.patch /opt/nvyr-build/vendor/frr/reload-ordering.patch
 COPY vendor/frr/keychain-reload.patch /opt/nvyr-build/vendor/frr/keychain-reload.patch
 COPY vendor/frr/ospf-reload.patch /opt/nvyr-build/vendor/frr/ospf-reload.patch
+COPY vendor/frr/rip-reload.patch /opt/nvyr-build/vendor/frr/rip-reload.patch
 RUN python3 /opt/nvyr-build/build_tools/frr_packages.py /opt/nvyr-frr-packages
 
 # Build the reviewed LTS kernel once, rather than tracking Debian's kernel meta-package.

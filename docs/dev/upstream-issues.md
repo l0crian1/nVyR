@@ -9,6 +9,25 @@ report has been filed or a fix merged. No upstream report or verified fix is
 recorded for the issues below. Add report URLs, patch/commit IDs, affected versions,
 and retest results as they become available.
 
+## FRR-RIP-001: Removing passive-default leaves active exceptions passive
+
+**Status:** Reproduced with FRR 10.7.1; fixed locally by
+`vendor/frr/rip-reload.patch` in FRR package revision `+nvyr3`. No upstream fix or
+report has been verified.
+
+Given `passive-interface default` and `no passive-interface eth1`, remove both
+settings using `frr-reload.py`. The generic inverse of the negative exception is
+`passive-interface eth1`, which persists after the process default becomes active.
+The interface therefore stops sending updates despite the desired configuration
+having no passive settings.
+
+The patch restores each removed exception to the target configuration's default,
+after default changes, while preserving explicit replacement settings. Native
+round-trip and packet tests in `tests/test_rip_native.py` exercise both protocols;
+the passive-default defect itself applies to RIP, since RIPng has no such switch.
+Retest exception removal and both passive-default transitions before dropping
+this patch when updating FRR.
+
 ## NFT-IFNAME-001: Adjacent interface prefixes corrupt anonymous set listings
 
 **Status:** Tracked upstream defect, not a release blocker. Reproduced with

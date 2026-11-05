@@ -1,0 +1,28 @@
+--- a/tools/frr-reload.py
++++ b/tools/frr-reload.py
+@@ -2127,6 +2127,25 @@
+         else:
+             other_deletions.append((ctx_keys, line))
+     lines_to_del = other_deletions + ospf_parents
++
++    # RIP writes exceptions to its passive default, not independent booleans.
++    # Removing an exception must restore the *target* default after a possible
++    # default change; negating "no passive-interface" would otherwise leave a
++    # newly passive port behind when passive-interface default is removed.
++    for ctx_keys, line in list(lines_to_del):
++        target = newconf.contexts.get(ctx_keys)
++        if (len(ctx_keys) != 1 or not re.fullmatch(r"router rip(?: vrf \S+)?", ctx_keys[0])
++                or target is None or not line):
++            continue
++        match = re.fullmatch(r"(?:no )?passive-interface (\S+)", line)
++        if not match or match[1] == "default":
++            continue
++        passive = "passive-interface " + match[1]
++        active = "no " + passive
++        lines_to_del.remove((ctx_keys, line))
++        if passive not in target.lines and active not in target.lines:
++            reset = passive if "passive-interface default" in target.lines else active
++            lines_to_add.append((ctx_keys, reset))
+ 
+     return (lines_to_add, lines_to_del)
+ 

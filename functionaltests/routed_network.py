@@ -32,7 +32,8 @@ CONFIGURATIONS = (CONFIGURATION, CONFIGURATION.with_name('network-features.conf'
                   CONFIGURATION.with_name('network-bgp-unicast.conf'),
                   CONFIGURATION.with_name('network-static.conf'),
                   CONFIGURATION.with_name('network-services.conf'),
-                  CONFIGURATION.with_name('network-ospf.conf'))
+                  CONFIGURATION.with_name('network-ospf.conf'),
+                  CONFIGURATION.with_name('network-rip.conf'))
 LINKS = ('veth42061', 'veth42062', 'veth42063', 'veth42064', 'veth42065', 'veth42066',
          'veth42067', 'veth42068',
          'dum42061', 'dum42069', 'dum977', 'dum980', 'dum997', 'dum998', 'dum999', 'veth994', 'veth995',

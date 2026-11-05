@@ -22,6 +22,7 @@ Configure and operate nVyR. For implementation and maintenance, use the
 - [Static routing displays](static-routing-operations.md)
 - [BGP unicast](bgp.md)
 - [OSPFv2 and OSPFv3](ospf.md)
+- [RIP and RIPng](rip.md)
 - [BGP operational commands](bgp-operations.md)
 - [Routing policies](routing-policy.md)
 - [Routing-policy operational commands](policy-operations.md)

@@ -1,0 +1,65 @@
+{% set protocol = configuration['protocol'] -%}
+{% set ipv6 = protocol == 'ripng' -%}
+{% macro filters(settings, interface='') -%}
+{% for direction, values in settings.get('distribute-list', {}).items() | sort -%}
+{% for kind, name in values.items() | sort %} {{ 'ipv6 ' if ipv6 else '' }}distribute-list {{ 'prefix ' if kind == 'prefix-list' else '' }}{{ name }} {{ direction }}{{ ' ' ~ interface if interface else '' }}
+{% endfor -%}
+{% endfor -%}
+{% for direction, values in settings.get('offset-list', {}).items() | sort %} offset-list {{ values['access-list'] }} {{ direction }} {{ values['metric'] | int }}{{ ' ' ~ interface if interface else '' }}
+{% endfor -%}
+{% endmacro -%}
+{% for vrf, settings in configuration['instances'].items() | sort(case_sensitive=true) -%}
+router {{ protocol }}{{ ' vrf ' ~ vrf if vrf != 'default' else '' }}
+{% if 'maximum-paths' in settings %} allow-ecmp {{ settings['maximum-paths'] | int }}
+{% endif -%}
+{% for key in ('default-metric', 'distance', 'version') -%}
+{% if key in settings %} {{ key }} {{ settings[key] | int }}
+{% endif -%}
+{% endfor -%}
+{% if 'log-neighbor-changes' in settings %} log-neighbor-changes
+{% endif -%}
+{% if 'originate' in settings.get('default-information', {}) %} default-information originate
+{% endif -%}
+{% if 'passive-default' in settings %} passive-interface default
+{% endif -%}
+{% for key in ('network', 'route', 'aggregate-address', 'neighbor') -%}
+{% for value in settings.get(key, ()) | sort %} {{ key }} {{ ip_network(value, strict=False) if key != 'neighbor' else ip_address(value) }}
+{% endfor -%}
+{% endfor -%}
+{% for prefix, values in settings.get('source-distance', {}).items() | sort %} distance {{ values['distance'] | int }} {{ ip_network(prefix, strict=False) }}{{ ' ' ~ values['access-list'] if 'access-list' in values else '' }}
+{% endfor -%}
+{% for source, values in settings.get('redistribute', {}).items() | sort %} redistribute {{ 'ospf6' if source == 'ospfv3' else source }}{{ ' metric ' ~ (values['metric'] | int) if 'metric' in values else '' }}{{ ' route-map ' ~ values['route-map'] if 'route-map' in values else '' }}
+{% endfor -%}
+{% if 'timers' in settings -%}
+{% set timers = settings['timers'] %} timers basic {{ timers.get('update', 30) | int }} {{ timers.get('timeout', 180) | int }} {{ timers.get('garbage-collection', 120) | int }}
+{% endif -%}
+{{ filters(settings) -}}
+{% for name, interface in settings.get('interface', {}).items() | sort(case_sensitive=true) %} network {{ name }}
+{% if 'passive' in interface %} {{ 'no ' if 'disable' in interface['passive'] else '' }}passive-interface {{ name }}
+{% endif -%}
+{{ filters(interface, name) -}}
+{% for direction, policy in interface.get('route-map', {}).items() | sort %} route-map {{ policy }} {{ direction }} {{ name }}
+{% endfor -%}
+{% endfor -%}
+exit
+{% for name, interface in settings.get('interface', {}).items() | sort(case_sensitive=true) -%}
+interface {{ name }}
+{% set native = 'ipv6 ripng' if ipv6 else 'ip rip' -%}
+{% if 'split-horizon' in interface -%}
+{% set split = interface['split-horizon'] %} {{ 'no ' if 'disable' in split else '' }}{{ native }} split-horizon{{ ' poisoned-reverse' if 'poisoned-reverse' in split else '' }}
+{% endif -%}
+{% for key, direction in [('send-version', 'send'), ('receive-version', 'receive')] -%}
+{% if key in interface %} ip rip {{ direction }} version {{ '1 2' if interface[key] == 'both' else interface[key] }}
+{% endif -%}
+{% endfor -%}
+{% if 'v2-broadcast' in interface %} ip rip v2-broadcast
+{% endif -%}
+{% if 'authentication' in interface -%}
+{% set auth = interface['authentication'] %} ip rip authentication mode {{ auth['mode'] }}{{ ' auth-length ' ~ auth['md5-auth-length'] if 'md5-auth-length' in auth else '' }}
+{% if 'password' in auth %} ip rip authentication string {{ auth['password'] }}
+{% else %} ip rip authentication key-chain {{ auth['key-chain'] }}
+{% endif -%}
+{% endif -%}
+exit
+{% endfor -%}
+{% endfor -%}

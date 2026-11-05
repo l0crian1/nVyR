@@ -13,6 +13,8 @@ SERVICES = {
     'static': ('staticd',),
     'zebra': ('zebra',),
     'ospf': ('ospfd', 'ospf6d'),
+    'rip': ('ripd',),
+    'ripng': ('ripngd',),
     'ntp': ('chronyd', 'nvyr-ntp'),
     'lldp': ('lldpd', 'lldpcli'),
     'ssh': ('sshd', 'sshd-session'),

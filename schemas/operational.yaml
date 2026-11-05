@@ -125,6 +125,7 @@ children: # operational
         children: # ip
 
           include_schema:
+          - file: operational/rip-display.yaml.i
           - file: operational/ospf-display.yaml.i
           - file: operational/policy-filters.yaml.i
             as: null
@@ -132,8 +133,11 @@ children: # operational
           - file: operational/route-display.yaml.i
             remove:
             - /children/ospf6
+            - /children/ripng
             - /children/vrf/children/ospf6
+            - /children/vrf/children/ripng
             - /children/table/children/ospf6
+            - /children/table/children/ripng
             replace:
               /description: IPv4 routing table from FRR
         description: IPv4 state
@@ -154,6 +158,7 @@ children: # operational
                 as: null
 
           include_schema:
+          - file: operational/ripng-display.yaml.i
           - file: operational/ospfv3-display.yaml.i
           - file: operational/policy-filters.yaml.i
             as: null
@@ -169,8 +174,11 @@ children: # operational
           - file: operational/route-display.yaml.i
             remove:
             - /children/ospf
+            - /children/rip
             - /children/vrf/children/ospf
+            - /children/vrf/children/rip
             - /children/table/children/ospf
+            - /children/table/children/rip
             replace:
               /description: IPv6 routing table from FRR
               /children/destination/validators:

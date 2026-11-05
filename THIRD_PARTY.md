@@ -8,7 +8,7 @@ relicense third-party code, packages, container images or data.
 ## FRR reload patch
 
 `vendor/frr/reload-ordering.patch`, `vendor/frr/keychain-reload.patch`, and
-`vendor/frr/ospf-reload.patch` contain changes to and context from
+`vendor/frr/ospf-reload.patch` and `vendor/frr/rip-reload.patch` contain changes to and context from
 FRRouting's `tools/frr-reload.py`, `lib/keychain_cli.c`, and
 `ospfd/ospf_opaque.c` at tag `frr-10.7.1`:
 

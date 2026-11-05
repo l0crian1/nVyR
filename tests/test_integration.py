@@ -188,6 +188,8 @@ def daemon(tmp_path, request):
                'from nvyr.helpers import kea; kea.manager.apply = lambda *args, **kwargs: None; '
                # RPC tests do not manage the development host's DNS daemon or timer.
                'from nvyr.helpers import dns_forwarding; dns_forwarding.install = lambda *args, **kwargs: None; '
+               # Match the in-process fixture: RPC tests do not manage host LLDP.
+               'from nvyr.helpers import lldp; lldp.install = lambda *args, **kwargs: None; '
                'from nvyr.config_scripts import container; container.generate = lambda *args, **kwargs: None; container.worker.run_apply = lambda *args, **kwargs: None; '
                'interfaces.manager.replace = lambda *args, **kwargs: None; '
                'from nvyr.helpers import frr_reload; frr_reload.manager.apply = lambda *a, **k: None; '

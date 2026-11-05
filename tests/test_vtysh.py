@@ -71,11 +71,27 @@ def test_clear_passes_literal_star_without_shell_expansion(monkeypatch):
     ['clear', 'ip', 'ospf'], ['clear', 'ipv6', 'ospf6'],
     ['clear', 'ip', 'ospf', 'process;exit'],
     ['clear', 'ipv6', 'ospf6', 'interface', 'eth0\nconfigure terminal'],
+    ['clear', 'ip', 'rip', 'extra'], ['clear', 'ipv6', 'ripng', 'vrf'],
+    ['clear', 'ip', 'rip', 'vrf', 'BLUE;exit'],
+    ['clear', 'ipv6', 'ripng', 'vrf', 'BLUE\nconfigure terminal'],
 ])
 def test_clear_rejects_other_commands_and_embedded_input(monkeypatch, words):
     monkeypatch.setattr(vtysh, 'cmd', lambda argv: pytest.fail('Unsafe reset executed'))
-    with pytest.raises(ValueError, match='single FRR clear bgp, ospf, or route-map counters command'):
+    with pytest.raises(ValueError, match='single FRR clear bgp, ospf, rip, ripng, or route-map counters command'):
         vtysh.clear(words)
+
+
+@pytest.mark.parametrize('words', [
+    ['clear', 'ip', 'rip'], ['clear', 'ipv6', 'ripng'],
+    ['clear', 'ip', 'rip', 'vrf', 'default'], ['clear', 'ipv6', 'ripng', 'vrf', 'BLUE'],
+])
+def test_clear_rip_preserves_native_scope(monkeypatch, words):
+    calls = []
+    monkeypatch.setattr(vtysh, 'cmd', lambda argv: calls.append(argv) or '')
+
+    vtysh.clear(words)
+
+    assert calls == [['vtysh', '-c', ' '.join(words)]]
 
 
 @pytest.mark.parametrize('words', [

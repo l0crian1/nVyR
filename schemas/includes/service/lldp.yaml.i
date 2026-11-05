@@ -19,6 +19,7 @@ lldp:
       kind: leaf_node
       description: Advertised system name (native hostname when omitted)
       validators:
+        mode: AND
         text: {}
         byte-length:
           minimum: 1
@@ -30,6 +31,7 @@ lldp:
       kind: leaf_node
       description: Advertised system description (native platform description when omitted)
       validators:
+        mode: AND
         text: {}
         byte-length:
           minimum: 1
@@ -41,6 +43,7 @@ lldp:
       kind: leaf_node
       description: Custom local chassis identifier
       validators:
+        mode: AND
         text: {}
         byte-length:
           minimum: 1
@@ -162,6 +165,7 @@ lldp:
       kind: leaf_node
       description: Default advertised port description
       validators:
+        mode: AND
         text: {}
         byte-length:
           minimum: 1
@@ -226,6 +230,7 @@ lldp:
           kind: leaf_node
           description: Custom locally assigned port identifier
           validators:
+            mode: AND
             text: {}
             byte-length:
               minimum: 1
@@ -237,6 +242,7 @@ lldp:
           kind: leaf_node
           description: Advertised description for this port
           validators:
+            mode: AND
             text: {}
             byte-length:
               minimum: 1
