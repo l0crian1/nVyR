@@ -970,6 +970,32 @@ class Kernel:
 
         return True
 
+    def neighbors(self, name):
+        """Observe IP neighbors on one device, excluding proxy and bridge FDB entries."""
+        index = self.device(name)['index']
+        result = {}
+        for family in (socket.AF_INET, socket.AF_INET6):
+            for entry in self.dump(self.ipr.get_neighbours, ifindex=index, family=family):
+                if entry['flags'] & 8:  # NTF_PROXY is a separate table.
+                    continue
+                address = str(ipaddress.ip_address(entry.get_attr('NDA_DST')))
+                result[address] = (entry.get_attr('NDA_LLADDR'), entry['state'])
+        return result
+
+    def neighbor(self, operation, name, address, mac=None):
+        address = ipaddress.ip_address(address)
+        arguments = {'ifindex': self.device(name)['index'], 'dst': str(address),
+                     'family': socket.AF_INET if address.version == 4 else socket.AF_INET6}
+        if operation != 'del':
+            arguments.update(lladdr=mac, state=128)  # NUD_PERMANENT
+
+        try:
+            self.ipr.neigh(operation, **arguments)
+        except Exception as error:
+            code = getattr(error, 'code', getattr(error, 'errno', None))
+            if operation != 'del' or code not in (errno.ENOENT, errno.ESRCH):
+                raise
+
     def routes(self, name):
         device = self.device(name)
         if device is None:

@@ -337,6 +337,25 @@ class Manager:
             if route not in present:
                 self.kernel.route('add', name, route)
 
+    def _neighbors(self, name, record, desired):
+        previous = record.get('neighbors', {})
+        if not previous and not desired:
+            return
+
+        present = self.kernel.neighbors(name)
+        for address in previous.keys() - desired.keys():
+            if address in present:
+                self.kernel.neighbor('del', name, address)
+
+        # Persist intended ownership before writes so interrupted apply can roll back.
+        if previous != desired:
+            record['neighbors'] = desired
+            self.save_record(name)
+
+        for address, mac in desired.items():
+            if present.get(address) != (mac, 128):
+                self.kernel.neighbor('replace', name, address, mac)
+
     def reconcile_owner(self, owner, links, *, allow_missing=True, wait=False):
         self._attachments(owner, links)
         target = self.validate(owner, links, recovery=allow_missing)
@@ -403,6 +422,7 @@ class Manager:
                 if not driver.virtual:
                     self.naming(name)
                     self._routes(name, record, [])
+                    self._neighbors(name, record, {})
                     driver.release(self.kernel, dict(record['definition'], name=name), record['baseline'])
                     if record['kind'] in interface_ip.KINDS:
                         self.kernel.ip_policy(name, {}, self.state.get('kernel-settings', {}))
@@ -576,6 +596,7 @@ class Manager:
                                      if lifetimes or record.get('dhcp6-addresses') else {}),
                                   lease=lease if not static_lease else None, ip_options=spec['ip-options'])
         self.kernel.state(name, not spec['disabled'])
+        self._neighbors(name, record, {} if spec['disabled'] else interface_ip.neighbors(spec['ip-options']))
         if self.dhcp6:
             if sorted(lifetimes) != record.get('dhcp6-addresses', []):
                 record['dhcp6-addresses'] = sorted(lifetimes)

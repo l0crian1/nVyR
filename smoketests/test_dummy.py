@@ -1,12 +1,14 @@
 """Dummy interface features exercised through configd and native kernel state."""
 
 import pytest
+import json
 
 if __name__ == '__main__':
     import sys
     raise SystemExit(pytest.main([__file__, '-v', '-s', *sys.argv[1:]]))
 
 from nvyr.errors import RouterError
+from nvyr.helpers.process import cmd
 from smoketests.assertions import (
     assert_config_commit_rejected, assert_link, assert_link_absent,
     assert_configured_link_addresses, assert_raises,
@@ -51,6 +53,33 @@ def test_ipv4_addresses(config):
     config.commit()
 
     assert_configured_link_addresses('dum990', '198.18.111.1/24', absent=('198.18.110.1/24',))
+
+
+def test_static_neighbors(config):
+    """Anchored entries, metadata, MAC changes and deletion reach the native table."""
+    config.set('set interfaces dummy dum990 ip arp-entry 198.18.110.2 mac-address 02:00:00:00:11:02 description "IPv4 peer"')
+    config.set('set interfaces dummy dum990 ipv6 neighbor 2001:db8:110::2 mac-address 02:00:00:00:11:02 description "IPv6 peer"')
+    config.commit()
+
+    def entries():
+        return {item['dst']: item for item in json.loads(cmd(['ip', '-j', 'neighbor', 'show', 'dev', 'dum990']))}
+
+    records = entries()
+    for address in ('198.18.110.2', '2001:db8:110::2'):
+        assert records[address]['lladdr'] == '02:00:00:00:11:02'
+        assert 'PERMANENT' in records[address]['state']
+    assert 'IPv4 peer' in cmd(['neighbors.nvyr.op', 'show', 'show arp interface dum990'])
+    assert 'IPv6 peer' in cmd(['neighbors.nvyr.op', 'show', 'show ipv6 neighbors interface dum990'])
+
+    config.set('set interfaces dummy dum990 ip arp-entry 198.18.110.2 mac-address 02:00:00:00:11:03')
+    config.delete('delete interfaces dummy dum990 ipv6 neighbor 2001:db8:110::2')
+    config.commit()
+    assert entries()['198.18.110.2']['lladdr'] == '02:00:00:00:11:03'
+    assert '2001:db8:110::2' not in entries()
+
+    config.delete('delete interfaces dummy dum990 ip arp-entry 198.18.110.2')
+    config.commit()
+    assert '198.18.110.2' not in entries()
 
 
 def test_ipv6_addresses(config):

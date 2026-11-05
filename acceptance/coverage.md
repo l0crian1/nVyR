@@ -12,6 +12,11 @@ IPv4 addresses and virtual-network traffic checks still run without a cable.
 
 ## Recent configuration additions
 
+Static ARP and IPv6 neighbors in `interfaces.set` cover permanent bindings and
+descriptions on the shared default/VRF transit pair. `check_static_neighbors`
+verifies both native tables and operational descriptions before and after reboot;
+the existing routing checks exercise traffic over those bindings.
+
 LLDP in `services.set` covers native wildcard selection, an excluded port,
 custom system/chassis identity, management address, transmit timing and an exact
 port override. `check_lldp` verifies installed native state and operational output

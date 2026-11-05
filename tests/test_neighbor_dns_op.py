@@ -55,6 +55,7 @@ def neighbor_data(monkeypatch):
         return json.dumps(entries)
 
     monkeypatch.setattr(neighbors, 'cmd', execute)
+    monkeypatch.setattr(neighbors, 'running_configuration', lambda: {})
     return calls
 
 

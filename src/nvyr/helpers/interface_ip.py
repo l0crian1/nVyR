@@ -17,13 +17,14 @@ import secrets
 from nvyr.errors import RecoveryError, ValidationError
 from nvyr.helpers.kernel_settings import Manager, validate_value
 from nvyr.helpers.kernel_settings_map import INTERFACE_SETTINGS, SETTINGS
-from nvyr.helpers.validators import interface_ipv6_value
+from nvyr.helpers.validators import interface_ipv6_value, ipv4_address, ipv6_address, mac
 from nvyr.storage import atomic_json
 from nvyr.tree import lookup
 
 
 SPECIAL = {'eui64', 'interface-identifier', 'link-local-address', 'no-default-link-local'}
 KINDS = {'ethernet', 'dummy', 'virtual-ethernet', 'bridge', 'bond', 'vlan'}
+NEIGHBORS = {'ip': 'arp-entry', 'ipv6': 'neighbor'}
 
 
 def verify(options, *, addresses=(), kind=None):
@@ -41,10 +42,39 @@ def verify(options, *, addresses=(), kind=None):
         if not isinstance(values, Mapping):
             raise ValidationError(f'{family}: expected an options node')
         allowed = {path[1] for path in INTERFACE_SETTINGS if path[0] == family}
+        allowed.add(NEIGHBORS[family])
         if family == 'ipv6':
             allowed |= SPECIAL
         if set(values) - allowed:
             raise ValidationError(f'{family}: unknown IP option')
+
+        entries = values.get(NEIGHBORS[family], {})
+        # Direct daemon requests must retain the CLI's address-to-entry shape.
+        if not isinstance(entries, Mapping):
+            raise ValidationError(f'{family}: expected a neighbor mapping')
+
+        seen = set()
+        validate_address = ipv4_address if family == 'ip' else ipv6_address
+        for address, entry in entries.items():
+            path = f'{family} {NEIGHBORS[family]} {address}'
+            # Netlinkd is also a transport boundary; reject malformed native keys.
+            if not isinstance(address, str) or not validate_address(address):
+                raise ValidationError(f'{path}: invalid neighbor address')
+
+            # Equivalent IPv6 spellings still identify the same kernel neighbor.
+            canonical = str(ipaddress.ip_address(address))
+            if canonical in seen:
+                raise ValidationError(f'{path}: duplicate neighbor address')
+            seen.add(canonical)
+
+            # A description alone cannot produce a usable permanent neighbor.
+            if not isinstance(entry, Mapping) or 'mac-address' not in entry:
+                raise ValidationError(f'{path}: requires mac-address')
+
+            # The transport must not silently discard unknown fields or invalid MACs.
+            if (set(entry) - {'mac-address', 'description'}
+                    or not isinstance(entry['mac-address'], str) or not mac(entry['mac-address'])):
+                raise ValidationError(f'{path}: invalid neighbor settings')
 
     for path, name in INTERFACE_SETTINGS.items():
         value = lookup(options, path, None)
@@ -115,6 +145,9 @@ def verify(options, *, addresses=(), kind=None):
 def format_options(options):
     """Copy verified IP options without retaining references to configuration views."""
     result = {family: dict(values) for family, values in options.items()}
+    for family, node in NEIGHBORS.items():
+        if node in result.get(family, {}):
+            result[family][node] = {address: dict(entry) for address, entry in result[family][node].items()}
     ipv6 = result.get('ipv6', {})
     if 'duplicate-address-detection' in ipv6:
         ipv6['duplicate-address-detection'] = dict(ipv6['duplicate-address-detection'])
@@ -122,6 +155,13 @@ def format_options(options):
         ipv6['eui64'] = list(dict.fromkeys(ipv6['eui64']))
 
     return result
+
+
+def neighbors(options):
+    """Kernel bindings exclude descriptions and canonicalize address spellings."""
+    return {str(ipaddress.ip_address(address)): entry['mac-address'].lower()
+            for family, node in NEIGHBORS.items()
+            for address, entry in lookup(options, (family, node), {}).items()}
 
 
 def normalize(options, *, addresses=(), kind=None):

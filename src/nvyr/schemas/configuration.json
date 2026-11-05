@@ -325,6 +325,49 @@
                   "hints": {
                     "duration": "Duration in s, m, h or d; default 60s"
                   }
+                },
+                "arp-entry": {
+                  "kind": "tag_node",
+                  "anchor": true,
+                  "description": "Permanent IPv4 ARP entry",
+                  "strip_kind": "ipv4",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "ipv4-address": {
+                        "name": "ipv4-address"
+                      }
+                    }
+                  },
+                  "hints": {
+                    "x.x.x.x": "Neighbor IPv4 address without a prefix"
+                  },
+                  "children": {
+                    "mac-address": {
+                      "kind": "leaf_node",
+                      "description": "Permanent destination Ethernet address",
+                      "strip_kind": "mac",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "mac": {
+                            "name": "mac"
+                          }
+                        }
+                      },
+                      "hints": {
+                        "xx:xx:xx:xx:xx:xx": "Nonzero unicast Ethernet MAC address"
+                      }
+                    },
+                    "description": {
+                      "kind": "leaf_node",
+                      "strip_kind": "private",
+                      "description": "Description of this static neighbor",
+                      "hints": {
+                        "text": "Description; quote spaces"
+                      }
+                    }
+                  }
                 }
               }
             },
@@ -628,6 +671,49 @@
                   "kind": "leaf_node",
                   "valueless": true,
                   "description": "Suppress automatically generated IPv6 link-local addresses"
+                },
+                "neighbor": {
+                  "kind": "tag_node",
+                  "anchor": true,
+                  "description": "Permanent IPv6 neighbor entry",
+                  "strip_kind": "ipv6",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "ipv6-address": {
+                        "name": "ipv6-address"
+                      }
+                    }
+                  },
+                  "hints": {
+                    "h:h::h": "Neighbor IPv6 address without a prefix"
+                  },
+                  "children": {
+                    "mac-address": {
+                      "kind": "leaf_node",
+                      "description": "Permanent destination Ethernet address",
+                      "strip_kind": "mac",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "mac": {
+                            "name": "mac"
+                          }
+                        }
+                      },
+                      "hints": {
+                        "xx:xx:xx:xx:xx:xx": "Nonzero unicast Ethernet MAC address"
+                      }
+                    },
+                    "description": {
+                      "kind": "leaf_node",
+                      "strip_kind": "private",
+                      "description": "Description of this static neighbor",
+                      "hints": {
+                        "text": "Description; quote spaces"
+                      }
+                    }
+                  }
                 }
               }
             },
@@ -1410,6 +1496,49 @@
                       "hints": {
                         "duration": "Duration in s, m, h or d; default 60s"
                       }
+                    },
+                    "arp-entry": {
+                      "kind": "tag_node",
+                      "anchor": true,
+                      "description": "Permanent IPv4 ARP entry",
+                      "strip_kind": "ipv4",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "ipv4-address": {
+                            "name": "ipv4-address"
+                          }
+                        }
+                      },
+                      "hints": {
+                        "x.x.x.x": "Neighbor IPv4 address without a prefix"
+                      },
+                      "children": {
+                        "mac-address": {
+                          "kind": "leaf_node",
+                          "description": "Permanent destination Ethernet address",
+                          "strip_kind": "mac",
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "mac": {
+                                "name": "mac"
+                              }
+                            }
+                          },
+                          "hints": {
+                            "xx:xx:xx:xx:xx:xx": "Nonzero unicast Ethernet MAC address"
+                          }
+                        },
+                        "description": {
+                          "kind": "leaf_node",
+                          "strip_kind": "private",
+                          "description": "Description of this static neighbor",
+                          "hints": {
+                            "text": "Description; quote spaces"
+                          }
+                        }
+                      }
                     }
                   }
                 },
@@ -1713,6 +1842,49 @@
                       "kind": "leaf_node",
                       "valueless": true,
                       "description": "Suppress automatically generated IPv6 link-local addresses"
+                    },
+                    "neighbor": {
+                      "kind": "tag_node",
+                      "anchor": true,
+                      "description": "Permanent IPv6 neighbor entry",
+                      "strip_kind": "ipv6",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "ipv6-address": {
+                            "name": "ipv6-address"
+                          }
+                        }
+                      },
+                      "hints": {
+                        "h:h::h": "Neighbor IPv6 address without a prefix"
+                      },
+                      "children": {
+                        "mac-address": {
+                          "kind": "leaf_node",
+                          "description": "Permanent destination Ethernet address",
+                          "strip_kind": "mac",
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "mac": {
+                                "name": "mac"
+                              }
+                            }
+                          },
+                          "hints": {
+                            "xx:xx:xx:xx:xx:xx": "Nonzero unicast Ethernet MAC address"
+                          }
+                        },
+                        "description": {
+                          "kind": "leaf_node",
+                          "strip_kind": "private",
+                          "description": "Description of this static neighbor",
+                          "hints": {
+                            "text": "Description; quote spaces"
+                          }
+                        }
+                      }
                     }
                   }
                 },
@@ -2499,6 +2671,49 @@
                   "hints": {
                     "duration": "Duration in s, m, h or d; default 60s"
                   }
+                },
+                "arp-entry": {
+                  "kind": "tag_node",
+                  "anchor": true,
+                  "description": "Permanent IPv4 ARP entry",
+                  "strip_kind": "ipv4",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "ipv4-address": {
+                        "name": "ipv4-address"
+                      }
+                    }
+                  },
+                  "hints": {
+                    "x.x.x.x": "Neighbor IPv4 address without a prefix"
+                  },
+                  "children": {
+                    "mac-address": {
+                      "kind": "leaf_node",
+                      "description": "Permanent destination Ethernet address",
+                      "strip_kind": "mac",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "mac": {
+                            "name": "mac"
+                          }
+                        }
+                      },
+                      "hints": {
+                        "xx:xx:xx:xx:xx:xx": "Nonzero unicast Ethernet MAC address"
+                      }
+                    },
+                    "description": {
+                      "kind": "leaf_node",
+                      "strip_kind": "private",
+                      "description": "Description of this static neighbor",
+                      "hints": {
+                        "text": "Description; quote spaces"
+                      }
+                    }
+                  }
                 }
               }
             },
@@ -2784,6 +2999,49 @@
                   "kind": "leaf_node",
                   "valueless": true,
                   "description": "Suppress automatically generated IPv6 link-local addresses"
+                },
+                "neighbor": {
+                  "kind": "tag_node",
+                  "anchor": true,
+                  "description": "Permanent IPv6 neighbor entry",
+                  "strip_kind": "ipv6",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "ipv6-address": {
+                        "name": "ipv6-address"
+                      }
+                    }
+                  },
+                  "hints": {
+                    "h:h::h": "Neighbor IPv6 address without a prefix"
+                  },
+                  "children": {
+                    "mac-address": {
+                      "kind": "leaf_node",
+                      "description": "Permanent destination Ethernet address",
+                      "strip_kind": "mac",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "mac": {
+                            "name": "mac"
+                          }
+                        }
+                      },
+                      "hints": {
+                        "xx:xx:xx:xx:xx:xx": "Nonzero unicast Ethernet MAC address"
+                      }
+                    },
+                    "description": {
+                      "kind": "leaf_node",
+                      "strip_kind": "private",
+                      "description": "Description of this static neighbor",
+                      "hints": {
+                        "text": "Description; quote spaces"
+                      }
+                    }
+                  }
                 }
               }
             },
@@ -3318,6 +3576,49 @@
                   "hints": {
                     "duration": "Duration in s, m, h or d; default 60s"
                   }
+                },
+                "arp-entry": {
+                  "kind": "tag_node",
+                  "anchor": true,
+                  "description": "Permanent IPv4 ARP entry",
+                  "strip_kind": "ipv4",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "ipv4-address": {
+                        "name": "ipv4-address"
+                      }
+                    }
+                  },
+                  "hints": {
+                    "x.x.x.x": "Neighbor IPv4 address without a prefix"
+                  },
+                  "children": {
+                    "mac-address": {
+                      "kind": "leaf_node",
+                      "description": "Permanent destination Ethernet address",
+                      "strip_kind": "mac",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "mac": {
+                            "name": "mac"
+                          }
+                        }
+                      },
+                      "hints": {
+                        "xx:xx:xx:xx:xx:xx": "Nonzero unicast Ethernet MAC address"
+                      }
+                    },
+                    "description": {
+                      "kind": "leaf_node",
+                      "strip_kind": "private",
+                      "description": "Description of this static neighbor",
+                      "hints": {
+                        "text": "Description; quote spaces"
+                      }
+                    }
+                  }
                 }
               }
             },
@@ -3621,6 +3922,49 @@
                   "kind": "leaf_node",
                   "valueless": true,
                   "description": "Suppress automatically generated IPv6 link-local addresses"
+                },
+                "neighbor": {
+                  "kind": "tag_node",
+                  "anchor": true,
+                  "description": "Permanent IPv6 neighbor entry",
+                  "strip_kind": "ipv6",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "ipv6-address": {
+                        "name": "ipv6-address"
+                      }
+                    }
+                  },
+                  "hints": {
+                    "h:h::h": "Neighbor IPv6 address without a prefix"
+                  },
+                  "children": {
+                    "mac-address": {
+                      "kind": "leaf_node",
+                      "description": "Permanent destination Ethernet address",
+                      "strip_kind": "mac",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "mac": {
+                            "name": "mac"
+                          }
+                        }
+                      },
+                      "hints": {
+                        "xx:xx:xx:xx:xx:xx": "Nonzero unicast Ethernet MAC address"
+                      }
+                    },
+                    "description": {
+                      "kind": "leaf_node",
+                      "strip_kind": "private",
+                      "description": "Description of this static neighbor",
+                      "hints": {
+                        "text": "Description; quote spaces"
+                      }
+                    }
+                  }
                 }
               }
             },
@@ -4089,6 +4433,49 @@
                       "hints": {
                         "duration": "Duration in s, m, h or d; default 60s"
                       }
+                    },
+                    "arp-entry": {
+                      "kind": "tag_node",
+                      "anchor": true,
+                      "description": "Permanent IPv4 ARP entry",
+                      "strip_kind": "ipv4",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "ipv4-address": {
+                            "name": "ipv4-address"
+                          }
+                        }
+                      },
+                      "hints": {
+                        "x.x.x.x": "Neighbor IPv4 address without a prefix"
+                      },
+                      "children": {
+                        "mac-address": {
+                          "kind": "leaf_node",
+                          "description": "Permanent destination Ethernet address",
+                          "strip_kind": "mac",
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "mac": {
+                                "name": "mac"
+                              }
+                            }
+                          },
+                          "hints": {
+                            "xx:xx:xx:xx:xx:xx": "Nonzero unicast Ethernet MAC address"
+                          }
+                        },
+                        "description": {
+                          "kind": "leaf_node",
+                          "strip_kind": "private",
+                          "description": "Description of this static neighbor",
+                          "hints": {
+                            "text": "Description; quote spaces"
+                          }
+                        }
+                      }
                     }
                   }
                 },
@@ -4392,6 +4779,49 @@
                       "kind": "leaf_node",
                       "valueless": true,
                       "description": "Suppress automatically generated IPv6 link-local addresses"
+                    },
+                    "neighbor": {
+                      "kind": "tag_node",
+                      "anchor": true,
+                      "description": "Permanent IPv6 neighbor entry",
+                      "strip_kind": "ipv6",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "ipv6-address": {
+                            "name": "ipv6-address"
+                          }
+                        }
+                      },
+                      "hints": {
+                        "h:h::h": "Neighbor IPv6 address without a prefix"
+                      },
+                      "children": {
+                        "mac-address": {
+                          "kind": "leaf_node",
+                          "description": "Permanent destination Ethernet address",
+                          "strip_kind": "mac",
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "mac": {
+                                "name": "mac"
+                              }
+                            }
+                          },
+                          "hints": {
+                            "xx:xx:xx:xx:xx:xx": "Nonzero unicast Ethernet MAC address"
+                          }
+                        },
+                        "description": {
+                          "kind": "leaf_node",
+                          "strip_kind": "private",
+                          "description": "Description of this static neighbor",
+                          "hints": {
+                            "text": "Description; quote spaces"
+                          }
+                        }
+                      }
                     }
                   }
                 },
@@ -5229,6 +5659,49 @@
                   "hints": {
                     "duration": "Duration in s, m, h or d; default 60s"
                   }
+                },
+                "arp-entry": {
+                  "kind": "tag_node",
+                  "anchor": true,
+                  "description": "Permanent IPv4 ARP entry",
+                  "strip_kind": "ipv4",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "ipv4-address": {
+                        "name": "ipv4-address"
+                      }
+                    }
+                  },
+                  "hints": {
+                    "x.x.x.x": "Neighbor IPv4 address without a prefix"
+                  },
+                  "children": {
+                    "mac-address": {
+                      "kind": "leaf_node",
+                      "description": "Permanent destination Ethernet address",
+                      "strip_kind": "mac",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "mac": {
+                            "name": "mac"
+                          }
+                        }
+                      },
+                      "hints": {
+                        "xx:xx:xx:xx:xx:xx": "Nonzero unicast Ethernet MAC address"
+                      }
+                    },
+                    "description": {
+                      "kind": "leaf_node",
+                      "strip_kind": "private",
+                      "description": "Description of this static neighbor",
+                      "hints": {
+                        "text": "Description; quote spaces"
+                      }
+                    }
+                  }
                 }
               }
             },
@@ -5532,6 +6005,49 @@
                   "kind": "leaf_node",
                   "valueless": true,
                   "description": "Suppress automatically generated IPv6 link-local addresses"
+                },
+                "neighbor": {
+                  "kind": "tag_node",
+                  "anchor": true,
+                  "description": "Permanent IPv6 neighbor entry",
+                  "strip_kind": "ipv6",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "ipv6-address": {
+                        "name": "ipv6-address"
+                      }
+                    }
+                  },
+                  "hints": {
+                    "h:h::h": "Neighbor IPv6 address without a prefix"
+                  },
+                  "children": {
+                    "mac-address": {
+                      "kind": "leaf_node",
+                      "description": "Permanent destination Ethernet address",
+                      "strip_kind": "mac",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "mac": {
+                            "name": "mac"
+                          }
+                        }
+                      },
+                      "hints": {
+                        "xx:xx:xx:xx:xx:xx": "Nonzero unicast Ethernet MAC address"
+                      }
+                    },
+                    "description": {
+                      "kind": "leaf_node",
+                      "strip_kind": "private",
+                      "description": "Description of this static neighbor",
+                      "hints": {
+                        "text": "Description; quote spaces"
+                      }
+                    }
+                  }
                 }
               }
             },
@@ -7574,6 +8090,49 @@
                       "hints": {
                         "duration": "Duration in s, m, h or d; default 60s"
                       }
+                    },
+                    "arp-entry": {
+                      "kind": "tag_node",
+                      "anchor": true,
+                      "description": "Permanent IPv4 ARP entry",
+                      "strip_kind": "ipv4",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "ipv4-address": {
+                            "name": "ipv4-address"
+                          }
+                        }
+                      },
+                      "hints": {
+                        "x.x.x.x": "Neighbor IPv4 address without a prefix"
+                      },
+                      "children": {
+                        "mac-address": {
+                          "kind": "leaf_node",
+                          "description": "Permanent destination Ethernet address",
+                          "strip_kind": "mac",
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "mac": {
+                                "name": "mac"
+                              }
+                            }
+                          },
+                          "hints": {
+                            "xx:xx:xx:xx:xx:xx": "Nonzero unicast Ethernet MAC address"
+                          }
+                        },
+                        "description": {
+                          "kind": "leaf_node",
+                          "strip_kind": "private",
+                          "description": "Description of this static neighbor",
+                          "hints": {
+                            "text": "Description; quote spaces"
+                          }
+                        }
+                      }
                     }
                   }
                 },
@@ -7877,6 +8436,49 @@
                       "kind": "leaf_node",
                       "valueless": true,
                       "description": "Suppress automatically generated IPv6 link-local addresses"
+                    },
+                    "neighbor": {
+                      "kind": "tag_node",
+                      "anchor": true,
+                      "description": "Permanent IPv6 neighbor entry",
+                      "strip_kind": "ipv6",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "ipv6-address": {
+                            "name": "ipv6-address"
+                          }
+                        }
+                      },
+                      "hints": {
+                        "h:h::h": "Neighbor IPv6 address without a prefix"
+                      },
+                      "children": {
+                        "mac-address": {
+                          "kind": "leaf_node",
+                          "description": "Permanent destination Ethernet address",
+                          "strip_kind": "mac",
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "mac": {
+                                "name": "mac"
+                              }
+                            }
+                          },
+                          "hints": {
+                            "xx:xx:xx:xx:xx:xx": "Nonzero unicast Ethernet MAC address"
+                          }
+                        },
+                        "description": {
+                          "kind": "leaf_node",
+                          "strip_kind": "private",
+                          "description": "Description of this static neighbor",
+                          "hints": {
+                            "text": "Description; quote spaces"
+                          }
+                        }
+                      }
                     }
                   }
                 },
@@ -8633,6 +9235,49 @@
                   "hints": {
                     "duration": "Duration in s, m, h or d; default 60s"
                   }
+                },
+                "arp-entry": {
+                  "kind": "tag_node",
+                  "anchor": true,
+                  "description": "Permanent IPv4 ARP entry",
+                  "strip_kind": "ipv4",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "ipv4-address": {
+                        "name": "ipv4-address"
+                      }
+                    }
+                  },
+                  "hints": {
+                    "x.x.x.x": "Neighbor IPv4 address without a prefix"
+                  },
+                  "children": {
+                    "mac-address": {
+                      "kind": "leaf_node",
+                      "description": "Permanent destination Ethernet address",
+                      "strip_kind": "mac",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "mac": {
+                            "name": "mac"
+                          }
+                        }
+                      },
+                      "hints": {
+                        "xx:xx:xx:xx:xx:xx": "Nonzero unicast Ethernet MAC address"
+                      }
+                    },
+                    "description": {
+                      "kind": "leaf_node",
+                      "strip_kind": "private",
+                      "description": "Description of this static neighbor",
+                      "hints": {
+                        "text": "Description; quote spaces"
+                      }
+                    }
+                  }
                 }
               }
             },
@@ -8936,6 +9581,49 @@
                   "kind": "leaf_node",
                   "valueless": true,
                   "description": "Suppress automatically generated IPv6 link-local addresses"
+                },
+                "neighbor": {
+                  "kind": "tag_node",
+                  "anchor": true,
+                  "description": "Permanent IPv6 neighbor entry",
+                  "strip_kind": "ipv6",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "ipv6-address": {
+                        "name": "ipv6-address"
+                      }
+                    }
+                  },
+                  "hints": {
+                    "h:h::h": "Neighbor IPv6 address without a prefix"
+                  },
+                  "children": {
+                    "mac-address": {
+                      "kind": "leaf_node",
+                      "description": "Permanent destination Ethernet address",
+                      "strip_kind": "mac",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "mac": {
+                            "name": "mac"
+                          }
+                        }
+                      },
+                      "hints": {
+                        "xx:xx:xx:xx:xx:xx": "Nonzero unicast Ethernet MAC address"
+                      }
+                    },
+                    "description": {
+                      "kind": "leaf_node",
+                      "strip_kind": "private",
+                      "description": "Description of this static neighbor",
+                      "hints": {
+                        "text": "Description; quote spaces"
+                      }
+                    }
+                  }
                 }
               }
             },
@@ -9718,6 +10406,49 @@
                       "hints": {
                         "duration": "Duration in s, m, h or d; default 60s"
                       }
+                    },
+                    "arp-entry": {
+                      "kind": "tag_node",
+                      "anchor": true,
+                      "description": "Permanent IPv4 ARP entry",
+                      "strip_kind": "ipv4",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "ipv4-address": {
+                            "name": "ipv4-address"
+                          }
+                        }
+                      },
+                      "hints": {
+                        "x.x.x.x": "Neighbor IPv4 address without a prefix"
+                      },
+                      "children": {
+                        "mac-address": {
+                          "kind": "leaf_node",
+                          "description": "Permanent destination Ethernet address",
+                          "strip_kind": "mac",
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "mac": {
+                                "name": "mac"
+                              }
+                            }
+                          },
+                          "hints": {
+                            "xx:xx:xx:xx:xx:xx": "Nonzero unicast Ethernet MAC address"
+                          }
+                        },
+                        "description": {
+                          "kind": "leaf_node",
+                          "strip_kind": "private",
+                          "description": "Description of this static neighbor",
+                          "hints": {
+                            "text": "Description; quote spaces"
+                          }
+                        }
+                      }
                     }
                   }
                 },
@@ -10021,6 +10752,49 @@
                       "kind": "leaf_node",
                       "valueless": true,
                       "description": "Suppress automatically generated IPv6 link-local addresses"
+                    },
+                    "neighbor": {
+                      "kind": "tag_node",
+                      "anchor": true,
+                      "description": "Permanent IPv6 neighbor entry",
+                      "strip_kind": "ipv6",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "ipv6-address": {
+                            "name": "ipv6-address"
+                          }
+                        }
+                      },
+                      "hints": {
+                        "h:h::h": "Neighbor IPv6 address without a prefix"
+                      },
+                      "children": {
+                        "mac-address": {
+                          "kind": "leaf_node",
+                          "description": "Permanent destination Ethernet address",
+                          "strip_kind": "mac",
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "mac": {
+                                "name": "mac"
+                              }
+                            }
+                          },
+                          "hints": {
+                            "xx:xx:xx:xx:xx:xx": "Nonzero unicast Ethernet MAC address"
+                          }
+                        },
+                        "description": {
+                          "kind": "leaf_node",
+                          "strip_kind": "private",
+                          "description": "Description of this static neighbor",
+                          "hints": {
+                            "text": "Description; quote spaces"
+                          }
+                        }
+                      }
                     }
                   }
                 },

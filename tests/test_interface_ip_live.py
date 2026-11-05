@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import socket
 import struct
+import subprocess
 import time
 
 import pytest
@@ -34,11 +35,76 @@ def dummy(options=None):
     return {'dum987': {'kind': 'dummy', 'ip-options': options or {}}}
 
 
+def test_static_neighbors_native_lifecycle(native):
+    """Both families survive repair/recreation; deletion preserves unrelated entries."""
+    from copy import deepcopy
+
+    options = {'ip': {'arp-entry': {'192.0.2.2': {'mac-address': '02:00:00:00:00:02'}}},
+               'ipv6': {'neighbor': {'2001:db8::2': {'mac-address': '02:00:00:00:00:02'}}}}
+    definition = dummy(options)
+    native.replace('dummy', definition)
+    kernel = native.kernel
+    assert kernel.neighbors('dum987') == {'192.0.2.2': ('02:00:00:00:00:02', 128),
+                                          '2001:db8::2': ('02:00:00:00:00:02', 128)}
+    kernel.neighbor('replace', 'dum987', '192.0.2.99', '02:00:00:00:00:99')
+
+    changed = deepcopy(definition)
+    changed['dum987']['ip-options']['ip']['arp-entry']['192.0.2.2']['mac-address'] = '02:00:00:00:00:03'
+    native.replace('dummy', changed)
+    assert kernel.neighbors('dum987')['192.0.2.2'] == ('02:00:00:00:00:03', 128)
+    kernel.neighbor('del', 'dum987', '2001:db8::2')
+    native.reconcile()
+    assert kernel.neighbors('dum987')['2001:db8::2'][1] == 128
+
+    native.replace('dummy', dummy())
+    assert kernel.neighbors('dum987') == {'192.0.2.99': ('02:00:00:00:00:99', 128)}
+    native.replace('dummy', definition)
+    kernel.ipr.link('del', index=kernel.device('dum987')['index'])
+    native.reconcile()
+    assert set(kernel.neighbors('dum987')) == {'192.0.2.2', '2001:db8::2'}
+
+
 def pair(options=None):
     return {
         'veth987': {'kind': 'virtual-ethernet', 'attributes': {'peer-name': 'veth988'}, 'ip-options': options or {}},
         'veth988': {'kind': 'virtual-ethernet', 'attributes': {'peer-name': 'veth987'}},
     }
+
+
+def test_static_neighbor_packets(native):
+    """A real peer namespace receives both families through permanent bindings."""
+    options = {'ip': {'arp-entry': {'192.0.2.2': {'mac-address': '02:00:00:00:00:02'}}},
+               'ipv6': {'neighbor': {'2001:db8::2': {'mac-address': '02:00:00:00:00:02'}}}}
+    links = pair(options)
+    links['veth987']['addresses'] = ['192.0.2.1/24', '2001:db8::1/64']
+    links['veth988']['attributes']['mac'] = '02:00:00:00:00:02'
+    native.replace('virtual-ethernet', links)
+
+    def run(*args):
+        return subprocess.run(args, check=True, capture_output=True, text=True).stdout
+
+    peer = subprocess.Popen(['unshare', '-n', 'sleep', '60'])
+    moved = False
+    try:
+        deadline = time.monotonic() + 3
+        while os.stat(f'/proc/{peer.pid}/ns/net').st_ino == os.stat('/proc/self/ns/net').st_ino:
+            assert time.monotonic() < deadline
+            time.sleep(.01)
+        run('ip', 'link', 'set', 'veth988', 'netns', str(peer.pid))
+        moved = True
+        prefix = ('nsenter', '-t', str(peer.pid), '-n')
+        run(*prefix, 'ip', 'link', 'set', 'lo', 'up')
+        run(*prefix, 'ip', 'link', 'set', 'veth988', 'up')
+        run(*prefix, 'ip', 'address', 'add', '192.0.2.2/24', 'dev', 'veth988')
+        run(*prefix, 'ip', '-6', 'address', 'add', '2001:db8::2/64', 'dev', 'veth988', 'nodad')
+        for address in ('192.0.2.2', '2001:db8::2'):
+            run('ping', '-n', '-c', '2', '-W', '2', '-I', 'veth987', address)
+            assert native.kernel.neighbors('veth987')[address] == ('02:00:00:00:00:02', 128)
+    finally:
+        if moved:
+            run('nsenter', '-t', str(peer.pid), '-n', 'ip', 'link', 'set', 'veth988', 'netns', str(os.getpid()))
+        peer.terminate()
+        peer.wait(timeout=5)
 
 
 def value(interface, key, family='ipv6', area='conf'):

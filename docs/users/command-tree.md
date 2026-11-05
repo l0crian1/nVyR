@@ -9205,6 +9205,9 @@ set
 │   │   │   ├── arp-accept <disable|enable|same-subnet>
 │   │   │   ├── arp-announce <any|subnet|best-local>
 │   │   │   ├── arp-cache-timeout <duration>
+│   │   │   ├── arp-entry <x.x.x.x>
+│   │   │   │   ├── description <text>
+│   │   │   │   └── mac-address <xx:xx:xx:xx:xx:xx>
 │   │   │   ├── arp-filter <enable|disable>
 │   │   │   ├── arp-ignore <0|1|2|3|8>
 │   │   │   ├── arp-notify <enable|disable>
@@ -9233,6 +9236,9 @@ set
 │   │   │   ├── interface-identifier <address>
 │   │   │   ├── link-local-address <address>
 │   │   │   ├── maximum-autoconf-addresses <number>
+│   │   │   ├── neighbor <h:h::h>
+│   │   │   │   ├── description <text>
+│   │   │   │   └── mac-address <xx:xx:xx:xx:xx:xx>
 │   │   │   ├── neighbor-reachable-time <duration>
 │   │   │   ├── neighbor-retransmit-interval <duration>
 │   │   │   ├── neighbor-stale-time <duration>
@@ -9315,6 +9321,9 @@ set
 │   │   │   │   ├── arp-accept <disable|enable|same-subnet>
 │   │   │   │   ├── arp-announce <any|subnet|best-local>
 │   │   │   │   ├── arp-cache-timeout <duration>
+│   │   │   │   ├── arp-entry <x.x.x.x>
+│   │   │   │   │   ├── description <text>
+│   │   │   │   │   └── mac-address <xx:xx:xx:xx:xx:xx>
 │   │   │   │   ├── arp-filter <enable|disable>
 │   │   │   │   ├── arp-ignore <0|1|2|3|8>
 │   │   │   │   ├── arp-notify <enable|disable>
@@ -9343,6 +9352,9 @@ set
 │   │   │   │   ├── interface-identifier <address>
 │   │   │   │   ├── link-local-address <address>
 │   │   │   │   ├── maximum-autoconf-addresses <number>
+│   │   │   │   ├── neighbor <h:h::h>
+│   │   │   │   │   ├── description <text>
+│   │   │   │   │   └── mac-address <xx:xx:xx:xx:xx:xx>
 │   │   │   │   ├── neighbor-reachable-time <duration>
 │   │   │   │   ├── neighbor-retransmit-interval <duration>
 │   │   │   │   ├── neighbor-stale-time <duration>
@@ -9390,6 +9402,9 @@ set
 │   │   │   ├── arp-accept <disable|enable|same-subnet>
 │   │   │   ├── arp-announce <any|subnet|best-local>
 │   │   │   ├── arp-cache-timeout <duration>
+│   │   │   ├── arp-entry <x.x.x.x>
+│   │   │   │   ├── description <text>
+│   │   │   │   └── mac-address <xx:xx:xx:xx:xx:xx>
 │   │   │   ├── arp-filter <enable|disable>
 │   │   │   ├── arp-ignore <0|1|2|3|8>
 │   │   │   ├── arp-notify <enable|disable>
@@ -9418,6 +9433,9 @@ set
 │   │   │   ├── interface-identifier <address>
 │   │   │   ├── link-local-address <address>
 │   │   │   ├── maximum-autoconf-addresses <number>
+│   │   │   ├── neighbor <h:h::h>
+│   │   │   │   ├── description <text>
+│   │   │   │   └── mac-address <xx:xx:xx:xx:xx:xx>
 │   │   │   ├── neighbor-reachable-time <duration>
 │   │   │   ├── neighbor-retransmit-interval <duration>
 │   │   │   ├── neighbor-stale-time <duration>
@@ -9535,6 +9553,9 @@ set
 │   │   │   │   ├── arp-accept <disable|enable|same-subnet>
 │   │   │   │   ├── arp-announce <any|subnet|best-local>
 │   │   │   │   ├── arp-cache-timeout <duration>
+│   │   │   │   ├── arp-entry <x.x.x.x>
+│   │   │   │   │   ├── description <text>
+│   │   │   │   │   └── mac-address <xx:xx:xx:xx:xx:xx>
 │   │   │   │   ├── arp-filter <enable|disable>
 │   │   │   │   ├── arp-ignore <0|1|2|3|8>
 │   │   │   │   ├── arp-notify <enable|disable>
@@ -9563,6 +9584,9 @@ set
 │   │   │   │   ├── interface-identifier <address>
 │   │   │   │   ├── link-local-address <address>
 │   │   │   │   ├── maximum-autoconf-addresses <number>
+│   │   │   │   ├── neighbor <h:h::h>
+│   │   │   │   │   ├── description <text>
+│   │   │   │   │   └── mac-address <xx:xx:xx:xx:xx:xx>
 │   │   │   │   ├── neighbor-reachable-time <duration>
 │   │   │   │   ├── neighbor-retransmit-interval <duration>
 │   │   │   │   ├── neighbor-stale-time <duration>
@@ -9609,6 +9633,9 @@ set
 │   │   │   ├── arp-accept <disable|enable|same-subnet>
 │   │   │   ├── arp-announce <any|subnet|best-local>
 │   │   │   ├── arp-cache-timeout <duration>
+│   │   │   ├── arp-entry <x.x.x.x>
+│   │   │   │   ├── description <text>
+│   │   │   │   └── mac-address <xx:xx:xx:xx:xx:xx>
 │   │   │   ├── arp-filter <enable|disable>
 │   │   │   ├── arp-ignore <0|1|2|3|8>
 │   │   │   ├── arp-notify <enable|disable>
@@ -9636,6 +9663,9 @@ set
 │   │   │   ├── hop-limit <number>
 │   │   │   ├── link-local-address <address>
 │   │   │   ├── maximum-autoconf-addresses <number>
+│   │   │   ├── neighbor <h:h::h>
+│   │   │   │   ├── description <text>
+│   │   │   │   └── mac-address <xx:xx:xx:xx:xx:xx>
 │   │   │   ├── neighbor-reachable-time <duration>
 │   │   │   ├── neighbor-retransmit-interval <duration>
 │   │   │   ├── neighbor-stale-time <duration>
@@ -9681,6 +9711,9 @@ set
 │   │   │   ├── arp-accept <disable|enable|same-subnet>
 │   │   │   ├── arp-announce <any|subnet|best-local>
 │   │   │   ├── arp-cache-timeout <duration>
+│   │   │   ├── arp-entry <x.x.x.x>
+│   │   │   │   ├── description <text>
+│   │   │   │   └── mac-address <xx:xx:xx:xx:xx:xx>
 │   │   │   ├── arp-filter <enable|disable>
 │   │   │   ├── arp-ignore <0|1|2|3|8>
 │   │   │   ├── arp-notify <enable|disable>
@@ -9709,6 +9742,9 @@ set
 │   │   │   ├── interface-identifier <address>
 │   │   │   ├── link-local-address <address>
 │   │   │   ├── maximum-autoconf-addresses <number>
+│   │   │   ├── neighbor <h:h::h>
+│   │   │   │   ├── description <text>
+│   │   │   │   └── mac-address <xx:xx:xx:xx:xx:xx>
 │   │   │   ├── neighbor-reachable-time <duration>
 │   │   │   ├── neighbor-retransmit-interval <duration>
 │   │   │   ├── neighbor-stale-time <duration>
@@ -9753,6 +9789,9 @@ set
 │   │   │   │   ├── arp-accept <disable|enable|same-subnet>
 │   │   │   │   ├── arp-announce <any|subnet|best-local>
 │   │   │   │   ├── arp-cache-timeout <duration>
+│   │   │   │   ├── arp-entry <x.x.x.x>
+│   │   │   │   │   ├── description <text>
+│   │   │   │   │   └── mac-address <xx:xx:xx:xx:xx:xx>
 │   │   │   │   ├── arp-filter <enable|disable>
 │   │   │   │   ├── arp-ignore <0|1|2|3|8>
 │   │   │   │   ├── arp-notify <enable|disable>
@@ -9781,6 +9820,9 @@ set
 │   │   │   │   ├── interface-identifier <address>
 │   │   │   │   ├── link-local-address <address>
 │   │   │   │   ├── maximum-autoconf-addresses <number>
+│   │   │   │   ├── neighbor <h:h::h>
+│   │   │   │   │   ├── description <text>
+│   │   │   │   │   └── mac-address <xx:xx:xx:xx:xx:xx>
 │   │   │   │   ├── neighbor-reachable-time <duration>
 │   │   │   │   ├── neighbor-retransmit-interval <duration>
 │   │   │   │   ├── neighbor-stale-time <duration>
@@ -9808,6 +9850,9 @@ set
 │       │   ├── arp-accept <disable|enable|same-subnet>
 │       │   ├── arp-announce <any|subnet|best-local>
 │       │   ├── arp-cache-timeout <duration>
+│       │   ├── arp-entry <x.x.x.x>
+│       │   │   ├── description <text>
+│       │   │   └── mac-address <xx:xx:xx:xx:xx:xx>
 │       │   ├── arp-filter <enable|disable>
 │       │   ├── arp-ignore <0|1|2|3|8>
 │       │   ├── arp-notify <enable|disable>
@@ -9836,6 +9881,9 @@ set
 │       │   ├── interface-identifier <address>
 │       │   ├── link-local-address <address>
 │       │   ├── maximum-autoconf-addresses <number>
+│       │   ├── neighbor <h:h::h>
+│       │   │   ├── description <text>
+│       │   │   └── mac-address <xx:xx:xx:xx:xx:xx>
 │       │   ├── neighbor-reachable-time <duration>
 │       │   ├── neighbor-retransmit-interval <duration>
 │       │   ├── neighbor-stale-time <duration>
@@ -9881,6 +9929,9 @@ set
 │       │   │   ├── arp-accept <disable|enable|same-subnet>
 │       │   │   ├── arp-announce <any|subnet|best-local>
 │       │   │   ├── arp-cache-timeout <duration>
+│       │   │   ├── arp-entry <x.x.x.x>
+│       │   │   │   ├── description <text>
+│       │   │   │   └── mac-address <xx:xx:xx:xx:xx:xx>
 │       │   │   ├── arp-filter <enable|disable>
 │       │   │   ├── arp-ignore <0|1|2|3|8>
 │       │   │   ├── arp-notify <enable|disable>
@@ -9909,6 +9960,9 @@ set
 │       │   │   ├── interface-identifier <address>
 │       │   │   ├── link-local-address <address>
 │       │   │   ├── maximum-autoconf-addresses <number>
+│       │   │   ├── neighbor <h:h::h>
+│       │   │   │   ├── description <text>
+│       │   │   │   └── mac-address <xx:xx:xx:xx:xx:xx>
 │       │   │   ├── neighbor-reachable-time <duration>
 │       │   │   ├── neighbor-retransmit-interval <duration>
 │       │   │   ├── neighbor-stale-time <duration>

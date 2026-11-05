@@ -10,6 +10,12 @@ set interfaces loopback lo description "Boot acceptance router identity" address
 # Keep wildcard prefixes nonadjacent to avoid nftables listing defect NFT-IFNAME-001.
 set interfaces virtual-ethernet veth995 peer-name veth997 vrf BOOTLEFT mtu 1400 address 198.18.192.1/30 address 2001:db8:192::1/64
 set interfaces virtual-ethernet veth997 peer-name veth995 mtu 1400 address 198.18.192.2/30 address 2001:db8:192::2/64
+set interfaces virtual-ethernet veth995 mac 02:00:00:19:95:01
+set interfaces virtual-ethernet veth997 mac 02:00:00:19:97:01
+set interfaces virtual-ethernet veth995 ip arp-entry 198.18.192.2 mac-address 02:00:00:19:97:01 description "Default instance peer"
+set interfaces virtual-ethernet veth995 ipv6 neighbor 2001:db8:192::2 mac-address 02:00:00:19:97:01 description "Default IPv6 peer"
+set interfaces virtual-ethernet veth997 ip arp-entry 198.18.192.1 mac-address 02:00:00:19:95:01 description "VRF peer"
+set interfaces virtual-ethernet veth997 ipv6 neighbor 2001:db8:192::1 mac-address 02:00:00:19:95:01 description "VRF IPv6 peer"
 set interfaces virtual-ethernet veth995 vif 195 vrf BOOTLEFT address 198.18.209.1/30 address 2001:db8:209::1/64
 set interfaces virtual-ethernet veth997 vif 195 vrf BOOTRIGHT address 198.18.209.2/30 address 2001:db8:209::2/64
 

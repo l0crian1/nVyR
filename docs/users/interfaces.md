@@ -7,6 +7,49 @@ and link groups. Use [interface diagnostics](interface-operations.md) to inspect
 
 ## Current commands
 
+### Static ARP and IPv6 neighbors
+
+Configure permanent address-to-MAC bindings on the interface that reaches the
+neighbor. Ethernet, dummy, virtual Ethernet, bonds, bridges and their supported
+VIFs share these commands:
+
+```text
+set interfaces ethernet eth1 ip arp-entry 192.168.1.10 mac-address aa:bb:cc:dd:ee:ff description 'Core switch'
+set interfaces ethernet eth1 ipv6 neighbor 2001:db8::10 mac-address aa:bb:cc:dd:ee:ff description 'Core switch'
+set interfaces ethernet eth1 vif 100 ip arp-entry 192.168.100.10 mac-address aa:bb:cc:dd:ee:ff description 'VLAN peer'
+```
+
+The entry is anchored, so `mac-address` and `description` can be supplied on one
+line. The MAC is required; the description is optional. Addresses are individual
+hosts, without a prefix length. IPv6 link-local addresses are also supported;
+their interface is already specified by the configuration path.
+
+Entries inherit their interface's VRF. The same neighbor address can be configured
+on different interfaces. Equivalent spellings of an IPv6 address on the same
+interface are rejected as duplicates.
+
+```text
+show arp interface eth1
+show ipv6 neighbors interface eth1
+```
+
+These views show `Permanent` and the configured description. Descriptions are
+nVyR metadata; changing one does not rewrite the kernel entry. Entries do not
+age out. Netlinkd restores them after interface recreation and reconciliation;
+save the configuration to retain them after reboot. Disabling the interface
+withdraws its configured neighbors until it is enabled again.
+
+Delete an entry to remove its permanent binding:
+
+```text
+delete interfaces ethernet eth1 ip arp-entry 192.168.1.10
+delete interfaces ethernet eth1 ipv6 neighbor 2001:db8::10
+```
+
+Static neighbors do not install routes or enable proxy ARP/NDP. Configure them
+on the routed bridge or bond, rather than a member port. Loopback has no
+static-neighbor configuration.
+
 ### IPv4 and IPv6 options
 
 Anchored `ip` and `ipv6` nodes are shared by Ethernet, dummy, virtual Ethernet,

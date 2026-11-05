@@ -8,8 +8,10 @@ from tabulate import tabulate
 
 from nvyr import opmode
 from nvyr.errors import OperationalError
-from nvyr.helpers.interfaces import interface_vrfs
+from nvyr.helpers.interfaces import configured, interface_vrfs
 from nvyr.helpers.process import cmd
+from nvyr.op_scripts.services import running_configuration
+from nvyr.tree import lookup
 
 
 def records(family, interface=None, vrf=None):
@@ -27,6 +29,10 @@ def records(family, interface=None, vrf=None):
     if interface is not None:
         arguments.extend(['dev', interface])
     neighbors = json.loads(cmd(arguments))
+    path = ('ip', 'arp-entry') if family == 'ipv4' else ('ipv6', 'neighbor')
+    descriptions = {(name, str(ipaddress.ip_address(address))): lookup(entry, ('description',), '')
+                    for name, values in configured(running_configuration())
+                    for address, entry in lookup(values, path, {}).items()}
     result = []
 
     for neighbor in neighbors:
@@ -44,7 +50,8 @@ def records(family, interface=None, vrf=None):
             states = states.split(',')
         state = ', '.join('No ARP' if value == 'NOARP' else value.capitalize() for value in states)
         result.append({'address': neighbor['dst'], 'mac': neighbor.get('lladdr'),
-                       'interface': device, 'vrf': domain, 'state': state or '—'})
+                       'interface': device, 'vrf': domain, 'state': state or '—',
+                       'description': descriptions.get((device, str(ipaddress.ip_address(neighbor['dst']))), '')})
 
     return sorted(result, key=lambda item: (item['vrf'], item['interface'], int(ipaddress.ip_address(item['address']))))
 
@@ -75,8 +82,10 @@ def show(line: str, raw: bool = False):
     if not values:
         return 'No matching ARP entries.\n' if family == 'ipv4' else 'No matching IPv6 neighbors.\n'
 
-    rows = [[item['address'], item['mac'] or '—', item['interface'], item['vrf'], item['state']] for item in values]
-    return tabulate(rows, headers=['Address', 'MAC address', 'Interface', 'VRF', 'State'], disable_numparse=True) + '\n'
+    rows = [[item['address'], item['mac'] or '—', item['interface'], item['vrf'], item['state'], item['description']]
+            for item in values]
+    return tabulate(rows, headers=['Address', 'MAC address', 'Interface', 'VRF', 'State', 'Description'],
+                    disable_numparse=True) + '\n'
 
 
 if __name__ == '__main__':

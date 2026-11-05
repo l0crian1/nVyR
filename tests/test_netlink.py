@@ -32,6 +32,7 @@ class Kernel:
 
     def __init__(self):
         self.devices, self.ips, self.routing = {}, {}, {}
+        self.neighbor_entries, self.neighbor_writes = {}, []
         self.next_index = 1
         self.ipr = SimpleNamespace(link=self.link)
         self.rule_socket = RuleSocket()
@@ -79,6 +80,7 @@ class Kernel:
             del self.devices[name]
             self.ips.pop(name, None)
             self.routing.pop(name, None)
+            self.neighbor_entries.pop(name, None)
         else:
             for key, value in args.items():
                 if key == 'index':
@@ -108,6 +110,17 @@ class Kernel:
 
     def routes(self, name):
         return deepcopy(self.routing.get(name, []))
+
+    def neighbors(self, name):
+        return dict(self.neighbor_entries.get(name, {}))
+
+    def neighbor(self, operation, name, address, mac=None):
+        self.neighbor_writes.append((operation, name, address, mac))
+        entries = self.neighbor_entries.setdefault(name, {})
+        if operation == 'del':
+            entries.pop(address, None)
+        else:
+            entries[address] = (mac, 128)
 
     def route(self, operation, name, route):
         if operation == 'del':

@@ -3,6 +3,22 @@ children: # interface (shared)
   include_schema:
   - file: interfaces/ip-options.yaml.i
     as: null
+    add:
+      /ip/children/arp-entry:
+        include_schema:
+        - file: interfaces/neighbor.yaml.i
+          as: null
+          replace:
+            /description: Permanent IPv4 ARP entry
+            /validators:
+              ipv4-address: {}
+            /hints:
+              x.x.x.x: Neighbor IPv4 address without a prefix
+            /strip_kind: ipv4
+      /ipv6/children/neighbor:
+        include_schema:
+        - file: interfaces/neighbor.yaml.i
+          as: null
   - file: interfaces/address.yaml.i
   - file: generic/disable.yaml.i
     replace:

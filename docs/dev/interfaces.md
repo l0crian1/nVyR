@@ -10,6 +10,29 @@ to send complete desired link mappings to `nvyr-netlinkd`. The daemon uses
 route notifications, and reconciles affected interfaces from fresh kernel snapshots. There are
 no generated networkd profiles or networkctl calls. The ISO masks networkd.
 
+## Static neighbors
+
+Static neighbors use the same interface lifecycle. Their schema is in
+`interfaces/neighbor.yaml.i`, included under `ip arp-entry` and `ipv6 neighbor`.
+The IP-options payload carries bindings and descriptions. `interface_ip.verify()`
+requires a MAC, rejects equivalent address keys and checks compatibility with
+other IP options; individual address and MAC validators also run at CLI entry.
+
+`interface_ip.neighbors()` prepares canonical bindings without descriptions.
+Netlinkd reconciles these after interface state and IP policy, using
+`Kernel.neighbors()` and `Kernel.neighbor()` for rtnetlink observations and
+`NUD_PERMANENT` writes. It journals owned bindings before additions/replacements.
+Removal, failure compensation and restart recovery use that journal; unrelated
+entries are not flushed. Recreated devices receive the current bindings, disabled
+interfaces withdraw them, and periodic audits repair missing or changed bindings.
+
+Operational output joins running configuration to native observations by
+interface and canonical address. Description-only edits do not change native
+bindings. Tests cover journal recovery, compensation, real-kernel replacement
+and recreation, anchored syntax, readback and descriptions. The shared routed
+functional topology and acceptance baseline include permanent neighbors in both
+families; acceptance verifies default/VRF instances across reboot.
+
 ## Responsibility and extension boundaries
 
 - `configd` remains authoritative for configuration, save, commits and confirmed

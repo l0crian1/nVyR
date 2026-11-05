@@ -782,7 +782,20 @@ def check_lldp(options):
     assert_in('veth995', cmd(['lldp.nvyr.op', 'show', 'interfaces']))
 
 
+def check_static_neighbors(options):
+    for interface, mac, address4, address6, description in (
+        ('veth995', '02:00:00:19:97:01', '198.18.192.2', '2001:db8:192::2', 'Default instance peer'),
+        ('veth997', '02:00:00:19:95:01', '198.18.192.1', '2001:db8:192::1', 'VRF peer'),
+    ):
+        records = {entry['dst']: entry for entry in json.loads(cmd(['ip', '-j', 'neighbor', 'show', 'dev', interface]))}
+        for address in (address4, address6):
+            assert_equal(records[address]['lladdr'], mac)
+            assert_in('PERMANENT', records[address]['state'])
+        assert_in(description, cmd(['neighbors.nvyr.op', 'show', f'show arp interface {interface}']))
+
+
 CHECKS = (
+    check_static_neighbors,
     check_lldp,
     check_kernel_release, check_operational_inventory,
     check_system_hostname, check_static_host_mapping, check_system_timezone, check_system_tasks, check_cpu_policy, check_vrfs,
