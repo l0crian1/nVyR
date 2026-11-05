@@ -4,6 +4,7 @@ Follow the always-applicable rules in `.cursor/rules/`:
 
 - [Development compatibility](.cursor/rules/development-compatibility.mdc)
 - [Root-cause fixes](.cursor/rules/root-cause-fixes.mdc)
+- [Maintained dependencies](.cursor/rules/maintained-dependencies.mdc)
 - [Clarify uncertainty](.cursor/rules/clarify-uncertainty.mdc)
 - [Python imports](.cursor/rules/python-imports.mdc)
 - [Python readability](.cursor/rules/python-readability.mdc)

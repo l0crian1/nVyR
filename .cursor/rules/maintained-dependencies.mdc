@@ -1,0 +1,18 @@
+---
+description: Require maintained packages and supported releases throughout nVyR.
+alwaysApply: true
+---
+
+# Maintained dependencies
+
+- All nVyR dependencies must be maintained. This includes runtime packages,
+  libraries, image-builder tools, and development and test dependencies.
+- Verify maintenance and support for the selected release before adding or
+  upgrading a dependency. Record the supporting source with the dependency
+  decision.
+- Repository availability alone does not establish maintenance. Check who
+  provides ongoing fixes and security support for the version we use.
+- Do not select an abandoned project or an unsupported release. Evaluate a
+  maintained replacement or actively maintained fork.
+- When an existing dependency loses maintenance, flag it and plan its replacement
+  or upgrade as part of keeping nVyR supported.
