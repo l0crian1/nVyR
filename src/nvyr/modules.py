@@ -93,7 +93,7 @@ def registry(schema):
     from nvyr.config_scripts import (
         container, firewall, firewall_failsafe, logging, interface_ethernet, interface_dummy, interface_virtual_ethernet,
         interface_bridge, interface_bond, interface_loopback, protocols_static, protocols_bgp, protocols_ospf, protocols_ospfv3, policy,
-        service_ssh, service_dhcp, system_dns, system_login, system_hostname, system_configuration, system_ntp, system_cpu,
+        service_ssh, service_dhcp, service_dns_forwarding, system_dns, system_login, system_hostname, system_configuration, system_ntp, system_cpu,
         system_static_hosts, system_task, system_timezone, vrf, vrf_conntrack,
     )
 
@@ -123,6 +123,7 @@ def registry(schema):
         'dhcp-server': service_dhcp,
         'dhcpv6-server': service_dhcp,
         'dns': system_dns,
+        'dns-forwarding': service_dns_forwarding,
         'ntp': system_ntp,
         'login': system_login,
         'system': system_hostname,

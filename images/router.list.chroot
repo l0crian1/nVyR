@@ -37,6 +37,8 @@ conntrack
 jq
 openssh-server
 chrony
+unbound
+dns-root-data
 isc-kea-common
 isc-kea-dhcp4
 isc-kea-dhcp6

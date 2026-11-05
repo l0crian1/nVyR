@@ -1,0 +1,8 @@
+[Unit]
+Description=Refresh learned DNS forwarders and local lease records
+After=nvyr-netlinkd.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/nvyr-dns refresh
+TimeoutStartSec=60

@@ -11182,6 +11182,68 @@ set
 │   │   │   └── valid-lifetime <duration>
 │   │   ├── update-hostfile
 │   │   └── valid-lifetime <duration>
+│   ├── dns
+│   │   └── forwarding
+│   │       ├── allow-from <IPv4-prefix|IPv6-prefix>
+│   │       ├── cache
+│   │       │   ├── maximum-negative-ttl <0-2147483647>
+│   │       │   ├── maximum-ttl <0-2147483647>
+│   │       │   ├── message-size <bytes[k|m|g]>
+│   │       │   ├── minimum-ttl <0-2147483647>
+│   │       │   ├── prefetch
+│   │       │   ├── prefetch-dnssec
+│   │       │   ├── rrset-size <bytes[k|m|g]>
+│   │       │   └── serve-expired
+│   │       │       ├── client-timeout <0-2147483647>
+│   │       │       ├── maximum-age <0-2147483647>
+│   │       │       └── reply-ttl <0-2147483647>
+│   │       ├── disable
+│   │       ├── dnssec
+│   │       │   ├── disable
+│   │       │   └── insecure-domain <domain>
+│   │       ├── domain <domain>
+│   │       │   ├── disable-cache
+│   │       │   ├── fallback-recursion
+│   │       │   ├── name-server <IPv4|IPv6>
+│   │       │   │   ├── port <1-65535>
+│   │       │   │   └── tls
+│   │       │   │       └── authentication-name <domain>
+│   │       │   └── name-server-interface <interface>
+│   │       ├── fallback-recursion
+│   │       ├── listen-address <IPv4|IPv6>
+│   │       ├── listen-interface <interface>
+│   │       ├── local-data
+│   │       │   ├── dhcp-leases
+│   │       │   ├── disable-reverse
+│   │       │   ├── static-host-mapping
+│   │       │   └── ttl <0-2147483647>
+│   │       ├── logging
+│   │       │   ├── queries
+│   │       │   ├── replies
+│   │       │   ├── servfail
+│   │       │   ├── validation-failures
+│   │       │   └── verbosity <0-5>
+│   │       ├── name-server <IPv4|IPv6>
+│   │       │   ├── port <1-65535>
+│   │       │   └── tls
+│   │       │       └── authentication-name <domain>
+│   │       ├── name-server-interface <interface>
+│   │       ├── options
+│   │       │   ├── edns-buffer-size <512-65535>
+│   │       │   ├── hide-identity
+│   │       │   ├── hide-version
+│   │       │   ├── incoming-tcp <0-1048576>
+│   │       │   ├── maximum-udp-size <512-65535>
+│   │       │   ├── minimal-responses
+│   │       │   ├── outgoing-range <1-65535>
+│   │       │   ├── outgoing-tcp <0-1048576>
+│   │       │   ├── qname-minimisation
+│   │       │   │   └── strict
+│   │       │   ├── queries-per-thread <1-1048576>
+│   │       │   ├── tcp-idle-timeout <1-2147483647>
+│   │       │   └── threads <1-1024>
+│   │       ├── port <1-65535>
+│   │       └── source-address <IPv4|IPv6>
 │   └── ssh
 │       └── listen-address <x.x.x.x|x:x:x:x:x:x>
 ├── system
@@ -11197,7 +11259,7 @@ set
 │   │   │   ├── count <1-1000>
 │   │   │   └── size <size>
 │   │   └── service <system|kernel|authentication|configd|netlinkd|bgp|static|zebra|ospf|
-│   │                dhcp-server|dhcpv6-server|ntp|ssh>
+│   │                dhcp-server|dhcpv6-server|ntp|dns-forwarding|ssh>
 │   │       └── level <emerg|alert|crit|err|warn|notice|info|debug>
 │   ├── login
 │   │   └── user <username>
@@ -12128,55 +12190,117 @@ set
         │   │   │           ├── hostname <hostname>
         │   │   │           └── mac-address <xx:xx:xx:xx:xx:xx>
         │   │   └── socket-type <raw|udp>
-        │   └── dhcpv6-server
-        │       ├── description <text>
-        │       ├── disable
-        │       ├── ha
-        │       │   ├── mode <active-active|active-passive>
-        │       │   ├── name <name>
-        │       │   ├── peer <name>
-        │       │   │   ├── address <address>
-        │       │   │   ├── port <1-65535>
-        │       │   │   └── role <primary|secondary|standby|backup>
-        │       │   ├── port <1-65535>
-        │       │   ├── role <primary|secondary|standby|backup>
-        │       │   └── source-address <address>
-        │       ├── listen-address <IPv6-address>
-        │       ├── listen-interface <interface>
-        │       ├── option
-        │       │   ├── domain-search <domain>
-        │       │   ├── name-server <IPv6-address>
-        │       │   └── ntp-server <IPv6-address>
-        │       ├── preferred-lifetime <duration>
-        │       ├── shared-network <name>
-        │       │   ├── description <text>
-        │       │   ├── disable
-        │       │   ├── interface <interface>
-        │       │   ├── option
-        │       │   │   ├── domain-search <domain>
-        │       │   │   ├── name-server <IPv6-address>
-        │       │   │   └── ntp-server <IPv6-address>
-        │       │   ├── preferred-lifetime <duration>
-        │       │   ├── subnet <prefix>
-        │       │   │   ├── description <text>
-        │       │   │   ├── disable
-        │       │   │   ├── option
-        │       │   │   │   ├── domain-search <domain>
-        │       │   │   │   ├── name-server <IPv6-address>
-        │       │   │   │   └── ntp-server <IPv6-address>
-        │       │   │   ├── preferred-lifetime <duration>
-        │       │   │   ├── prefix-pool <aggregate/length>
-        │       │   │   │   └── delegated-length <1-128>
-        │       │   │   ├── range <start-end>
-        │       │   │   ├── reservation <name>
-        │       │   │   │   ├── address <IPv6-address>
-        │       │   │   │   ├── description <text>
-        │       │   │   │   ├── duid <hex-bytes>
-        │       │   │   │   ├── hostname <hostname>
-        │       │   │   │   └── prefix <prefix/length>
-        │       │   │   └── valid-lifetime <duration>
-        │       │   └── valid-lifetime <duration>
-        │       └── valid-lifetime <duration>
+        │   ├── dhcpv6-server
+        │   │   ├── description <text>
+        │   │   ├── disable
+        │   │   ├── ha
+        │   │   │   ├── mode <active-active|active-passive>
+        │   │   │   ├── name <name>
+        │   │   │   ├── peer <name>
+        │   │   │   │   ├── address <address>
+        │   │   │   │   ├── port <1-65535>
+        │   │   │   │   └── role <primary|secondary|standby|backup>
+        │   │   │   ├── port <1-65535>
+        │   │   │   ├── role <primary|secondary|standby|backup>
+        │   │   │   └── source-address <address>
+        │   │   ├── listen-address <IPv6-address>
+        │   │   ├── listen-interface <interface>
+        │   │   ├── option
+        │   │   │   ├── domain-search <domain>
+        │   │   │   ├── name-server <IPv6-address>
+        │   │   │   └── ntp-server <IPv6-address>
+        │   │   ├── preferred-lifetime <duration>
+        │   │   ├── shared-network <name>
+        │   │   │   ├── description <text>
+        │   │   │   ├── disable
+        │   │   │   ├── interface <interface>
+        │   │   │   ├── option
+        │   │   │   │   ├── domain-search <domain>
+        │   │   │   │   ├── name-server <IPv6-address>
+        │   │   │   │   └── ntp-server <IPv6-address>
+        │   │   │   ├── preferred-lifetime <duration>
+        │   │   │   ├── subnet <prefix>
+        │   │   │   │   ├── description <text>
+        │   │   │   │   ├── disable
+        │   │   │   │   ├── option
+        │   │   │   │   │   ├── domain-search <domain>
+        │   │   │   │   │   ├── name-server <IPv6-address>
+        │   │   │   │   │   └── ntp-server <IPv6-address>
+        │   │   │   │   ├── preferred-lifetime <duration>
+        │   │   │   │   ├── prefix-pool <aggregate/length>
+        │   │   │   │   │   └── delegated-length <1-128>
+        │   │   │   │   ├── range <start-end>
+        │   │   │   │   ├── reservation <name>
+        │   │   │   │   │   ├── address <IPv6-address>
+        │   │   │   │   │   ├── description <text>
+        │   │   │   │   │   ├── duid <hex-bytes>
+        │   │   │   │   │   ├── hostname <hostname>
+        │   │   │   │   │   └── prefix <prefix/length>
+        │   │   │   │   └── valid-lifetime <duration>
+        │   │   │   └── valid-lifetime <duration>
+        │   │   └── valid-lifetime <duration>
+        │   └── dns
+        │       └── forwarding
+        │           ├── allow-from <IPv4-prefix|IPv6-prefix>
+        │           ├── cache
+        │           │   ├── maximum-negative-ttl <0-2147483647>
+        │           │   ├── maximum-ttl <0-2147483647>
+        │           │   ├── message-size <bytes[k|m|g]>
+        │           │   ├── minimum-ttl <0-2147483647>
+        │           │   ├── prefetch
+        │           │   ├── prefetch-dnssec
+        │           │   ├── rrset-size <bytes[k|m|g]>
+        │           │   └── serve-expired
+        │           │       ├── client-timeout <0-2147483647>
+        │           │       ├── maximum-age <0-2147483647>
+        │           │       └── reply-ttl <0-2147483647>
+        │           ├── disable
+        │           ├── dnssec
+        │           │   ├── disable
+        │           │   └── insecure-domain <domain>
+        │           ├── domain <domain>
+        │           │   ├── disable-cache
+        │           │   ├── fallback-recursion
+        │           │   ├── name-server <IPv4|IPv6>
+        │           │   │   ├── port <1-65535>
+        │           │   │   └── tls
+        │           │   │       └── authentication-name <domain>
+        │           │   └── name-server-interface <interface>
+        │           ├── fallback-recursion
+        │           ├── listen-address <IPv4|IPv6>
+        │           ├── listen-interface <interface>
+        │           ├── local-data
+        │           │   ├── dhcp-leases
+        │           │   ├── disable-reverse
+        │           │   ├── static-host-mapping
+        │           │   └── ttl <0-2147483647>
+        │           ├── logging
+        │           │   ├── queries
+        │           │   ├── replies
+        │           │   ├── servfail
+        │           │   ├── validation-failures
+        │           │   └── verbosity <0-5>
+        │           ├── name-server <IPv4|IPv6>
+        │           │   ├── port <1-65535>
+        │           │   └── tls
+        │           │       └── authentication-name <domain>
+        │           ├── name-server-interface <interface>
+        │           ├── options
+        │           │   ├── edns-buffer-size <512-65535>
+        │           │   ├── hide-identity
+        │           │   ├── hide-version
+        │           │   ├── incoming-tcp <0-1048576>
+        │           │   ├── maximum-udp-size <512-65535>
+        │           │   ├── minimal-responses
+        │           │   ├── outgoing-range <1-65535>
+        │           │   ├── outgoing-tcp <0-1048576>
+        │           │   ├── qname-minimisation
+        │           │   │   └── strict
+        │           │   ├── queries-per-thread <1-1048576>
+        │           │   ├── tcp-idle-timeout <1-2147483647>
+        │           │   └── threads <1-1024>
+        │           ├── port <1-65535>
+        │           └── source-address <IPv4|IPv6>
         └── table <100-251|256-4294967295>
 ```
 
@@ -12426,6 +12550,19 @@ operational mode
 │   │               ├── in
 │   │               └── out
 │   ├── conntrack
+│   ├── dns
+│   │   └── forwarding
+│   │       ├── cache
+│   │       │   ├── all
+│   │       │   ├── domain <domain>
+│   │       │   └── name <domain>
+│   │       ├── statistics
+│   │       └── vrf <vrf>
+│   │           ├── cache
+│   │           │   ├── all
+│   │           │   ├── domain <domain>
+│   │           │   └── name <domain>
+│   │           └── statistics
 │   ├── firewall
 │   │   ├── counter <name>
 │   │   ├── group
@@ -13675,6 +13812,19 @@ operational mode
 │   │           ├── leases
 │   │           ├── listeners
 │   │           └── pools
+│   ├── dns
+│   │   └── forwarding
+│   │       ├── cache
+│   │       │   └── name <domain>
+│   │       ├── local-data
+│   │       ├── statistics
+│   │       ├── upstreams
+│   │       └── vrf <vrf>
+│   │           ├── cache
+│   │           │   └── name <domain>
+│   │           ├── local-data
+│   │           ├── statistics
+│   │           └── upstreams
 │   ├── firewall
 │   │   ├── detail
 │   │   ├── domain-group
@@ -14449,6 +14599,11 @@ operational mode
 │   │   │   ├── follow
 │   │   │   └── vrf <name>
 │   │   │       └── follow
+│   │   ├── dns
+│   │   │   └── forwarding
+│   │   │       ├── follow
+│   │   │       └── vrf <vrf>
+│   │   │           └── follow
 │   │   ├── firewall
 │   │   │   ├── follow
 │   │   │   ├── group <name>

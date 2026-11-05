@@ -80,6 +80,23 @@ def test_observation_does_not_claim_failed_publication_succeeded(backend, monkey
     assert 'read-only filesystem' in result['error']
 
 
+def test_forwarding_sources_do_not_depend_on_resolver_selection(backend):
+    backend.resolver.replace(['1.1.1.1'])
+    lease(backend, 'eth1', ['192.0.2.53'])
+    original = backend.resolver.path.read_text()
+    request = {'version': 1, 'operation': 'dns-sources', 'sources': ['eth1', 'eth2']}
+
+    observed = dispatch(backend, request)
+
+    assert observed['eth1'] == [{'server': '192.0.2.53', 'source': 'DHCP', 'interface': 'eth1'}]
+    assert observed['eth2'] == []
+    assert backend.resolver.path.read_text() == original
+
+    lease(backend, 'eth1', ['192.0.2.53'], expires=time.monotonic() - 1)
+    assert dispatch(backend, request) == {'eth1': [], 'eth2': []}
+    assert backend.resolver.path.read_text() == original
+
+
 def test_aggregation_renewal_expiry_fencing_and_idempotence(backend):
     lease(backend, 'eth1', ['1.1.1.1', '8.8.8.8'])
     lease(backend, 'eth2', ['8.8.8.8', '9.9.9.9'])

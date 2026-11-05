@@ -23,6 +23,8 @@ def test_comprehensive_configuration_and_restore(controller, engine, session, mo
     } if kwargs.get('vrf') == 'BOOTLEFT' else set())
     monkeypatch.setattr(interfaces, 'exists', lambda name: True)
     devices = {
+        'lo': {'vrf': 'default', 'addresses': ['127.0.0.1', '::1'], 'up': True, 'running': True},
+        'dum996': {'vrf': 'BOOTLEFT', 'addresses': ['198.18.196.1', '2001:db8:196::1'], 'up': True, 'running': True},
         'dum995': {'vrf': 'default', 'addresses': ['198.18.195.1', '2001:db8:195::1', 'fe80::195'], 'up': True, 'running': True},
         'veth993': {'vrf': 'BOOTLEFT', 'addresses': ['198.18.193.1', '2001:db8:193::1', 'fe80::193'], 'up': True, 'running': True},
     }

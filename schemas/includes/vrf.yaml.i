@@ -30,6 +30,9 @@ vrf:
           children:
 
             include_schema:
+            - file: service/dns.yaml.i
+              replace:
+                /children/forwarding/script/register/vrf: {tag: name}
             - file: service/dhcp-server.yaml.i
               remove:
               - /children/update-hostfile

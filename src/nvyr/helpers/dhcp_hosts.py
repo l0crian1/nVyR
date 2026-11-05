@@ -77,9 +77,9 @@ def lease_names(lease, suffix):
     return names
 
 
-def records(configuration, *, now=None):
+def records(configuration, *, now=None, require_enabled=True):
     """Rebuild from current leases, never from potentially reordered hook payloads."""
-    if not enabled(configuration):
+    if require_enabled and not enabled(configuration):
         return []
 
     family = 4 if 'Dhcp4' in configuration else 6

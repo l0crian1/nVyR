@@ -711,9 +711,27 @@ def check_ospf_ipv6(options):
          '-c', '1', '-W', '3', '2001:db8:207::1'])
 
 
+def check_dns_forwarding(options):
+    """Read native listeners/configuration and resolve local names after boot."""
+    import dns.message
+    import dns.query
+    from nvyr.helpers import dns_forwarding
+
+    for vrf in ('default', 'BOOTLEFT'):
+        directory = dns_forwarding.ROOT / dns_forwarding.instance_id(vrf)
+        cmd(['unbound-checkconf', str(directory / 'unbound.conf')])
+        status = json.loads(cmd(['dns_forwarding.nvyr.op', 'show', 'status', '--vrf', vrf, '--raw']))
+        assert_equal(status['State'], 'Running')
+        assert_in('boot-host.example.test.', cmd(['dns_forwarding.nvyr.op', 'show', 'local-data', '--vrf', vrf]))
+    for address, kind, expected in [('127.0.0.1', 'A', '192.0.2.42'), ('::1', 'AAAA', '2001:db8::42')]:
+        answer = dns.query.udp(dns.message.make_query('boot-host.example.test', kind), address, port=1053, timeout=3)
+        assert_equal(answer.answer[0][0].address, expected)
+
+
 CHECKS = (
     check_kernel_release, check_operational_inventory,
     check_system_hostname, check_static_host_mapping, check_system_timezone, check_system_tasks, check_cpu_policy, check_vrfs,
+    check_dns_forwarding,
     check_ethernet, check_ethernet_ipv4, check_ethernet_ipv6, check_vlans,
     check_vlan_ipv4_traffic, check_vlan_ipv6_traffic,
     check_loopback_ipv4, check_loopback_ipv6, check_dummy_and_disabled, check_veth_pair,

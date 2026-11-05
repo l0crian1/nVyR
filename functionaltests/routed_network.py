@@ -77,6 +77,8 @@ def configure(config):
         config.delete('delete protocols static')
     if lookup(running, ('system', 'ntp'), None) is not None:
         config.delete('delete system ntp')
+    if lookup(running, ('service', 'dns'), None) is not None:
+        config.delete('delete service dns')
 
     config.set('set interfaces dummy dum998')
     config.set('set interfaces dummy dum999')

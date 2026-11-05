@@ -27,6 +27,7 @@ nvyr-dhcp4-hook = "nvyr.helpers.dhcp:hook_main"
 nvyr-kea = "nvyr.helpers.kea:main"
 nvyr-dhcp-hosts = "nvyr.helpers.dhcp_hosts:main"
 nvyr-ntp = "nvyr.helpers.ntp:main"
+nvyr-dns = "nvyr.helpers.dns_forwarding:main"
 nvyr-logging = "nvyr.helpers.logging_runtime:main"
 nvyr-interface-naming = "nvyr.interface_naming:main"
 

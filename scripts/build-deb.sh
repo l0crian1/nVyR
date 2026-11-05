@@ -161,6 +161,11 @@ printf '%s\n' '/etc/default/grub.d/20-nvyr-console.cfg' > "$stage/DEBIAN/conffil
 
 install -m 0644 "$repository/packaging/nvyr-ssh@.service" "$stage/usr/lib/systemd/system/nvyr-ssh@.service"
 install -m 0644 "$repository/packaging/nvyr-ntp.service" "$stage/usr/lib/systemd/system/nvyr-ntp.service"
+for unit in nvyr-dns@.service nvyr-dns-refresh.service nvyr-dns-refresh.timer; do
+    install -m 0644 "$repository/packaging/$unit" "$stage/usr/lib/systemd/system/$unit"
+done
+printf '%s\n' '#!/usr/bin/python3' 'from nvyr.helpers.dns_forwarding import main' 'main()' > "$stage/usr/bin/nvyr-dns"
+chmod 0755 "$stage/usr/bin/nvyr-dns"
 printf '%s\n' '#!/usr/bin/python3' 'from nvyr.helpers.ntp import main' 'main()' > "$stage/usr/bin/nvyr-ntp"
 chmod 0755 "$stage/usr/bin/nvyr-ntp"
 install -m 0644 "$repository/packaging/nvyr-kea@.service" "$stage/usr/lib/systemd/system/nvyr-kea@.service"

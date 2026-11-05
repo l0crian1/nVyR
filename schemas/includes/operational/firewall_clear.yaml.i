@@ -5,6 +5,7 @@ clear:
 
     include_schema:
     - file: operational/bgp-clear.yaml.i
+    - file: operational/dns-clear.yaml.i
     - file: operational/ospf-clear.yaml.i
       as: null
     - file: operational/bridge-clear.yaml.i

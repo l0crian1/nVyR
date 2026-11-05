@@ -24,6 +24,8 @@ if [ "$1" = configure ]; then
         # Only the configured nVyR instance may own the system clock.
         # Masking also works on upgrades where the stock service is already masked.
         systemctl mask --now chrony.service
+        # DNS forwarding uses independently configured per-VRF instances.
+        systemctl mask --now unbound.service
         systemctl mask chronyd.service systemd-timesyncd.service
         udevadm control --reload || true
 

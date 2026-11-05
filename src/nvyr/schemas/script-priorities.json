@@ -197,6 +197,14 @@
     ]
   },
   {
+    "script": "dns-forwarding",
+    "priority": 57,
+    "paths": [
+      "service dns forwarding",
+      "vrf name <name> service dns forwarding"
+    ]
+  },
+  {
     "script": "container",
     "priority": 70,
     "paths": [

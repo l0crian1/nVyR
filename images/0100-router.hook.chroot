@@ -78,6 +78,7 @@ systemctl disable ssh.service ssh.socket
 systemctl mask ssh.service ssh.socket
 systemctl disable chrony.service
 systemctl mask chrony.service chronyd.service systemd-timesyncd.service
+systemctl mask unbound.service
 systemctl mask isc-kea-dhcp4-server.service isc-kea-dhcp6-server.service
 
 # Never distribute the stock package's build-time host identities either.

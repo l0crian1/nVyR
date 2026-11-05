@@ -40,6 +40,43 @@ log:
           command: ["logs.nvyr.op", "show", "system", "--follow"]
           stream: true
 
+    dns:
+      kind: node
+      description: DNS service logs
+      children:
+
+        forwarding:
+          kind: node
+          description: DNS forwarding logs
+          command: ['logs.nvyr.op', 'show', 'dns-forwarding']
+          stream: true
+          children:
+
+            follow:
+              kind: node
+              description: Follow new DNS log entries
+              command: ['logs.nvyr.op', 'show', 'dns-forwarding', '--follow']
+              stream: true
+
+            vrf:
+              kind: tag_node
+              description: DNS forwarding logs in this VRF
+              validators:
+                regex: {pattern: '[a-zA-Z][a-zA-Z0-9_.-]{0,14}'}
+              hints:
+                vrf: Routing instance name
+              suggestors:
+                config-path: {path: vrf name}
+              command: ['logs.nvyr.op', 'show', 'dns-forwarding', '--vrf', '@6']
+              stream: true
+              children:
+
+                follow:
+                  kind: node
+                  description: Follow new DNS log entries in this VRF
+                  command: ['logs.nvyr.op', 'show', 'dns-forwarding', '--vrf', '@6', '--follow']
+                  stream: true
+
     kernel:
       kind: node
       description: kernel log

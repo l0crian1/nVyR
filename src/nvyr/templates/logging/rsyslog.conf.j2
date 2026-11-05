@@ -26,6 +26,11 @@ if ({{ logging_program_condition(identifiers) }}) then {
 }
 {% endfor %}
 # Only hexadecimal instance identifiers enter dynamic paths, never message text.
+if (re_match($programname, "^nvyr-dns-([0-9a-f]+)\$")) then {
+    set $!nvyrpath = "dns-forwarding/" & re_extract($programname, "^nvyr-dns-([0-9a-f]+)\$", 0, 1, "") & ".log";
+    if $syslogseverity <= {{ logging_severity(configuration, 'dns-forwarding') }} then action(type="omfile" dynaFile="nvyrfile" template="nvyr")
+    stop
+}
 {% for family, service in [(4, 'dhcp-server'), (6, 'dhcpv6-server')] %}
 if ($programname == "kea-dhcp{{ family }}" and re_match($msg, "nvyr-kea-{{ family }}-([0-9a-f]+)")) then {
     set $!nvyrpath = "{{ service }}/" & re_extract($msg, "nvyr-kea-{{ family }}-([0-9a-f]+)", 0, 1, "") & ".log";

@@ -3475,6 +3475,219 @@
           },
           "access": "net-admin"
         },
+        "dns": {
+          "kind": "node",
+          "description": "Clear DNS runtime state",
+          "children": {
+            "forwarding": {
+              "kind": "node",
+              "description": "Clear forwarding caches and statistics",
+              "children": {
+                "cache": {
+                  "kind": "node",
+                  "description": "Flush cached DNS answers",
+                  "children": {
+                    "all": {
+                      "kind": "node",
+                      "description": "Flush all cached answers",
+                      "command": {
+                        "argv": [
+                          "dns_forwarding.nvyr.op",
+                          "clear",
+                          "cache",
+                          "--scope",
+                          "all"
+                        ]
+                      }
+                    },
+                    "name": {
+                      "kind": "leaf_node",
+                      "description": "DNS name",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "dns-name": {
+                            "name": "dns-name"
+                          }
+                        }
+                      },
+                      "hints": {
+                        "domain": "DNS name"
+                      },
+                      "command": {
+                        "argv": [
+                          "dns_forwarding.nvyr.op",
+                          "clear",
+                          "cache",
+                          "--scope",
+                          "name",
+                          "--name",
+                          "@6"
+                        ]
+                      }
+                    },
+                    "domain": {
+                      "kind": "leaf_node",
+                      "description": "DNS suffix and all names below it",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "dns-name": {
+                            "name": "dns-name"
+                          }
+                        }
+                      },
+                      "hints": {
+                        "domain": "DNS suffix and all names below it"
+                      },
+                      "command": {
+                        "argv": [
+                          "dns_forwarding.nvyr.op",
+                          "clear",
+                          "cache",
+                          "--scope",
+                          "domain",
+                          "--name",
+                          "@6"
+                        ]
+                      }
+                    }
+                  }
+                },
+                "statistics": {
+                  "kind": "node",
+                  "description": "Reset DNS counters",
+                  "command": {
+                    "argv": [
+                      "dns_forwarding.nvyr.op",
+                      "clear",
+                      "statistics"
+                    ]
+                  }
+                },
+                "vrf": {
+                  "kind": "tag_node",
+                  "description": "Routing instance",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[a-zA-Z][a-zA-Z0-9_.-]{0,14}"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "vrf": "Routing instance"
+                  },
+                  "suggestors": [
+                    {
+                      "name": "config-path",
+                      "args": {
+                        "path": "vrf name"
+                      }
+                    }
+                  ],
+                  "children": {
+                    "cache": {
+                      "kind": "node",
+                      "description": "Flush cached DNS answers",
+                      "children": {
+                        "all": {
+                          "kind": "node",
+                          "description": "Flush all cached answers",
+                          "command": {
+                            "argv": [
+                              "dns_forwarding.nvyr.op",
+                              "clear",
+                              "cache",
+                              "--vrf",
+                              "@5",
+                              "--scope",
+                              "all"
+                            ]
+                          }
+                        },
+                        "name": {
+                          "kind": "leaf_node",
+                          "description": "DNS name",
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "dns-name": {
+                                "name": "dns-name"
+                              }
+                            }
+                          },
+                          "hints": {
+                            "domain": "DNS name"
+                          },
+                          "command": {
+                            "argv": [
+                              "dns_forwarding.nvyr.op",
+                              "clear",
+                              "cache",
+                              "--vrf",
+                              "@5",
+                              "--scope",
+                              "name",
+                              "--name",
+                              "@8"
+                            ]
+                          }
+                        },
+                        "domain": {
+                          "kind": "leaf_node",
+                          "description": "DNS suffix and all names below it",
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "dns-name": {
+                                "name": "dns-name"
+                              }
+                            }
+                          },
+                          "hints": {
+                            "domain": "DNS suffix and all names below it"
+                          },
+                          "command": {
+                            "argv": [
+                              "dns_forwarding.nvyr.op",
+                              "clear",
+                              "cache",
+                              "--vrf",
+                              "@5",
+                              "--scope",
+                              "domain",
+                              "--name",
+                              "@8"
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    "statistics": {
+                      "kind": "node",
+                      "description": "Reset DNS counters",
+                      "command": {
+                        "argv": [
+                          "dns_forwarding.nvyr.op",
+                          "clear",
+                          "statistics",
+                          "--vrf",
+                          "@5"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "access": "net-admin"
+        },
         "ip": {
           "kind": "node",
           "description": "IPv4",
@@ -10391,6 +10604,92 @@
                 }
               }
             },
+            "dns": {
+              "kind": "node",
+              "description": "DNS service logs",
+              "children": {
+                "forwarding": {
+                  "kind": "node",
+                  "description": "DNS forwarding logs",
+                  "command": {
+                    "argv": [
+                      "logs.nvyr.op",
+                      "show",
+                      "dns-forwarding"
+                    ],
+                    "stream": true
+                  },
+                  "children": {
+                    "follow": {
+                      "kind": "node",
+                      "description": "Follow new DNS log entries",
+                      "command": {
+                        "argv": [
+                          "logs.nvyr.op",
+                          "show",
+                          "dns-forwarding",
+                          "--follow"
+                        ],
+                        "stream": true
+                      }
+                    },
+                    "vrf": {
+                      "kind": "tag_node",
+                      "description": "DNS forwarding logs in this VRF",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "regex": {
+                            "name": "regex",
+                            "args": {
+                              "pattern": "[a-zA-Z][a-zA-Z0-9_.-]{0,14}"
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "vrf": "Routing instance name"
+                      },
+                      "suggestors": [
+                        {
+                          "name": "config-path",
+                          "args": {
+                            "path": "vrf name"
+                          }
+                        }
+                      ],
+                      "command": {
+                        "argv": [
+                          "logs.nvyr.op",
+                          "show",
+                          "dns-forwarding",
+                          "--vrf",
+                          "@6"
+                        ],
+                        "stream": true
+                      },
+                      "children": {
+                        "follow": {
+                          "kind": "node",
+                          "description": "Follow new DNS log entries in this VRF",
+                          "command": {
+                            "argv": [
+                              "logs.nvyr.op",
+                              "show",
+                              "dns-forwarding",
+                              "--vrf",
+                              "@6",
+                              "--follow"
+                            ],
+                            "stream": true
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
             "kernel": {
               "kind": "node",
               "description": "kernel log",
@@ -13880,6 +14179,212 @@
                     ]
                   }
                 }
+              }
+            }
+          }
+        },
+        "dns": {
+          "kind": "node",
+          "description": "DNS services",
+          "children": {
+            "forwarding": {
+              "kind": "node",
+              "description": "DNS forwarding service status",
+              "children": {
+                "statistics": {
+                  "kind": "node",
+                  "description": "Resolver counters and cache usage",
+                  "command": {
+                    "argv": [
+                      "dns_forwarding.nvyr.op",
+                      "show",
+                      "statistics"
+                    ]
+                  }
+                },
+                "upstreams": {
+                  "kind": "node",
+                  "description": "Configured and learned upstream DNS servers",
+                  "command": {
+                    "argv": [
+                      "dns_forwarding.nvyr.op",
+                      "show",
+                      "upstreams"
+                    ]
+                  }
+                },
+                "local-data": {
+                  "kind": "node",
+                  "description": "Published local A, AAAA and PTR records",
+                  "command": {
+                    "argv": [
+                      "dns_forwarding.nvyr.op",
+                      "show",
+                      "local-data"
+                    ]
+                  }
+                },
+                "cache": {
+                  "kind": "node",
+                  "description": "Cached DNS resource records",
+                  "children": {
+                    "name": {
+                      "kind": "leaf_node",
+                      "description": "DNS name whose cached records should be displayed",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "dns-name": {
+                            "name": "dns-name"
+                          }
+                        }
+                      },
+                      "hints": {
+                        "domain": "DNS name whose cached records should be displayed"
+                      },
+                      "command": {
+                        "argv": [
+                          "dns_forwarding.nvyr.op",
+                          "show",
+                          "cache",
+                          "--name",
+                          "@6"
+                        ]
+                      }
+                    }
+                  },
+                  "command": {
+                    "argv": [
+                      "dns_forwarding.nvyr.op",
+                      "show",
+                      "cache"
+                    ]
+                  }
+                },
+                "vrf": {
+                  "kind": "tag_node",
+                  "description": "Routing instance",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[a-zA-Z][a-zA-Z0-9_.-]{0,14}"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "vrf": "Routing instance"
+                  },
+                  "suggestors": [
+                    {
+                      "name": "config-path",
+                      "args": {
+                        "path": "vrf name"
+                      }
+                    }
+                  ],
+                  "command": {
+                    "argv": [
+                      "dns_forwarding.nvyr.op",
+                      "show",
+                      "status",
+                      "--vrf",
+                      "@5"
+                    ]
+                  },
+                  "children": {
+                    "statistics": {
+                      "kind": "node",
+                      "description": "Resolver counters and cache usage",
+                      "command": {
+                        "argv": [
+                          "dns_forwarding.nvyr.op",
+                          "show",
+                          "statistics",
+                          "--vrf",
+                          "@5"
+                        ]
+                      }
+                    },
+                    "upstreams": {
+                      "kind": "node",
+                      "description": "Configured and learned upstream DNS servers",
+                      "command": {
+                        "argv": [
+                          "dns_forwarding.nvyr.op",
+                          "show",
+                          "upstreams",
+                          "--vrf",
+                          "@5"
+                        ]
+                      }
+                    },
+                    "local-data": {
+                      "kind": "node",
+                      "description": "Published local A, AAAA and PTR records",
+                      "command": {
+                        "argv": [
+                          "dns_forwarding.nvyr.op",
+                          "show",
+                          "local-data",
+                          "--vrf",
+                          "@5"
+                        ]
+                      }
+                    },
+                    "cache": {
+                      "kind": "node",
+                      "description": "Cached DNS resource records",
+                      "children": {
+                        "name": {
+                          "kind": "leaf_node",
+                          "description": "DNS name whose cached records should be displayed",
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "dns-name": {
+                                "name": "dns-name"
+                              }
+                            }
+                          },
+                          "hints": {
+                            "domain": "DNS name whose cached records should be displayed"
+                          },
+                          "command": {
+                            "argv": [
+                              "dns_forwarding.nvyr.op",
+                              "show",
+                              "cache",
+                              "--vrf",
+                              "@5",
+                              "--name",
+                              "@8"
+                            ]
+                          }
+                        }
+                      },
+                      "command": {
+                        "argv": [
+                          "dns_forwarding.nvyr.op",
+                          "show",
+                          "cache",
+                          "--vrf",
+                          "@5"
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              "command": {
+                "argv": [
+                  "dns_forwarding.nvyr.op",
+                  "show",
+                  "status"
+                ]
               }
             }
           }

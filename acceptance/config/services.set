@@ -5,6 +5,53 @@ set system static-host-mapping boot-host.example.test address 192.0.2.42
 set system static-host-mapping boot-host.example.test address 2001:db8::42
 set system static-host-mapping boot-host.example.test alias boot-alias.example.test
 
+# DNS forwarding and local publication survive reboot in both routing scopes.
+set service dns forwarding listen-address 127.0.0.1
+set service dns forwarding listen-address ::1
+set service dns forwarding port 1053
+set service dns forwarding name-server 192.0.2.53 port 853 tls authentication-name dns.example.org
+set service dns forwarding domain home.example.org name-server 192.0.2.54
+set service dns forwarding domain home.example.org disable-cache
+set service dns forwarding cache message-size 4m
+set service dns forwarding cache rrset-size 8m
+set service dns forwarding cache minimum-ttl 0
+set service dns forwarding cache maximum-ttl 600
+set service dns forwarding cache maximum-negative-ttl 30
+set service dns forwarding cache prefetch
+set service dns forwarding cache prefetch-dnssec
+set service dns forwarding cache serve-expired maximum-age 300 reply-ttl 10 client-timeout 100
+set service dns forwarding dnssec insecure-domain home.example.org
+set service dns forwarding local-data static-host-mapping
+set service dns forwarding local-data dhcp-leases
+set service dns forwarding local-data ttl 60
+set service dns forwarding options threads 2
+set service dns forwarding options edns-buffer-size 1232
+set service dns forwarding options maximum-udp-size 1232
+set service dns forwarding options outgoing-range 512
+set service dns forwarding options queries-per-thread 512
+set service dns forwarding options incoming-tcp 10
+set service dns forwarding options outgoing-tcp 10
+set service dns forwarding options tcp-idle-timeout 5000
+set service dns forwarding options minimal-responses
+set service dns forwarding options hide-identity
+set service dns forwarding options hide-version
+set service dns forwarding options qname-minimisation strict
+set service dns forwarding logging verbosity 2
+set service dns forwarding logging queries
+set service dns forwarding logging replies
+set service dns forwarding logging servfail
+set service dns forwarding logging validation-failures
+
+set vrf name BOOTLEFT service dns forwarding listen-interface dum996
+set vrf name BOOTLEFT service dns forwarding port 1053
+set vrf name BOOTLEFT service dns forwarding source-address 198.18.196.1
+set vrf name BOOTLEFT service dns forwarding allow-from 198.18.196.0/24
+set vrf name BOOTLEFT service dns forwarding allow-from 2001:db8:196::/64
+set vrf name BOOTLEFT service dns forwarding dnssec disable
+set vrf name BOOTLEFT service dns forwarding local-data static-host-mapping
+set vrf name BOOTLEFT service dns forwarding local-data disable-reverse
+set vrf name BOOTLEFT service dns forwarding fallback-recursion
+
 # Timers are rearmed from saved configuration on each boot.
 set system task BOOT-AUDIT op-command 'show uptime'
 set system task BOOT-AUDIT calendar at 03:15

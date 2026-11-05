@@ -1,0 +1,14 @@
+[Unit]
+Description=nVyR DNS forwarding instance %i
+After=network.target nvyr-netlinkd.service
+# Valid commits and rollback may legitimately restart an instance several times.
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/nvyr-dns %i
+Restart=on-failure
+RestartSec=2
+TimeoutStopSec=15
+# ip vrf exec binds sockets before Unbound drops to its native unbound user.
+# Configuration owns activation; this unit is not enabled independently.

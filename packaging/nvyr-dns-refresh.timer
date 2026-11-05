@@ -1,0 +1,8 @@
+[Unit]
+Description=Refresh DNS forwarding inputs
+
+[Timer]
+OnActiveSec=5s
+OnUnitInactiveSec=5s
+AccuracySec=1s
+# The configuration script activates this only while forwarding is configured.

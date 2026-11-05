@@ -55,7 +55,7 @@ def select(service, *, root=ROOT, name='', vrf='default', family='', hook='', st
     elif service == 'container':
         container = identifier(name)
         paths = lambda: [root / 'containers' / (container + '.log')]
-    elif service in ('dhcp-server', 'dhcpv6-server'):
+    elif service in ('dhcp-server', 'dhcpv6-server', 'dns-forwarding'):
         paths = lambda: [root / service / (identifier(vrf).encode().hex() + '.log')]
     elif service in SERVICES or service in ('system', 'kernel', 'authentication'):
         paths = lambda: [root / (service + '.log')]

@@ -12,6 +12,13 @@ IPv4 addresses and virtual-network traffic checks still run without a cable.
 
 ## Recent configuration additions
 
+DNS forwarding in `services.set` covers default and BOOTLEFT instances,
+dual-stack listeners, conditional/TLS upstreams, cache and worker settings,
+DNSSEC controls, local publication and logging. Native configuration and local
+A/AAAA answers are checked after reboot without requiring Internet connectivity.
+Incompatible transport combinations, disable/removal and real upstream exchanges
+are covered by the smoke and native functional suites.
+
 OSPFv2 and OSPFv3 in `ospf.set` share BGP's default-instance/BOOTLEFT transit.
 Both use timed authentication keychains and advertise destinations independent
 of BGP: `dum996` from BOOTLEFT and `lo` from the default instance. Their checks

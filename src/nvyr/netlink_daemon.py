@@ -139,6 +139,14 @@ def dispatch(manager, request):
         result['error'] = manager.failures.get('DNS')
         return result
 
+    if operation == 'dns-sources':
+        sources = request.get('sources')
+        if not isinstance(sources, list) or any(not isinstance(source, str) for source in sources):
+            raise ValidationError('DNS sources must be interface names')
+        if manager.resolver is None:
+            raise RouterError('Learned DNS inventory is unavailable')
+        return {source: manager.resolver.records([source]) for source in sources}
+
     if operation == 'dhcp6-status':
         result = {}
         for name, owner in manager.claims.items():

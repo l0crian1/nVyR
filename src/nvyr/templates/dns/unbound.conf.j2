@@ -1,0 +1,100 @@
+server:
+    chroot: ""
+    directory: "{{ directory }}"
+    username: "unbound"
+    pidfile: ""
+    use-syslog: yes
+    log-identity: "nvyr-dns-{{ identifier }}"
+    port: {{ configuration.get('port', 53) }}
+    interface-automatic: no
+    ip-freebind: yes
+{% for address in listeners %}
+    interface: {{ address }}
+{% endfor %}
+{% for prefix in configuration.get('allow-from', []) %}
+    access-control: {{ prefix }} allow
+{% endfor %}
+{% for address in configuration.get('source-address', []) %}
+    outgoing-interface: {{ address }}
+{% endfor %}
+{% if 'disable' in configuration.get('dnssec', {}) %}
+    module-config: "iterator"
+{% else %}
+    auto-trust-anchor-file: "{{ state }}/root.key"
+{% endif %}
+{% for domain in configuration.get('dnssec', {}).get('insecure-domain', []) %}
+    domain-insecure: "{{ domain }}"
+{% endfor %}
+    tls-cert-bundle: "/etc/ssl/certs/ca-certificates.crt"
+{% for domain, forwarding in [('.', configuration)] + configuration.get('domain', {}).items() | list %}
+{% if domain != '.' %}
+    local-zone: "{{ domain }}" transparent
+{% endif %}
+{% for address in forwarding.get('name-server', {}) | list + learned[domain] if ip_address(address).is_loopback %}
+    do-not-query-localhost: no
+{% endfor %}
+{% endfor %}
+{% set cache = configuration.get('cache', {}) %}
+{% for key, native in [('message-size', 'msg-cache-size'), ('rrset-size', 'rrset-cache-size'), ('minimum-ttl', 'cache-min-ttl'), ('maximum-ttl', 'cache-max-ttl'), ('maximum-negative-ttl', 'cache-max-negative-ttl')] if key in cache %}
+    {{ native }}: {{ cache[key] }}
+{% endfor %}
+{% for key, native in [('prefetch', 'prefetch'), ('prefetch-dnssec', 'prefetch-key')] if key in cache %}
+    {{ native }}: yes
+{% endfor %}
+{% if 'serve-expired' in cache %}
+    serve-expired: yes
+{% for key, native in [('maximum-age', 'serve-expired-ttl'), ('reply-ttl', 'serve-expired-reply-ttl'), ('client-timeout', 'serve-expired-client-timeout')] if key in cache['serve-expired'] %}
+    {{ native }}: {{ cache['serve-expired'][key] }}
+{% endfor %}
+{% endif %}
+{% set options = configuration.get('options', {}) %}
+{% for key, native in [('threads', 'num-threads'), ('edns-buffer-size', 'edns-buffer-size'), ('maximum-udp-size', 'max-udp-size'), ('outgoing-range', 'outgoing-range'), ('queries-per-thread', 'num-queries-per-thread'), ('incoming-tcp', 'incoming-num-tcp'), ('outgoing-tcp', 'outgoing-num-tcp'), ('tcp-idle-timeout', 'tcp-idle-timeout')] if key in options %}
+    {{ native }}: {{ options[key] }}
+{% endfor %}
+{% for key in ['minimal-responses', 'hide-identity', 'hide-version', 'qname-minimisation'] if key in options %}
+    {{ key }}: yes
+{% endfor %}
+{% if 'strict' in options.get('qname-minimisation', {}) %}
+    qname-minimisation-strict: yes
+{% endif %}
+{% set logging = configuration.get('logging', {}) %}
+{% if 'verbosity' in logging %}
+    verbosity: {{ logging['verbosity'] }}
+{% endif %}
+{% for key, native in [('queries', 'log-queries'), ('replies', 'log-replies'), ('servfail', 'log-servfail')] if key in logging %}
+    {{ native }}: yes
+{% endfor %}
+{% if 'validation-failures' in logging %}
+    val-log-level: 2
+{% endif %}
+{% for record in records %}
+    local-data: "{{ record }}"
+{% endfor %}
+
+remote-control:
+    control-enable: yes
+    control-interface: "{{ directory }}/socket/control.sock"
+    control-use-cert: no
+
+{% for domain, forwarding in [('.', configuration)] + configuration.get('domain', {}).items() | list %}
+forward-zone:
+    name: "{{ domain }}"
+    forward-first: {{ 'yes' if 'fallback-recursion' in forwarding else 'no' }}
+{% if 'disable-cache' in forwarding %}
+    forward-no-cache: yes
+{% endif %}
+{% for address, settings in forwarding.get('name-server', {}).items() %}
+{% if 'tls' in settings %}
+{% if loop.first %}
+    forward-tls-upstream: yes
+{% endif %}
+    forward-addr: {{ address }}@{{ settings.get('port', 853) }}#{{ settings['tls']['authentication-name'] }}
+{% else %}
+    forward-addr: {{ address }}@{{ settings.get('port', 53) }}
+{% endif %}
+{% endfor %}
+{% for address in learned[domain] %}
+    forward-addr: {{ address }}
+{% endfor %}
+
+{% endfor %}
