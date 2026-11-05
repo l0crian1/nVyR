@@ -6,6 +6,8 @@ cannot disturb another case. The explicit VRF creation/deletion case alone owns
 disposable routing domains. No other case recreates a VRF.
 """
 
+from contextlib import closing
+
 import pytest
 
 
@@ -15,16 +17,31 @@ if __name__ == "__main__":
     raise SystemExit(pytest.main([__file__, "-v", "-s", *sys.argv[1:]]))
 
 from smoketests.assertions import (
-    assert_operational_output, assert_link_addresses, assert_probe_command, assert_link, assert_kernel_route, assert_link_absent,
+    assert_operational_output, assert_link_addresses, assert_link, assert_kernel_route, assert_link_absent,
+    assert_equal, assert_in, assert_true,
 )
+from nvyr.protocol import Client
+
+
+def assert_cli_probe(command, address):
+    """Exercise configd's actual service restrictions as well as the probe wrapper."""
+    with closing(Client('/run/nvyr/configd.sock')) as client:
+        result = client.request('execute', text=command)
+
+    output = result['text']
+    assert_equal(result['returncode'], 0, output)
+    assert_in(address, output)
+    if command.startswith('traceroute '):
+        assert_true(any(line.lstrip().startswith('1 ') and address in line
+                        for line in output.splitlines()), msg=output)
 
 
 def test_ipv4_ping_and_traceroute(config):
     """Both installed probe commands reach an IPv4 address inside the selected VRF."""
     # Installed once by configs/interfaces.conf.
 
-    assert_probe_command('ping 198.18.58.1 vrf NVYRIFSMOKE count 1 deadline 3 numeric', '198.18.58.1')
-    assert_probe_command('traceroute 198.18.58.1 vrf NVYRIFSMOKE no-resolve icmp probes 1 max-ttl 1 wait 1', '198.18.58.1')
+    assert_cli_probe('ping 198.18.58.1 vrf NVYRIFSMOKE count 1 deadline 3 numeric', '198.18.58.1')
+    assert_cli_probe('traceroute 198.18.58.1 vrf NVYRIFSMOKE no-resolve icmp probes 1 max-ttl 1 wait 1', '198.18.58.1')
 
 
 def test_ipv6_ping_and_traceroute(config):
@@ -32,8 +49,8 @@ def test_ipv6_ping_and_traceroute(config):
     # Installed once by configs/interfaces.conf.
 
     assert_link_addresses('dum43300', '2001:db8:3c::1/64')
-    assert_probe_command('ping 2001:db8:3c::1 ipv6 vrf NVYRIFSMOKE count 1 deadline 3 numeric', '2001:db8:3c::1')
-    assert_probe_command('traceroute 2001:db8:3c::1 ipv6 vrf NVYRIFSMOKE no-resolve icmp probes 1 max-ttl 1 wait 1', '2001:db8:3c::1')
+    assert_cli_probe('ping 2001:db8:3c::1 ipv6 vrf NVYRIFSMOKE count 1 deadline 3 numeric', '2001:db8:3c::1')
+    assert_cli_probe('traceroute 2001:db8:3c::1 ipv6 vrf NVYRIFSMOKE no-resolve icmp probes 1 max-ttl 1 wait 1', '2001:db8:3c::1')
 
 
 def test_create_multiple_and_delete(config):

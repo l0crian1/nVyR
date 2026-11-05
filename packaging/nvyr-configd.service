@@ -51,6 +51,8 @@ PrivateTmp=true
 ProtectKernelTunables=true
 ProtectKernelModules=true
 ProtectControlGroups=true
+# VRF diagnostics use ip vrf exec, which creates children in this service's cgroup.
+ReadWritePaths=/sys/fs/cgroup/system.slice/nvyr-configd.service
 RestrictNamespaces=true
 RestrictAddressFamilies=AF_UNIX AF_NETLINK AF_INET AF_INET6
 LockPersonality=true
