@@ -12,7 +12,7 @@ lookups, their benefit over long rule lists, and how to inspect matching traffic
   [zones](firewall-zones.md), and [VRF/link-group matching](#linux-link-groups-and-vrf-ingress-interfaces).
 - [Maps](#named-maps), [match-groups](#match-groups), [single-field groups](#single-field-groups),
   [ICMP groups](#icmp-groups), [dynamic groups](#dynamic-address-and-match-groups),
-  and [GeoIP groups](firewall-geoip.md).
+  [list/CSV-backed groups](firewall-lists.md), and [GeoIP groups](firewall-geoip.md).
 - [Source validation](#source-validation), [FIB](#fib-lookups), [ICMP](#icmp-type-and-code-matches), [TCP flags/length](#tcp-flags-and-packet-length),
   [connection tracking](#connection-tracking-matches), [timeout groups](firewall-timeouts.md),
   and [transport ports](#transport-port-matching).

@@ -10,6 +10,7 @@ port-group:
   children: # port-group
 
     include_schema:
+    - file: firewall/from-list.yaml.i
     - file: firewall/group-description.yaml.i
     - file: nftables/counter.yaml.i
     - file: nftables/last-used.yaml.i

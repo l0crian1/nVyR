@@ -24,7 +24,7 @@ def render(current, previous=None, *, recovery=False):
                             recovery=recovery, previous_effective=ReadOnlyTree(schema.defaults(previous)), schema=schema)
     firewall.verify(effective, context)
 
-    return firewall.generate(effective, context)
+    return firewall.generate(effective, context)['rules']
 
 
 @pytest.mark.parametrize('family', ['ipv4', 'ipv6'])

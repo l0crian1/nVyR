@@ -284,6 +284,8 @@ def _prepare_firewall_failsafe(document):
 
     def visit(node):
         children = node.get('children', {})
+        children.pop('from-list', None)
+        children.pop('from-csv', None)
         children.pop('source-domain-group', None)
         children.pop('destination-domain-group', None)
 
@@ -636,6 +638,37 @@ def script_inventory(index):
     return sorted(records.values(), key=lambda record: (record['priority'], record['script']))
 
 
+def _prepare_firewall_csv_columns(document):
+    """Derive positional column selectors from the same fields as manual entries."""
+    def columnize(children):
+        for name, node in children.items():
+            if node['kind'] == 'leaf_node':
+                children[name] = {
+                    'kind': 'leaf_node', 'description': 'CSV column for ' + node['description'].lower(),
+                    'validators': {'integer-range': {'minimum': 1, 'maximum': 65535}},
+                    'hints': {'column': 'Column number starting at 1'},
+                }
+            else:
+                children[name] = {'kind': 'node', 'description': node['description'],
+                                  'children': node['children']}
+                columnize(children[name]['children'])
+
+    groups = document.get('children', {}).get('firewall', {}).get('children', {}).get('group', {}).get('children', {})
+    for kind in ('map', 'match-group'):
+        for node in groups.get(kind, {}).get('children', {}).values():
+            children = node['children']
+            if 'from-csv' not in children:
+                continue
+            columns = copy.deepcopy(children['entry']['children'])
+            columns.pop('description', None)
+            columnize(columns)
+            children['from-csv']['children']['column'] = {
+                'kind': 'node', 'anchor': True,
+                'description': 'Map entry fields to one-based CSV columns',
+                'children': columns,
+            }
+
+
 def build_schemas(source=ROOT / 'schemas', output=ROOT / 'src/nvyr/schemas', *, check=False,
                   op_scripts=ROOT / 'src/nvyr/op_scripts'):
     """Resolve every top-level .yaml; validate all inputs before writing any JSON."""
@@ -655,6 +688,7 @@ def build_schemas(source=ROOT / 'schemas', output=ROOT / 'src/nvyr/schemas', *, 
         _assert_expanded(document)
 
         if path.stem == 'configuration':
+            _prepare_firewall_csv_columns(document)
             _prepare_firewall_failsafe(document)
 
         try:

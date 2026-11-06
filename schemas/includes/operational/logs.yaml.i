@@ -305,10 +305,22 @@ log:
 
     firewall:
       kind: node
-      description: Firewall packet logs
+      description: Firewall packet and import logs
       command: ["logs.nvyr.op", "show", "firewall"]
 
       children:
+
+        lists:
+          kind: node
+          description: Firewall list and CSV import results
+          command: ['logs.nvyr.op', 'show', 'firewall-lists']
+          children:
+
+            follow:
+              kind: node
+              description: Follow new import results until Ctrl-C
+              command: ['logs.nvyr.op', 'show', 'firewall-lists', '--follow']
+              stream: true
 
         follow:
           kind: node

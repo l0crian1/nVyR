@@ -47,7 +47,7 @@ def test_multi_matches_and_masks_available_on_all_firewall_rules(schema, path):
     firewall.verify(effective, None)
     context = firewall_context(effective, ReadOnlyTree({}), 'firewall', ('firewall',),
                             previous_effective=ReadOnlyTree({}), schema=schema)
-    rendered = firewall.generate(effective, context)
+    rendered = firewall.generate(effective, context)['rules']
 
     for expression in ('meta mark { 0, 12-20, 4294967295 }', 'ct mark { 1-8, 42 }',
                        ('ip' if version == 4 else 'ip6') + ' dscp { 0, 63, 8-16 }',
@@ -203,7 +203,7 @@ def test_cli_anchoring_completion_and_failed_mask_commit(controller, engine, ses
     context = firewall_context(effective, ReadOnlyTree({}), 'firewall', ('firewall',),
                             previous_effective=ReadOnlyTree({}), schema=engine.schema)
 
-    assert 'saddr' not in firewall.generate(effective, context)
+    assert 'saddr' not in firewall.generate(effective, context)['rules']
 
 
 @pytest.mark.parametrize('path', PATHS)

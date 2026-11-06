@@ -36,7 +36,7 @@ def apply(config, section='nat'):
     before = ReadOnlyTree(schema.defaults(previous))
     context = firewall_context(effective, before, 'firewall', ('firewall',), previous_effective=before)
     firewall.verify(effective, context)
-    text = firewall.generate(effective, context)
+    text = firewall.generate(effective, context)['rules']
     Manager().apply(text, directory)
     previous = deepcopy(tree)
     return text

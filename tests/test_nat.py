@@ -20,7 +20,7 @@ def generated(config):
 
     context = firewall_context(effective, ReadOnlyTree({}), 'firewall', ('firewall',),
                             previous_effective=ReadOnlyTree({}), schema=schema)
-    return firewall.generate(effective, context)
+    return firewall.generate(effective, context)['rules']
 
 
 @pytest.mark.parametrize('direction', ['source', 'destination'])

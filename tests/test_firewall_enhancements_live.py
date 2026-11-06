@@ -59,7 +59,7 @@ apply(config)
 empty = ReadOnlyTree({})
 context = firewall_context(empty, empty, 'firewall', ('firewall',), recovery=True,
                         previous_effective=empty)
-Manager().apply(firewall.generate(empty, context), directory)
+Manager().apply(firewall.generate(empty, context)['rules'], directory)
 assert Manager().flowtables() == []
 assert any(item.get('chain', {}).get('name') == 'unmanaged_chain' for item in snapshot())
 ''')

@@ -9,6 +9,7 @@ ipv6:
   children: # ipv6 map
 
     include_schema:
+    - file: firewall/from-csv.yaml.i
     - file: firewall/map-options.yaml.i
       as: null
     - file: firewall/map-result_ipv6.yaml.i

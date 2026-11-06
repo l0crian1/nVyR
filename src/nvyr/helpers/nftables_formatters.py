@@ -280,7 +280,7 @@ def nft_group_lookup(family, configuration):
 
 def nft_group_tcp_mask(configuration):
     # Learned keys must retain all flags, independently of configured entries.
-    if 'dynamic' in configuration:
+    if 'dynamic' in configuration or 'from-csv' in configuration:
         return 255
     values = [entry['tcp-flags'] for entry in configuration.get('entry', {}).values() if 'tcp-flags' in entry]
     return tcp_flags_mask(values) or 255
@@ -459,12 +459,14 @@ def nft_singleton_group(kind, family, name, configuration, global_options=None, 
 
     if kind == 'interface-group':
         members = interface_patterns.normalize(members)
-        if any(member.endswith('*') for member in members):
+        if 'from-list' in configuration or any(member.endswith('*') for member in members):
             lines.append('    flags interval;')
+            if 'from-list' in configuration:
+                lines.append('    auto-merge;')
 
     values = sorted({_nft_group_value(field, value) for value in members})
     if (kind in ('address-group', 'domain-group') and 'dynamic' not in configuration or
-            kind == 'port-group' and any('/' in value or '-' in value for value in values)):
+            kind == 'port-group' and ('from-list' in configuration or any('/' in value or '-' in value for value in values))):
         # Native interval merging represents overlapping membership as a union.
         lines.extend(['    flags interval;', '    auto-merge;'])
 
@@ -512,11 +514,16 @@ def _nft_group(family, name, configuration, global_options, *, kind):
     tcp_mask = nft_group_tcp_mask(configuration) if 'tcp-flags' in fields else None
 
     # Prefixes and ranges need interval storage; exact groups avoid that overhead.
-    if any(('/' in nft_field_value(entry, field) or '-' in nft_field_value(entry, field))
-           for entry in entries.values() for field in fields
-           if NFT_KEYMAP[field].interval or field in {'source-address', 'destination-address', 'source-port', 'destination-port',
-                        'packet-mark', 'connection-mark', 'dscp'}):
+    interval_fields = [field for field in fields if NFT_KEYMAP[field].interval or field in {
+        'source-address', 'destination-address', 'source-port', 'destination-port',
+        'packet-mark', 'connection-mark', 'dscp'}]
+    imported_intervals = 'from-csv' in configuration and 'dynamic' not in configuration and interval_fields
+    configured_intervals = any('/' in nft_field_value(entry, field) or '-' in nft_field_value(entry, field)
+                               for entry in entries.values() for field in interval_fields)
+    if imported_intervals or configured_intervals:
         lines.append('    flags interval;')
+        if imported_intervals and kind == 'set' and len(fields) == 1:
+            lines.append('    auto-merge;')
 
     lines.extend(_nft_dynamic_options(configuration))
     lines.extend(_nft_group_tracking(configuration, global_options))

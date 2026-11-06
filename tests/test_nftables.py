@@ -25,7 +25,7 @@ def generated(configuration, previous=None):
     context = firewall_context(effective, ReadOnlyTree(before), 'firewall', ('firewall',),
                                previous_effective=ReadOnlyTree(schema.defaults(before)), schema=schema)
 
-    return firewall.generate(effective, context)
+    return firewall.generate(effective, context)['rules']
 
 
 def test_rendering_compiles_schema_once(monkeypatch):

@@ -229,7 +229,7 @@ context = firewall_context(effective, ReadOnlyTree({}), 'firewall', ('firewall',
                            previous_effective=ReadOnlyTree({}))
 from nvyr.helpers import nftables
 nftables.manager = manager
-manager.apply(firewall.generate(effective, context), directory)
+manager.apply(firewall.generate(effective, context)['rules'], directory)
 
 # Removing zones restores the original hook configuration and removes all maps.
 empty = deepcopy(changed)

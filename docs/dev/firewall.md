@@ -2,6 +2,8 @@
 
 For configuration and command usage, see the [user guide](../users/firewall.md).
 
+For external membership and refresh transactions, see [list/CSV-backed groups](firewall-lists.md).
+
 ## Implementation overview
 
 The firewall owner uses the normal get_config/verify/generate/apply lifecycle. Its

@@ -2,8 +2,8 @@
 
 import ipaddress
 
-from nvyr.errors import ValidationError, Warning
-from nvyr.helpers import domain_groups, geoip, geoip_config, nftables, nftables_lifecycle
+from nvyr.errors import RecoveryError, RouterError, ValidationError, Warning
+from nvyr.helpers import domain_groups, geoip, geoip_config, nftables, nftables_lifecycle, firewall_lists, task_schedule
 from nvyr.helpers import interface_patterns, kernel_settings, nftables_helpers, nftables_timeouts
 from nvyr.helpers import nftables_modify
 from nvyr.helpers import nftables_zones
@@ -958,6 +958,9 @@ def verify(configuration, context):
     """
     from nvyr.config_scripts import nat
 
+    # Imported membership requires complete source/column settings and exclusive ownership.
+    firewall_lists.verify(configuration)
+
     # Kernel settings need bounded values even when invoked outside the CLI parser.
     kernel_settings.firewall_values(configuration)
 
@@ -1115,7 +1118,11 @@ def generate(configuration, context):
     log_groups = {}
     if logging_runtime.groups(configuration):
         log_groups = logging_runtime.nft_groups(configuration, context.state_directory / 'logging')
-    return render_rules(configuration, nftables_lifecycle.plan(context, nftables.manager), log_groups=log_groups)
+    lifecycle = nftables_lifecycle.plan(context, nftables.manager)
+    statements, cache = firewall_lists.manager.prepare(configuration, context, lifecycle['rebuild'])
+    rendered = render_rules(configuration, lifecycle, log_groups=log_groups)
+    return {'rules': rendered + statements, 'list-cache': cache,
+            'list-schedules': firewall_lists.schedules(firewall_lists.groups(configuration))}
 
 
 def render_rules(configuration, lifecycle, *, table='nvyr_filter', replace_table=False, log_groups=None):
@@ -1138,6 +1145,9 @@ def apply(configuration, context):
     Publish the prepared DNS cache only after the native apply succeeds so failed
     commits do not advertise membership that was never installed.
     """
+    cache = configuration['list-cache']
+    schedules = configuration['list-schedules']
+    configuration = configuration['rules']
     from nvyr.helpers import logging_runtime
     logging_runtime.prepare_groups(context.effective, context.state_directory / 'logging')
     dns_cache = None
@@ -1161,4 +1171,10 @@ def apply(configuration, context):
             with domain_groups.manager.lock:
                 domain_groups.manager.publish(dns_cache, context.report)
 
+        try:
+            task_schedule.reconcile('firewalllists', schedules, recover=context.recovery)
+        except (RouterError, OSError) as error:
+            # The native transaction already succeeded; preserve the journal for recovery.
+            raise RecoveryError(f'Firewall loaded but list schedules could not be installed: {error}') from error
+        firewall_lists.manager.publish(cache)
         logging_runtime.cleanup(context.effective, context.state_directory / 'logging')

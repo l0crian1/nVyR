@@ -189,6 +189,12 @@ class Server:
 
                         action = manager.update if operation == 'domain-group-update' else manager.status
                         result = await asyncio.to_thread(action, self.engine, request.get('family'), request.get('name'))
+                    elif operation == 'firewall-list-update':
+                        from nvyr.helpers.firewall_lists import manager
+
+                        result = await asyncio.to_thread(manager.update, self.engine, request.get('kind'),
+                                                         request.get('family', ''), request.get('name'),
+                                                         request.get('attachment'), schedule=request.get('schedule'))
                     elif operation == "status":
                         after = request.get("after")
                         result = self.engine.status(session, after=initial_event_id if after is None else after)

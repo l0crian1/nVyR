@@ -138,6 +138,14 @@ def _references(registrar, configuration, objects, dispatch, consumers):
 
     firewall = configuration.get('firewall', {})
 
+    # CSV verdicts may jump to any named chain in their family. Rebuild those maps
+    # when chains change so cached external references cannot retain deleted chains.
+    for family, definitions in firewall.get('group', {}).get('map', {}).items():
+        for name, definition in definitions.items():
+            if 'from-csv' in definition and definition.get('result-type') == 'verdict':
+                for chain in firewall.get(family, {}).get('name', {}):
+                    consumers['chain', nft.nft_named_chain(family, chain)].add(('map', nft.nft_map_name(family, name)))
+
     # Shared helper assignment references its map, which in turn owns object references.
     if nftables_helpers.configured(firewall):
         mapping = ('map', nftables_helpers.MAP_NAME)

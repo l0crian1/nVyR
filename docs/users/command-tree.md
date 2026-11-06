@@ -4569,6 +4569,14 @@ set
 │   │   │   │   │   ├── gc-interval <duration>
 │   │   │   │   │   ├── size <1-4294967295>
 │   │   │   │   │   └── timeout <duration>
+│   │   │   │   ├── from-list <name>
+│   │   │   │   │   ├── calendar
+│   │   │   │   │   │   ├── at <HH:MM>
+│   │   │   │   │   │   ├── day-of-month <last|1-31>
+│   │   │   │   │   │   └── day-of-week <monday|tuesday|wednesday|thursday|friday|saturday|sunday|
+│   │   │   │   │   │                    weekdays|weekends>
+│   │   │   │   │   ├── interval <duration>
+│   │   │   │   │   └── source <path-or-url>
 │   │   │   │   ├── geoip
 │   │   │   │   │   └── country <country>
 │   │   │   │   ├── include-group <name>
@@ -4581,6 +4589,14 @@ set
 │   │   │       │   ├── gc-interval <duration>
 │   │   │       │   ├── size <1-4294967295>
 │   │   │       │   └── timeout <duration>
+│   │   │       ├── from-list <name>
+│   │   │       │   ├── calendar
+│   │   │       │   │   ├── at <HH:MM>
+│   │   │       │   │   ├── day-of-month <last|1-31>
+│   │   │       │   │   └── day-of-week <monday|tuesday|wednesday|thursday|friday|saturday|sunday|
+│   │   │       │   │                    weekdays|weekends>
+│   │   │       │   ├── interval <duration>
+│   │   │       │   └── source <path-or-url>
 │   │   │       ├── geoip
 │   │   │       │   └── country <country>
 │   │   │       ├── include-group <name>
@@ -4630,6 +4646,14 @@ set
 │   │   ├── interface-group <name>
 │   │   │   ├── counter
 │   │   │   ├── description <text>
+│   │   │   ├── from-list <name>
+│   │   │   │   ├── calendar
+│   │   │   │   │   ├── at <HH:MM>
+│   │   │   │   │   ├── day-of-month <last|1-31>
+│   │   │   │   │   └── day-of-week <monday|tuesday|wednesday|thursday|friday|saturday|sunday|
+│   │   │   │   │                    weekdays|weekends>
+│   │   │   │   ├── interval <duration>
+│   │   │   │   └── source <path-or-url>
 │   │   │   ├── include-group <name>
 │   │   │   ├── interface <name|prefix*>
 │   │   │   ├── last-used
@@ -4691,6 +4715,14 @@ set
 │   │   │   ├── address <xx:xx:xx:xx:xx:xx>
 │   │   │   ├── counter
 │   │   │   ├── description <text>
+│   │   │   ├── from-list <name>
+│   │   │   │   ├── calendar
+│   │   │   │   │   ├── at <HH:MM>
+│   │   │   │   │   ├── day-of-month <last|1-31>
+│   │   │   │   │   └── day-of-week <monday|tuesday|wednesday|thursday|friday|saturday|sunday|
+│   │   │   │   │                    weekdays|weekends>
+│   │   │   │   ├── interval <duration>
+│   │   │   │   └── source <path-or-url>
 │   │   │   ├── include-group <name>
 │   │   │   └── last-used
 │   │   ├── map
@@ -4761,6 +4793,61 @@ set
 │   │   │   │   │   └── vlan
 │   │   │   │   │       ├── id <0-4095>
 │   │   │   │   │       └── priority <0-7>
+│   │   │   │   ├── from-csv <name>
+│   │   │   │   │   ├── calendar
+│   │   │   │   │   │   ├── at <HH:MM>
+│   │   │   │   │   │   ├── day-of-month <last|1-31>
+│   │   │   │   │   │   └── day-of-week <monday|tuesday|wednesday|thursday|friday|saturday|sunday|
+│   │   │   │   │   │                    weekdays|weekends>
+│   │   │   │   │   ├── column
+│   │   │   │   │   │   ├── connection
+│   │   │   │   │   │   │   ├── direction <column>
+│   │   │   │   │   │   │   ├── expiration <column>
+│   │   │   │   │   │   │   ├── helper <column>
+│   │   │   │   │   │   │   ├── id <column>
+│   │   │   │   │   │   │   ├── mark <column>
+│   │   │   │   │   │   │   ├── original
+│   │   │   │   │   │   │   │   ├── average-packet-size <column>
+│   │   │   │   │   │   │   │   ├── bytes <column>
+│   │   │   │   │   │   │   │   ├── destination-port <column>
+│   │   │   │   │   │   │   │   ├── packets <column>
+│   │   │   │   │   │   │   │   ├── source-port <column>
+│   │   │   │   │   │   │   │   └── zone <column>
+│   │   │   │   │   │   │   ├── protocol <column>
+│   │   │   │   │   │   │   ├── reply
+│   │   │   │   │   │   │   │   ├── average-packet-size <column>
+│   │   │   │   │   │   │   │   ├── bytes <column>
+│   │   │   │   │   │   │   │   ├── destination-port <column>
+│   │   │   │   │   │   │   │   ├── packets <column>
+│   │   │   │   │   │   │   │   ├── source-port <column>
+│   │   │   │   │   │   │   │   └── zone <column>
+│   │   │   │   │   │   │   ├── state <column>
+│   │   │   │   │   │   │   ├── status <column>
+│   │   │   │   │   │   │   ├── total
+│   │   │   │   │   │   │   │   ├── average-packet-size <column>
+│   │   │   │   │   │   │   │   ├── bytes <column>
+│   │   │   │   │   │   │   │   └── packets <column>
+│   │   │   │   │   │   │   └── zone <column>
+│   │   │   │   │   │   ├── destination-mac <column>
+│   │   │   │   │   │   ├── destination-port <column>
+│   │   │   │   │   │   ├── inbound-interface <column>
+│   │   │   │   │   │   ├── inbound-link-group <column>
+│   │   │   │   │   │   ├── outbound-interface <column>
+│   │   │   │   │   │   ├── outbound-link-group <column>
+│   │   │   │   │   │   ├── packet-mark <column>
+│   │   │   │   │   │   ├── packet-type <column>
+│   │   │   │   │   │   ├── protocol <column>
+│   │   │   │   │   │   ├── result
+│   │   │   │   │   │   │   ├── action <column>
+│   │   │   │   │   │   │   └── jump-target <column>
+│   │   │   │   │   │   ├── source-mac <column>
+│   │   │   │   │   │   ├── source-port <column>
+│   │   │   │   │   │   ├── tcp-flags <column>
+│   │   │   │   │   │   └── vlan
+│   │   │   │   │   │       ├── id <column>
+│   │   │   │   │   │       └── priority <column>
+│   │   │   │   │   ├── interval <duration>
+│   │   │   │   │   └── source <path-or-url>
 │   │   │   │   ├── last-used
 │   │   │   │   ├── match
 │   │   │   │   │   ├── connection
@@ -4892,6 +4979,73 @@ set
 │   │   │   │   │   └── vlan
 │   │   │   │   │       ├── id <0-4095>
 │   │   │   │   │       └── priority <0-7>
+│   │   │   │   ├── from-csv <name>
+│   │   │   │   │   ├── calendar
+│   │   │   │   │   │   ├── at <HH:MM>
+│   │   │   │   │   │   ├── day-of-month <last|1-31>
+│   │   │   │   │   │   └── day-of-week <monday|tuesday|wednesday|thursday|friday|saturday|sunday|
+│   │   │   │   │   │                    weekdays|weekends>
+│   │   │   │   │   ├── column
+│   │   │   │   │   │   ├── connection
+│   │   │   │   │   │   │   ├── direction <column>
+│   │   │   │   │   │   │   ├── expiration <column>
+│   │   │   │   │   │   │   ├── family <column>
+│   │   │   │   │   │   │   ├── helper <column>
+│   │   │   │   │   │   │   ├── id <column>
+│   │   │   │   │   │   │   ├── mark <column>
+│   │   │   │   │   │   │   ├── original
+│   │   │   │   │   │   │   │   ├── average-packet-size <column>
+│   │   │   │   │   │   │   │   ├── bytes <column>
+│   │   │   │   │   │   │   │   ├── destination-address <column>
+│   │   │   │   │   │   │   │   ├── destination-port <column>
+│   │   │   │   │   │   │   │   ├── packets <column>
+│   │   │   │   │   │   │   │   ├── source-address <column>
+│   │   │   │   │   │   │   │   ├── source-port <column>
+│   │   │   │   │   │   │   │   └── zone <column>
+│   │   │   │   │   │   │   ├── protocol <column>
+│   │   │   │   │   │   │   ├── reply
+│   │   │   │   │   │   │   │   ├── average-packet-size <column>
+│   │   │   │   │   │   │   │   ├── bytes <column>
+│   │   │   │   │   │   │   │   ├── destination-address <column>
+│   │   │   │   │   │   │   │   ├── destination-port <column>
+│   │   │   │   │   │   │   │   ├── packets <column>
+│   │   │   │   │   │   │   │   ├── source-address <column>
+│   │   │   │   │   │   │   │   ├── source-port <column>
+│   │   │   │   │   │   │   │   └── zone <column>
+│   │   │   │   │   │   │   ├── state <column>
+│   │   │   │   │   │   │   ├── status <column>
+│   │   │   │   │   │   │   ├── total
+│   │   │   │   │   │   │   │   ├── average-packet-size <column>
+│   │   │   │   │   │   │   │   ├── bytes <column>
+│   │   │   │   │   │   │   │   └── packets <column>
+│   │   │   │   │   │   │   └── zone <column>
+│   │   │   │   │   │   ├── destination-address <column>
+│   │   │   │   │   │   ├── destination-mac <column>
+│   │   │   │   │   │   ├── destination-port <column>
+│   │   │   │   │   │   ├── dscp <column>
+│   │   │   │   │   │   ├── icmp-code <column>
+│   │   │   │   │   │   ├── icmp-type <column>
+│   │   │   │   │   │   ├── inbound-interface <column>
+│   │   │   │   │   │   ├── inbound-link-group <column>
+│   │   │   │   │   │   ├── outbound-interface <column>
+│   │   │   │   │   │   ├── outbound-link-group <column>
+│   │   │   │   │   │   ├── packet-mark <column>
+│   │   │   │   │   │   ├── packet-type <column>
+│   │   │   │   │   │   ├── protocol <column>
+│   │   │   │   │   │   ├── result
+│   │   │   │   │   │   │   ├── action <column>
+│   │   │   │   │   │   │   ├── address <column>
+│   │   │   │   │   │   │   ├── jump-target <column>
+│   │   │   │   │   │   │   └── port <column>
+│   │   │   │   │   │   ├── source-address <column>
+│   │   │   │   │   │   ├── source-mac <column>
+│   │   │   │   │   │   ├── source-port <column>
+│   │   │   │   │   │   ├── tcp-flags <column>
+│   │   │   │   │   │   └── vlan
+│   │   │   │   │   │       ├── id <column>
+│   │   │   │   │   │       └── priority <column>
+│   │   │   │   │   ├── interval <duration>
+│   │   │   │   │   └── source <path-or-url>
 │   │   │   │   ├── last-used
 │   │   │   │   ├── match
 │   │   │   │   │   ├── connection
@@ -5034,6 +5188,73 @@ set
 │   │   │       │   └── vlan
 │   │   │       │       ├── id <0-4095>
 │   │   │       │       └── priority <0-7>
+│   │   │       ├── from-csv <name>
+│   │   │       │   ├── calendar
+│   │   │       │   │   ├── at <HH:MM>
+│   │   │       │   │   ├── day-of-month <last|1-31>
+│   │   │       │   │   └── day-of-week <monday|tuesday|wednesday|thursday|friday|saturday|sunday|
+│   │   │       │   │                    weekdays|weekends>
+│   │   │       │   ├── column
+│   │   │       │   │   ├── connection
+│   │   │       │   │   │   ├── direction <column>
+│   │   │       │   │   │   ├── expiration <column>
+│   │   │       │   │   │   ├── family <column>
+│   │   │       │   │   │   ├── helper <column>
+│   │   │       │   │   │   ├── id <column>
+│   │   │       │   │   │   ├── mark <column>
+│   │   │       │   │   │   ├── original
+│   │   │       │   │   │   │   ├── average-packet-size <column>
+│   │   │       │   │   │   │   ├── bytes <column>
+│   │   │       │   │   │   │   ├── destination-address <column>
+│   │   │       │   │   │   │   ├── destination-port <column>
+│   │   │       │   │   │   │   ├── packets <column>
+│   │   │       │   │   │   │   ├── source-address <column>
+│   │   │       │   │   │   │   ├── source-port <column>
+│   │   │       │   │   │   │   └── zone <column>
+│   │   │       │   │   │   ├── protocol <column>
+│   │   │       │   │   │   ├── reply
+│   │   │       │   │   │   │   ├── average-packet-size <column>
+│   │   │       │   │   │   │   ├── bytes <column>
+│   │   │       │   │   │   │   ├── destination-address <column>
+│   │   │       │   │   │   │   ├── destination-port <column>
+│   │   │       │   │   │   │   ├── packets <column>
+│   │   │       │   │   │   │   ├── source-address <column>
+│   │   │       │   │   │   │   ├── source-port <column>
+│   │   │       │   │   │   │   └── zone <column>
+│   │   │       │   │   │   ├── state <column>
+│   │   │       │   │   │   ├── status <column>
+│   │   │       │   │   │   ├── total
+│   │   │       │   │   │   │   ├── average-packet-size <column>
+│   │   │       │   │   │   │   ├── bytes <column>
+│   │   │       │   │   │   │   └── packets <column>
+│   │   │       │   │   │   └── zone <column>
+│   │   │       │   │   ├── destination-address <column>
+│   │   │       │   │   ├── destination-mac <column>
+│   │   │       │   │   ├── destination-port <column>
+│   │   │       │   │   ├── dscp <column>
+│   │   │       │   │   ├── icmp-code <column>
+│   │   │       │   │   ├── icmp-type <column>
+│   │   │       │   │   ├── inbound-interface <column>
+│   │   │       │   │   ├── inbound-link-group <column>
+│   │   │       │   │   ├── outbound-interface <column>
+│   │   │       │   │   ├── outbound-link-group <column>
+│   │   │       │   │   ├── packet-mark <column>
+│   │   │       │   │   ├── packet-type <column>
+│   │   │       │   │   ├── protocol <column>
+│   │   │       │   │   ├── result
+│   │   │       │   │   │   ├── action <column>
+│   │   │       │   │   │   ├── address <column>
+│   │   │       │   │   │   ├── jump-target <column>
+│   │   │       │   │   │   └── port <column>
+│   │   │       │   │   ├── source-address <column>
+│   │   │       │   │   ├── source-mac <column>
+│   │   │       │   │   ├── source-port <column>
+│   │   │       │   │   ├── tcp-flags <column>
+│   │   │       │   │   └── vlan
+│   │   │       │   │       ├── id <column>
+│   │   │       │   │       └── priority <column>
+│   │   │       │   ├── interval <duration>
+│   │   │       │   └── source <path-or-url>
 │   │   │       ├── last-used
 │   │   │       ├── match
 │   │   │       │   ├── connection
@@ -5156,6 +5377,58 @@ set
 │   │   │   │   │   └── vlan
 │   │   │   │   │       ├── id <0-4095>
 │   │   │   │   │       └── priority <0-7>
+│   │   │   │   ├── from-csv <name>
+│   │   │   │   │   ├── calendar
+│   │   │   │   │   │   ├── at <HH:MM>
+│   │   │   │   │   │   ├── day-of-month <last|1-31>
+│   │   │   │   │   │   └── day-of-week <monday|tuesday|wednesday|thursday|friday|saturday|sunday|
+│   │   │   │   │   │                    weekdays|weekends>
+│   │   │   │   │   ├── column
+│   │   │   │   │   │   ├── connection
+│   │   │   │   │   │   │   ├── direction <column>
+│   │   │   │   │   │   │   ├── expiration <column>
+│   │   │   │   │   │   │   ├── helper <column>
+│   │   │   │   │   │   │   ├── id <column>
+│   │   │   │   │   │   │   ├── mark <column>
+│   │   │   │   │   │   │   ├── original
+│   │   │   │   │   │   │   │   ├── average-packet-size <column>
+│   │   │   │   │   │   │   │   ├── bytes <column>
+│   │   │   │   │   │   │   │   ├── destination-port <column>
+│   │   │   │   │   │   │   │   ├── packets <column>
+│   │   │   │   │   │   │   │   ├── source-port <column>
+│   │   │   │   │   │   │   │   └── zone <column>
+│   │   │   │   │   │   │   ├── protocol <column>
+│   │   │   │   │   │   │   ├── reply
+│   │   │   │   │   │   │   │   ├── average-packet-size <column>
+│   │   │   │   │   │   │   │   ├── bytes <column>
+│   │   │   │   │   │   │   │   ├── destination-port <column>
+│   │   │   │   │   │   │   │   ├── packets <column>
+│   │   │   │   │   │   │   │   ├── source-port <column>
+│   │   │   │   │   │   │   │   └── zone <column>
+│   │   │   │   │   │   │   ├── state <column>
+│   │   │   │   │   │   │   ├── status <column>
+│   │   │   │   │   │   │   ├── total
+│   │   │   │   │   │   │   │   ├── average-packet-size <column>
+│   │   │   │   │   │   │   │   ├── bytes <column>
+│   │   │   │   │   │   │   │   └── packets <column>
+│   │   │   │   │   │   │   └── zone <column>
+│   │   │   │   │   │   ├── destination-mac <column>
+│   │   │   │   │   │   ├── destination-port <column>
+│   │   │   │   │   │   ├── inbound-interface <column>
+│   │   │   │   │   │   ├── inbound-link-group <column>
+│   │   │   │   │   │   ├── outbound-interface <column>
+│   │   │   │   │   │   ├── outbound-link-group <column>
+│   │   │   │   │   │   ├── packet-mark <column>
+│   │   │   │   │   │   ├── packet-type <column>
+│   │   │   │   │   │   ├── protocol <column>
+│   │   │   │   │   │   ├── source-mac <column>
+│   │   │   │   │   │   ├── source-port <column>
+│   │   │   │   │   │   ├── tcp-flags <column>
+│   │   │   │   │   │   └── vlan
+│   │   │   │   │   │       ├── id <column>
+│   │   │   │   │   │       └── priority <column>
+│   │   │   │   │   ├── interval <duration>
+│   │   │   │   │   └── source <path-or-url>
 │   │   │   │   ├── last-used
 │   │   │   │   └── match
 │   │   │   │       ├── connection
@@ -5280,6 +5553,68 @@ set
 │   │   │   │   │   └── vlan
 │   │   │   │   │       ├── id <0-4095>
 │   │   │   │   │       └── priority <0-7>
+│   │   │   │   ├── from-csv <name>
+│   │   │   │   │   ├── calendar
+│   │   │   │   │   │   ├── at <HH:MM>
+│   │   │   │   │   │   ├── day-of-month <last|1-31>
+│   │   │   │   │   │   └── day-of-week <monday|tuesday|wednesday|thursday|friday|saturday|sunday|
+│   │   │   │   │   │                    weekdays|weekends>
+│   │   │   │   │   ├── column
+│   │   │   │   │   │   ├── connection
+│   │   │   │   │   │   │   ├── direction <column>
+│   │   │   │   │   │   │   ├── expiration <column>
+│   │   │   │   │   │   │   ├── family <column>
+│   │   │   │   │   │   │   ├── helper <column>
+│   │   │   │   │   │   │   ├── id <column>
+│   │   │   │   │   │   │   ├── mark <column>
+│   │   │   │   │   │   │   ├── original
+│   │   │   │   │   │   │   │   ├── average-packet-size <column>
+│   │   │   │   │   │   │   │   ├── bytes <column>
+│   │   │   │   │   │   │   │   ├── destination-address <column>
+│   │   │   │   │   │   │   │   ├── destination-port <column>
+│   │   │   │   │   │   │   │   ├── packets <column>
+│   │   │   │   │   │   │   │   ├── source-address <column>
+│   │   │   │   │   │   │   │   ├── source-port <column>
+│   │   │   │   │   │   │   │   └── zone <column>
+│   │   │   │   │   │   │   ├── protocol <column>
+│   │   │   │   │   │   │   ├── reply
+│   │   │   │   │   │   │   │   ├── average-packet-size <column>
+│   │   │   │   │   │   │   │   ├── bytes <column>
+│   │   │   │   │   │   │   │   ├── destination-address <column>
+│   │   │   │   │   │   │   │   ├── destination-port <column>
+│   │   │   │   │   │   │   │   ├── packets <column>
+│   │   │   │   │   │   │   │   ├── source-address <column>
+│   │   │   │   │   │   │   │   ├── source-port <column>
+│   │   │   │   │   │   │   │   └── zone <column>
+│   │   │   │   │   │   │   ├── state <column>
+│   │   │   │   │   │   │   ├── status <column>
+│   │   │   │   │   │   │   ├── total
+│   │   │   │   │   │   │   │   ├── average-packet-size <column>
+│   │   │   │   │   │   │   │   ├── bytes <column>
+│   │   │   │   │   │   │   │   └── packets <column>
+│   │   │   │   │   │   │   └── zone <column>
+│   │   │   │   │   │   ├── destination-address <column>
+│   │   │   │   │   │   ├── destination-mac <column>
+│   │   │   │   │   │   ├── destination-port <column>
+│   │   │   │   │   │   ├── dscp <column>
+│   │   │   │   │   │   ├── icmp-code <column>
+│   │   │   │   │   │   ├── icmp-type <column>
+│   │   │   │   │   │   ├── inbound-interface <column>
+│   │   │   │   │   │   ├── inbound-link-group <column>
+│   │   │   │   │   │   ├── outbound-interface <column>
+│   │   │   │   │   │   ├── outbound-link-group <column>
+│   │   │   │   │   │   ├── packet-mark <column>
+│   │   │   │   │   │   ├── packet-type <column>
+│   │   │   │   │   │   ├── protocol <column>
+│   │   │   │   │   │   ├── source-address <column>
+│   │   │   │   │   │   ├── source-mac <column>
+│   │   │   │   │   │   ├── source-port <column>
+│   │   │   │   │   │   ├── tcp-flags <column>
+│   │   │   │   │   │   └── vlan
+│   │   │   │   │   │       ├── id <column>
+│   │   │   │   │   │       └── priority <column>
+│   │   │   │   │   ├── interval <duration>
+│   │   │   │   │   └── source <path-or-url>
 │   │   │   │   ├── last-used
 │   │   │   │   └── match
 │   │   │   │       ├── connection
@@ -5415,6 +5750,68 @@ set
 │   │   │       │   └── vlan
 │   │   │       │       ├── id <0-4095>
 │   │   │       │       └── priority <0-7>
+│   │   │       ├── from-csv <name>
+│   │   │       │   ├── calendar
+│   │   │       │   │   ├── at <HH:MM>
+│   │   │       │   │   ├── day-of-month <last|1-31>
+│   │   │       │   │   └── day-of-week <monday|tuesday|wednesday|thursday|friday|saturday|sunday|
+│   │   │       │   │                    weekdays|weekends>
+│   │   │       │   ├── column
+│   │   │       │   │   ├── connection
+│   │   │       │   │   │   ├── direction <column>
+│   │   │       │   │   │   ├── expiration <column>
+│   │   │       │   │   │   ├── family <column>
+│   │   │       │   │   │   ├── helper <column>
+│   │   │       │   │   │   ├── id <column>
+│   │   │       │   │   │   ├── mark <column>
+│   │   │       │   │   │   ├── original
+│   │   │       │   │   │   │   ├── average-packet-size <column>
+│   │   │       │   │   │   │   ├── bytes <column>
+│   │   │       │   │   │   │   ├── destination-address <column>
+│   │   │       │   │   │   │   ├── destination-port <column>
+│   │   │       │   │   │   │   ├── packets <column>
+│   │   │       │   │   │   │   ├── source-address <column>
+│   │   │       │   │   │   │   ├── source-port <column>
+│   │   │       │   │   │   │   └── zone <column>
+│   │   │       │   │   │   ├── protocol <column>
+│   │   │       │   │   │   ├── reply
+│   │   │       │   │   │   │   ├── average-packet-size <column>
+│   │   │       │   │   │   │   ├── bytes <column>
+│   │   │       │   │   │   │   ├── destination-address <column>
+│   │   │       │   │   │   │   ├── destination-port <column>
+│   │   │       │   │   │   │   ├── packets <column>
+│   │   │       │   │   │   │   ├── source-address <column>
+│   │   │       │   │   │   │   ├── source-port <column>
+│   │   │       │   │   │   │   └── zone <column>
+│   │   │       │   │   │   ├── state <column>
+│   │   │       │   │   │   ├── status <column>
+│   │   │       │   │   │   ├── total
+│   │   │       │   │   │   │   ├── average-packet-size <column>
+│   │   │       │   │   │   │   ├── bytes <column>
+│   │   │       │   │   │   │   └── packets <column>
+│   │   │       │   │   │   └── zone <column>
+│   │   │       │   │   ├── destination-address <column>
+│   │   │       │   │   ├── destination-mac <column>
+│   │   │       │   │   ├── destination-port <column>
+│   │   │       │   │   ├── dscp <column>
+│   │   │       │   │   ├── icmp-code <column>
+│   │   │       │   │   ├── icmp-type <column>
+│   │   │       │   │   ├── inbound-interface <column>
+│   │   │       │   │   ├── inbound-link-group <column>
+│   │   │       │   │   ├── outbound-interface <column>
+│   │   │       │   │   ├── outbound-link-group <column>
+│   │   │       │   │   ├── packet-mark <column>
+│   │   │       │   │   ├── packet-type <column>
+│   │   │       │   │   ├── protocol <column>
+│   │   │       │   │   ├── source-address <column>
+│   │   │       │   │   ├── source-mac <column>
+│   │   │       │   │   ├── source-port <column>
+│   │   │       │   │   ├── tcp-flags <column>
+│   │   │       │   │   └── vlan
+│   │   │       │   │       ├── id <column>
+│   │   │       │   │       └── priority <column>
+│   │   │       │   ├── interval <duration>
+│   │   │       │   └── source <path-or-url>
 │   │   │       ├── last-used
 │   │   │       └── match
 │   │   │           ├── connection
@@ -5473,6 +5870,14 @@ set
 │   │   ├── port-group <name>
 │   │   │   ├── counter
 │   │   │   ├── description <text>
+│   │   │   ├── from-list <name>
+│   │   │   │   ├── calendar
+│   │   │   │   │   ├── at <HH:MM>
+│   │   │   │   │   ├── day-of-month <last|1-31>
+│   │   │   │   │   └── day-of-week <monday|tuesday|wednesday|thursday|friday|saturday|sunday|
+│   │   │   │   │                    weekdays|weekends>
+│   │   │   │   ├── interval <duration>
+│   │   │   │   └── source <path-or-url>
 │   │   │   ├── include-group <name>
 │   │   │   ├── last-used
 │   │   │   └── port <1-65535|start-end>
@@ -11518,8 +11923,8 @@ set
 │   │   ├── rotation
 │   │   │   ├── count <1-1000>
 │   │   │   └── size <size>
-│   │   └── service <system|kernel|authentication|configd|netlinkd|bgp|static|zebra|ospf|rip|ripng|
-│   │                dhcp-server|dhcpv6-server|ntp|lldp|dns-forwarding|ssh>
+│   │   └── service <system|kernel|authentication|firewall-lists|configd|netlinkd|bgp|static|zebra|
+│   │                ospf|rip|ripng|dhcp-server|dhcpv6-server|ntp|lldp|dns-forwarding|ssh>
 │   │       └── level <emerg|alert|crit|err|warn|notice|info|debug>
 │   ├── login
 │   │   └── user <username>
@@ -15158,46 +15563,48 @@ operational mode
 │   │   │   │           ├── follow
 │   │   │   │           └── rule <1-999999>
 │   │   │   │               └── follow
-│   │   │   └── ipv6
-│   │   │       ├── follow
-│   │   │       ├── forward
-│   │   │       │   ├── filter
-│   │   │       │   │   ├── follow
-│   │   │       │   │   └── rule <1-999999>
-│   │   │       │   │       └── follow
-│   │   │       │   └── follow
-│   │   │       ├── ingress
-│   │   │       │   ├── filter
-│   │   │       │   │   ├── follow
-│   │   │       │   │   └── rule <1-999999>
-│   │   │       │   │       └── follow
-│   │   │       │   └── follow
-│   │   │       ├── input
-│   │   │       │   ├── filter
-│   │   │       │   │   ├── follow
-│   │   │       │   │   └── rule <1-999999>
-│   │   │       │   │       └── follow
-│   │   │       │   └── follow
-│   │   │       ├── name <name>
-│   │   │       │   ├── follow
-│   │   │       │   └── rule <1-999999>
-│   │   │       │       └── follow
-│   │   │       ├── output
-│   │   │       │   ├── filter
-│   │   │       │   │   ├── follow
-│   │   │       │   │   └── rule <1-999999>
-│   │   │       │   │       └── follow
-│   │   │       │   ├── follow
-│   │   │       │   └── raw
-│   │   │       │       ├── follow
-│   │   │       │       └── rule <1-999999>
-│   │   │       │           └── follow
-│   │   │       └── prerouting
-│   │   │           ├── follow
-│   │   │           └── raw
-│   │   │               ├── follow
-│   │   │               └── rule <1-999999>
-│   │   │                   └── follow
+│   │   │   ├── ipv6
+│   │   │   │   ├── follow
+│   │   │   │   ├── forward
+│   │   │   │   │   ├── filter
+│   │   │   │   │   │   ├── follow
+│   │   │   │   │   │   └── rule <1-999999>
+│   │   │   │   │   │       └── follow
+│   │   │   │   │   └── follow
+│   │   │   │   ├── ingress
+│   │   │   │   │   ├── filter
+│   │   │   │   │   │   ├── follow
+│   │   │   │   │   │   └── rule <1-999999>
+│   │   │   │   │   │       └── follow
+│   │   │   │   │   └── follow
+│   │   │   │   ├── input
+│   │   │   │   │   ├── filter
+│   │   │   │   │   │   ├── follow
+│   │   │   │   │   │   └── rule <1-999999>
+│   │   │   │   │   │       └── follow
+│   │   │   │   │   └── follow
+│   │   │   │   ├── name <name>
+│   │   │   │   │   ├── follow
+│   │   │   │   │   └── rule <1-999999>
+│   │   │   │   │       └── follow
+│   │   │   │   ├── output
+│   │   │   │   │   ├── filter
+│   │   │   │   │   │   ├── follow
+│   │   │   │   │   │   └── rule <1-999999>
+│   │   │   │   │   │       └── follow
+│   │   │   │   │   ├── follow
+│   │   │   │   │   └── raw
+│   │   │   │   │       ├── follow
+│   │   │   │   │       └── rule <1-999999>
+│   │   │   │   │           └── follow
+│   │   │   │   └── prerouting
+│   │   │   │       ├── follow
+│   │   │   │       └── raw
+│   │   │   │           ├── follow
+│   │   │   │           └── rule <1-999999>
+│   │   │   │               └── follow
+│   │   │   └── lists
+│   │   │       └── follow
 │   │   ├── follow
 │   │   ├── kernel
 │   │   │   └── follow
@@ -15397,7 +15804,33 @@ operational mode
         ├── domain-group
         │   ├── ipv4 [<name>]
         │   └── ipv6 [<name>]
-        └── geoip
+        ├── geoip
+        └── group
+            ├── address-group
+            │   ├── ipv4 <name>
+            │   │   └── from-list <name>
+            │   └── ipv6 <name>
+            │       └── from-list <name>
+            ├── interface-group <name>
+            │   └── from-list <name>
+            ├── mac-group <name>
+            │   └── from-list <name>
+            ├── map
+            │   ├── inet <name>
+            │   │   └── from-csv <name>
+            │   ├── ipv4 <name>
+            │   │   └── from-csv <name>
+            │   └── ipv6 <name>
+            │       └── from-csv <name>
+            ├── match-group
+            │   ├── inet <name>
+            │   │   └── from-csv <name>
+            │   ├── ipv4 <name>
+            │   │   └── from-csv <name>
+            │   └── ipv6 <name>
+            │       └── from-csv <name>
+            └── port-group <name>
+                └── from-list <name>
 ```
 
 ## Pipe modifiers

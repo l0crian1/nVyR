@@ -72,7 +72,7 @@ def test_nft_rendering_does_not_repeat_schema_validation(monkeypatch):
 
     context = firewall_context(effective, ReadOnlyTree({}), 'firewall', ('firewall',),
                             previous_effective=ReadOnlyTree({}), schema=schema)
-    filtering = firewall.generate(effective, context)
+    filtering = firewall.generate(effective, context)['rules']
 
     assert 'ip saddr { 192.0.2.1/24 }' in filtering and 'th dport { 80 }' in filtering
     assert 'log prefix "[ipv4-INP-filter-10-A]" counter accept comment "10|"' in filtering

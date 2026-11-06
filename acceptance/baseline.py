@@ -154,6 +154,9 @@ def prepare_assets(options):
     (directory / 'data').mkdir(mode=0o700)
     (directory / 'data' / 'sentinel').write_text(options['assets'] + '\n')
     (directory / 'environment').write_text('BOOT_FILE=from-file\nBOOT_OVERRIDE=file\n')
+    (directory / 'firewall-list4').write_text('198.18.205.10\ninvalid.example\n198.18.205.11\n')
+    (directory / 'firewall-list6').write_text('2001:db8:205::10\n2001:db8:205::11\n')
+    (directory / 'firewall-map.csv').write_text('198.18.205.10,198.18.205.11,59410,udp,drop\n')
 
 
 def configure(config, options):

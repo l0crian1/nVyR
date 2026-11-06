@@ -24,7 +24,7 @@ set system logging rotation size 25m count 10
 Severity values are `emerg`, `alert`, `crit`, `err`, `warn`, `notice`, `info`, and
 `debug`. The services are `system`, `kernel`, `authentication`, `configd`,
 `netlinkd`, `bgp`, `static`, `zebra`, `ospf`, `dhcp-server`, `dhcpv6-server`,
-`ntp`, and `ssh`. A logging threshold does not enable FRR protocol-specific
+`ntp`, `ssh`, and `firewall-lists`. A logging threshold does not enable FRR protocol-specific
 debugging commands.
 
 Rotation defaults to **25 MiB and 10 archives per file**. Size accepts `k`, `m`,

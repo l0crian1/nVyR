@@ -601,6 +601,13 @@ def check_firewall_flowtable(options):
     assert_equal(second.count('flowtable inet nvyr_filter flowtable_BOOTFAST'), 1)
 
 
+def check_firewall_imports(options):
+    """Literal lists and positional CSV membership restore with provenance after boot."""
+    assert_firewall_object('set', 'ipv4_address_group_BOOTFEED', '198.18.205.10', 'LOCAL')
+    assert_firewall_object('set', 'ipv6_address_group_BOOTFEED', '2001:db8:205::', 'LOCAL')
+    assert_firewall_object('map', 'ipv4_map_BOOTFEED', '59410', 'drop', 'LOCAL')
+
+
 def check_firewall_ipv4_inclusions(options):
     """Nested address inclusions recover IPv4 members from every level."""
     # Auto-merge joins these adjacent /24s into one inclusive interval.
@@ -832,7 +839,7 @@ CHECKS = (
     check_firewall_ipv6_dynamic, check_firewall_zones_ipv4, check_firewall_zones_ipv6,
     check_firewall_raw, check_firewall_named_state, check_firewall_flowtable, check_nat,
     check_firewall_ipv4_learning_packets, check_firewall_ipv6_learning_packets,
-    check_firewall_ipv4_inclusions, check_firewall_ipv6_inclusions, check_firewall_singleton_inclusions,
+    check_firewall_imports, check_firewall_ipv4_inclusions, check_firewall_ipv6_inclusions, check_firewall_singleton_inclusions,
     check_firewall_ipv4_prefixes, check_firewall_ipv6_prefixes,
     check_logging_service, check_logging_container, check_logging_ipv4_packets, check_logging_ipv6_packets,
     check_complete_rule_inventory,

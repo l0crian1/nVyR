@@ -43,7 +43,7 @@ def render(tree, previous=None, recovery=False, state_directory=None):
     if state_directory is not None:
         context = replace(context, state_directory=state_directory)
     firewall.verify(effective, context)
-    return firewall.generate(effective, context)
+    return firewall.generate(effective, context)['rules']
 
 
 @pytest.mark.parametrize('path', RULE_PATHS)

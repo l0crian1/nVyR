@@ -9,6 +9,9 @@ update:
       description: Firewall data sources
       children:
 
+        include_schema:
+        - file: operational/firewall_list_updates.yaml.i
+
         geoip:
           kind: node
           description: Check DB-IP for changed country data and refresh address-groups

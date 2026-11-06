@@ -54,8 +54,8 @@ def _verify_namespace(definitions, path):
         definition = definitions[name]
         includes = definition.get('include-group', ())
         # Runtime-owned membership cannot also be assembled from static groups.
-        if includes and ('dynamic' in definition or 'geoip' in definition):
-            raise ValidationError(f'{path} {name}: include-group cannot be combined with dynamic or geoip')
+        if includes and ('dynamic' in definition or 'geoip' in definition or 'from-list' in definition):
+            raise ValidationError(f'{path} {name}: include-group cannot be combined with dynamic, geoip or imported')
 
         longest = (name,)
         for child in includes:
@@ -65,8 +65,8 @@ def _verify_namespace(definitions, path):
 
             source = definitions[child]
             # Copying learned or externally refreshed members would become stale.
-            if 'dynamic' in source or 'geoip' in source:
-                raise ValidationError(f'{path} {name}: cannot include dynamic or geoip group {child!r}')
+            if 'dynamic' in source or 'geoip' in source or 'from-list' in source:
+                raise ValidationError(f'{path} {name}: cannot include dynamic, geoip or imported group {child!r}')
 
             candidate = (name, *visit(child, chain))
             # Retain the deepest branch so cached reuse cannot hide excessive depth.

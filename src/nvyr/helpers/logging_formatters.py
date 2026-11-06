@@ -7,6 +7,7 @@ from nvyr.tree import lookup
 
 LEVELS = ('emerg', 'alert', 'crit', 'err', 'warn', 'notice', 'info', 'debug')
 SERVICES = {
+    'firewall-lists': ('nvyr-firewall-lists',),
     'configd': ('nvyr-configd',),
     'netlinkd': ('nvyr-netlinkd', 'nvyr-interface-naming', 'nvyr-dhcp4'),
     'bgp': ('bgpd',),

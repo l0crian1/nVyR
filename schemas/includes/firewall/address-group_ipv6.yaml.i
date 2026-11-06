@@ -10,6 +10,7 @@ ipv6:
   children: # ipv6
 
     include_schema:
+    - file: firewall/from-list.yaml.i
     - file: firewall/geoip.yaml.i
     - file: firewall/dynamic.yaml.i
     - file: firewall/group-description.yaml.i

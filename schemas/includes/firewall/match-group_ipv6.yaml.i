@@ -9,6 +9,7 @@ ipv6:
   children: # ipv6 match-group
 
     include_schema:
+    - file: firewall/from-csv.yaml.i
     - file: firewall/dynamic.yaml.i
     - file: firewall/group-options.yaml.i
       as: null

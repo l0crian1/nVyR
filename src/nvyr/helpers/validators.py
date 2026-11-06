@@ -545,6 +545,21 @@ def prepare_integer_range(minimum, maximum, allow_range=False):
     return validate
 
 
+@register('firewall-list-source', 'an absolute local filename or an http, https, ftp, ftps, or tftp URL')
+def firewall_list_source(value):
+    from urllib.parse import urlsplit
+
+    if value.startswith('/'):
+        return not any(ord(char) < 32 or ord(char) == 127 for char in value)
+    try:
+        parsed = urlsplit(value)
+        return (parsed.scheme in {'http', 'https', 'ftp', 'ftps', 'tftp'}
+                and bool(parsed.hostname) and parsed.port != 0 and not parsed.fragment
+                and not any(char.isspace() for char in value))
+    except ValueError:
+        return False
+
+
 @register('integer-range', 'an integer within the configured bounds, or an allowed ascending range', prepare=prepare_integer_range)
 def integer_range(value, minimum, maximum, allow_range=False):
     return prepare_integer_range(minimum, maximum, allow_range)(value)

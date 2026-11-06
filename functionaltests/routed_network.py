@@ -33,7 +33,8 @@ CONFIGURATIONS = (CONFIGURATION, CONFIGURATION.with_name('network-features.conf'
                   CONFIGURATION.with_name('network-static.conf'),
                   CONFIGURATION.with_name('network-services.conf'),
                   CONFIGURATION.with_name('network-ospf.conf'),
-                  CONFIGURATION.with_name('network-rip.conf'))
+                  CONFIGURATION.with_name('network-rip.conf'),
+                  CONFIGURATION.with_name('network-lists.conf'))
 LINKS = ('veth42061', 'veth42062', 'veth42063', 'veth42064', 'veth42065', 'veth42066',
          'veth42067', 'veth42068',
          'dum42061', 'dum42069', 'dum977', 'dum980', 'dum997', 'dum998', 'dum999', 'veth994', 'veth995',
@@ -198,9 +199,13 @@ def restore(config, original, moved, namespaces):
 def scenario(config, stop):
     """Own setup once and restore the entry configuration after the whole package."""
     original = preflight(config)
+    feeds = Path('/run/nvyr-routed-feeds')
+    feeds.mkdir(mode=0o700)
     namespaces = []
     moved = []
     try:
+        (feeds / 'ipv4.csv').write_text('198.18.61.2,198.18.62.2,59411,udp,drop\n')
+        (feeds / 'ipv6.csv').write_text('2001:db8:61::2,2001:db8:62::2,59412,udp\n')
         configure(config)
         for namespace in NAMESPACES:
             cmd(['ip', 'netns', 'add', namespace])
@@ -238,6 +243,9 @@ def scenario(config, stop):
         try:
             with defer_interrupt():
                 restore(config, original, moved, namespaces)
+                (feeds / 'ipv4.csv').unlink(missing_ok=True)
+                (feeds / 'ipv6.csv').unlink(missing_ok=True)
+                feeds.rmdir()
         except BaseException:
             stop('Routed-network cleanup failed; stopping tests and restoring the session snapshot.')
             raise

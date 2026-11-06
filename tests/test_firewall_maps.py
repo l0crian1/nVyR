@@ -29,7 +29,7 @@ def rendered(tree, previous=None, recovery=False):
     context = firewall_context(effective, before, 'firewall', ('firewall',), recovery,
                             previous_effective=before, schema=schema)
     firewall.verify(effective, context)
-    return firewall.generate(effective, context)
+    return firewall.generate(effective, context)['rules']
 
 
 def test_cli_maps_anchor_suggest_reference_and_commit_once(controller, engine, session):

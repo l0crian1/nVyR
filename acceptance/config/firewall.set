@@ -278,3 +278,12 @@ set firewall ipv6 forward filter rule 41989 inbound-interface dum995 protocol tc
 set firewall ipv6 forward filter rule 41989 modify packet-mark 32 connection-mark 64 dscp ef ttl 63 tcp-mss 1360
 set firewall ipv4 output raw rule 41989 outbound-interface dum995 protocol tcp tcp-flags syn modify tcp-mss clamp-to-pmtu action continue
 set firewall ipv6 output raw rule 41989 outbound-interface dum995 protocol tcp tcp-flags syn modify tcp-mss clamp-to-pmtu action continue
+# Imported membership survives reboot from persistent cache and source files.
+set firewall group address-group ipv4 BOOTFEED from-list LOCAL source /config/containers/@assets/firewall-list4
+set firewall group address-group ipv4 BOOTFEED from-list LOCAL interval 1d
+set firewall group address-group ipv6 BOOTFEED from-list LOCAL source /config/containers/@assets/firewall-list6
+set firewall group map ipv4 BOOTFEED match source-address destination-address destination-port protocol
+set firewall group map ipv4 BOOTFEED result-type verdict
+set firewall group map ipv4 BOOTFEED default-result action continue
+set firewall group map ipv4 BOOTFEED from-csv LOCAL source /config/containers/@assets/firewall-map.csv
+set firewall group map ipv4 BOOTFEED from-csv LOCAL column source-address 1 destination-address 2 destination-port 3 protocol 4 result action 5

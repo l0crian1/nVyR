@@ -34,7 +34,7 @@ def apply(config):
     firewall.verify(effective, None)
     context = firewall_context(effective, ReadOnlyTree(previous), 'firewall', ('firewall',),
                             previous_effective=ReadOnlyTree(schema.defaults(previous)))
-    text = firewall.generate(effective, context)
+    text = firewall.generate(effective, context)['rules']
     Manager().apply(text, directory)
     previous = {'firewall': deepcopy(config)}
     return text
@@ -165,7 +165,7 @@ run('nft', 'add', 'rule', 'inet', 'nvyr_filter', 'ipv4_name_ORPHAN', 'drop')
 assert set(Manager().named_chains()) == {('ipv4', 'ORPHAN'), ('ipv6', 'ORPHAN')}
 empty = ReadOnlyTree({})
 context = firewall_context(empty, empty, 'firewall', ('firewall',), recovery=True, previous_effective=empty)
-Manager().apply(firewall.generate(empty, context), directory)
+Manager().apply(firewall.generate(empty, context)['rules'], directory)
 assert Manager().named_chains() == []
 ''')
 

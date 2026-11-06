@@ -52,6 +52,7 @@ logging:
         system: General system services
         kernel: Linux kernel messages
         authentication: Login, authentication and privilege changes
+        firewall-lists: Firewall list and CSV imports
         configd: Configuration daemon
         netlinkd: Interface management daemon
         bgp: FRRouting BGP daemon
@@ -67,7 +68,7 @@ logging:
         dns-forwarding: Unbound DNS forwarding services
         ssh: Secure Shell service
       validators:
-        list: {values: 'system kernel authentication configd netlinkd bgp static zebra ospf rip ripng dhcp-server dhcpv6-server ntp ssh dns-forwarding lldp'}
+        list: {values: 'system kernel authentication configd netlinkd bgp static zebra ospf rip ripng dhcp-server dhcpv6-server ntp ssh dns-forwarding lldp firewall-lists'}
       children:
 
         level:
