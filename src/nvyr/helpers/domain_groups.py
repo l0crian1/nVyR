@@ -10,7 +10,7 @@ import threading
 import dns.exception
 import dns.resolver
 
-from nvyr.errors import BusyError, RecoveryError, ValidationError
+from nvyr.errors import BusyError, ValidationError
 from nvyr.helpers import access, nftables
 from nvyr.helpers.nftables_formatters import nft_singleton_name
 from nvyr.storage import atomic_json
@@ -212,7 +212,7 @@ class Manager:
 
         # DNS runs outside the engine lock. Recheck state before touching nftables.
         resolved = self.resolve(queries(selections, selected), cache, messages.append)
-        with engine.mutex, self.lock:
+        with engine.runtime_apply(), self.lock:
             access.require_role('net-admin')
             self.ready(engine)
             if selections != groups(engine.running):
@@ -228,11 +228,7 @@ class Manager:
                     if before != after:
                         changes.append(elements(af, group, after))
             if changes:
-                try:
-                    nftables.manager.apply(''.join(changes), engine.store.directory, owner='domain-groups')
-                except RecoveryError:
-                    engine.unhealthy = True
-                    raise
+                nftables.manager.apply(''.join(changes), engine.store.directory, owner='domain-groups')
             self.publish(updated, messages.append)
             messages.append(f'Domain-group lookup completed; refreshed {len(changes)} sets.\n')
             return {'text': ''.join(messages)}

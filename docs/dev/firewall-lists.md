@@ -26,6 +26,10 @@ validators; individual rows also use the existing relational group checks.
 Invalid rows are warnings, not invalid configuration. URL and column configuration
 errors remain ordinary CLI/verification failures.
 
+Row reading and relational validation are separate from native formatting and
+deduplication. Only expected input failures are skipped; internal schema lookup or
+formatter errors propagate instead of being mislabeled as invalid feed entries.
+
 Keys use the firewall's canonical interval representation. Dictionaries provide
 deduplication; each surviving key gathers attachment names in a set. Conflicting
 map results remove the complete key and mark it ambiguous so later occurrences
@@ -46,6 +50,8 @@ running configuration, retrieves outside the engine mutex, and rechecks the
 configuration and engine state before applying. Concurrent commits/recovery or
 refreshes cause a busy response. Native replacement uses flush/add in one atomic
 nftables transaction; consuming rules retain their handles and counters.
+The apply phase uses the engine's shared `runtime_apply()` boundary so an uncertain
+outcome marks the engine unhealthy before the mutex is released.
 Attachments with identical schedules share one timer and retrieval batch, even
 across groups. Different schedules coinciding wait outside the engine mutex.
 

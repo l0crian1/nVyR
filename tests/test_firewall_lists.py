@@ -10,7 +10,7 @@ from types import SimpleNamespace
 import pytest
 
 from nvyr.config_scripts import firewall
-from nvyr.errors import ValidationError
+from nvyr.errors import RecoveryError, ValidationError
 from nvyr.helpers import firewall_lists as feeds
 from nvyr.helpers.nftables_formatters import nft_singleton_group, nft_match_group
 from nvyr.schema import Schema
@@ -297,6 +297,54 @@ def test_malformed_csv_row_does_not_discard_good_rows():
     _, _, record, warnings = imported('192.0.2.1,198.51.100.1,443,tcp,drop\n"unclosed\n192.0.2.2,198.51.100.2,443,tcp,accept\n', configuration)
     assert len(record['entries']) == 2
     assert record['counts']['invalid'] == 1
+
+
+def test_short_csv_row_does_not_discard_good_rows():
+    configuration = config(kind='map')
+    _, _, record, warnings = imported('192.0.2.1\n192.0.2.2,198.51.100.2,443,tcp,accept\n', configuration)
+
+    assert len(record['entries']) == 1
+    assert record['counts']['invalid'] == 1
+    assert 'missing column' in warnings[0]
+
+
+@pytest.mark.parametrize('error', [KeyError('schema defect'), ValueError('formatter defect')])
+def test_import_programming_errors_are_not_reported_as_bad_input(error, tmp_path, monkeypatch):
+    def fail(*args, **kwargs):
+        raise error
+
+    monkeypatch.setattr(feeds, 'fetch', lambda source: b'192.0.2.1\n')
+    monkeypatch.setattr(feeds.nft, '_nft_group_value', fail)
+
+    with pytest.raises(type(error)) as failure:
+        feeds.Manager(tmp_path).collect(config(), {})
+    assert failure.value is error
+
+
+def test_schema_lookup_errors_are_not_skipped_as_csv_rows(monkeypatch):
+    monkeypatch.setattr(feeds, 'entry_schema', lambda identity: {'children': {}})
+    with pytest.raises(KeyError, match='source-address'):
+        imported('192.0.2.1,198.51.100.1,443,tcp,drop\n', config(kind='map'))
+
+
+def test_runtime_cache_publication_failure_marks_engine_unhealthy(engine, tmp_path, monkeypatch):
+    manager = feeds.Manager(tmp_path)
+    engine.running = config()
+    monkeypatch.setattr(feeds, 'fetch', lambda source: b'192.0.2.1\n')
+    write = manager.write
+
+    def fail_cache(name, data):
+        if name == 'cache.json':
+            raise OSError('disk full')
+        write(name, data)
+
+    monkeypatch.setattr(manager, 'write', fail_cache)
+    with pytest.raises(RecoveryError, match='cache could not be published'):
+        manager.update(engine)
+
+    assert engine.unhealthy
+    assert manager.refresh_lock.acquire(blocking=False)
+    manager.refresh_lock.release()
 
 
 def test_changed_mapping_reimports_even_if_file_hash_is_same(monkeypatch, tmp_path):

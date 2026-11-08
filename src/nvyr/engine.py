@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass, field
 from collections import deque
+from contextlib import contextmanager
 from copy import deepcopy
 import logging
 import math
@@ -172,6 +173,16 @@ class Engine:
         owner = self.sessions.get(self.lock_owner)
         if not owner or not owner.alive:
             self.lock_owner = None
+
+    @contextmanager
+    def runtime_apply(self):
+        """Serialize runtime changes and record uncertain outcomes before releasing the lock."""
+        with self.mutex:
+            try:
+                yield
+            except RecoveryError:
+                self.unhealthy = True
+                raise
 
     def _idle(self, session):
         self.check_session(session)

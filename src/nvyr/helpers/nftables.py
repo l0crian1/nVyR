@@ -7,7 +7,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 
-from nvyr.errors import RecoveryError, ValidationError, RouterError
+from nvyr.errors import RecoveryError, ValidationError, RouterError, recovery_required
 from nvyr.storage import sync_directory
 from nvyr.helpers.process import cmd, rc_cmd, CommandError
 from nvyr.helpers.template import write
@@ -387,11 +387,9 @@ class Manager:
 
                 raise
 
-            try:
+            with recovery_required('nftables loaded but its configuration file could not be published; restart configd to recover.'):
                 os.replace(candidate, directory / f'{owner}.nft')
                 sync_directory(directory)
-            except OSError as error:
-                raise RecoveryError('nftables loaded but its configuration file could not be published; restart configd to recover.') from error
 
 
 manager = Manager()

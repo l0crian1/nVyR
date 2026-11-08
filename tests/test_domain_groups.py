@@ -8,7 +8,7 @@ import dns.exception
 import pytest
 
 from nvyr.config_scripts import firewall
-from nvyr.errors import BusyError, RouterError
+from nvyr.errors import BusyError, RecoveryError, RouterError
 from nvyr.helpers import access, domain_groups, nftables
 from nvyr.helpers.nftables_formatters import nft_singleton_group
 from tests.test_geoip import context
@@ -124,15 +124,17 @@ def test_concurrent_commit_rejects_outdated_resolution(manager, monkeypatch, eng
     assert not loads
 
 
-def test_failed_native_update_keeps_cache(manager, monkeypatch, engine):
+@pytest.mark.parametrize('error_type', [RouterError, RecoveryError])
+def test_failed_native_update_keeps_cache(manager, monkeypatch, engine, error_type):
     engine.running = configuration()
     resolver(monkeypatch, [['192.0.2.1']] * 3)
     def fail(*args, **kwargs):
-        raise RouterError('native failure')
+        raise error_type('native failure')
     monkeypatch.setattr(nftables.manager, 'apply', fail)
     with pytest.raises(RouterError, match='native failure'):
         manager.update(engine)
     assert manager.read(pytest.fail) == {}
+    assert engine.unhealthy == (error_type is RecoveryError)
 
 
 def test_busy_and_unauthorized_updates_do_not_query(manager, monkeypatch, engine):

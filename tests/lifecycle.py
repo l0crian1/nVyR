@@ -1,7 +1,16 @@
 """Lifecycle doubles for isolated engine tests; never installed with nVyR."""
 
+from types import SimpleNamespace
+
+from nvyr.engine import Engine
 from nvyr.modules import registry
 from nvyr.tree import lookup
+
+
+class RuntimeEngine(SimpleNamespace):
+    """Small runtime-update fixture using the engine's actual recovery boundary."""
+
+    runtime_apply = Engine.runtime_apply
 
 
 class LifecycleStub:

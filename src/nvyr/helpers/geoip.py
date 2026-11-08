@@ -21,7 +21,7 @@ from urllib.error import URLError
 from urllib.request import Request, urlopen
 import zlib
 
-from nvyr.errors import BusyError, OperationalError, RecoveryError
+from nvyr.errors import BusyError, OperationalError, RecoveryError, recovery_required
 from nvyr.helpers import access, firewall_scope, geoip_config, nftables
 from nvyr.helpers.nftables_formatters import nft_singleton_name
 from nvyr.storage import atomic_json, sync_directory
@@ -213,11 +213,9 @@ class Manager:
         return None
 
     def publish(self, metadata, table='nvyr_filter'):
-        try:
+        with recovery_required('GeoIP sets loaded but cache publication failed; restart configd to recover'):
             name = 'active-failsafe' if table == firewall_scope.FAILSAFE_TABLE else 'active'
             self.record(name, metadata | {'applied': now()})
-        except OSError as error:
-            raise RecoveryError('GeoIP sets loaded but cache publication failed; restart configd to recover') from error
 
     def apply(self, rendered, context, rebuild, *, configuration=None, table='nvyr_filter',
               owner='firewall', check_only=False):
@@ -264,7 +262,7 @@ class Manager:
 
         # Never hold the engine lock while contacting DB-IP. A commit may proceed.
         release = self.download()
-        with engine.mutex:
+        with engine.runtime_apply():
             access.require_role('net-admin')
             self.ready(engine)
             scopes = self.scopes(engine.running)
@@ -290,11 +288,10 @@ class Manager:
                     nftables.manager.apply('\n'.join(updates), engine.store.directory, owner='geoip')
                     for table in scopes:
                         self.publish(release, table)
-                except RecoveryError:
-                    engine.unhealthy = True
-                    raise
                 except Exception as error:
-                    self.record('check', {'time': now(), 'error': str(error)})
+                    # Do not risk replacing an uncertain live outcome with a metadata-write failure.
+                    if not isinstance(error, RecoveryError):
+                        self.record('check', {'time': now(), 'error': str(error)})
                     raise
                 count = sum(len(selections) for selections in scopes.values())
                 return {'text': f"GeoIP updated to {release['release']}; refreshed {count} address-groups.\n"}

@@ -1,5 +1,6 @@
 """Errors and nonfatal warnings safe to disclose over the local RPC boundary."""
 
+from contextlib import contextmanager
 from dataclasses import dataclass
 
 
@@ -57,6 +58,17 @@ class RecoveryError(RouterError):
     """Live compensation failed: retain the transaction and block further commits."""
 
     code = "recovery"
+
+
+@contextmanager
+def recovery_required(message):
+    """Classify expected failures after a live change that cannot be compensated here."""
+    try:
+        yield
+    except RecoveryError:
+        raise
+    except (OSError, RouterError) as error:
+        raise RecoveryError(f'{message}: {error}') from error
 
 
 class OperationalError(RouterError):

@@ -65,6 +65,23 @@ counter drop comment "default|default-action drop"
 
 ## Firewall execution boundary
 
+The engine catches script lifecycle failures centrally. Firewall, IPv4 NAT and
+NAT66 share that owner and the native nftables apply/publication path; they do not
+need separate wrappers around each lifecycle stage.
+
+DNS, GeoIP and list refreshes use `Engine.runtime_apply()` for the locked native
+update phase. It marks recovery-required failures unhealthy before releasing the
+engine mutex. Retrieval stays outside that boundary, and each updater retains its
+configuration/permission checks and feature-specific reporting.
+
+After native state has changed, `errors.recovery_required()` translates expected
+publication/finalization failures into `RecoveryError`, preserving the original
+cause and any existing recovery error. Its placement is explicit: ordinary
+validation failures before native application remain ordinary failures. Unexpected
+programming errors still propagate to the execution boundary. Compensating kernel
+rollback, per-source fallback, and per-row rejection retain local handlers because
+those handlers restore state or allow valid work to continue.
+
 `show firewall` displays `nft list table inet nvyr_filter`; use `run show firewall`
 from configuration mode. The command executes in root-owned configd through the
 existing operational argv mechanism, so the CLI user does not need `sudo`. The image

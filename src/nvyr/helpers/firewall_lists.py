@@ -20,7 +20,7 @@ import tempfile
 import threading
 import time
 
-from nvyr.errors import BusyError, RecoveryError, RouterError, ValidationError, Warning
+from nvyr.errors import BusyError, RouterError, ValidationError, Warning, recovery_required
 from nvyr.helpers import access, nftables, task_schedule
 from nvyr.helpers import nftables_formatters as nft
 from nvyr.schema import Schema
@@ -169,6 +169,69 @@ def put_entry(entry, path, value):
     entry[path[-1]] = value
 
 
+def read_entry(line, columns, node, field):
+    """Read and validate input cells; schema/programming errors must propagate."""
+    if not columns:
+        value = line.strip()
+        schema().validate(node, value)
+        return {field: value}
+
+    row = next(csv.reader([line], strict=True))
+    entry = {}
+    for path, column in columns.items():
+        index = int(column) - 1
+        # Short rows are input errors; an invalid schema path is a programming error.
+        if index >= len(row):
+            raise ValidationError(f'missing column {column} for {" ".join(path)}')
+        value = row[index].strip()
+        if path == ('result', 'jump-target') and not value:
+            continue
+        field_node = node
+        for part in path:
+            field_node = field_node['children'][part]
+        schema().validate(field_node, value)
+        put_entry(entry, path, value)
+
+    if 'port' in entry.get('result', {}):
+        entry['result']['port'] = str(int(entry['result']['port']))
+    return entry
+
+
+def verify_entry(entry, identity, definition, configuration, jump_checks):
+    from nvyr.config_scripts import firewall
+
+    kind, family, name = identity
+    if kind in ('map', 'match-group'):
+        candidate = {key: value for key, value in definition.items() if key not in ('entry', 'from-csv')}
+        candidate['entry'] = {'import': entry}
+        candidate.pop('dynamic', None)
+        named = lookup(configuration, ('firewall', family, 'name'), {})
+        # Apply relational group validation without rejecting imported dynamic members as manual ones.
+        firewall._verify_group(family, name, candidate, kind, named)
+        target = lookup(entry, ('result', 'jump-target'), None)
+        # CSV jumps obey every calling hook; cache both valid and invalid targets per import.
+        if target:
+            if target not in jump_checks:
+                maps = dict(lookup(configuration, ('firewall', 'group', 'map', family), {}))
+                maps[name] = candidate
+                try:
+                    firewall._verify_hook_constraints(configuration, family, named, maps,
+                        lookup(configuration, ('firewall', 'group', 'match-group', family), {}))
+                    jump_checks[target] = None
+                except ValidationError as error:
+                    jump_checks[target] = str(error)
+            # Reject every occurrence of an invalid target without repeating its traversal.
+            if jump_checks[target]:
+                raise ValidationError(jump_checks[target])
+
+    fields = nft.nft_group_fields(definition) if kind in ('map', 'match-group') else [nft.NFT_SINGLETON_GROUPS[kind][1]]
+    # Learned sets use exact keys; intervals are not supported by their native backend.
+    if 'dynamic' in definition and any('/' in nft.nft_field_value(entry, field) or
+            '-' in nft.nft_field_value(entry, field) for field in fields
+            if field.endswith(('-address', '-port')) or nft.NFT_KEYMAP[field].interval):
+        raise ValidationError('dynamic groups require exact keys, not prefixes or ranges')
+
+
 def parse(data, identity, definition, options, configuration, emit):
     from nvyr.config_scripts import firewall
 
@@ -176,7 +239,6 @@ def parse(data, identity, definition, options, configuration, emit):
     columns = dict(leaves(options.get('column', {})))
     node = entry_schema(identity)
     fields = nft.nft_group_fields(definition) if columns else [nft.NFT_SINGLETON_GROUPS[kind][1]]
-    named = lookup(configuration, ('firewall', family, 'name'), {})
     text = data.decode('utf-8-sig', errors='replace')
     entries = {}
     ambiguous = set()
@@ -186,71 +248,33 @@ def parse(data, identity, definition, options, configuration, emit):
         if not line.strip() or (not columns and line.lstrip().startswith('#')):
             continue
         try:
-            row = next(csv.reader([line], strict=True)) if columns else [line]
-            entry = {}
-            if columns:
-                for path, column in columns.items():
-                    value = row[int(column) - 1].strip()
-                    if path == ('result', 'jump-target') and not value:
-                        continue
-                    field_node = node
-                    for part in path:
-                        field_node = field_node['children'][part]
-                    schema().validate(field_node, value)
-                    put_entry(entry, path, value)
-                candidate = {key: value for key, value in definition.items() if key not in ('entry', 'from-csv')}
-                candidate['entry'] = {'import': entry}
-                if 'port' in entry.get('result', {}):
-                    entry['result']['port'] = str(int(entry['result']['port']))
-                # Dynamic declarations reject configured members, but imported exact keys are allowed.
-                candidate.pop('dynamic', None)
-                firewall._verify_group(family, name, candidate, kind, named)
-                target = lookup(entry, ('result', 'jump-target'), None)
-                if target:
-                    # CSV jumps obey every calling hook; cache this check per target, not per row.
-                    if target not in jump_checks:
-                        maps = dict(lookup(configuration, ('firewall', 'group', 'map', family), {}))
-                        maps[name] = candidate
-                        try:
-                            firewall._verify_hook_constraints(configuration, family, named, maps,
-                                lookup(configuration, ('firewall', 'group', 'match-group', family), {}))
-                            jump_checks[target] = None
-                        except ValidationError as error:
-                            jump_checks[target] = str(error)
-                    if jump_checks[target]:
-                        raise ValueError(jump_checks[target])
-            else:
-                value = row[0].strip()
-                schema().validate(node, value)
-                entry[fields[0]] = value
-            # Learned sets use exact keys; intervals are not supported by their native backend.
-            if 'dynamic' in definition and any('/' in nft.nft_field_value(entry, field) or
-                    '-' in nft.nft_field_value(entry, field) for field in fields
-                    if field.endswith(('-address', '-port')) or nft.NFT_KEYMAP[field].interval):
-                raise ValueError('dynamic groups require exact keys, not prefixes or ranges')
-            flags = nft.tcp_flag_values(entry['tcp-flags'], 255) if 'tcp-flags' in fields else [None]
-            result = nft._nft_map_result(family, definition['result-type'], entry['result']) if kind == 'map' else None
-            for flag in flags:
-                canonical = tuple((flag, flag) if field == 'tcp-flags' else firewall._group_interval(
-                    field, nft.nft_field_value(entry, field), family) for field in fields)
-                key = json.dumps(canonical, separators=(',', ':'))
-                native = ' . '.join(str(flag) if field == 'tcp-flags' else nft._nft_group_value(
-                    field, nft.nft_field_value(entry, field)) for field in fields)
-                value = {'key': native, 'result': result, 'row': number}
-                if key in ambiguous:
-                    continue
-                if key in entries and entries[key]['result'] != result:
-                    emit(f'row {number}: ambiguous key {native}; results {entries[key]["result"]!r} and {result!r}; excluding key')
-                    del entries[key]
-                    ambiguous.add(key)
-                elif key in entries:
-                    counts['duplicates'] += 1
-                else:
-                    entries[key] = value
-            counts['accepted'] += 1
-        except (ValidationError, ValueError, IndexError, KeyError, csv.Error) as error:
+            entry = read_entry(line, columns, node, fields[0])
+            verify_entry(entry, identity, definition, configuration, jump_checks)
+        except (ValidationError, csv.Error) as error:
             counts['invalid'] += 1
             emit(f'row {number}: {error}')
+            continue
+
+        flags = nft.tcp_flag_values(entry['tcp-flags'], 255) if 'tcp-flags' in fields else [None]
+        result = nft._nft_map_result(family, definition['result-type'], entry['result']) if kind == 'map' else None
+        for flag in flags:
+            canonical = tuple((flag, flag) if field == 'tcp-flags' else firewall._group_interval(
+                field, nft.nft_field_value(entry, field), family) for field in fields)
+            key = json.dumps(canonical, separators=(',', ':'))
+            native = ' . '.join(str(flag) if field == 'tcp-flags' else nft._nft_group_value(
+                field, nft.nft_field_value(entry, field)) for field in fields)
+            value = {'key': native, 'result': result, 'row': number}
+            if key in ambiguous:
+                continue
+            if key in entries and entries[key]['result'] != result:
+                emit(f'row {number}: ambiguous key {native}; results {entries[key]["result"]!r} and {result!r}; excluding key')
+                del entries[key]
+                ambiguous.add(key)
+            elif key in entries:
+                counts['duplicates'] += 1
+            else:
+                entries[key] = value
+        counts['accepted'] += 1
     return {'entries': entries, 'ambiguous': sorted(ambiguous), 'counts': counts}
 
 
@@ -436,6 +460,11 @@ class Manager:
             old = records[attachment]
             try:
                 data = fetch(options['source'])
+            except (OSError, ValueError) as error:
+                message = f'{error}; using cached membership' if old.get('hash') else f'{error}; using empty membership'
+                warnings.append(message)
+                result = old | {'error': str(error), 'checked': datetime.now(timezone.utc).isoformat()}
+            else:
                 checksum = hashlib.sha256(data).hexdigest()
                 if old.get('hash') == checksum:
                     result = old if not old.get('error') else old | {'error': None}
@@ -445,10 +474,6 @@ class Manager:
                     result.update(signature=signature, hash=checksum, checked=datetime.now(timezone.utc).isoformat(),
                                   error=None, constraints=constraints, text=data.decode('utf-8-sig', errors='replace'))
                     message = ', '.join(f'{key}={value}' for key, value in result['counts'].items())
-            except (OSError, ValueError, csv.Error) as error:
-                message = f'{error}; using cached membership' if old.get('hash') else f'{error}; using empty membership'
-                warnings.append(message)
-                result = old | {'error': str(error), 'checked': datetime.now(timezone.utc).isoformat()}
             return records, attachment, result, label, warnings, f'{message}; {time.monotonic() - started:.2f}s'
 
         if jobs:
@@ -477,10 +502,8 @@ class Manager:
 
     def publish(self, cache):
         if cache is not None:
-            try:
+            with recovery_required('Firewall membership loaded but its cache could not be published'):
                 self.write('cache.json', cache)
-            except OSError as error:
-                raise RecoveryError('Firewall membership loaded but its cache could not be published') from error
 
     @staticmethod
     def ready(engine):
@@ -515,7 +538,7 @@ class Manager:
                 before = self.checkpoint(engine.store.directory)
             report(('scheduled' if schedule is not None else 'manual') + f' refresh: {len(selected)} attachment(s)', output)
             after = self.collect(configuration, before, refresh=selected, output=output)
-            with engine.mutex:
+            with engine.runtime_apply():
                 access.require_role('net-admin')
                 self.ready(engine)
                 if running != engine.running:
@@ -541,8 +564,6 @@ class Manager:
                 report(f'Refresh complete; replaced membership in {len(statements)} group(s)', output)
             return {'text': ''.join(messages)}
         except (RouterError, OSError) as error:
-            if isinstance(error, RecoveryError):
-                engine.unhealthy = True
             report(f'Refresh failed: {error}', output, warning=True)
             raise
         finally:

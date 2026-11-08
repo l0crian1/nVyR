@@ -29,7 +29,7 @@ from nvyr.config_scripts import firewall
 from nvyr.helpers import firewall_lists as feeds, nftables
 from nvyr.schema import Schema
 from nvyr.tree import ReadOnlyTree
-from tests.lifecycle import firewall_context
+from tests.lifecycle import RuntimeEngine, firewall_context
 from tests.test_firewall_lists import config
 
 directory = Path(tempfile.mkdtemp())
@@ -48,7 +48,7 @@ plan = firewall.generate(effective, context)
 nftables.manager.apply(plan['rules'], directory)
 feeds.manager.publish(plan['list-cache'])
 subprocess.run(['ip','link','set','lo','up'],check=True)
-engine = SimpleNamespace(running=configuration, schema=schema, mutex=threading.RLock(), busy=False,
+engine = RuntimeEngine(running=configuration, schema=schema, mutex=threading.RLock(), busy=False,
                          unhealthy=False, store=SimpleNamespace(directory=directory))
 def listed():
     return subprocess.check_output(['nft','-a','list','table','inet','nvyr_filter'],text=True)
@@ -164,7 +164,7 @@ from nvyr.config_scripts import firewall
 from nvyr.helpers import firewall_lists as feeds, nftables
 from nvyr.schema import Schema
 from nvyr.tree import ReadOnlyTree
-from tests.lifecycle import firewall_context
+from tests.lifecycle import RuntimeEngine, firewall_context
 
 directory = Path(tempfile.mkdtemp())
 root = {}
@@ -220,7 +220,7 @@ assert '198.51.100.1' in listed and '192.0.2.' not in listed, listed
 listed = subprocess.check_output(['nft', 'list', 'set', 'inet', 'nvyr_filter', 'ipv4_address_group_LEARNED'], text=True)
 assert '192.0.2.200' in listed and 'expires' in listed, listed
 time.sleep(1.2)
-engine = SimpleNamespace(running={'firewall': {'group': root}}, schema=schema,
+engine = RuntimeEngine(running={'firewall': {'group': root}}, schema=schema,
                          mutex=threading.RLock(), busy=False, unhealthy=False,
                          store=SimpleNamespace(directory=directory))
 result = feeds.manager.update(engine, 'address-group', 'ipv4', 'LEARNED')

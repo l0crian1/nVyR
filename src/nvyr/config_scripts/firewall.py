@@ -2,7 +2,7 @@
 
 import ipaddress
 
-from nvyr.errors import RecoveryError, RouterError, ValidationError, Warning
+from nvyr.errors import ValidationError, Warning, recovery_required
 from nvyr.helpers import domain_groups, geoip, geoip_config, nftables, nftables_lifecycle, firewall_lists, task_schedule
 from nvyr.helpers import interface_patterns, kernel_settings, nftables_helpers, nftables_timeouts
 from nvyr.helpers import nftables_modify
@@ -1171,10 +1171,7 @@ def apply(configuration, context):
             with domain_groups.manager.lock:
                 domain_groups.manager.publish(dns_cache, context.report)
 
-        try:
+        with recovery_required('Firewall loaded but list schedules could not be installed'):
             task_schedule.reconcile('firewalllists', schedules, recover=context.recovery)
-        except (RouterError, OSError) as error:
-            # The native transaction already succeeded; preserve the journal for recovery.
-            raise RecoveryError(f'Firewall loaded but list schedules could not be installed: {error}') from error
         firewall_lists.manager.publish(cache)
         logging_runtime.cleanup(context.effective, context.state_directory / 'logging')
