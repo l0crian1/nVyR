@@ -96,14 +96,19 @@ def test_details_and_empty_output(monkeypatch):
 
 def test_install_change_noop_and_removal(tmp_path, monkeypatch):
     calls = []
+    queries = []
     monkeypatch.setattr(lldp, 'ROOT', tmp_path)
     monkeypatch.setattr(lldp, 'cmd', lambda argv, **kwargs: calls.append(argv))
     monkeypatch.setattr(lldp, 'run', lambda argv: 0)
-    monkeypatch.setattr(lldp, 'control', lambda *args, **kwargs: {'lldp': [{'interface': [{'name': 'eth1'}]}]})
+    def control(*args, **kwargs):
+        queries.append((args, kwargs))
+        return {'lldp': [{'interface': [{'name': 'eth1'}]}]}
+    monkeypatch.setattr(lldp, 'control', control)
     plan = service.generate({'interface': {'eth1': {'port-id': 'uplink'}}}, None)
 
     install(plan)
     assert calls == [['systemctl', 'restart', lldp.UNIT]]
+    assert queries[-1] == (('show', 'interfaces', 'details'), {'raw': True})
     assert (tmp_path / 'lldpd.conf').stat().st_mode & 0o777 == 0o644
     install(plan)
     assert len(calls) == 1

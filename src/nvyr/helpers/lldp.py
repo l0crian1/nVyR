@@ -55,7 +55,7 @@ def install(plan):
             control(*shlex.split(line))
 
     # lldpcli silently ignores settings for unknown ports; do not report those as applied.
-    document = control('show', 'interfaces', 'details', 'hidden', raw=True)
+    document = control('show', 'interfaces', 'details', raw=True)
     present = {port['name'] for group in document.get('lldp', ()) for port in group.get('interface', ())}
     missing = set(plan['overrides']) - present
     if missing:
