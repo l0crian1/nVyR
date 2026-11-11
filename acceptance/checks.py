@@ -776,6 +776,19 @@ def check_rip(options):
             cmd(command if vrf == 'default' else ['ip', 'vrf', 'exec', vrf, *command])
 
 
+def check_isis(options):
+    """Global and VRF IS-IS restore dual-stack routes and forwarding after reboot."""
+    for vrf, interface, number in [('default', 'veth997', 102), ('BOOTLEFT', 'veth995', 101)]:
+        for family, prefix in [('ip', f'198.18.211.{number}/32'), ('ipv6', f'2001:db8:211::{number}/128')]:
+            assert_kernel_route(prefix, 'dev ' + interface, vrf=vrf)
+            scope = '' if vrf == 'default' else ' vrf ' + vrf
+            assert_operational_output(f'show {family} route{scope} isis', prefix)
+            command = ['ping', '-c', '1', '-W', '3', prefix.split('/')[0]]
+            cmd(command if vrf == 'default' else ['ip', 'vrf', 'exec', vrf, *command])
+        assert_operational_output(f'show isis vrf {vrf} summary', 'Area nvyr')
+        assert_operational_output(f'show isis vrf {vrf} neighbor', 'Up')
+
+
 def check_dns_forwarding(options):
     """Read native listeners/configuration and resolve local names after boot."""
     import dns.message
@@ -839,7 +852,7 @@ CHECKS = (
     check_static_ipv4, check_static_ipv6, check_multipath_ipv4, check_multipath_ipv6,
     check_vrf_static_ipv4, check_vrf_static_ipv6, check_routing_policies,
     check_bgp_ipv4_session, check_bgp_ipv6_session, check_bgp_ipv4_policy_result, check_bgp_ipv6_policy_result,
-    check_bgp_unicast_options, check_ospf_ipv4, check_ospf_ipv6, check_rip,
+    check_bgp_unicast_options, check_ospf_ipv4, check_ospf_ipv6, check_rip, check_isis,
     check_dhcp4_server, check_dhcp6_server, check_vrf_dhcp4_server, check_vrf_dhcp6_server,
     check_dhcp_hostfile_hook, check_dhcp_ha, check_dhcp_client_lease, check_dhcpv6_delegation,
     check_container_workload, check_container_network_ipv4,

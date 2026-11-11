@@ -79,6 +79,10 @@ commands. The fixtures are deliberately readable and reviewable:
   transit, with separate destinations from BGP. Both sides must form adjacencies,
   install OSPF routes and exchange traffic before and after reboot. Global opaque
   capability and router-info coexist with the VRF configuration.
+- [IS-IS](config/isis.set): dual-stack, MD5-authenticated default/BOOTLEFT peers
+  on the same transit, dedicated connected-route export policies, IPv6 multi-topology,
+  LSP/SPF and circuit timers, local LFA settings, route installation and traffic
+  before and after reboot.
 - [Services and containers](config/services.set): five Kea instances (IPv4/IPv6
   in the default VRF and BOOTLEFT, plus an independent IPv6 ISP in BOOTRIGHT),
   disjoint pools, IPv4/IPv6 reservations,

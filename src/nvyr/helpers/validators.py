@@ -1184,3 +1184,10 @@ def time_zone(value):
     return ValidationFailure(suggestions=suggest_values(
         value, timezones.available(), mangles=[['-', '_']], ignore_case=True,
     ))
+
+
+@register('isis-net', 'an ISO NET with 8-20 bytes, a six-byte system ID and a zero selector')
+def isis_net(value):
+    if not re.fullmatch(r'[0-9a-fA-F]{2}(?:\.[0-9a-fA-F]{4}){3,9}\.00', value):
+        return False
+    return True

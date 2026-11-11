@@ -151,6 +151,14 @@
     ]
   },
   {
+    "script": "isis",
+    "priority": 46,
+    "paths": [
+      "protocols isis",
+      "vrf name <name> protocols isis"
+    ]
+  },
+  {
     "script": "ospf",
     "priority": 46,
     "paths": [

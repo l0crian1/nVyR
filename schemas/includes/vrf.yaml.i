@@ -66,6 +66,9 @@ vrf:
               replace:
                 /script/register/vrf: {tag: name}
 
+            - file: protocols/isis.yaml.i
+              replace:
+                /script/register/vrf: {tag: name}
             - file: protocols/rip.yaml.i
               replace:
                 /script/register/vrf: {tag: name}

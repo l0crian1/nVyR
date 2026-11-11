@@ -27,6 +27,7 @@ or consult the complete [command tree](docs/users/command-tree.md).
 - [IPv4/IPv6 static routing](docs/users/static.md)
 - [IPv4/IPv6 unicast BGP](docs/users/bgp.md)
 - [OSPFv2 and OSPFv3, including VRFs and authenticated neighbors](docs/users/ospf.md)
+- [IPv4/IPv6 IS-IS, including VRFs, authentication, and routing policies](docs/users/isis.md)
 - [Access lists, prefix-lists, route-maps, community lists, and AS-path lists](docs/users/routing-policy.md)
 - [IPv4/IPv6 stateful](docs/users/firewall.md) and [zone-based firewall](docs/users/firewall-zones.md)
 - Firewall groups, [maps](docs/users/firewall-maps.md), and [match-groups](docs/users/firewall-match-groups.md)

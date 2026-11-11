@@ -121,6 +121,35 @@ ipv4-unicast:
               hints:
                 0-4294967295: Metric assigned to redistributed routes
 
+        isis:
+          kind: node
+          description: Import IS-IS routes
+          anchor: true
+          children:
+
+            route-map:
+              kind: leaf_node
+              description: Configured route-map
+              validators:
+                regex:
+                  pattern: '[A-Za-z_][A-Za-z0-9_.-]{0,127}'
+              hints:
+                name: Configured route-map
+              depends: policy-route-map
+              suggestors:
+                config-path:
+                  path: policy route-map
+
+            metric:
+              kind: leaf_node
+              description: Metric assigned to redistributed routes
+              validators:
+                integer-range:
+                  minimum: 0
+                  maximum: 4294967295
+              hints:
+                0-4294967295: Metric assigned to redistributed routes
+
     aggregate-address:
       kind: tag_node
       anchor: true

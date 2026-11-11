@@ -1632,6 +1632,129 @@
       "kind": "node",
       "description": "Reset operational state",
       "children": {
+        "isis": {
+          "kind": "node",
+          "description": "Reset IS-IS adjacencies",
+          "access": "net-admin",
+          "children": {
+            "neighbor": {
+              "kind": "node",
+              "description": "Reset all adjacencies in this routing instance",
+              "command": {
+                "argv": [
+                  "isis.nvyr.op",
+                  "clear",
+                  "@line"
+                ]
+              },
+              "access": "net-admin",
+              "children": {
+                "name": {
+                  "kind": "tag_node",
+                  "description": "Reset a selected neighbor",
+                  "command": {
+                    "argv": [
+                      "isis.nvyr.op",
+                      "clear",
+                      "@line"
+                    ]
+                  },
+                  "access": "net-admin",
+                  "children": {},
+                  "positional": true,
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[A-Za-z0-9_.-]{1,128}"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "system-id": "Reset a selected neighbor"
+                  }
+                }
+              }
+            },
+            "vrf": {
+              "kind": "tag_node",
+              "description": "Routing instance",
+              "children": {
+                "neighbor": {
+                  "kind": "node",
+                  "description": "Reset all adjacencies in this routing instance",
+                  "command": {
+                    "argv": [
+                      "isis.nvyr.op",
+                      "clear",
+                      "@line"
+                    ]
+                  },
+                  "access": "net-admin",
+                  "children": {
+                    "name": {
+                      "kind": "tag_node",
+                      "description": "Reset a selected neighbor",
+                      "command": {
+                        "argv": [
+                          "isis.nvyr.op",
+                          "clear",
+                          "@line"
+                        ]
+                      },
+                      "access": "net-admin",
+                      "children": {},
+                      "positional": true,
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "regex": {
+                            "name": "regex",
+                            "args": {
+                              "pattern": "[A-Za-z0-9_.-]{1,128}"
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "system-id": "Reset a selected neighbor"
+                      }
+                    }
+                  }
+                }
+              },
+              "validators": {
+                "mode": "AND",
+                "checks": {
+                  "regex": {
+                    "name": "regex",
+                    "args": {
+                      "pattern": "[A-Za-z][A-Za-z0-9_.-]{0,14}"
+                    }
+                  }
+                }
+              },
+              "hints": {
+                "vrf": "Routing instance"
+              },
+              "choices": {
+                "default": "Default routing instance",
+                "all": "All routing instances"
+              },
+              "suggestors": [
+                {
+                  "name": "config-path",
+                  "args": {
+                    "path": "vrf name"
+                  }
+                }
+              ]
+            }
+          }
+        },
         "rip": {
           "kind": "node",
           "description": "Clear learned RIP routes",
@@ -15123,6 +15246,32 @@
                   }
                 }
               }
+            },
+            "isis": {
+              "kind": "node",
+              "description": "IS-IS service logs",
+              "command": {
+                "argv": [
+                  "logs.nvyr.op",
+                  "show",
+                  "isis"
+                ]
+              },
+              "children": {
+                "follow": {
+                  "kind": "node",
+                  "description": "Follow new IS-IS log entries",
+                  "command": {
+                    "argv": [
+                      "logs.nvyr.op",
+                      "show",
+                      "isis",
+                      "--follow"
+                    ],
+                    "stream": true
+                  }
+                }
+              }
             }
           }
         },
@@ -15403,6 +15552,1174 @@
                   "status"
                 ]
               }
+            }
+          }
+        },
+        "isis": {
+          "kind": "node",
+          "description": "IS-IS routing state",
+          "command": {
+            "argv": [
+              "isis.nvyr.op",
+              "show",
+              "@line"
+            ]
+          },
+          "children": {
+            "summary": {
+              "kind": "node",
+              "description": "IS-IS summary",
+              "command": {
+                "argv": [
+                  "isis.nvyr.op",
+                  "show",
+                  "@line"
+                ]
+              },
+              "children": {
+                "json": {
+                  "kind": "node",
+                  "description": "Native JSON output",
+                  "command": {
+                    "argv": [
+                      "isis.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  },
+                  "children": {}
+                }
+              }
+            },
+            "neighbor": {
+              "kind": "node",
+              "description": "IS-IS neighbors",
+              "command": {
+                "argv": [
+                  "isis.nvyr.op",
+                  "show",
+                  "@line"
+                ]
+              },
+              "children": {
+                "detail": {
+                  "kind": "node",
+                  "description": "Detailed is-is neighbors",
+                  "command": {
+                    "argv": [
+                      "isis.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  },
+                  "children": {
+                    "json": {
+                      "kind": "node",
+                      "description": "Native JSON output",
+                      "command": {
+                        "argv": [
+                          "isis.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {}
+                    }
+                  }
+                },
+                "name": {
+                  "kind": "tag_node",
+                  "description": "Select system-id",
+                  "command": {
+                    "argv": [
+                      "isis.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  },
+                  "children": {
+                    "json": {
+                      "kind": "node",
+                      "description": "Native JSON output",
+                      "command": {
+                        "argv": [
+                          "isis.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {}
+                    }
+                  },
+                  "positional": true,
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[A-Za-z0-9_.-]{1,128}"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "system-id": "Select system-id"
+                  }
+                },
+                "json": {
+                  "kind": "node",
+                  "description": "Native JSON output",
+                  "command": {
+                    "argv": [
+                      "isis.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  },
+                  "children": {}
+                }
+              }
+            },
+            "interface": {
+              "kind": "node",
+              "description": "IS-IS interfaces",
+              "command": {
+                "argv": [
+                  "isis.nvyr.op",
+                  "show",
+                  "@line"
+                ]
+              },
+              "children": {
+                "detail": {
+                  "kind": "node",
+                  "description": "Detailed is-is interfaces",
+                  "command": {
+                    "argv": [
+                      "isis.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  },
+                  "children": {
+                    "json": {
+                      "kind": "node",
+                      "description": "Native JSON output",
+                      "command": {
+                        "argv": [
+                          "isis.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {}
+                    }
+                  }
+                },
+                "name": {
+                  "kind": "tag_node",
+                  "description": "Select interface",
+                  "command": {
+                    "argv": [
+                      "isis.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  },
+                  "children": {
+                    "json": {
+                      "kind": "node",
+                      "description": "Native JSON output",
+                      "command": {
+                        "argv": [
+                          "isis.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {}
+                    }
+                  },
+                  "positional": true,
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[A-Za-z_][A-Za-z0-9_.:-]{0,14}"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "interface": "Select interface"
+                  }
+                },
+                "json": {
+                  "kind": "node",
+                  "description": "Native JSON output",
+                  "command": {
+                    "argv": [
+                      "isis.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  },
+                  "children": {}
+                }
+              }
+            },
+            "database": {
+              "kind": "node",
+              "description": "Link-state database",
+              "command": {
+                "argv": [
+                  "isis.nvyr.op",
+                  "show",
+                  "@line"
+                ]
+              },
+              "children": {
+                "detail": {
+                  "kind": "node",
+                  "description": "Detailed link-state database",
+                  "command": {
+                    "argv": [
+                      "isis.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  },
+                  "children": {
+                    "json": {
+                      "kind": "node",
+                      "description": "Native JSON output",
+                      "command": {
+                        "argv": [
+                          "isis.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {}
+                    },
+                    "name": {
+                      "kind": "tag_node",
+                      "description": "Select LSP",
+                      "command": {
+                        "argv": [
+                          "isis.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {
+                        "json": {
+                          "kind": "node",
+                          "description": "Native JSON output",
+                          "command": {
+                            "argv": [
+                              "isis.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          },
+                          "children": {}
+                        }
+                      },
+                      "positional": true,
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "regex": {
+                            "name": "regex",
+                            "args": {
+                              "pattern": "[A-Za-z0-9_.-]{1,128}"
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "lsp-id": "Select LSP"
+                      }
+                    }
+                  }
+                },
+                "name": {
+                  "kind": "tag_node",
+                  "description": "Select lsp-id",
+                  "command": {
+                    "argv": [
+                      "isis.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  },
+                  "children": {
+                    "json": {
+                      "kind": "node",
+                      "description": "Native JSON output",
+                      "command": {
+                        "argv": [
+                          "isis.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {}
+                    }
+                  },
+                  "positional": true,
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[A-Za-z0-9_.-]{1,128}"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "lsp-id": "Select lsp-id"
+                  }
+                },
+                "json": {
+                  "kind": "node",
+                  "description": "Native JSON output",
+                  "command": {
+                    "argv": [
+                      "isis.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  },
+                  "children": {}
+                }
+              }
+            },
+            "hostname": {
+              "kind": "node",
+              "description": "Learned system hostnames",
+              "command": {
+                "argv": [
+                  "isis.nvyr.op",
+                  "show",
+                  "@line"
+                ]
+              },
+              "children": {}
+            },
+            "topology": {
+              "kind": "node",
+              "description": "SPF topology",
+              "command": {
+                "argv": [
+                  "isis.nvyr.op",
+                  "show",
+                  "@line"
+                ]
+              },
+              "children": {
+                "level": {
+                  "kind": "tag_node",
+                  "description": "Select a routing level",
+                  "choices": {
+                    "level-1": "Level 1",
+                    "level-2": "Level 2"
+                  },
+                  "command": {
+                    "argv": [
+                      "isis.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  },
+                  "children": {
+                    "json": {
+                      "kind": "node",
+                      "description": "Native JSON output",
+                      "command": {
+                        "argv": [
+                          "isis.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {}
+                    }
+                  }
+                },
+                "json": {
+                  "kind": "node",
+                  "description": "Native JSON output",
+                  "command": {
+                    "argv": [
+                      "isis.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  },
+                  "children": {}
+                }
+              }
+            },
+            "route": {
+              "kind": "node",
+              "description": "IS-IS calculated routes",
+              "command": {
+                "argv": [
+                  "isis.nvyr.op",
+                  "show",
+                  "@line"
+                ]
+              },
+              "children": {
+                "level": {
+                  "kind": "tag_node",
+                  "description": "Select a routing level",
+                  "choices": {
+                    "level-1": "Level 1",
+                    "level-2": "Level 2"
+                  },
+                  "command": {
+                    "argv": [
+                      "isis.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  },
+                  "children": {
+                    "json": {
+                      "kind": "node",
+                      "description": "Native JSON output",
+                      "command": {
+                        "argv": [
+                          "isis.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {}
+                    },
+                    "backup": {
+                      "kind": "node",
+                      "description": "Backup routes",
+                      "command": {
+                        "argv": [
+                          "isis.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {
+                        "json": {
+                          "kind": "node",
+                          "description": "Native JSON output",
+                          "command": {
+                            "argv": [
+                              "isis.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          },
+                          "children": {}
+                        }
+                      }
+                    }
+                  }
+                },
+                "backup": {
+                  "kind": "node",
+                  "description": "Backup routes",
+                  "command": {
+                    "argv": [
+                      "isis.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  },
+                  "children": {
+                    "json": {
+                      "kind": "node",
+                      "description": "Native JSON output",
+                      "command": {
+                        "argv": [
+                          "isis.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {}
+                    }
+                  }
+                },
+                "json": {
+                  "kind": "node",
+                  "description": "Native JSON output",
+                  "command": {
+                    "argv": [
+                      "isis.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  },
+                  "children": {}
+                }
+              }
+            },
+            "fast-reroute": {
+              "kind": "node",
+              "description": "Local protection coverage",
+              "command": {
+                "argv": [
+                  "isis.nvyr.op",
+                  "show",
+                  "@line"
+                ]
+              },
+              "children": {
+                "summary": {
+                  "kind": "node",
+                  "description": "LFA coverage summary",
+                  "command": {
+                    "argv": [
+                      "isis.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  },
+                  "children": {
+                    "level": {
+                      "kind": "tag_node",
+                      "description": "Select a routing level",
+                      "choices": {
+                        "level-1": "Level 1",
+                        "level-2": "Level 2"
+                      },
+                      "command": {
+                        "argv": [
+                          "isis.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "spf-delay": {
+              "kind": "node",
+              "description": "IETF SPF backoff state",
+              "command": {
+                "argv": [
+                  "isis.nvyr.op",
+                  "show",
+                  "@line"
+                ]
+              },
+              "children": {}
+            },
+            "vrf": {
+              "kind": "tag_node",
+              "description": "Routing instance",
+              "command": {
+                "argv": [
+                  "isis.nvyr.op",
+                  "show",
+                  "@line"
+                ]
+              },
+              "children": {
+                "summary": {
+                  "kind": "node",
+                  "description": "IS-IS summary",
+                  "command": {
+                    "argv": [
+                      "isis.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  },
+                  "children": {
+                    "json": {
+                      "kind": "node",
+                      "description": "Native JSON output",
+                      "command": {
+                        "argv": [
+                          "isis.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {}
+                    }
+                  }
+                },
+                "neighbor": {
+                  "kind": "node",
+                  "description": "IS-IS neighbors",
+                  "command": {
+                    "argv": [
+                      "isis.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  },
+                  "children": {
+                    "detail": {
+                      "kind": "node",
+                      "description": "Detailed is-is neighbors",
+                      "command": {
+                        "argv": [
+                          "isis.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {
+                        "json": {
+                          "kind": "node",
+                          "description": "Native JSON output",
+                          "command": {
+                            "argv": [
+                              "isis.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          },
+                          "children": {}
+                        }
+                      }
+                    },
+                    "name": {
+                      "kind": "tag_node",
+                      "description": "Select system-id",
+                      "command": {
+                        "argv": [
+                          "isis.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {
+                        "json": {
+                          "kind": "node",
+                          "description": "Native JSON output",
+                          "command": {
+                            "argv": [
+                              "isis.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          },
+                          "children": {}
+                        }
+                      },
+                      "positional": true,
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "regex": {
+                            "name": "regex",
+                            "args": {
+                              "pattern": "[A-Za-z0-9_.-]{1,128}"
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "system-id": "Select system-id"
+                      }
+                    },
+                    "json": {
+                      "kind": "node",
+                      "description": "Native JSON output",
+                      "command": {
+                        "argv": [
+                          "isis.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {}
+                    }
+                  }
+                },
+                "interface": {
+                  "kind": "node",
+                  "description": "IS-IS interfaces",
+                  "command": {
+                    "argv": [
+                      "isis.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  },
+                  "children": {
+                    "detail": {
+                      "kind": "node",
+                      "description": "Detailed is-is interfaces",
+                      "command": {
+                        "argv": [
+                          "isis.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {
+                        "json": {
+                          "kind": "node",
+                          "description": "Native JSON output",
+                          "command": {
+                            "argv": [
+                              "isis.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          },
+                          "children": {}
+                        }
+                      }
+                    },
+                    "name": {
+                      "kind": "tag_node",
+                      "description": "Select interface",
+                      "command": {
+                        "argv": [
+                          "isis.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {
+                        "json": {
+                          "kind": "node",
+                          "description": "Native JSON output",
+                          "command": {
+                            "argv": [
+                              "isis.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          },
+                          "children": {}
+                        }
+                      },
+                      "positional": true,
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "regex": {
+                            "name": "regex",
+                            "args": {
+                              "pattern": "[A-Za-z_][A-Za-z0-9_.:-]{0,14}"
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "interface": "Select interface"
+                      }
+                    },
+                    "json": {
+                      "kind": "node",
+                      "description": "Native JSON output",
+                      "command": {
+                        "argv": [
+                          "isis.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {}
+                    }
+                  }
+                },
+                "database": {
+                  "kind": "node",
+                  "description": "Link-state database",
+                  "command": {
+                    "argv": [
+                      "isis.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  },
+                  "children": {
+                    "detail": {
+                      "kind": "node",
+                      "description": "Detailed link-state database",
+                      "command": {
+                        "argv": [
+                          "isis.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {
+                        "json": {
+                          "kind": "node",
+                          "description": "Native JSON output",
+                          "command": {
+                            "argv": [
+                              "isis.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          },
+                          "children": {}
+                        },
+                        "name": {
+                          "kind": "tag_node",
+                          "description": "Select LSP",
+                          "command": {
+                            "argv": [
+                              "isis.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          },
+                          "children": {
+                            "json": {
+                              "kind": "node",
+                              "description": "Native JSON output",
+                              "command": {
+                                "argv": [
+                                  "isis.nvyr.op",
+                                  "show",
+                                  "@line"
+                                ]
+                              },
+                              "children": {}
+                            }
+                          },
+                          "positional": true,
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "regex": {
+                                "name": "regex",
+                                "args": {
+                                  "pattern": "[A-Za-z0-9_.-]{1,128}"
+                                }
+                              }
+                            }
+                          },
+                          "hints": {
+                            "lsp-id": "Select LSP"
+                          }
+                        }
+                      }
+                    },
+                    "name": {
+                      "kind": "tag_node",
+                      "description": "Select lsp-id",
+                      "command": {
+                        "argv": [
+                          "isis.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {
+                        "json": {
+                          "kind": "node",
+                          "description": "Native JSON output",
+                          "command": {
+                            "argv": [
+                              "isis.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          },
+                          "children": {}
+                        }
+                      },
+                      "positional": true,
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "regex": {
+                            "name": "regex",
+                            "args": {
+                              "pattern": "[A-Za-z0-9_.-]{1,128}"
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "lsp-id": "Select lsp-id"
+                      }
+                    },
+                    "json": {
+                      "kind": "node",
+                      "description": "Native JSON output",
+                      "command": {
+                        "argv": [
+                          "isis.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {}
+                    }
+                  }
+                },
+                "hostname": {
+                  "kind": "node",
+                  "description": "Learned system hostnames",
+                  "command": {
+                    "argv": [
+                      "isis.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  },
+                  "children": {}
+                },
+                "topology": {
+                  "kind": "node",
+                  "description": "SPF topology",
+                  "command": {
+                    "argv": [
+                      "isis.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  },
+                  "children": {
+                    "level": {
+                      "kind": "tag_node",
+                      "description": "Select a routing level",
+                      "choices": {
+                        "level-1": "Level 1",
+                        "level-2": "Level 2"
+                      },
+                      "command": {
+                        "argv": [
+                          "isis.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {
+                        "json": {
+                          "kind": "node",
+                          "description": "Native JSON output",
+                          "command": {
+                            "argv": [
+                              "isis.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          },
+                          "children": {}
+                        }
+                      }
+                    },
+                    "json": {
+                      "kind": "node",
+                      "description": "Native JSON output",
+                      "command": {
+                        "argv": [
+                          "isis.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {}
+                    }
+                  }
+                },
+                "route": {
+                  "kind": "node",
+                  "description": "IS-IS calculated routes",
+                  "command": {
+                    "argv": [
+                      "isis.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  },
+                  "children": {
+                    "level": {
+                      "kind": "tag_node",
+                      "description": "Select a routing level",
+                      "choices": {
+                        "level-1": "Level 1",
+                        "level-2": "Level 2"
+                      },
+                      "command": {
+                        "argv": [
+                          "isis.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {
+                        "json": {
+                          "kind": "node",
+                          "description": "Native JSON output",
+                          "command": {
+                            "argv": [
+                              "isis.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          },
+                          "children": {}
+                        },
+                        "backup": {
+                          "kind": "node",
+                          "description": "Backup routes",
+                          "command": {
+                            "argv": [
+                              "isis.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          },
+                          "children": {
+                            "json": {
+                              "kind": "node",
+                              "description": "Native JSON output",
+                              "command": {
+                                "argv": [
+                                  "isis.nvyr.op",
+                                  "show",
+                                  "@line"
+                                ]
+                              },
+                              "children": {}
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "backup": {
+                      "kind": "node",
+                      "description": "Backup routes",
+                      "command": {
+                        "argv": [
+                          "isis.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {
+                        "json": {
+                          "kind": "node",
+                          "description": "Native JSON output",
+                          "command": {
+                            "argv": [
+                              "isis.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          },
+                          "children": {}
+                        }
+                      }
+                    },
+                    "json": {
+                      "kind": "node",
+                      "description": "Native JSON output",
+                      "command": {
+                        "argv": [
+                          "isis.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {}
+                    }
+                  }
+                },
+                "fast-reroute": {
+                  "kind": "node",
+                  "description": "Local protection coverage",
+                  "command": {
+                    "argv": [
+                      "isis.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  },
+                  "children": {
+                    "summary": {
+                      "kind": "node",
+                      "description": "LFA coverage summary",
+                      "command": {
+                        "argv": [
+                          "isis.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {
+                        "level": {
+                          "kind": "tag_node",
+                          "description": "Select a routing level",
+                          "choices": {
+                            "level-1": "Level 1",
+                            "level-2": "Level 2"
+                          },
+                          "command": {
+                            "argv": [
+                              "isis.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "spf-delay": {
+                  "kind": "node",
+                  "description": "IETF SPF backoff state",
+                  "command": {
+                    "argv": [
+                      "isis.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  },
+                  "children": {}
+                }
+              },
+              "validators": {
+                "mode": "AND",
+                "checks": {
+                  "regex": {
+                    "name": "regex",
+                    "args": {
+                      "pattern": "[A-Za-z][A-Za-z0-9_.-]{0,14}"
+                    }
+                  }
+                }
+              },
+              "hints": {
+                "vrf": "Routing instance"
+              },
+              "choices": {
+                "default": "Default routing instance",
+                "all": "All routing instances"
+              },
+              "suggestors": [
+                {
+                  "name": "config-path",
+                  "args": {
+                    "path": "vrf name"
+                  }
+                }
+              ]
             }
           }
         },
@@ -40561,6 +41878,17 @@
                     ]
                   }
                 },
+                "isis": {
+                  "kind": "node",
+                  "description": "Routes learned through IS-IS",
+                  "command": {
+                    "argv": [
+                      "static.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  }
+                },
                 "static": {
                   "kind": "node",
                   "description": "Static routes in Zebra's routing table",
@@ -40841,6 +42169,17 @@
                         ]
                       }
                     },
+                    "isis": {
+                      "kind": "node",
+                      "description": "Routes learned through IS-IS",
+                      "command": {
+                        "argv": [
+                          "static.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      }
+                    },
                     "static": {
                       "kind": "node",
                       "description": "Static routes in Zebra's routing table",
@@ -41113,6 +42452,17 @@
                     "rip": {
                       "kind": "node",
                       "description": "Routes learned through RIP",
+                      "command": {
+                        "argv": [
+                          "static.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      }
+                    },
+                    "isis": {
+                      "kind": "node",
+                      "description": "Routes learned through IS-IS",
                       "command": {
                         "argv": [
                           "static.nvyr.op",
@@ -44442,6 +45792,17 @@
                     ]
                   }
                 },
+                "isis": {
+                  "kind": "node",
+                  "description": "Routes learned through IS-IS",
+                  "command": {
+                    "argv": [
+                      "static.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  }
+                },
                 "static": {
                   "kind": "node",
                   "description": "Static routes in Zebra's routing table",
@@ -44722,6 +46083,17 @@
                         ]
                       }
                     },
+                    "isis": {
+                      "kind": "node",
+                      "description": "Routes learned through IS-IS",
+                      "command": {
+                        "argv": [
+                          "static.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      }
+                    },
                     "static": {
                       "kind": "node",
                       "description": "Static routes in Zebra's routing table",
@@ -44994,6 +46366,17 @@
                     "ripng": {
                       "kind": "node",
                       "description": "Routes learned through RIPNG",
+                      "command": {
+                        "argv": [
+                          "static.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      }
+                    },
+                    "isis": {
+                      "kind": "node",
+                      "description": "Routes learned through IS-IS",
                       "command": {
                         "argv": [
                           "static.nvyr.op",

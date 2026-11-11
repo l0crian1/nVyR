@@ -551,6 +551,45 @@ children:
               config-path:
                 path: policy route-map
 
+      isis:
+        kind: node
+        description: Redistribute IS-IS routes
+        anchor: true
+        children:
+
+          metric:
+            kind: leaf_node
+            description: Redistributed route metric
+            validators:
+              integer-range:
+                minimum: 0
+                maximum: 16777214
+            hints:
+              0-16777214: Redistributed route metric
+
+          metric-type:
+            kind: leaf_node
+            description: External route metric type
+            validators:
+              list:
+                values: 1 2
+            choices:
+              '1': Add the internal cost to the external metric
+              '2': Compare external metric before internal cost
+
+          route-map:
+            kind: leaf_node
+            description: Configured route-map
+            validators:
+              regex:
+                pattern: '[A-Za-z_][A-Za-z0-9_.-]{0,127}'
+            hints:
+              name: Configured route-map
+            depends: policy-route-map
+            suggestors:
+              config-path:
+                path: policy route-map
+
   graceful-restart:
     kind: node
     description: Enable restarting-router support

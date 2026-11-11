@@ -1362,3 +1362,15 @@ log:
           description: Follow new RIPNG log entries
           stream: true
           command: ['logs.nvyr.op', 'show', 'ripng', '--follow']
+
+    isis:
+      kind: node
+      description: IS-IS service logs
+      command: ['logs.nvyr.op', 'show', 'isis']
+      children:
+
+        follow:
+          kind: node
+          description: Follow new IS-IS log entries
+          stream: true
+          command: ['logs.nvyr.op', 'show', 'isis', '--follow']

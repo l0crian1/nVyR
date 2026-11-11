@@ -101,3 +101,29 @@ The patched native files are GPL-2.0-or-later:
 
 No upstream fix is claimed. Retest map creation and recreation in the default
 and named VRFs before removing the patch on a future FRR upgrade.
+
+
+`isis-reload.patch` restores the native always-padding default when an explicit
+IS-IS hello-padding mode is removed. Its native handler changes let existing
+table redistribution entries update their metric and route-map and remove the
+protocol/level parent after its final table is deleted. Otherwise hidden state
+survives readback and blocks a subsequent level change. The common apply-finish
+callback now applies table attributes for both families without registering a
+phantom table-zero entry; IPv6 table deletion also withdraws its registration.
+The route-map callback refreshes redistribution references before re-evaluation,
+covering maps created after their references and map deletion/recreation.
+
+The native files are from tag `frr-10.7.1`, licensed GPL-2.0-or-later,
+copyright (C) 2001, 2002 Sampo Saaristo / Tampere University of Technology,
+and (C) 2018 Volta Networks / Emanuele Di Pascale:
+[`isisd/isis_cli.c`](https://github.com/FRRouting/frr/blob/frr-10.7.1/isisd/isis_cli.c)
+and [`isisd/isis_nb_config.c`](https://github.com/FRRouting/frr/blob/frr-10.7.1/isisd/isis_nb_config.c).
+[`isisd/isis_routemap.c`](https://github.com/FRRouting/frr/blob/frr-10.7.1/isisd/isis_routemap.c)
+is also GPL-2.0-or-later, copyright (C) 2013–2015 Christian Franke.
+Native round-trip/removal tests are in `tests/test_isis_native.py`; reload reset
+coverage is in `tests/test_frr_reload_ordering.py`. Reevaluate this patch on upgrade.
+
+Circuit option resets also precede removal of the final IS-IS address-family
+binding and process, so removal does not recreate an interface container missing
+its mandatory area tag. The native runtime test verifies advertisement metrics,
+route-map withdrawal, table removal and complete interface cleanup.

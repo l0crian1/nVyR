@@ -1,0 +1,37 @@
+# Global and named-VRF IS-IS share existing transit links and recover after reboot.
+set interfaces dummy dum995 address 198.18.211.101/32 address 2001:db8:211::101/128
+set interfaces dummy dum997 address 198.18.211.102/32 address 2001:db8:211::102/128
+set policy prefix-list ipv4 BOOTISIS rule 10 action permit prefix 198.18.211.101/32
+set policy prefix-list ipv4 BOOTISIS rule 20 action permit prefix 198.18.211.102/32
+set policy route-map BOOTISIS4 rule 10 action permit match ipv4 prefix-list BOOTISIS
+set policy prefix-list ipv6 BOOTISIS rule 10 action permit prefix 2001:db8:211::101/128
+set policy prefix-list ipv6 BOOTISIS rule 20 action permit prefix 2001:db8:211::102/128
+set policy route-map BOOTISIS6 rule 10 action permit match ipv6 prefix-list BOOTISIS
+set protocols isis net 49.0001.0000.0000.0001.00 options level level-2
+set protocols isis options log-adjacency-changes log-pdu-drops purge-originator lsp-mtu 1400
+set protocols isis topology ipv6-unicast
+set protocols isis level level-2 authentication mode md5 password acceptance-isis snp validate
+set protocols isis level level-2 timers lsp-generation 1 lsp-refresh 600 lsp-lifetime 1200 spf-interval 1
+set protocols isis spf delay initial 50 short 100 long 500 hold-down 1000 time-to-learn 500
+set protocols isis interface veth997 address-family ipv4-unicast address-family ipv6-unicast network point-to-point
+set protocols isis interface veth997 authentication mode md5 password acceptance-isis
+set protocols isis interface veth997 topology ipv6-unicast
+set protocols isis interface veth997 level level-2 metric 20 priority 32 timers hello-interval 1 hello-multiplier 3 csnp-interval 15 psnp-interval 3
+set protocols isis interface veth997 level level-2 fast-reroute lfa
+set protocols isis level level-2 fast-reroute tiebreaker 1 type downstream
+set protocols isis address-family ipv4-unicast level level-2 redistribute connected metric 30 route-map BOOTISIS4
+set protocols isis address-family ipv6-unicast level level-2 redistribute connected metric 30 route-map BOOTISIS6
+set vrf name BOOTLEFT protocols isis net 49.0001.0000.0000.0002.00 options level level-2
+set vrf name BOOTLEFT protocols isis options log-adjacency-changes log-pdu-drops purge-originator lsp-mtu 1400
+set vrf name BOOTLEFT protocols isis topology ipv6-unicast
+set vrf name BOOTLEFT protocols isis level level-2 authentication mode md5 password acceptance-isis snp validate
+set vrf name BOOTLEFT protocols isis level level-2 timers lsp-generation 1 lsp-refresh 600 lsp-lifetime 1200 spf-interval 1
+set vrf name BOOTLEFT protocols isis spf delay initial 50 short 100 long 500 hold-down 1000 time-to-learn 500
+set vrf name BOOTLEFT protocols isis interface veth995 address-family ipv4-unicast address-family ipv6-unicast network point-to-point
+set vrf name BOOTLEFT protocols isis interface veth995 authentication mode md5 password acceptance-isis
+set vrf name BOOTLEFT protocols isis interface veth995 topology ipv6-unicast
+set vrf name BOOTLEFT protocols isis interface veth995 level level-2 metric 20 priority 32 timers hello-interval 1 hello-multiplier 3 csnp-interval 15 psnp-interval 3
+set vrf name BOOTLEFT protocols isis interface veth995 level level-2 fast-reroute lfa
+set vrf name BOOTLEFT protocols isis level level-2 fast-reroute tiebreaker 1 type downstream
+set vrf name BOOTLEFT protocols isis address-family ipv4-unicast level level-2 redistribute connected metric 30 route-map BOOTISIS4
+set vrf name BOOTLEFT protocols isis address-family ipv6-unicast level level-2 redistribute connected metric 30 route-map BOOTISIS6

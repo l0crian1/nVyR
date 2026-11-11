@@ -19,6 +19,7 @@ KEYCHAIN_PATCH = ROOT / 'vendor/frr/keychain-reload.patch'
 OSPF_PATCH = ROOT / 'vendor/frr/ospf-reload.patch'
 RIP_PATCH = ROOT / 'vendor/frr/rip-reload.patch'
 RIP_VRF_PATCH = ROOT / 'vendor/frr/rip-vrf-routemap.patch'
+ISIS_PATCH = ROOT / 'vendor/frr/isis-reload.patch'
 MANIFEST = 'frr-packages.json'
 
 
@@ -30,7 +31,7 @@ def digest(path):
 def recipe_digest():
     """Changing any build input invalidates previously cached packages."""
     checksum = hashlib.sha256()
-    for path in (Path(__file__), LOCK, PATCH, KEYCHAIN_PATCH, OSPF_PATCH, RIP_PATCH, RIP_VRF_PATCH):
+    for path in (Path(__file__), LOCK, PATCH, KEYCHAIN_PATCH, OSPF_PATCH, RIP_PATCH, RIP_VRF_PATCH, ISIS_PATCH):
         checksum.update(path.read_text(encoding='utf-8').replace('\r\n', '\n').encode())
         checksum.update(b'\0')
     return checksum.hexdigest()
@@ -89,10 +90,12 @@ def prepare_source(work, lock):
     run(['patch', '--batch', '--forward', '--fuzz=0', '-p1', '-i', str(RIP_PATCH)], cwd=source)
     run(['patch', '--batch', '--forward', '--fuzz=0', '-p1', '-i', str(RIP_VRF_PATCH)], cwd=source)
 
+    run(['patch', '--batch', '--forward', '--fuzz=0', '-p1', '-i', str(ISIS_PATCH)], cwd=source)
+
     # Keep upstream's Debian options and package layout; change only our revision.
     date = format_datetime(datetime.fromtimestamp(lock['source_date_epoch'], timezone.utc))
     entry = (f'frr ({lock["version"]}) trixie; urgency=medium\n\n'
-             '  * Enable Lua scripting and fix routing reloads and RIP VRF route maps.\n\n'
+             '  * Enable Lua scripting and fix routing reloads, RIP VRF policies and IS-IS table redistribution.\n\n'
              f' -- nVyR Router Contributors <maintainers@example.invalid>  {date}\n\n')
     changelog = source / 'debian/changelog'
     changelog.write_text(entry + changelog.read_text(), encoding='utf-8')

@@ -33,11 +33,12 @@ def clear(words):
     ospf = tuple(words[:3]) in {('clear', 'ip', 'ospf'), ('clear', 'ipv6', 'ospf6')} and len(words) >= 4
     rip = tuple(words[:3]) in {('clear', 'ip', 'rip'), ('clear', 'ipv6', 'ripng')} and (
         len(words) == 3 or len(words) == 5 and words[3] == 'vrf')
-    if (not (bgp or route_map or ospf or rip)
+    isis = tuple(words[:3]) == ('clear', 'isis', 'vrf') and len(words) in {5, 6} and words[4] == 'neighbor'
+    if (not (bgp or route_map or ospf or rip or isis)
             or any(not isinstance(word, str)
                    or not (bgp and word == '*') and not re.fullmatch(r'[a-zA-Z0-9_.:/%-]+', word)
                    for word in words)):
-        raise ValueError('Expected a single FRR clear bgp, ospf, rip, ripng, or route-map counters command')
+        raise ValueError('Expected a single FRR clear bgp, ospf, isis, rip, ripng, or route-map counters command')
 
     return cmd(['vtysh', '-c', ' '.join(words)])
 

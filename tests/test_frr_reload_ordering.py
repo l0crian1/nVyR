@@ -92,3 +92,11 @@ def test_ripng_poisoned_reverse_removal_restores_simple_split_horizon():
 
     assert 'ipv6 ripng split-horizon' in [line.strip() for line in lines]
     assert not any(line.strip().startswith('no ipv6 ripng') for line in lines)
+
+
+@pytest.mark.parametrize('before', ['no isis hello padding', 'isis hello padding during-adjacency-formation'])
+def test_isis_padding_removal_restores_always(before):
+    functions = runpy.run_path('/usr/lib/frr/frr-reload.py')
+    lines = functions['lines_to_config'](('interface eth1',), before, True)
+    assert 'isis hello padding' in [line.strip() for line in lines]
+    assert 'no isis hello padding' not in [line.strip() for line in lines]

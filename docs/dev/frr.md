@@ -1,18 +1,21 @@
 # FRR integration
 
-BGP, OSPF, RIP, static routing and routing policies use FRR 10.7.1's `frr-reload.py` through the shared
+BGP, OSPF, RIP, IS-IS, static routing and routing policies use FRR 10.7.1's `frr-reload.py` through the shared
 [`frr_reload.Manager`](../../src/nvyr/helpers/frr_reload.py). The ISO pins both `frr`
-and `frr-pythontools` at `10.7.1-0~deb13u1+nvyr4`. The builder compiles both from
+and `frr-pythontools` at `10.7.1-0~deb13u1+nvyr5`. The builder compiles both from
 checksum-pinned source with FRR's `pkg.frr.lua` profile, enabling Lua scripting
 while preserving the other Debian build options. Installing only the nVyR
 `.deb` requires these matching FRR packages; `dpkg -i` does not fetch dependencies.
 
 The manager uses `/usr/lib/frr/frr-reload.py` from our `frr-pythontools` build,
 with fixes for BGP list deletion ordering, key lifetimes, OSPF resets, and RIP
-passive-interface and split-horizon resets applied to its source. See
+passive-interface and split-horizon resets, and IS-IS padding and circuit removal
+applied to its source. See
 [patch provenance](../../vendor/frr/README.md) for the changes and regression tests.
 The native RIP/RIPng daemons also refresh shared map/list references in named
 VRFs and discard cached interface policy when its RIP instance changes.
+The native IS-IS fixes cover editing and removing IPv4/IPv6 table redistribution,
+including applying its metrics and route maps, and refreshing late map references.
 
 The cached packages live in `/opt/nvyr-frr-packages` in `nvyr-image-builder`.
 Rebuild that image after changing the source lock, builder recipe or patch:

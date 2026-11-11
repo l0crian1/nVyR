@@ -1,6 +1,6 @@
 {
   "source_date_epoch": 1787644800,
-  "version": "10.7.1-0~deb13u1+nvyr4",
+  "version": "10.7.1-0~deb13u1+nvyr5",
   "upstream_version": "10.7.1",
   "profiles": ["pkg.frr.lua"],
   "source": {

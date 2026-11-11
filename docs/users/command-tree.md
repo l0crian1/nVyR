@@ -10755,6 +10755,9 @@ set
 │   │   │   │       ├── connected
 │   │   │   │       │   ├── metric <0-4294967295>
 │   │   │   │       │   └── route-map <name>
+│   │   │   │       ├── isis
+│   │   │   │       │   ├── metric <0-4294967295>
+│   │   │   │       │   └── route-map <name>
 │   │   │   │       ├── kernel
 │   │   │   │       │   ├── metric <0-4294967295>
 │   │   │   │       │   └── route-map <name>
@@ -10782,6 +10785,9 @@ set
 │   │   │       │   └── prefer-global
 │   │   │       └── redistribute
 │   │   │           ├── connected
+│   │   │           │   ├── metric <0-4294967295>
+│   │   │           │   └── route-map <name>
+│   │   │           ├── isis
 │   │   │           │   ├── metric <0-4294967295>
 │   │   │           │   └── route-map <name>
 │   │   │           ├── kernel
@@ -11185,6 +11191,139 @@ set
 │   │       ├── ttl-security
 │   │       │   └── hops <1-254>
 │   │       └── update-source <interface|address>
+│   ├── isis
+│   │   ├── address-family
+│   │   │   ├── ipv4-unicast
+│   │   │   │   └── level <level-1|level-2>
+│   │   │   │       ├── default-originate
+│   │   │   │       │   ├── always
+│   │   │   │       │   ├── metric <0-16777215>
+│   │   │   │       │   └── route-map <name>
+│   │   │   │       └── redistribute
+│   │   │   │           ├── bgp
+│   │   │   │           │   ├── metric <0-16777215>
+│   │   │   │           │   └── route-map <name>
+│   │   │   │           ├── connected
+│   │   │   │           │   ├── metric <0-16777215>
+│   │   │   │           │   └── route-map <name>
+│   │   │   │           ├── kernel
+│   │   │   │           │   ├── metric <0-16777215>
+│   │   │   │           │   └── route-map <name>
+│   │   │   │           ├── local
+│   │   │   │           │   ├── metric <0-16777215>
+│   │   │   │           │   └── route-map <name>
+│   │   │   │           ├── ospf
+│   │   │   │           │   ├── metric <0-16777215>
+│   │   │   │           │   └── route-map <name>
+│   │   │   │           ├── rip
+│   │   │   │           │   ├── metric <0-16777215>
+│   │   │   │           │   └── route-map <name>
+│   │   │   │           ├── static
+│   │   │   │           │   ├── metric <0-16777215>
+│   │   │   │           │   └── route-map <name>
+│   │   │   │           └── table <table-id>
+│   │   │   │               ├── metric <0-16777215>
+│   │   │   │               └── route-map <name>
+│   │   │   └── ipv6-unicast
+│   │   │       └── level <level-1|level-2>
+│   │   │           ├── default-originate
+│   │   │           │   ├── always
+│   │   │           │   ├── metric <0-16777215>
+│   │   │           │   └── route-map <name>
+│   │   │           └── redistribute
+│   │   │               ├── bgp
+│   │   │               │   ├── metric <0-16777215>
+│   │   │               │   └── route-map <name>
+│   │   │               ├── connected
+│   │   │               │   ├── metric <0-16777215>
+│   │   │               │   └── route-map <name>
+│   │   │               ├── kernel
+│   │   │               │   ├── metric <0-16777215>
+│   │   │               │   └── route-map <name>
+│   │   │               ├── local
+│   │   │               │   ├── metric <0-16777215>
+│   │   │               │   └── route-map <name>
+│   │   │               ├── ospfv3
+│   │   │               │   ├── metric <0-16777215>
+│   │   │               │   └── route-map <name>
+│   │   │               ├── ripng
+│   │   │               │   ├── metric <0-16777215>
+│   │   │               │   └── route-map <name>
+│   │   │               ├── static
+│   │   │               │   ├── metric <0-16777215>
+│   │   │               │   └── route-map <name>
+│   │   │               └── table <table-id>
+│   │   │                   ├── metric <0-16777215>
+│   │   │                   └── route-map <name>
+│   │   ├── interface <interface>
+│   │   │   ├── address-family <ipv4-unicast|ipv6-unicast>
+│   │   │   ├── authentication
+│   │   │   │   ├── mode <plaintext|md5>
+│   │   │   │   └── password <secret>
+│   │   │   ├── circuit-type <level-1|level-2|level-1-2>
+│   │   │   ├── disable-three-way-handshake
+│   │   │   ├── hello-padding <always|during-adjacency-formation|disabled>
+│   │   │   ├── level <level-1|level-2>
+│   │   │   │   ├── fast-reroute
+│   │   │   │   │   └── lfa
+│   │   │   │   │       └── exclude-interface <interface>
+│   │   │   │   ├── metric <0-16777215>
+│   │   │   │   ├── priority <0-127>
+│   │   │   │   └── timers
+│   │   │   │       ├── csnp-interval <1-600>
+│   │   │   │       ├── hello-interval <1-600>
+│   │   │   │       ├── hello-multiplier <2-100>
+│   │   │   │       └── psnp-interval <1-120>
+│   │   │   ├── network <broadcast|point-to-point>
+│   │   │   ├── passive
+│   │   │   │   └── disable
+│   │   │   └── topology <standard|ipv6-unicast|ipv4-multicast|ipv6-multicast|ipv4-management|
+│   │   │                 ipv6-management|ipv6-dstsrc>
+│   │   │       └── disable
+│   │   ├── level <level-1|level-2>
+│   │   │   ├── authentication
+│   │   │   │   ├── mode <plaintext|md5>
+│   │   │   │   ├── password <secret>
+│   │   │   │   └── snp <send-only|validate>
+│   │   │   ├── fast-reroute
+│   │   │   │   ├── disable-load-sharing
+│   │   │   │   ├── priority-limit <critical|high|medium>
+│   │   │   │   └── tiebreaker <1-255>
+│   │   │   │       └── type <downstream|lowest-backup-metric|node-protecting>
+│   │   │   └── timers
+│   │   │       ├── lsp-generation <1-120>
+│   │   │       ├── lsp-lifetime <350-65535>
+│   │   │       ├── lsp-refresh <1-65235>
+│   │   │       └── spf-interval <1-120>
+│   │   ├── net <NET>
+│   │   ├── options
+│   │   │   ├── advertise-high-metrics
+│   │   │   ├── advertise-passive-only
+│   │   │   ├── attached-bit
+│   │   │   │   ├── ignore
+│   │   │   │   └── send
+│   │   │   ├── disable-dynamic-hostname
+│   │   │   ├── level <level-1|level-2|level-1-2>
+│   │   │   ├── log-adjacency-changes
+│   │   │   ├── log-pdu-drops
+│   │   │   ├── lsp-mtu <128-4352>
+│   │   │   ├── metric-style <narrow|transition|wide>
+│   │   │   ├── overload
+│   │   │   │   ├── administrative
+│   │   │   │   └── on-startup <0-86400>
+│   │   │   └── purge-originator
+│   │   ├── spf
+│   │   │   ├── delay
+│   │   │   │   ├── hold-down <0-60000>
+│   │   │   │   ├── initial <0-60000>
+│   │   │   │   ├── long <0-60000>
+│   │   │   │   ├── short <0-60000>
+│   │   │   │   └── time-to-learn <0-60000>
+│   │   │   └── prefix-priority <critical|high|medium>
+│   │   │       └── access-list <name>
+│   │   └── topology <ipv6-unicast|ipv4-multicast|ipv6-multicast|ipv4-management|ipv6-management|
+│   │                 ipv6-dstsrc>
+│   │       └── overload
 │   ├── ospf
 │   │   ├── area <0-4294967295|x.x.x.x>
 │   │   │   ├── authentication <plaintext|message-digest>
@@ -11321,6 +11460,10 @@ set
 │   │   │   │   ├── metric <0-16777214>
 │   │   │   │   ├── metric-type <1|2>
 │   │   │   │   └── route-map <name>
+│   │   │   ├── isis
+│   │   │   │   ├── metric <0-16777214>
+│   │   │   │   ├── metric-type <1|2>
+│   │   │   │   └── route-map <name>
 │   │   │   ├── kernel
 │   │   │   │   ├── metric <0-16777214>
 │   │   │   │   ├── metric-type <1|2>
@@ -11442,6 +11585,10 @@ set
 │   │   │   │   ├── metric-type <1|2>
 │   │   │   │   └── route-map <name>
 │   │   │   ├── connected
+│   │   │   │   ├── metric <0-16777214>
+│   │   │   │   ├── metric-type <1|2>
+│   │   │   │   └── route-map <name>
+│   │   │   ├── isis
 │   │   │   │   ├── metric <0-16777214>
 │   │   │   │   ├── metric-type <1|2>
 │   │   │   │   └── route-map <name>
@@ -11962,7 +12109,7 @@ set
 │   │   │   ├── count <1-1000>
 │   │   │   └── size <size>
 │   │   └── service <system|kernel|authentication|firewall-lists|configd|netlinkd|bgp|static|zebra|
-│   │                ospf|rip|ripng|dhcp-server|dhcpv6-server|ntp|lldp|dns-forwarding|ssh>
+│   │                ospf|rip|ripng|isis|dhcp-server|dhcpv6-server|ntp|lldp|dns-forwarding|ssh>
 │   │       └── level <emerg|alert|crit|err|warn|notice|info|debug>
 │   ├── login
 │   │   └── user <username>
@@ -12022,6 +12169,9 @@ set
         │   │   │   │       ├── connected
         │   │   │   │       │   ├── metric <0-4294967295>
         │   │   │   │       │   └── route-map <name>
+        │   │   │   │       ├── isis
+        │   │   │   │       │   ├── metric <0-4294967295>
+        │   │   │   │       │   └── route-map <name>
         │   │   │   │       ├── kernel
         │   │   │   │       │   ├── metric <0-4294967295>
         │   │   │   │       │   └── route-map <name>
@@ -12049,6 +12199,9 @@ set
         │   │   │       │   └── prefer-global
         │   │   │       └── redistribute
         │   │   │           ├── connected
+        │   │   │           │   ├── metric <0-4294967295>
+        │   │   │           │   └── route-map <name>
+        │   │   │           ├── isis
         │   │   │           │   ├── metric <0-4294967295>
         │   │   │           │   └── route-map <name>
         │   │   │           ├── kernel
@@ -12452,6 +12605,139 @@ set
         │   │       ├── ttl-security
         │   │       │   └── hops <1-254>
         │   │       └── update-source <interface|address>
+        │   ├── isis
+        │   │   ├── address-family
+        │   │   │   ├── ipv4-unicast
+        │   │   │   │   └── level <level-1|level-2>
+        │   │   │   │       ├── default-originate
+        │   │   │   │       │   ├── always
+        │   │   │   │       │   ├── metric <0-16777215>
+        │   │   │   │       │   └── route-map <name>
+        │   │   │   │       └── redistribute
+        │   │   │   │           ├── bgp
+        │   │   │   │           │   ├── metric <0-16777215>
+        │   │   │   │           │   └── route-map <name>
+        │   │   │   │           ├── connected
+        │   │   │   │           │   ├── metric <0-16777215>
+        │   │   │   │           │   └── route-map <name>
+        │   │   │   │           ├── kernel
+        │   │   │   │           │   ├── metric <0-16777215>
+        │   │   │   │           │   └── route-map <name>
+        │   │   │   │           ├── local
+        │   │   │   │           │   ├── metric <0-16777215>
+        │   │   │   │           │   └── route-map <name>
+        │   │   │   │           ├── ospf
+        │   │   │   │           │   ├── metric <0-16777215>
+        │   │   │   │           │   └── route-map <name>
+        │   │   │   │           ├── rip
+        │   │   │   │           │   ├── metric <0-16777215>
+        │   │   │   │           │   └── route-map <name>
+        │   │   │   │           ├── static
+        │   │   │   │           │   ├── metric <0-16777215>
+        │   │   │   │           │   └── route-map <name>
+        │   │   │   │           └── table <table-id>
+        │   │   │   │               ├── metric <0-16777215>
+        │   │   │   │               └── route-map <name>
+        │   │   │   └── ipv6-unicast
+        │   │   │       └── level <level-1|level-2>
+        │   │   │           ├── default-originate
+        │   │   │           │   ├── always
+        │   │   │           │   ├── metric <0-16777215>
+        │   │   │           │   └── route-map <name>
+        │   │   │           └── redistribute
+        │   │   │               ├── bgp
+        │   │   │               │   ├── metric <0-16777215>
+        │   │   │               │   └── route-map <name>
+        │   │   │               ├── connected
+        │   │   │               │   ├── metric <0-16777215>
+        │   │   │               │   └── route-map <name>
+        │   │   │               ├── kernel
+        │   │   │               │   ├── metric <0-16777215>
+        │   │   │               │   └── route-map <name>
+        │   │   │               ├── local
+        │   │   │               │   ├── metric <0-16777215>
+        │   │   │               │   └── route-map <name>
+        │   │   │               ├── ospfv3
+        │   │   │               │   ├── metric <0-16777215>
+        │   │   │               │   └── route-map <name>
+        │   │   │               ├── ripng
+        │   │   │               │   ├── metric <0-16777215>
+        │   │   │               │   └── route-map <name>
+        │   │   │               ├── static
+        │   │   │               │   ├── metric <0-16777215>
+        │   │   │               │   └── route-map <name>
+        │   │   │               └── table <table-id>
+        │   │   │                   ├── metric <0-16777215>
+        │   │   │                   └── route-map <name>
+        │   │   ├── interface <interface>
+        │   │   │   ├── address-family <ipv4-unicast|ipv6-unicast>
+        │   │   │   ├── authentication
+        │   │   │   │   ├── mode <plaintext|md5>
+        │   │   │   │   └── password <secret>
+        │   │   │   ├── circuit-type <level-1|level-2|level-1-2>
+        │   │   │   ├── disable-three-way-handshake
+        │   │   │   ├── hello-padding <always|during-adjacency-formation|disabled>
+        │   │   │   ├── level <level-1|level-2>
+        │   │   │   │   ├── fast-reroute
+        │   │   │   │   │   └── lfa
+        │   │   │   │   │       └── exclude-interface <interface>
+        │   │   │   │   ├── metric <0-16777215>
+        │   │   │   │   ├── priority <0-127>
+        │   │   │   │   └── timers
+        │   │   │   │       ├── csnp-interval <1-600>
+        │   │   │   │       ├── hello-interval <1-600>
+        │   │   │   │       ├── hello-multiplier <2-100>
+        │   │   │   │       └── psnp-interval <1-120>
+        │   │   │   ├── network <broadcast|point-to-point>
+        │   │   │   ├── passive
+        │   │   │   │   └── disable
+        │   │   │   └── topology <standard|ipv6-unicast|ipv4-multicast|ipv6-multicast|
+        │   │   │                 ipv4-management|ipv6-management|ipv6-dstsrc>
+        │   │   │       └── disable
+        │   │   ├── level <level-1|level-2>
+        │   │   │   ├── authentication
+        │   │   │   │   ├── mode <plaintext|md5>
+        │   │   │   │   ├── password <secret>
+        │   │   │   │   └── snp <send-only|validate>
+        │   │   │   ├── fast-reroute
+        │   │   │   │   ├── disable-load-sharing
+        │   │   │   │   ├── priority-limit <critical|high|medium>
+        │   │   │   │   └── tiebreaker <1-255>
+        │   │   │   │       └── type <downstream|lowest-backup-metric|node-protecting>
+        │   │   │   └── timers
+        │   │   │       ├── lsp-generation <1-120>
+        │   │   │       ├── lsp-lifetime <350-65535>
+        │   │   │       ├── lsp-refresh <1-65235>
+        │   │   │       └── spf-interval <1-120>
+        │   │   ├── net <NET>
+        │   │   ├── options
+        │   │   │   ├── advertise-high-metrics
+        │   │   │   ├── advertise-passive-only
+        │   │   │   ├── attached-bit
+        │   │   │   │   ├── ignore
+        │   │   │   │   └── send
+        │   │   │   ├── disable-dynamic-hostname
+        │   │   │   ├── level <level-1|level-2|level-1-2>
+        │   │   │   ├── log-adjacency-changes
+        │   │   │   ├── log-pdu-drops
+        │   │   │   ├── lsp-mtu <128-4352>
+        │   │   │   ├── metric-style <narrow|transition|wide>
+        │   │   │   ├── overload
+        │   │   │   │   ├── administrative
+        │   │   │   │   └── on-startup <0-86400>
+        │   │   │   └── purge-originator
+        │   │   ├── spf
+        │   │   │   ├── delay
+        │   │   │   │   ├── hold-down <0-60000>
+        │   │   │   │   ├── initial <0-60000>
+        │   │   │   │   ├── long <0-60000>
+        │   │   │   │   ├── short <0-60000>
+        │   │   │   │   └── time-to-learn <0-60000>
+        │   │   │   └── prefix-priority <critical|high|medium>
+        │   │   │       └── access-list <name>
+        │   │   └── topology <ipv6-unicast|ipv4-multicast|ipv6-multicast|ipv4-management|
+        │   │                 ipv6-management|ipv6-dstsrc>
+        │   │       └── overload
         │   ├── ospf
         │   │   ├── area <0-4294967295|x.x.x.x>
         │   │   │   ├── authentication <plaintext|message-digest>
@@ -12587,6 +12873,10 @@ set
         │   │   │   │   ├── metric <0-16777214>
         │   │   │   │   ├── metric-type <1|2>
         │   │   │   │   └── route-map <name>
+        │   │   │   ├── isis
+        │   │   │   │   ├── metric <0-16777214>
+        │   │   │   │   ├── metric-type <1|2>
+        │   │   │   │   └── route-map <name>
         │   │   │   ├── kernel
         │   │   │   │   ├── metric <0-16777214>
         │   │   │   │   ├── metric-type <1|2>
@@ -12707,6 +12997,10 @@ set
         │   │   │   │   ├── metric-type <1|2>
         │   │   │   │   └── route-map <name>
         │   │   │   ├── connected
+        │   │   │   │   ├── metric <0-16777214>
+        │   │   │   │   ├── metric-type <1|2>
+        │   │   │   │   └── route-map <name>
+        │   │   │   ├── isis
         │   │   │   │   ├── metric <0-16777214>
         │   │   │   │   ├── metric-type <1|2>
         │   │   │   │   └── route-map <name>
@@ -13696,6 +13990,12 @@ operational mode
 │   │           ├── interface
 │   │           │   └── <interface>
 │   │           └── process
+│   ├── isis
+│   │   ├── neighbor
+│   │   │   └── <system-id>
+│   │   └── vrf <default|all|vrf>
+│   │       └── neighbor
+│   │           └── <system-id>
 │   ├── rip
 │   │   ├── all
 │   │   └── vrf <default|vrf>
@@ -15205,6 +15505,7 @@ operational mode
 │   │       │   └── longer-prefixes
 │   │       │       └── static
 │   │       ├── failed
+│   │       ├── isis
 │   │       ├── kernel
 │   │       ├── local
 │   │       ├── ospf
@@ -15221,6 +15522,7 @@ operational mode
 │   │       │   ├── <x.x.x.x|x.x.x.x/x>
 │   │       │   │   └── longer-prefixes
 │   │       │   │       └── static
+│   │       │   ├── isis
 │   │       │   ├── kernel
 │   │       │   ├── local
 │   │       │   ├── ospf
@@ -15235,6 +15537,7 @@ operational mode
 │   │           │   └── longer-prefixes
 │   │           │       └── static
 │   │           ├── failed
+│   │           ├── isis
 │   │           ├── kernel
 │   │           ├── local
 │   │           ├── ospf
@@ -15443,6 +15746,7 @@ operational mode
 │   │       │   └── longer-prefixes
 │   │       │       └── static
 │   │       ├── failed
+│   │       ├── isis
 │   │       ├── kernel
 │   │       ├── local
 │   │       ├── ospf6
@@ -15459,6 +15763,7 @@ operational mode
 │   │       │   ├── <x:x:x:x:x:x|x:x:x:x:x:x/x>
 │   │       │   │   └── longer-prefixes
 │   │       │   │       └── static
+│   │       │   ├── isis
 │   │       │   ├── kernel
 │   │       │   ├── local
 │   │       │   ├── ospf6
@@ -15473,6 +15778,7 @@ operational mode
 │   │           │   └── longer-prefixes
 │   │           │       └── static
 │   │           ├── failed
+│   │           ├── isis
 │   │           ├── kernel
 │   │           ├── local
 │   │           ├── ospf6
@@ -15484,6 +15790,86 @@ operational mode
 │   │           │   └── table <number>
 │   │           │       └── prefix
 │   │           └── tag <1-4294967295>
+│   ├── isis
+│   │   ├── database
+│   │   │   ├── detail
+│   │   │   │   ├── json
+│   │   │   │   └── <lsp-id>
+│   │   │   │       └── json
+│   │   │   ├── json
+│   │   │   └── <lsp-id>
+│   │   │       └── json
+│   │   ├── fast-reroute
+│   │   │   └── summary
+│   │   │       └── level <level-1|level-2>
+│   │   ├── hostname
+│   │   ├── interface
+│   │   │   ├── detail
+│   │   │   │   └── json
+│   │   │   ├── json
+│   │   │   └── <interface>
+│   │   │       └── json
+│   │   ├── neighbor
+│   │   │   ├── detail
+│   │   │   │   └── json
+│   │   │   ├── json
+│   │   │   └── <system-id>
+│   │   │       └── json
+│   │   ├── route
+│   │   │   ├── backup
+│   │   │   │   └── json
+│   │   │   ├── json
+│   │   │   └── level <level-1|level-2>
+│   │   │       ├── backup
+│   │   │       │   └── json
+│   │   │       └── json
+│   │   ├── spf-delay
+│   │   ├── summary
+│   │   │   └── json
+│   │   ├── topology
+│   │   │   ├── json
+│   │   │   └── level <level-1|level-2>
+│   │   │       └── json
+│   │   └── vrf <default|all|vrf>
+│   │       ├── database
+│   │       │   ├── detail
+│   │       │   │   ├── json
+│   │       │   │   └── <lsp-id>
+│   │       │   │       └── json
+│   │       │   ├── json
+│   │       │   └── <lsp-id>
+│   │       │       └── json
+│   │       ├── fast-reroute
+│   │       │   └── summary
+│   │       │       └── level <level-1|level-2>
+│   │       ├── hostname
+│   │       ├── interface
+│   │       │   ├── detail
+│   │       │   │   └── json
+│   │       │   ├── json
+│   │       │   └── <interface>
+│   │       │       └── json
+│   │       ├── neighbor
+│   │       │   ├── detail
+│   │       │   │   └── json
+│   │       │   ├── json
+│   │       │   └── <system-id>
+│   │       │       └── json
+│   │       ├── route
+│   │       │   ├── backup
+│   │       │   │   └── json
+│   │       │   ├── json
+│   │       │   └── level <level-1|level-2>
+│   │       │       ├── backup
+│   │       │       │   └── json
+│   │       │       └── json
+│   │       ├── spf-delay
+│   │       ├── summary
+│   │       │   └── json
+│   │       └── topology
+│   │           ├── json
+│   │           └── level <level-1|level-2>
+│   │               └── json
 │   ├── license
 │   ├── lldp
 │   │   ├── interfaces [<interface>]
@@ -15644,6 +16030,8 @@ operational mode
 │   │   │   └── lists
 │   │   │       └── follow
 │   │   ├── follow
+│   │   ├── isis
+│   │   │   └── follow
 │   │   ├── kernel
 │   │   │   └── follow
 │   │   ├── lldp

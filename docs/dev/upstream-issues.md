@@ -648,3 +648,47 @@ The operational normalizer preserves the available kernel listing without
 inventing an installed flag from configuration. Use the native text listing to
 inspect the option and conntrack detail for packet/byte totals. Recheck JSON
 round-trip support when upgrading nftables.
+
+
+## FRR-ISIS-001: hello-padding removal changes the default
+
+FRR 10.7.1 reload negates `isis hello padding during-adjacency-formation`.
+That negative command disables padding, while an absent setting means always
+pad. `vendor/frr/isis-reload.patch` restores the positive default form when removing
+an explicit mode. Test configure, change and deletion when upgrading FRR.
+
+## FRR-ISIS-002: table redistribution edits and removal
+
+FRR 10.7.1's native table handler returns success without updating existing entries.
+Deleting the final table destroys an already-absent child collection, leaving a
+hidden protocol/level parent that can reject subsequent `is-type` changes. Native
+return statuses are also discarded. Table attribute edits do not reach the correct
+runtime registration, and IPv6 table create/destroy callbacks are unfinished.
+
+`vendor/frr/isis-reload.patch` fixes the handler and applies per-table attributes
+through the common finish callback for both families. Recheck edits, last-entry
+removal, level changes and actual advertisement/withdrawal before removing it.
+These fixes ship in FRR `10.7.1-0~deb13u1+nvyr5`.
+
+Circuit option resets also precede removal of the final IS-IS address-family
+binding and process, so removal does not recreate an interface container missing
+its mandatory area tag. The native runtime test verifies advertisement metrics,
+route-map withdrawal, table removal and complete interface cleanup.
+
+## FRR-ISIS-003: late route-map references remain unresolved
+
+**Status:** Fixed locally in FRR `10.7.1-0~deb13u1+nvyr5`.
+
+The IS-IS map callback re-evaluates redistributed routes without refreshing the
+stored map pointer. A reference configured before its map therefore remains
+unresolved, and deletion/recreation can retain a reference to the old map object.
+Acceptance reproduced healthy adjacencies with no exported connected routes in
+both the default and named VRFs. Reapplying redistribution resolved the map and
+immediately restored advertisements; it is diagnostic evidence, not a workaround
+used by nVyR.
+
+`vendor/frr/isis-reload.patch` refreshes the reference and its usage counter before
+re-evaluation. The native regression configures the reference first, then creates,
+deletes and recreates the map while checking IPv4 and IPv6 advertisements. It fails
+on the unpatched callback. Retest this sequence before removing the patch on an
+FRR upgrade; no upstream fix or report is claimed.

@@ -34,6 +34,7 @@ CONFIGURATIONS = (CONFIGURATION, CONFIGURATION.with_name('network-features.conf'
                   CONFIGURATION.with_name('network-services.conf'),
                   CONFIGURATION.with_name('network-ospf.conf'),
                   CONFIGURATION.with_name('network-rip.conf'),
+                  CONFIGURATION.with_name('network-isis.conf'),
                   CONFIGURATION.with_name('network-lists.conf'),
                   CONFIGURATION.with_name('network-cgnat.conf'))
 LINKS = ('veth42061', 'veth42062', 'veth42063', 'veth42064', 'veth42065', 'veth42066',
@@ -129,6 +130,11 @@ def preflight(config):
 
 def configure_host(namespace, interface, ipv4, gateway4, ipv6, gateway6):
     """Represent an external dual-stack host behind each CLI-managed router LAN."""
+    # Replies must not accidentally match another test's service-port policy.
+    # This namespace-local range covers IPv4 and IPv6 automatic client binds;
+    # the scenario's service ports and CGN translation blocks start above it.
+    cmd(['ip', 'netns', 'exec', namespace, 'sysctl', '-q', '-w',
+         'net.ipv4.ip_local_port_range=32768 39999'])
     cmd(['ip', '-n', namespace, 'link', 'set', 'lo', 'up'])
     cmd(['ip', '-n', namespace, 'link', 'set', interface, 'up'])
     cmd(['ip', '-n', namespace, 'address', 'add', ipv4, 'dev', interface])

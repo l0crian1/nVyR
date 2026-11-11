@@ -61,6 +61,7 @@ logging:
         ospf: FRRouting OSPF daemon
         rip: FRRouting RIP daemon
         ripng: FRRouting RIPng daemon
+        isis: FRRouting IS-IS daemon
         dhcp-server: Kea DHCPv4 servers
         dhcpv6-server: Kea DHCPv6 servers
         ntp: Chrony time service
@@ -68,7 +69,7 @@ logging:
         dns-forwarding: Unbound DNS forwarding services
         ssh: Secure Shell service
       validators:
-        list: {values: 'system kernel authentication configd netlinkd bgp static zebra ospf rip ripng dhcp-server dhcpv6-server ntp ssh dns-forwarding lldp firewall-lists'}
+        list: {values: 'system kernel authentication configd netlinkd bgp static zebra ospf rip ripng isis dhcp-server dhcpv6-server ntp ssh dns-forwarding lldp firewall-lists'}
       children:
 
         level:

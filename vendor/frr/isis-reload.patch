@@ -1,0 +1,174 @@
+--- a/tools/frr-reload.py
++++ b/tools/frr-reload.py
+@@ -839,6 +839,12 @@
+         # If we need to remove this line we do so by adding "bgp default ipv4-unicast",
+         # not by doing a "no no bgp default ipv4-unicast"
+         if delete:
++            # The negative padding command disables padding. Removing an
++            # explicit mode must instead restore IS-IS's implicit always mode.
++            if (len(ctx_keys) == 1 and ctx_keys[0].startswith("interface ")
++                    and line in ("no isis hello padding",
++                                 "isis hello padding during-adjacency-formation")):
++                line = "no isis hello padding"
+             # RIPng's negative poisoned-reverse command disables split horizon;
+             # restoring the implicit default requires the positive simple form.
+             if (len(ctx_keys) == 1 and ctx_keys[0].startswith("interface ")
+@@ -2151,6 +2157,21 @@
+         if passive not in target.lines and active not in target.lines:
+             reset = passive if "passive-interface default" in target.lines else active
+             lines_to_add.append((ctx_keys, reset))
++
++    # Removing the final IS-IS AF binding deletes its interface container.
++    # Reset dependent circuit leaves before unbinding or deleting the process.
++    circuit_unbind = []
++    process_delete = []
++    other_deletions = []
++    for ctx_keys, line in lines_to_del:
++        if (len(ctx_keys) == 1 and ctx_keys[0].startswith("interface ")
++                and line and re.fullmatch(r"(?:ip|ipv6) router isis \S+", line)):
++            circuit_unbind.append((ctx_keys, line))
++        elif len(ctx_keys) == 1 and ctx_keys[0].startswith("router isis ") and not line:
++            process_delete.append((ctx_keys, line))
++        else:
++            other_deletions.append((ctx_keys, line))
++    lines_to_del = other_deletions + circuit_unbind + process_delete
+ 
+     return (lines_to_add, lines_to_del)
+ 
+--- a/isisd/isis_cli.c
++++ b/isisd/isis_cli.c
+@@ -1369,17 +1369,15 @@
+ 		nb_cli_enqueue_change(vty, xpath, NB_OP_DESTROY, NULL);
+ 		rv = nb_cli_apply_changes(vty, "./redistribute/%s[protocol='table'][level='%s']",
+ 					  ip, level);
+-		if (rv == CMD_SUCCESS) {
+-			if (isis_redist_table_get_first(vty, &rtda) > 0)
+-				return CMD_SUCCESS;
+-			nb_cli_enqueue_change(vty, "./table", NB_OP_DESTROY, NULL);
+-			nb_cli_apply_changes(vty, "./redistribute/%s[protocol='table'][level='%s']",
+-					     ip, level);
+-		}
+-		return CMD_SUCCESS;
+-	}
+-	if (isis_redist_table_is_present(vty, &rtda))
+-		return CMD_SUCCESS;
++		if (rv != CMD_SUCCESS || isis_redist_table_get_first(vty, &rtda) > 0)
++			return rv;
++
++		/* Remove the empty protocol/level entry, not its absent children. */
++		nb_cli_enqueue_change(vty, ".", NB_OP_DESTROY, NULL);
++		return nb_cli_apply_changes(vty, "./redistribute/%s[protocol='table'][level='%s']",
++					    ip, level);
++	}
++	/* Existing entries still need their metric and route-map updated. */
+ 
+ 	snprintf(xpath, sizeof(xpath), "./table[table='%s']", table_str);
+ 	nb_cli_enqueue_change(vty, ".", NB_OP_CREATE, NULL);
+--- a/isisd/isis_nb_config.c
++++ b/isisd/isis_nb_config.c
+@@ -1180,6 +1180,24 @@
+ 	level = yang_dnode_get_enum(dnode, "level");
+ 	area = nb_running_get_entry(dnode, NULL, true);
+ 
++	if (type == ZEBRA_ROUTE_TABLE) {
++		const struct lyd_node *entry;
++
++		/* Tables have their own attributes; never register a table-zero
++		 * redistribution from the parent list entry. */
++		LY_LIST_FOR (lyd_child(dnode), entry) {
++			if (!strmatch(entry->schema->name, "table"))
++				continue;
++			metric = yang_dnode_get_uint32(entry, "metric");
++			routemap = yang_dnode_exists(entry, "route-map")
++					   ? yang_dnode_get_string(entry, "route-map")
++					   : NULL;
++			isis_redist_set(area, level, family, type, metric, routemap, 0,
++					yang_dnode_get_uint16(entry, "table"));
++		}
++		return;
++	}
++
+ 	if (yang_dnode_exists(dnode, "metric"))
+ 		metric = yang_dnode_get_uint32(dnode, "metric");
+ 	if (yang_dnode_exists(dnode, "route-map"))
+@@ -1257,29 +1275,10 @@
+  */
+ int isis_instance_redistribute_ipv4_table_create(struct nb_cb_create_args *args)
+ {
+-	uint16_t table;
+-	int type, level;
+-	unsigned long metric = 0;
+-	const char *routemap = NULL;
+-	struct isis_area *area;
+-
+-	if (args->event != NB_EV_APPLY)
+-		return NB_OK;
+-
+-	type = yang_dnode_get_enum(args->dnode, "../protocol");
+-	level = yang_dnode_get_enum(args->dnode, "../level");
+-	area = nb_running_get_entry(lyd_parent(args->dnode), NULL, true);
+-
+-	if (yang_dnode_exists(args->dnode, "metric"))
+-		metric = yang_dnode_get_uint32(args->dnode, "metric");
+-	if (yang_dnode_exists(args->dnode, "route-map"))
+-		routemap = yang_dnode_get_string(args->dnode, "route-map");
+-
+-	table = yang_dnode_get_uint16(args->dnode, "table");
+-	isis_redist_set(area, level, AF_INET, type, metric, routemap, 0, table);
+-
+-	return NB_OK;
+-}
++	/* Both families and subsequent edits use redistribute_apply_finish. */
++	return NB_OK;
++}
++
+ int isis_instance_redistribute_ipv4_table_destroy(struct nb_cb_destroy_args *args)
+ {
+ 	struct isis_area *area;
+@@ -1358,19 +1357,25 @@
+  */
+ int isis_instance_redistribute_ipv6_table_create(struct nb_cb_create_args *args)
+ {
+-	if (args->event != NB_EV_APPLY)
+-		return NB_OK;
+-
+-	/* TODO */
++	/* Both families and subsequent edits use redistribute_apply_finish. */
+ 	return NB_OK;
+ }
+ 
+ int isis_instance_redistribute_ipv6_table_destroy(struct nb_cb_destroy_args *args)
+ {
+-	if (args->event != NB_EV_APPLY)
+-		return NB_OK;
+-
+-	/* TODO */
++	struct isis_area *area;
++	int level, type;
++	uint16_t table;
++
++	if (args->event != NB_EV_APPLY)
++		return NB_OK;
++
++	area = nb_running_get_entry(lyd_parent(args->dnode), NULL, true);
++	level = yang_dnode_get_enum(args->dnode, "../level");
++	type = yang_dnode_get_enum(args->dnode, "../protocol");
++	table = yang_dnode_get_uint16(args->dnode, "table");
++	isis_redist_unset(area, level, AF_INET6, type, table);
++
+ 	return NB_OK;
+ }
+ 
+--- a/isisd/isis_routemap.c
++++ b/isisd/isis_routemap.c
+@@ -261,6 +261,10 @@
+ 
+ 							if (redist->map_name &&
+ 							    strcmp(redist->map_name, name) == 0) {
++								/* Creation and deletion replace the map object. */
++								route_map_counter_decrement(redist->map);
++								redist->map = route_map_lookup_by_name(name);
++								route_map_counter_increment(redist->map);
+ 								isis_redist_update(area, level + 1,
+ 										   afi_skt_for_redist_protocol(
+ 											   protocol),

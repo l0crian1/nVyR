@@ -48,3 +48,8 @@ children: # Native FRR route selectors
     kind: node
     description: Routes learned through RIPNG
     command: ['static.nvyr.op', 'show', '@line']
+
+  isis:
+    kind: node
+    description: Routes learned through IS-IS
+    command: ['static.nvyr.op', 'show', '@line']

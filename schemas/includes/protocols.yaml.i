@@ -10,3 +10,4 @@ protocols:
     - file: protocols/ospfv3.yaml.i
     - file: protocols/rip.yaml.i
     - file: protocols/ripng.yaml.i
+    - file: protocols/isis.yaml.i

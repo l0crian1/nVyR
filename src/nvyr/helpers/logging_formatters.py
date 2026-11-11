@@ -16,6 +16,7 @@ SERVICES = {
     'ospf': ('ospfd', 'ospf6d'),
     'rip': ('ripd',),
     'ripng': ('ripngd',),
+    'isis': ('isisd',),
     'ntp': ('chronyd', 'nvyr-ntp'),
     'lldp': ('lldpd', 'lldpcli'),
     'ssh': ('sshd', 'sshd-session'),

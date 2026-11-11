@@ -1,0 +1,96 @@
+{% for vrf, settings in configuration['instances'].items() | sort(case_sensitive=true) -%}
+router isis nvyr{{ ' vrf ' ~ vrf if vrf != 'default' else '' }}
+{% for net in settings['net'] | sort %} net {{ net | lower }}
+{% endfor -%}
+{% set options = settings.get('options', {}) -%}
+{% if 'level' in options %} is-type {{ 'level-2-only' if options['level'] == 'level-2' else options['level'] }}
+{% endif -%}
+{% if 'metric-style' in options %} metric-style {{ options['metric-style'] }}
+{% endif -%}
+{% if 'disable-dynamic-hostname' in options %} no hostname dynamic
+{% endif -%}
+{% for key in ('advertise-high-metrics', 'advertise-passive-only', 'purge-originator', 'log-adjacency-changes', 'log-pdu-drops') -%}
+{% if key in options %} {{ key }}
+{% endif -%}
+{% endfor -%}
+{% if 'lsp-mtu' in options %} lsp-mtu {{ options['lsp-mtu'] | int }}
+{% endif -%}
+{% for key, command in [('send', 'send'), ('ignore', 'receive ignore')] -%}
+{% if key in options.get('attached-bit', {}) %} attached-bit {{ command }}
+{% endif -%}
+{% endfor -%}
+{% if 'administrative' in options.get('overload', {}) %} set-overload-bit
+{% endif -%}
+{% if 'on-startup' in options.get('overload', {}) %} set-overload-bit on-startup {{ options['overload']['on-startup'] | int }}
+{% endif -%}
+{% for level, values in settings.get('level', {}).items() | sort -%}
+{% if 'authentication' in values -%}
+{% set auth = values['authentication'] %} {{ 'area-password' if level == 'level-1' else 'domain-password' }} {{ 'clear' if auth['mode'] == 'plaintext' else 'md5' }} {{ auth['password'] }}{{ ' authenticate snp ' ~ auth['snp'] if 'snp' in auth else '' }}
+{% endif -%}
+{% set timers = values.get('timers', {}) -%}
+{% if timers.keys() | select('in', ['lsp-generation', 'lsp-refresh', 'lsp-lifetime']) | list %} lsp-timers {{ level }} gen-interval {{ timers.get('lsp-generation', 30) | int }} refresh-interval {{ timers.get('lsp-refresh', 900) | int }} max-lifetime {{ timers.get('lsp-lifetime', 1200) | int }}
+{% endif -%}
+{% if 'spf-interval' in timers %} spf-interval {{ level }} {{ timers['spf-interval'] | int }}
+{% endif -%}
+{% set frr = values.get('fast-reroute', {}) -%}
+{% if 'priority-limit' in frr %} fast-reroute priority-limit {{ frr['priority-limit'] }} {{ level }}
+{% endif -%}
+{% if 'disable-load-sharing' in frr %} fast-reroute load-sharing disable {{ level }}
+{% endif -%}
+{% for index, rule in frr.get('tiebreaker', {}).items() | sort %} fast-reroute lfa tiebreaker {{ rule['type'] }} index {{ index | int }} {{ level }}
+{% endfor -%}
+{% endfor -%}
+{% set spf = settings.get('spf', {}) -%}
+{% if 'delay' in spf -%}
+{% set delay = spf['delay'] %} spf-delay-ietf init-delay {{ delay['initial'] | int }} short-delay {{ delay['short'] | int }} long-delay {{ delay['long'] | int }} holddown {{ delay['hold-down'] | int }} time-to-learn {{ delay['time-to-learn'] | int }}
+{% endif -%}
+{% for priority, values in spf.get('prefix-priority', {}).items() | sort %} spf prefix-priority {{ priority }} {{ values['access-list'] }}
+{% endfor -%}
+{% for topology, values in settings.get('topology', {}).items() | sort %} topology {{ topology | replace('management', 'mgmt') }}{{ ' overload' if 'overload' in values else '' }}
+{% endfor -%}
+{% for family, af in settings.get('address-family', {}).items() | sort -%}
+{% for level, values in af.get('level', {}).items() | sort -%}
+{% if 'default-originate' in values -%}
+{% set default = values['default-originate'] %} default-information originate {{ family.split('-')[0] }} {{ level }}{{ ' always' if 'always' in default else '' }}{{ ' route-map ' ~ default['route-map'] if 'route-map' in default else '' }}{{ ' metric ' ~ (default['metric'] | int) if 'metric' in default else '' }}
+{% endif -%}
+{% for source, redistribution in values.get('redistribute', {}).items() | sort -%}
+{% for table, entry in (redistribution.items() if source == 'table' else [('', redistribution)]) %} redistribute {{ family.split('-')[0] }} {{ 'ospf6' if source == 'ospfv3' else source }}{{ ' ' ~ (table | int) if table else '' }} {{ level }}{{ ' metric ' ~ (entry['metric'] | int) if 'metric' in entry else '' }}{{ ' route-map ' ~ entry['route-map'] if 'route-map' in entry else '' }}
+{% endfor -%}
+{% endfor -%}
+{% endfor -%}
+{% endfor -%}
+exit
+{% for name, interface in settings.get('interface', {}).items() | sort(case_sensitive=true) -%}
+interface {{ name }}
+{% for family in interface['address-family'] | sort %} {{ 'ip' if family == 'ipv4-unicast' else 'ipv6' }} router isis nvyr
+{% endfor -%}
+{% if 'circuit-type' in interface %} isis circuit-type {{ 'level-2-only' if interface['circuit-type'] == 'level-2' else interface['circuit-type'] }}
+{% endif -%}
+{% if 'network' in interface %} {{ 'no ' if interface['network'] == 'broadcast' else '' }}isis network point-to-point
+{% endif -%}
+{% if 'passive' in interface %} {{ 'no ' if 'disable' in interface['passive'] else '' }}isis passive
+{% endif -%}
+{% if 'authentication' in interface -%}
+{% set auth = interface['authentication'] %} isis password {{ 'clear' if auth['mode'] == 'plaintext' else 'md5' }} {{ auth['password'] }}
+{% endif -%}
+{% if 'disable-three-way-handshake' in interface %} no isis three-way-handshake
+{% endif -%}
+{% if 'hello-padding' in interface %} {{ 'no ' if interface['hello-padding'] == 'disabled' else '' }}isis hello padding{{ ' during-adjacency-formation' if interface['hello-padding'] == 'during-adjacency-formation' else '' }}
+{% endif -%}
+{% for topology, values in interface.get('topology', {}).items() | sort %} {{ 'no ' if 'disable' in values else '' }}isis topology {{ topology | replace('management', 'mgmt') }}
+{% endfor -%}
+{% for level, values in interface.get('level', {}).items() | sort -%}
+{% for key in ('metric', 'priority') -%}
+{% if key in values %} isis {{ key }} {{ level ~ ' ' if key == 'metric' else '' }}{{ values[key] | int }}{{ ' ' ~ level if key == 'priority' else '' }}
+{% endif -%}
+{% endfor -%}
+{% for key, value in values.get('timers', {}).items() | sort %} isis {{ key }} {{ level ~ ' ' if key.startswith('hello-') else '' }}{{ value | int }}{{ ' ' ~ level if not key.startswith('hello-') else '' }}
+{% endfor -%}
+{% if 'lfa' in values.get('fast-reroute', {}) %} isis fast-reroute lfa {{ level }}
+{% for excluded in values['fast-reroute']['lfa'].get('exclude-interface', ()) | sort %} isis fast-reroute lfa {{ level }} exclude interface {{ excluded }}
+{% endfor -%}
+{% endif -%}
+{% endfor -%}
+exit
+{% endfor -%}
+{% endfor -%}
