@@ -17,6 +17,29 @@ from nvyr.helpers import build_metadata
 from nvyr.helpers import access
 
 
+@pytest.mark.skipif(shutil.which('git') is None, reason='checkout tests require Git')
+def test_windows_checkout_preserves_linux_packaging_line_endings(tmp_path):
+    """A fresh autocrlf checkout must not corrupt native Linux configuration files."""
+    repository = tmp_path / 'repository'
+    repository.mkdir()
+    shutil.copyfile(ROOT / '.gitattributes', repository / '.gitattributes')
+    shutil.copytree(ROOT / 'packaging', repository / 'packaging')
+
+    def git(*arguments):
+        subprocess.run(['git', '-C', str(repository), '-c', 'core.autocrlf=true', *arguments],
+                       check=True, capture_output=True, text=True)
+
+    git('init')
+    git('add', '.gitattributes', 'packaging')
+    checkout = tmp_path / 'checkout'
+    git('checkout-index', '--all', '--prefix=' + checkout.as_posix() + '/')
+
+    for source in (ROOT / 'packaging').rglob('*'):
+        if source.is_file():
+            installed = checkout / source.relative_to(ROOT)
+            assert b'\r' not in installed.read_bytes(), str(source.relative_to(ROOT))
+
+
 def test_metadata_uses_project_version_and_normalizes_time_to_utc(tmp_path):
     project = tmp_path / 'pyproject.toml'
     project.write_text('[project]\nversion = "0.2.3"\n')

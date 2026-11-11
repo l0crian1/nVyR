@@ -8,10 +8,9 @@ src/nvyr/schemas/*.json text eol=lf
 *.timer text eol=lf
 images/packages.lock text eol=lf
 images/container-sources.lock text eol=lf
-packaging/debian/* text eol=lf
-packaging/nvyr-dhcp-hosts-hook text eol=lf
+# Installed Linux configuration files must also survive fresh Windows checkouts.
+packaging/** text eol=lf
 src/nvyr/op_scripts/*.py text eol=lf
 # Unified-diff context prefixes are not source indentation or trailing whitespace.
 vendor/frr/*.patch text eol=lf whitespace=-blank-at-eol,-blank-at-eof,-space-before-tab
-packaging/initramfs/** text eol=lf
 images/bootloaders/**/*.cfg text eol=lf
