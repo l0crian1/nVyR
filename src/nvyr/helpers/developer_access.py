@@ -13,6 +13,7 @@ from nvyr.storage import atomic_json
 POLICY = Path('/config/.nvyr/login/developer.json')
 RUNTIME = Path('/run/nvyr-developer')
 RECOVERY_OWNER = Path('/var/lib/nvyr-developer/recovery.json')
+ACCOUNT_STATE = Path('/var/lib/nvyr')
 
 
 def enabled():
@@ -68,6 +69,7 @@ def schedule_disable(engine):
 
 def boot():
     """Run before configd, including when configuration recovery cannot start."""
+    from nvyr.helpers import accounts
     from nvyr.helpers.passwords import hash_password
 
     RUNTIME.mkdir(mode=0o755, exist_ok=True)
@@ -101,8 +103,16 @@ def boot():
     else:
         raise RouterError('nvyr-dev already exists outside recovery account management')
 
+    # Saved users may not exist in /etc/passwd yet on an upgraded image. Their
+    # ledger identities must remain available when configd restores accounts.
+    _, ledger = accounts.manager.ledger(ACCOUNT_STATE)
+    used = {account.pw_uid for account in pwd.getpwall()} | {entry['uid'] for entry in ledger.values()}
+    uid = next((value for value in range(1000, 60000) if value not in used), None)
+    if uid is None:
+        raise RouterError('No local user IDs remain available for developer recovery')
+
     # Recovery must remain usable when configd and the CLI cannot start.
-    subprocess.run(['useradd', '--no-create-home', '--home-dir', '/run/nvyr-developer',
+    subprocess.run(['useradd', '--uid', str(uid), '--no-create-home', '--home-dir', '/run/nvyr-developer',
                     '--gid', 'nvyr-users', '--groups', 'nvyr-access,nvyr-dev-admin',
                     '--shell', '/bin/bash', 'nvyr-dev'], check=True)
     account = pwd.getpwnam('nvyr-dev')

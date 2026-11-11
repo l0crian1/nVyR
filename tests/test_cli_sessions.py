@@ -26,6 +26,7 @@ def developer_policy(tmp_path, monkeypatch):
     monkeypatch.setattr(developer_access, 'POLICY', tmp_path / 'developer.json')
     monkeypatch.setattr(developer_access, 'RUNTIME', tmp_path / 'runtime')
     monkeypatch.setattr(developer_access, 'RECOVERY_OWNER', tmp_path / 'recovery-owner.json')
+    monkeypatch.setattr(developer_access, 'ACCOUNT_STATE', tmp_path / 'account-state')
     atomic_json(developer_access.RUNTIME / 'boot.json', {'enabled': True})
 
 
@@ -143,7 +144,9 @@ def test_live_boot_enables_developer_without_persisting_policy(developer_policy,
         developer_access.schedule_disable(None)
 
 
-def test_recovery_password_goes_only_to_local_consoles(developer_policy, monkeypatch, tmp_path, capsys):
+@pytest.mark.parametrize('reserved', [(), (1000, 1002)])
+def test_recovery_respects_saved_uids_and_keeps_password_on_local_consoles(
+        developer_policy, monkeypatch, tmp_path, capsys, reserved):
     from nvyr.helpers import passwords
 
     original = Path.read_text
@@ -155,7 +158,14 @@ def test_recovery_password_goes_only_to_local_consoles(developer_policy, monkeyp
         return original(path, *args, **kwargs)
 
     monkeypatch.setattr(Path, 'read_text', read)
-    monkeypatch.setattr(developer_access.pwd, 'getpwnam', Mock(side_effect=[KeyError(), SimpleNamespace(pw_uid=1234)]))
+    monkeypatch.setattr(accounts, 'manager', accounts.Manager())
+    atomic_json(developer_access.ACCOUNT_STATE / 'login/accounts.json',
+                {f'user{uid}': {'uid': uid} for uid in reserved})
+    monkeypatch.setattr(developer_access.pwd, 'getpwall',
+                        lambda: [SimpleNamespace(pw_uid=0), SimpleNamespace(pw_uid=1001)])
+    expected_uid = 1003 if reserved else 1000
+    monkeypatch.setattr(developer_access.pwd, 'getpwnam',
+                        Mock(side_effect=[KeyError(), SimpleNamespace(pw_uid=expected_uid)]))
     monkeypatch.setattr(developer_access.secrets, 'token_urlsafe', lambda size: 'one-boot-secret')
     monkeypatch.setattr(passwords, 'hash_password', lambda password: 'encrypted-only')
     calls = Mock()
@@ -163,6 +173,8 @@ def test_recovery_password_goes_only_to_local_consoles(developer_policy, monkeyp
     monkeypatch.setattr(developer_access, 'open', lambda path, mode: (tmp_path / Path(path).name).open(mode), raising=False)
     developer_access.boot()
     creation = next(call.args[0] for call in calls.call_args_list if call.args[0][0] == 'useradd')
+    assert creation[creation.index('--uid') + 1] == str(expected_uid)
+    assert json.loads(developer_access.RECOVERY_OWNER.read_text()) == {'uid': expected_uid}
     assert creation[creation.index('--shell') + 1] == '/bin/bash'
     assert 'one-boot-secret' in (tmp_path / 'tty0').read_text()
     assert 'one-boot-secret' in (tmp_path / 'ttyS0').read_text()
