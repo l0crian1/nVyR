@@ -3,6 +3,9 @@
 One VRF, dummy link and veth pair are retained throughout the module. Authentication
 modes, passive defaults and split-horizon variants change in place. Native packet
 checks exercise the renderer independently of the full routed functional scenario.
+Policy creation/deletion covers redistribution maps, interface maps, prefix lists
+and access lists in a named VRF. Requires disposable daemons and nVyR's VRF rule
+ordering; incompatible with unrelated routing configuration in the same container.
 """
 
 from copy import deepcopy
@@ -11,9 +14,10 @@ from pathlib import Path
 import subprocess
 
 import pytest
+from pyroute2 import IPRoute
 
 from nvyr.config_scripts import protocols_rip, policy
-from nvyr.helpers import frr_rip, frr_policy
+from nvyr.helpers import frr_rip, frr_policy, vrf_rules
 from nvyr.helpers.frr_reload import Manager
 from smoketests.support import wait_for
 
@@ -28,6 +32,10 @@ def run(*arguments):
 @pytest.fixture(scope='module')
 def native(tmp_path_factory):
     assert Path('/.dockerenv').exists(), 'native tests must not run on a shared router'
+    # Default and named routing instances share one kernel in this fixture.
+    # Use nVyR's normal VRF-before-local rules, including its isolation guard.
+    with IPRoute() as ipr:
+        vrf_rules.reconcile(ipr, lambda function, **kwargs: function(**kwargs))
     manager = Manager()
     state = tmp_path_factory.mktemp('rip-state')
     before = manager.snapshot()
@@ -193,3 +201,95 @@ def test_passive_default_transitions_preserve_explicit_modes(native):
     for settings in (active, dict(active, **{'passive-default': True}),
                      dict(passive, **{'passive-default': True}), passive, active):
         apply(native, 'rip', {'RIPNATIVE': settings})
+
+
+@pytest.mark.parametrize('protocol', ['rip', 'ripng'])
+def test_poisoned_reverse_removal_restores_implicit_default(native, protocol):
+    settings = {'interface': {'ripnative0': {'split-horizon': {'poisoned-reverse': True}}}}
+    apply(native, protocol, {'RIPNATIVE': settings})
+    apply(native, protocol, {'RIPNATIVE': {'interface': {'ripnative0': {}}}})
+    apply(native, protocol, {})
+
+
+@pytest.mark.parametrize('protocol', ['rip', 'ripng'])
+def test_recreated_instance_does_not_retain_interface_policy(native, protocol):
+    """An interface outlives its RIP instance and must discard its policy pointers."""
+    manager, state = native
+    family = '-4' if protocol == 'rip' else '-6'
+    policy_family = 'ipv4' if protocol == 'rip' else 'ipv6'
+    prefix = '192.0.2.100/32' if protocol == 'rip' else '2001:db8:506::100/128'
+    name = f'RIPNATIVE_RECREATE_{protocol}'
+    policies = {'prefix-list': {policy_family: {name: {'rule': {
+        '10': {'action': 'deny', 'prefix': prefix},
+    }}}}}
+    manager.apply('policy', policy.generate(policies, None), state, adapter=frr_policy.adapter)
+    left = {'timers': {'update': '2', 'timeout': '8', 'garbage-collection': '4'},
+            'interface': {'ripnative1': {'passive': {'disable': True}}}}
+    right = {'timers': dict(left['timers']), 'redistribute': {'connected': {}},
+             'interface': {'ripnative2': {'passive': {'disable': True},
+                           'distribute-list': {'out': {'prefix-list': name}}}}}
+    if protocol == 'rip':
+        left['version'] = right['version'] = '2'
+    apply(native, protocol, {'default': left, 'RIPNATIVE': right})
+
+    apply(native, protocol, {})
+    manager.apply('policy', policy.generate({}, None), state, adapter=frr_policy.adapter)
+    del right['interface']['ripnative2']['distribute-list']
+    apply(native, protocol, {'default': left, 'RIPNATIVE': right})
+    wait_for(lambda: run('ip', family, 'route', 'show', prefix), lambda output: 'ripnative1' in output,
+             description=f'{protocol} recreated instance without deleted filter', timeout=20)
+    run('ping', family, '-c', '1', '-W', '2', prefix.split('/')[0])
+    apply(native, protocol, {})
+
+
+@pytest.mark.parametrize('protocol', ['rip', 'ripng'])
+@pytest.mark.parametrize('attachment', ['redistribute', 'interface', 'prefix-list', 'access-list'])
+def test_vrf_policy_created_after_reference(native, protocol, attachment):
+    """Named VRFs must refresh redistribution, interface maps and filter lists.
+
+    FRR loads protocol references before route maps during boot. Creating,
+    deleting and recreating shared policy must work without reapplying the reference.
+    """
+    manager, state = native
+    family = '-4' if protocol == 'rip' else '-6'
+    policy_family = 'ipv4' if protocol == 'rip' else 'ipv6'
+    prefix = '192.0.2.100/32' if protocol == 'rip' else '2001:db8:506::100/128'
+    name = f'RIPNATIVE_LATE_{protocol}_{attachment}'
+    left = {'timers': {'update': '2', 'timeout': '8', 'garbage-collection': '4'},
+            'interface': {'ripnative1': {'passive': {'disable': True}}}}
+    right = {'timers': dict(left['timers']),
+             'interface': {'ripnative2': {'passive': {'disable': True}}},
+             'redistribute': {'connected': {}}}
+    if protocol == 'rip':
+        left['version'] = right['version'] = '2'
+    if attachment == 'redistribute':
+        right['redistribute']['connected']['route-map'] = name
+    elif attachment == 'interface':
+        right['interface']['ripnative2']['route-map'] = {'out': name}
+    else:
+        right['interface']['ripnative2']['distribute-list'] = {'out': {attachment: name}}
+
+    manager.apply('policy', policy.generate({}, None), state, adapter=frr_policy.adapter)
+    apply(native, protocol, {'default': left, 'RIPNATIVE': right})
+
+    lists = {policy_family: {name: {'rule': {'10': {'action': 'permit', 'prefix': prefix}}}}}
+    policies = {'prefix-list': lists, 'route-map': {name: {'rule': {'10': {
+        'action': 'permit', 'match': {policy_family: {'prefix-list': name}},
+    }}}}}
+    if attachment in ('prefix-list', 'access-list'):
+        policies = {attachment: lists}
+    for action in ('permit', 'deny', 'permit'):
+        # Recreate the native object; mutating an existing map alone does not
+        # exercise refresh of a null or stale pointer held by a named VRF.
+        manager.apply('policy', policy.generate({}, None), state, adapter=frr_policy.adapter)
+        if attachment in ('prefix-list', 'access-list'):
+            policies[attachment][policy_family][name]['rule']['10']['action'] = action
+        else:
+            policies['route-map'][name]['rule']['10']['action'] = action
+        manager.apply('policy', policy.generate(policies, None), state, adapter=frr_policy.adapter)
+        wait_for(lambda: run('ip', family, 'route', 'show', prefix),
+                 lambda output: ('ripnative1' in output) == (action == 'permit'),
+                 description=f'{protocol} VRF {attachment} map recreated as {action}', timeout=20)
+
+    run('ping', family, '-c', '1', '-W', '2', prefix.split('/')[0])
+    apply(native, protocol, {})

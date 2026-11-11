@@ -2,12 +2,64 @@
 
 Track dependency defects observed while developing nVyR, the evidence separating
 them from nVyR defects, and the conditions for removing temporary restrictions.
-Last reviewed: 2026-10-27.
+Last reviewed: 2026-11-11.
 
 These entries are local investigation records, not confirmation that an upstream
 report has been filed or a fix merged. No upstream report or verified fix is
 recorded for the issues below. Add report URLs, patch/commit IDs, affected versions,
 and retest results as they become available.
+
+## FRR-RIP-002: Shared policy refresh omits named VRFs
+
+**Status:** Reproduced with FRR 10.7.1 on Linux 6.18.63-nvyr-amd64 and in a
+separate disposable container. Local fix: `vendor/frr/rip-vrf-routemap.patch`,
+package revision `+nvyr4`. No upstream report or released fix is verified.
+
+Configure RIP or RIPng redistribution in a named VRF with a route-map reference
+before creating that map. The native configuration reads back correctly, but
+permitted connected routes are not advertised. Debug output reports that the
+route-map filtered the prefix. Reapplying the identical redistribution setting
+makes the route appear immediately; no interface, route or firewall change is
+needed.
+
+Both daemons' route-map creation/deletion callbacks look up only `VRF_DEFAULT`.
+The named VRF retains a null map reference when the map is created later,
+including during configuration replay. Interface map references are refreshed
+by the same callback and have the same VRF omission. The fix walks all VRFs and
+uses the existing interface and redistribution refresh functions.
+
+The prefix-list/access-list update callbacks have the same default-only scope.
+The local patch also refreshes distribute-list references in all VRFs, and
+tests both list types through creation, deletion and recreation.
+
+Interfaces also retain cached list/map pointers after their RIP instance is
+removed. Deleting the policy and recreating the instance can reuse a dangling
+pointer; the combined regression reproduced RIPng SIGSEGV in
+`prefix_list_apply_ext` from `ripng_read`. The patch clears those interface
+references when their instance association changes. An explicit regression
+deletes a filtered instance and its prefix list, then verifies unfiltered route
+exchange after recreating the instance on the same interfaces.
+
+`tests/test_rip_native.py` exercises creation, deletion and recreation after
+both reference types, checking route advertisement, withdrawal and traffic for
+IPv4 and IPv6. The combined acceptance test checks bidirectional redistribution
+between default and named VRFs before and after reboot. Retest all these paths
+when upgrading FRR; do not hide the defect by changing configuration order or
+reapplying redistribution after each policy update.
+
+See [patch provenance](../../vendor/frr/README.md).
+
+## FRR-RIP-003: RIPng poisoned-reverse removal disables split horizon
+
+**Status:** Reproduced with FRR 10.7.1; local reload correction included in
+`vendor/frr/rip-vrf-routemap.patch`, package revision `+nvyr4`.
+
+Removing `ipv6 ripng split-horizon poisoned-reverse` through the generic reload
+negation leaves `no ipv6 ripng split-horizon` in native readback. This disables
+split horizon instead of restoring the default simple mode, causing nVyR's
+readback verification and rollback to reject the result. The corrected reset
+emits `ipv6 ripng split-horizon`. Both native removal and the generated reload
+command are tested; no readback exception is introduced.
 
 ## FRR-RIP-001: Removing passive-default leaves active exceptions passive
 

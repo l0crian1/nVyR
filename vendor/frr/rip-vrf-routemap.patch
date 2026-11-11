@@ -1,0 +1,161 @@
+--- a/ripd/ripd.c
++++ b/ripd/ripd.c
+@@ -3334,11 +3334,14 @@
+ /* ARGSUSED */
+ static void rip_distribute_update_all(struct prefix_list *notused)
+ {
+-	struct vrf *vrf = vrf_lookup_by_id(VRF_DEFAULT);
++	struct vrf *vrf;
+ 	struct interface *ifp;
+ 
+-	FOR_ALL_INTERFACES (vrf, ifp)
+-		rip_distribute_update_interface(ifp);
++	/* Shared policy objects must refresh references in every VRF. */
++	RB_FOREACH (vrf, vrf_id_head, &vrfs_by_id) {
++		FOR_ALL_INTERFACES (vrf, ifp)
++			rip_distribute_update_interface(ifp);
++	}
+ }
+ /* ARGSUSED */
+ static void rip_distribute_update_all_wrapper(struct access_list *notused)
+@@ -3459,16 +3462,19 @@
+ /* ARGSUSED */
+ static void rip_routemap_update(const char *notused)
+ {
+-	struct vrf *vrf = vrf_lookup_by_id(VRF_DEFAULT);
++	struct vrf *vrf;
+ 	struct rip *rip;
+ 	struct interface *ifp;
+ 
+-	FOR_ALL_INTERFACES (vrf, ifp)
+-		rip_if_rmap_update_interface(ifp);
+-
+-	rip = vrf->info;
+-	if (rip)
+-		rip_routemap_update_redistribute(rip);
++	/* Shared policy objects must refresh references in every VRF. */
++	RB_FOREACH (vrf, vrf_id_head, &vrfs_by_id) {
++		FOR_ALL_INTERFACES (vrf, ifp)
++			rip_if_rmap_update_interface(ifp);
++
++		rip = vrf->info;
++		if (rip)
++			rip_routemap_update_redistribute(rip);
++	}
+ }
+ 
+ /* Link RIP instance to VRF. */
+--- a/ripngd/ripngd.c
++++ b/ripngd/ripngd.c
+@@ -2356,11 +2356,14 @@
+ /* Update all interface's distribute list. */
+ static void ripng_distribute_update_all(struct prefix_list *notused)
+ {
+-	struct vrf *vrf = vrf_lookup_by_id(VRF_DEFAULT);
++	struct vrf *vrf;
+ 	struct interface *ifp;
+ 
+-	FOR_ALL_INTERFACES (vrf, ifp)
+-		ripng_distribute_update_interface(ifp);
++	/* Shared policy objects must refresh references in every VRF. */
++	RB_FOREACH (vrf, vrf_id_head, &vrfs_by_id) {
++		FOR_ALL_INTERFACES (vrf, ifp)
++			ripng_distribute_update_interface(ifp);
++	}
+ }
+ 
+ static void ripng_distribute_update_all_wrapper(struct access_list *notused)
+@@ -2479,16 +2482,19 @@
+ 
+ static void ripng_routemap_update(const char *unused)
+ {
+-	struct vrf *vrf = vrf_lookup_by_id(VRF_DEFAULT);
++	struct vrf *vrf;
+ 	struct ripng *ripng;
+ 	struct interface *ifp;
+ 
+-	FOR_ALL_INTERFACES (vrf, ifp)
+-		ripng_if_rmap_update_interface(ifp);
+-
+-	ripng = vrf->info;
+-	if (ripng)
+-		ripng_routemap_update_redistribute(ripng);
++	/* Shared policy objects must refresh references in every VRF. */
++	RB_FOREACH (vrf, vrf_id_head, &vrfs_by_id) {
++		FOR_ALL_INTERFACES (vrf, ifp)
++			ripng_if_rmap_update_interface(ifp);
++
++		ripng = vrf->info;
++		if (ripng)
++			ripng_routemap_update_redistribute(ripng);
++	}
+ }
+ 
+ /* Link RIPng instance to VRF. */
+--- a/tools/frr-reload.py
++++ b/tools/frr-reload.py
+@@ -839,6 +839,11 @@
+         # If we need to remove this line we do so by adding "bgp default ipv4-unicast",
+         # not by doing a "no no bgp default ipv4-unicast"
+         if delete:
++            # RIPng's negative poisoned-reverse command disables split horizon;
++            # restoring the implicit default requires the positive simple form.
++            if (len(ctx_keys) == 1 and ctx_keys[0].startswith("interface ")
++                    and line == "ipv6 ripng split-horizon poisoned-reverse"):
++                line = "no ipv6 ripng split-horizon"
+             # OSPF reset forms do not all accept their positive-form operands.
+             if len(ctx_keys) == 1 and ctx_keys[0].startswith(("router ospf", "router ospf6")):
+                 if line.startswith("aggregation timer "):
+--- a/ripd/rip_interface.c
++++ b/ripd/rip_interface.c
+@@ -1072,13 +1072,18 @@
+ 
+ void rip_interface_sync(struct interface *ifp)
+ {
+-	struct rip_interface *ri;
+-
+-	ri = ifp->info;
+-	if (ri) {
+-		ri->rip = ifp->vrf->info;
+-		ri->ifp = ifp;
+-	}
++	struct rip_interface *ri = ifp->info;
++
++	if (!ri)
++		return;
++	if (ri->rip != ifp->vrf->info) {
++		/* Interface policy belongs to the old instance, not the link. */
++		memset(ri->list, 0, sizeof(ri->list));
++		memset(ri->prefix, 0, sizeof(ri->prefix));
++		memset(ri->routemap, 0, sizeof(ri->routemap));
++	}
++	ri->rip = ifp->vrf->info;
++	ri->ifp = ifp;
+ }
+ 
+ /* Called when interface structure allocated. */
+--- a/ripngd/ripng_interface.c
++++ b/ripngd/ripng_interface.c
+@@ -833,11 +833,17 @@
+ 
+ void ripng_interface_sync(struct interface *ifp)
+ {
+-	struct ripng_interface *ri;
+-
+-	ri = ifp->info;
+-	if (ri)
+-		ri->ripng = ifp->vrf->info;
++	struct ripng_interface *ri = ifp->info;
++
++	if (!ri)
++		return;
++	if (ri->ripng != ifp->vrf->info) {
++		/* Interface policy belongs to the old instance, not the link. */
++		memset(ri->list, 0, sizeof(ri->list));
++		memset(ri->prefix, 0, sizeof(ri->prefix));
++		memset(ri->routemap, 0, sizeof(ri->routemap));
++	}
++	ri->ripng = ifp->vrf->info;
+ }
+ 
+ static int ripng_if_new_hook(struct interface *ifp)

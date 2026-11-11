@@ -69,3 +69,35 @@ would make that interface passive even when the same reload removes
 explicit replacement exceptions retain their normal handling. Native coverage
 in `tests/test_rip_native.py` exercises both transitions and verifies configuration
 readback. Reevaluate this patch when upgrading FRR.
+
+`rip-vrf-routemap.patch` fixes the RIP and RIPng route-map creation/deletion
+callbacks, which refresh only the default VRF in FRR 10.7.1. A named VRF can
+retain an unresolved redistribution map after boot loads the reference before
+the map itself; interface map references also miss those callbacks. The patch
+refreshes the existing references across all VRFs, preserving native policy
+evaluation. `tests/test_rip_native.py` creates, deletes and recreates maps after
+both kinds of reference and checks actual route advertisement and withdrawal.
+The same default-VRF restriction affects distribute-list updates for prefix
+and access lists. Both daemons' list callbacks now also walk every VRF, with
+the same deletion/recreation coverage. Interface policy references are cleared
+when their RIP instance association changes: otherwise removing an instance,
+deleting its policy and recreating it on the same interfaces can retain a
+dangling pointer (observed as a RIPng crash in `prefix_list_apply_ext`). A
+separate regression exercises this instance deletion/recreation sequence.
+The patch also corrects RIPng's poisoned-reverse reset in `frr-reload.py`:
+`no ipv6 ripng split-horizon poisoned-reverse` disables split horizon, while
+removing the configured override should restore `ipv6 ripng split-horizon`.
+Native removal and reload-command regressions cover the implicit default.
+
+The patched native files are GPL-2.0-or-later:
+
+- [`ripd/ripd.c`](https://github.com/FRRouting/frr/blob/frr-10.7.1/ripd/ripd.c),
+  copyright (C) 1997–1999 Kunihiro Ishiguro and (C) 2005 6WIND.
+- [`ripngd/ripngd.c`](https://github.com/FRRouting/frr/blob/frr-10.7.1/ripngd/ripngd.c),
+  copyright (C) 1998–1999 Kunihiro Ishiguro.
+- [`ripd/rip_interface.c`](https://github.com/FRRouting/frr/blob/frr-10.7.1/ripd/rip_interface.c)
+  and [`ripngd/ripng_interface.c`](https://github.com/FRRouting/frr/blob/frr-10.7.1/ripngd/ripng_interface.c)
+  contain the corresponding interface association hooks.
+
+No upstream fix is claimed. Retest map creation and recreation in the default
+and named VRFs before removing the patch on a future FRR upgrade.

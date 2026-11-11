@@ -83,3 +83,12 @@ def test_ospf_reset_forms(process, before, after):
     lines = functions['lines_to_config']((f'router {process} vrf BLUE',), before, True)
 
     assert after in [line.strip() for line in lines]
+
+
+def test_ripng_poisoned_reverse_removal_restores_simple_split_horizon():
+    functions = runpy.run_path('/usr/lib/frr/frr-reload.py')
+    lines = functions['lines_to_config'](
+        ('interface eth1',), 'ipv6 ripng split-horizon poisoned-reverse', True)
+
+    assert 'ipv6 ripng split-horizon' in [line.strip() for line in lines]
+    assert not any(line.strip().startswith('no ipv6 ripng') for line in lines)

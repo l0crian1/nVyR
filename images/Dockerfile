@@ -1,4 +1,4 @@
-# builder-version: 0.1.4
+# builder-version: 0.1.5
 FROM debian:trixie
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -19,6 +19,7 @@ COPY vendor/frr/reload-ordering.patch /opt/nvyr-build/vendor/frr/reload-ordering
 COPY vendor/frr/keychain-reload.patch /opt/nvyr-build/vendor/frr/keychain-reload.patch
 COPY vendor/frr/ospf-reload.patch /opt/nvyr-build/vendor/frr/ospf-reload.patch
 COPY vendor/frr/rip-reload.patch /opt/nvyr-build/vendor/frr/rip-reload.patch
+COPY vendor/frr/rip-vrf-routemap.patch /opt/nvyr-build/vendor/frr/rip-vrf-routemap.patch
 RUN python3 /opt/nvyr-build/build_tools/frr_packages.py /opt/nvyr-frr-packages
 
 # Build the reviewed LTS kernel once, rather than tracking Debian's kernel meta-package.
