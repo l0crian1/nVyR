@@ -77,7 +77,7 @@ def test_inclusion_rejects_dynamic_source(config):
     """Learned membership cannot be copied into a static parent."""
     config.set('set firewall group address-group ipv4 LEARNED dynamic')
     config.set('set firewall group address-group ipv4 PARENT include-group LEARNED')
-    assert_firewall_commit_rejected(config, 'cannot include dynamic or geoip')
+    assert_firewall_commit_rejected(config, 'cannot include dynamic, geoip or imported')
 
 
 def test_inclusion_rejects_dynamic_parent(config):
@@ -91,7 +91,7 @@ def test_inclusion_rejects_geoip_source(config):
     """GeoIP inclusions fail before any database download or ruleset change."""
     config.set('set firewall group address-group ipv4 GEO geoip country US')
     config.set('set firewall group address-group ipv4 PARENT include-group GEO')
-    assert_firewall_commit_rejected(config, 'cannot include dynamic or geoip')
+    assert_firewall_commit_rejected(config, 'cannot include dynamic, geoip or imported')
 
 
 def test_inclusion_rejects_geoip_parent(config):

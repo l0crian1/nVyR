@@ -3,15 +3,27 @@
 Uses the ordinary shared firewall fixture. No packet/convergence checks or extra topology.
 """
 
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
+import pytest
+
 from nvyr.helpers.process import cmd
 from smoketests.assertions import assert_firewall_object, assert_in
 from smoketests.firewall_support import firewall_environment, firewall_suite
 
 
-def test_imported_groups_and_timer(config, tmp_path):
-    source = tmp_path / 'addresses'
+@pytest.fixture
+def feed_directory():
+    # configd has PrivateTmp; use a shared path for files it must import.
+    with TemporaryDirectory(prefix='nvyr-smoke-feeds-', dir='/run') as directory:
+        yield Path(directory)
+
+
+def test_imported_groups_and_timer(config, feed_directory):
+    source = feed_directory / 'addresses'
     source.write_text('192.0.2.10\n192.0.2.20\n')
-    csv = tmp_path / 'flows.csv'
+    csv = feed_directory / 'flows.csv'
     csv.write_text('192.0.2.10,198.51.100.20,443,tcp,drop\n')
 
     config.set(f'set firewall group address-group ipv4 SMOKEFEED from-list A source {source}')
