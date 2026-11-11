@@ -8,7 +8,7 @@ from nvyr.errors import RouterError, ValidationError
 from nvyr.helpers import interface_ip, interfaces
 from nvyr.helpers.link_manager import Manager
 from nvyr.op_scripts import neighbors
-from tests.test_netlink import backend, spec
+from tests.test_netlink import Message, backend, spec
 from tests.test_neighbor_dns_op import neighbor_data
 
 
@@ -114,6 +114,26 @@ def test_partial_failure_rolls_back_and_restart_keeps_ownership(backend, monkeyp
     restarted = Manager(backend.kernel, backend.dhcp, backend.path.parent, boot='first')
     restarted.replace('ethernet', {'eth1': spec()})
     assert not backend.kernel.neighbors('eth1')
+
+
+@pytest.mark.parametrize('family,address', [(2, '192.0.2.2'), (10, '2001:db8::2')])
+def test_neighbor_notifications_repair_only_owned_binding_drift(backend, family, address):
+    backend.replace('ethernet', {'eth1': spec(**{'ip-options': deepcopy(OPTIONS)})})
+    index = backend.kernel.device('eth1')['index']
+    message = Message(event='RTM_NEWNEIGH', family=family, ifindex=index, flags=0,
+                      state=128, NDA_DST=address, NDA_LLADDR='02:00:00:00:00:02')
+    assert not backend.affected([message])  # Ignore our own successful writes.
+    assert not backend.affected([Message(message, NDA_DST='192.0.2.99', state=2)])
+    assert not backend.affected([Message(message, ifindex=99999, state=2)])
+    assert not backend.affected([Message(message, flags=8, state=2)])
+    assert not backend.affected([Message(message, family=7, state=2)])
+
+    for changes in ({'state': 2}, {'NDA_LLADDR': '02:00:00:00:00:99'}, {'event': 'RTM_DELNEIGH'}):
+        backend.kernel.neighbor_entries['eth1'][address] = ('02:00:00:00:00:99', 2)
+        affected = backend.affected([Message(message, **changes)])
+        assert affected == {'eth1'}
+        backend.reconcile(affected)
+        assert backend.kernel.neighbors('eth1')[address] == ('02:00:00:00:00:02', 128)
 
 
 def test_descriptions_are_scoped_and_canonical(neighbor_data, monkeypatch):

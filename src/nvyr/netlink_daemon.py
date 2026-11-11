@@ -245,7 +245,8 @@ class Server:
                 # Subscribe before the initial audit so changes during a dump
                 # remain queued. Do not suppress ENOBUFS notification loss.
                 events.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 4 * 1024 * 1024)
-                events.bind((0, 1 | 0x10 | 0x40 | 0x100 | 0x400 | (1 << 19)))
+                # Include RTMGRP_NEIGH so static bindings recover from external changes.
+                events.bind((0, 1 | 4 | 0x10 | 0x40 | 0x100 | 0x400 | (1 << 19)))
                 events.setblocking(False)
                 selector.register(listener, selectors.EVENT_READ, 'client')
                 selector.register(events, selectors.EVENT_READ, 'kernel')

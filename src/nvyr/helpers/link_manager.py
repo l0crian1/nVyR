@@ -13,6 +13,7 @@ import logging
 import os
 from pathlib import Path
 import re
+import socket
 import time
 import uuid
 
@@ -190,6 +191,16 @@ class Manager:
             elif event in ('RTM_NEWADDR', 'RTM_DELADDR'):
                 name = self.indices.get(message['index'])
                 if name:
+                    names.add(name)
+            elif event in ('RTM_NEWNEIGH', 'RTM_DELNEIGH'):
+                # Only our static IP bindings belong here, never proxy ARP or bridge FDBs.
+                if message.get('family') not in (socket.AF_INET, socket.AF_INET6) or message.get('flags', 0) & 8:
+                    continue
+                name = self.indices.get(message['ifindex'])
+                record = self.state['records'].get(name, {})
+                mac = record.get('neighbors', {}).get(message.get_attr('NDA_DST'))
+                if mac and (event == 'RTM_DELNEIGH' or message.get('state') != 128
+                            or message.get_attr('NDA_LLADDR') != mac):
                     names.add(name)
             elif event in ('RTM_NEWROUTE', 'RTM_DELROUTE'):
                 # Only DHCP routes belong to this daemon, never FRR routes.
