@@ -97,20 +97,55 @@ def test_library_reconnect_can_confirm_without_requesting_lock(daemon):
         assert reconnected.get_config()['interfaces']['dummy']['dum0']['description'] == 'candidate'
 
 
-def test_failed_commit_exposes_partial_result_and_leaves_candidate(daemon):
+def test_failed_commit_reports_dependency_rollback_and_leaves_candidate(daemon):
     with ConfigurationSession(socket_path=daemon) as config:
         config.set('set interfaces dummy dum0')
         config.set('set firewall ipv4 input filter rule 10 description "No action"')
+        candidate = config.get_config('candidate')
 
         with pytest.raises(CommitError) as error:
             config.commit()
 
-        assert error.value.result['results']['dummy']['success']
+        assert not error.value.result['changed']
+        assert not error.value.result['results']['dummy']['success']
+        assert 'dependent configuration operation failed' in error.value.result['results']['dummy']['error']
         assert not error.value.result['results']['firewall']['success']
+        assert config.get_config() == {}
+        assert config.get_config('candidate') == candidate
 
         config.set('set firewall ipv4 input filter rule 10 action accept')
+        corrected = config.get_config('candidate')
+        result = config.commit()
 
-        assert config.commit()['results']['firewall']['success']
+        assert result['changed']
+        assert result['results']['dummy']['success'] and result['results']['firewall']['success']
+        assert config.get_config() == corrected
+        assert not config.commit()['changed']
+
+
+def test_failed_commit_exposes_independent_partial_result_and_leaves_candidate(daemon):
+    with ConfigurationSession(socket_path=daemon) as config:
+        # Hostname can be published even when firewall verification fails.
+        config.set('set system host-name router')
+        config.set('set firewall ipv4 input filter rule 10 description "No action"')
+        candidate = config.get_config('candidate')
+
+        with pytest.raises(CommitError) as error:
+            config.commit()
+
+        assert error.value.result['changed']
+        assert error.value.result['results']['system']['success']
+        assert not error.value.result['results']['firewall']['success']
+        assert config.get_config() == {'system': {'host-name': 'router'}}
+        assert config.get_config('candidate') == candidate
+
+        config.set('set firewall ipv4 input filter rule 10 action accept')
+        corrected = config.get_config('candidate')
+        result = config.commit()
+
+        assert result['results'] == {'firewall': {'success': True}}
+        assert config.get_config() == corrected
+        assert not config.commit()['changed']
 
 
 def test_configuration_snapshots_and_replace_restore_only_changed_owners(daemon):

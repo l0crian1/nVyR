@@ -146,9 +146,10 @@ def test_status_completion_and_scope(controller, session):
             controller.execute(text, caller)
 
 
-def test_commit_feedback_partial_failure_and_noop(controller, engine, session, monkeypatch):
+def test_commit_feedback_dependency_rollback_and_noop(controller, engine, session, monkeypatch):
     controller.execute('set interfaces dummy dum0', session)
     controller.execute('set firewall ipv4 input filter rule 10 description unfinished', session)
+    candidate = engine.view(session)
     monkeypatch.setattr(engine.modules['dummy'], 'apply', lambda generated, context: context.report('A report without newline'))
     chunks = []
     result = controller.execute('commit', session, on_text=chunks.append)
@@ -159,15 +160,45 @@ def test_commit_feedback_partial_failure_and_noop(controller, engine, session, m
     assert chunks.index('Applying dummy...\n') < chunks.index('A report without newline\n') < chunks.index('dummy: done\n\n')
     assert any('firewall: failed' in chunk and 'action is required' in chunk for chunk in chunks)
     assert all(chunk.endswith('\n\n') for chunk in chunks if 'firewall: failed' in chunk)
+    restored = 'dummy: failed — Restored because a dependent configuration operation failed.\n\n'
+    assert restored in chunks and chunks.index('dummy: done\n\n') < chunks.index(restored)
+    assert 'Commit failed' in result['text'] and '0 applied, 2 failed' in result['text']
+    assert 'Changes remain pending: dummy, firewall.' in result['text']
+    assert engine.running == {} and engine.commit_id == 0
+    assert engine.view(session) == candidate
+    assert engine.configuration_status(session)['changed'] == ['dummy', 'firewall']
+    assert not engine.busy and engine.activity is None
+
+    failed = controller.execute('commit', session)['text']
+    assert 'Commit failed' in failed and '0 applied, 2 failed' in failed
+    engine.discard(session)
+    assert controller.execute('commit', session)['text'] == 'No configuration changes to commit.\n'
+
+
+def test_commit_feedback_independent_partial_failure(controller, engine, session):
+    # Hostname has no dependency on the invalid firewall configuration.
+    controller.execute('set system host-name router', session)
+    controller.execute('set firewall ipv4 input filter rule 10 description unfinished', session)
+    candidate = engine.view(session)
+    chunks = []
+
+    result = controller.execute('commit', session, on_text=chunks.append)
+
+    assert 'system: done\n\n' in chunks
+    assert any('firewall: failed' in chunk and 'action is required' in chunk for chunk in chunks)
     assert 'partially completed' in result['text'] and '1 applied, 1 failed' in result['text']
     assert 'Changes remain pending: firewall.' in result['text']
+    assert engine.running == {'system': {'host-name': 'router'}}
+    assert engine.commit_id == 1 and engine.view(session) == candidate
     assert engine.configuration_status(session)['changed'] == ['firewall']
     assert not engine.busy and engine.activity is None
 
     failed = controller.execute('commit', session)['text']
     assert 'Commit failed' in failed and '0 applied, 1 failed' in failed
+    assert engine.commit_id == 1
     engine.discard(session)
     assert controller.execute('commit', session)['text'] == 'No configuration changes to commit.\n'
+    assert engine.running == {'system': {'host-name': 'router'}}
 
 
 @pytest.mark.parametrize('stream', [False, True])
