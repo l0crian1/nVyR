@@ -33,13 +33,17 @@ def install(plan):
         environment.unlink(missing_ok=True)
         return
 
+    # configd uses umask 0077; lldpcli drops privileges before connecting, so
+    # directory traversal must be explicit even when the configuration is unchanged.
+    ROOT.mkdir(parents=True, exist_ok=True, mode=0o755)
+    ROOT.chmod(0o755)
+
     unchanged = (configuration.exists() and configuration.read_text() == plan['configuration']
                  and environment.exists() and environment.read_text() == plan['environment'])
     if unchanged and run(['systemctl', 'is-active', '--quiet', UNIT]) == 0:
         control('show', 'configuration')
         return
 
-    ROOT.mkdir(parents=True, exist_ok=True, mode=0o755)
     # lldpd's unprivileged startup client reads these public advertisement settings.
     write(configuration, plan['configuration'], mode=0o644)
     write(environment, plan['environment'], mode=0o600)

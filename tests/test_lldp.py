@@ -2,6 +2,7 @@
 
 from copy import deepcopy
 import json
+import os
 from types import SimpleNamespace
 
 import pytest
@@ -94,10 +95,12 @@ def test_details_and_empty_output(monkeypatch):
     assert calls[-1] == (('show', 'interfaces', 'ports', 'eth1', 'details'), False)
 
 
-def test_install_change_noop_and_removal(tmp_path, monkeypatch):
+@pytest.mark.parametrize('mask', [0o022, 0o077])
+def test_install_change_noop_and_removal(tmp_path, monkeypatch, mask):
     calls = []
     queries = []
-    monkeypatch.setattr(lldp, 'ROOT', tmp_path)
+    directory = tmp_path / 'lldp'
+    monkeypatch.setattr(lldp, 'ROOT', directory)
     monkeypatch.setattr(lldp, 'cmd', lambda argv, **kwargs: calls.append(argv))
     monkeypatch.setattr(lldp, 'run', lambda argv: 0)
     def control(*args, **kwargs):
@@ -106,18 +109,27 @@ def test_install_change_noop_and_removal(tmp_path, monkeypatch):
     monkeypatch.setattr(lldp, 'control', control)
     plan = service.generate({'interface': {'eth1': {'port-id': 'uplink'}}}, None)
 
-    install(plan)
+    previous_mask = os.umask(mask)
+    try:
+        install(plan)
+    finally:
+        os.umask(previous_mask)
+
     assert calls == [['systemctl', 'restart', lldp.UNIT]]
     assert queries[-1] == (('show', 'interfaces', 'details'), {'raw': True})
-    assert (tmp_path / 'lldpd.conf').stat().st_mode & 0o777 == 0o644
+    assert directory.stat().st_mode & 0o777 == 0o755
+    assert (directory / 'lldpd.conf').stat().st_mode & 0o777 == 0o644
+    assert (directory / 'daemon.env').stat().st_mode & 0o777 == 0o600
+    directory.chmod(0o700)
     install(plan)
     assert len(calls) == 1
+    assert directory.stat().st_mode & 0o777 == 0o755
 
     install(service.generate({'interface': {'eth1': {}}}, None))
     assert len(calls) == 2
     install(None)
     assert calls[-1] == ['systemctl', 'stop', lldp.UNIT]
-    assert not (tmp_path / 'lldpd.conf').exists()
+    assert not (directory / 'lldpd.conf').exists()
 
 
 def test_missing_override_is_not_reported_as_applied(tmp_path, monkeypatch):

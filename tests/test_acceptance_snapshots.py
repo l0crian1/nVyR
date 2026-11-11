@@ -1,12 +1,39 @@
 """Native comparisons preserve policy differences while ignoring runtime activity."""
 
 from copy import deepcopy
+import json
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from acceptance import snapshots
 from acceptance import checks
+from smoketests import support
+
+
+@pytest.mark.parametrize('settles', [True, False])
+def test_static_neighbors_require_reconciled_permanent_state(monkeypatch, settles):
+    clock = [0.0]
+    monkeypatch.setattr(support.time, 'monotonic', lambda: clock[0])
+    monkeypatch.setattr(support.time, 'sleep', lambda seconds: clock.__setitem__(0, clock[0] + seconds))
+
+    def read(command):
+        if command[0] == 'neighbors.nvyr.op':
+            return 'Default instance peer VRF peer'
+        if command[-1] == 'veth995':
+            addresses, mac = ('198.18.192.2', '2001:db8:192::2'), '02:00:00:19:97:01'
+        else:
+            addresses, mac = ('198.18.192.1', '2001:db8:192::1'), '02:00:00:19:95:01'
+        state = 'PERMANENT' if settles and clock[0] >= 0.2 else 'REACHABLE'
+        return json.dumps([{'dst': address, 'lladdr': mac, 'state': [state]} for address in addresses])
+
+    monkeypatch.setattr(checks, 'cmd', read)
+    if settles:
+        checks.check_static_neighbors({})
+        assert clock[0] >= 0.2
+    else:
+        with pytest.raises(AssertionError, match='permanent configured neighbors'):
+            checks.check_static_neighbors({})
 
 
 def ruleset():
