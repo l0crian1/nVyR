@@ -2,7 +2,7 @@
 
 from collections import defaultdict, deque
 
-from nvyr.helpers import nftables_helpers, nftables_timeouts
+from nvyr.helpers import nftables_helpers, nftables_timeouts, cgnat
 from nvyr.helpers import nftables_formatters as nft
 from nvyr.helpers import nftables_zones as zones
 from nvyr.helpers import nftables_source_validation as source_validation
@@ -17,6 +17,11 @@ NAT_HOOKS = {'source': 'postrouting', 'destination': 'prerouting'}
 def object_paths(configuration):
     """Index native objects by their owning configuration path, without copying data."""
     result = {}
+    if cgnat.enabled(configuration):
+        result['chain', cgnat.CHAIN] = cgnat.PATH
+        result['chain', 'ipv4_nat_postrouting'] = ('nat', 'source')
+        for number, _ in cgnat.enabled(configuration):
+            result['map', cgnat.map_name(number)] = (*cgnat.PATH, 'rule', number)
     firewall = configuration.get('firewall', {})
     if nftables_helpers.configured(firewall):
         result['map', nftables_helpers.MAP_NAME] = nftables_helpers.PATH
@@ -104,7 +109,8 @@ def entrypoints(configuration):
         result['chain', entrypoint] = (targets, policy_state)
     for direction, hook in NAT_HOOKS.items():
         targets = tuple(('chain', family + '_nat_' + hook) for root, family in nft.NAT_FAMILIES.items()
-                        if direction in configuration.get(root, {}))
+                        if direction in configuration.get(root, {}) or
+                        (root == 'nat' and hook == 'postrouting' and cgnat.enabled(configuration)))
         if targets:
             result['chain', 'nat_' + hook] = (targets, {})
     return result
@@ -137,6 +143,12 @@ def _references(registrar, configuration, objects, dispatch, consumers):
                     consumers[provider].update(consumer)
 
     firewall = configuration.get('firewall', {})
+
+    # Allocation maps are consumed by the CGN chain, which follows ordinary SNAT.
+    for number, _ in cgnat.enabled(configuration):
+        consumers['map', cgnat.map_name(number)].add(('chain', cgnat.CHAIN))
+    if cgnat.enabled(configuration):
+        consumers['chain', cgnat.CHAIN].add(('chain', 'ipv4_nat_postrouting'))
 
     # CSV verdicts may jump to any named chain in their family. Rebuild those maps
     # when chains change so cached external references cannot retain deleted chains.
@@ -220,6 +232,7 @@ def _reject_responses(configuration, path):
 def _recovery_objects(manager):
     """Recovery cannot trust a previous apply's outcome; replace all owned objects."""
     objects = {('chain', hook) for hook in nft.NFT_FILTER_HOOKS}
+    objects.add(('chain', cgnat.CHAIN))
     objects.add(('map', nftables_helpers.MAP_NAME))
     objects.update(('ct helper', f'conntrack_helper_{helper}_{protocol}')
                    for helper, transports in nftables_helpers.HELPERS.items() for protocol, _ in transports)
@@ -257,6 +270,19 @@ def plan(context, manager):
     changed = set(context.get_changed()) | set(context.reapply_paths)
     ancestors = {path[:length] for path in changed for length in range(len(path) + 1)}
     affected = old_keys ^ new_keys
+    # Pool edits change map results even though maps are owned by their rule paths.
+    for configuration in (before, after):
+        for number, rule in cgnat.enabled(configuration):
+            path = (*cgnat.PATH, 'pool', rule['pool'])
+            if lookup(before, path, None) != lookup(after, path, None):
+                affected.add(('map', cgnat.map_name(number)))
+            # A table change allocates a different conntrack identity for this VRF.
+            domain = ('vrf', 'name', lookup(rule, ('vrf',), 'default'), 'table')
+            if lookup(before, domain, None) != lookup(after, domain, None):
+                affected.add(('chain', cgnat.CHAIN))
+    # Routing-domain membership is also embedded in the CGN egress guard.
+    if cgnat.interface_vrfs(before) != cgnat.interface_vrfs(after):
+        affected.add(('chain', cgnat.CHAIN))
     # The raw chain's owning path does not include its sibling source-validation node.
     # Compare it explicitly even when no interface sets are needed for the default.
     for family in FAMILIES:

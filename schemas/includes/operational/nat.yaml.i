@@ -2,6 +2,9 @@ nat:
   kind: node
   description: Installed NAT rules and active translations
   children:
+    include_schema:
+    - file: operational/cgnat.yaml.i
+
     translations:
       kind: node
       anchor: true

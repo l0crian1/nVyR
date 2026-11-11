@@ -3,7 +3,7 @@
 import ipaddress
 
 from nvyr.errors import ValidationError, Warning, recovery_required
-from nvyr.helpers import domain_groups, geoip, geoip_config, nftables, nftables_lifecycle, firewall_lists, task_schedule
+from nvyr.helpers import domain_groups, geoip, geoip_config, nftables, nftables_lifecycle, firewall_lists, task_schedule, cgnat
 from nvyr.helpers import interface_patterns, kernel_settings, nftables_helpers, nftables_timeouts
 from nvyr.helpers import nftables_modify
 from nvyr.helpers import nftables_zones
@@ -1120,12 +1120,13 @@ def generate(configuration, context):
         log_groups = logging_runtime.nft_groups(configuration, context.state_directory / 'logging')
     lifecycle = nftables_lifecycle.plan(context, nftables.manager)
     statements, cache = firewall_lists.manager.prepare(configuration, context, lifecycle['rebuild'])
-    rendered = render_rules(configuration, lifecycle, log_groups=log_groups)
+    zones = cgnat.zone_numbers(configuration, context.state_directory)
+    rendered = render_rules(configuration, lifecycle, log_groups=log_groups, cgnat_zones=zones)
     return {'rules': rendered + statements, 'list-cache': cache,
             'list-schedules': firewall_lists.schedules(firewall_lists.groups(configuration))}
 
 
-def render_rules(configuration, lifecycle, *, table='nvyr_filter', replace_table=False, log_groups=None):
+def render_rules(configuration, lifecycle, *, table='nvyr_filter', replace_table=False, log_groups=None, cgnat_zones=None):
     """Both firewall owners use the same formatters and native rule ordering."""
     return render('firewall/filter.nft.j2', {
         'configuration': configuration,
@@ -1133,6 +1134,7 @@ def render_rules(configuration, lifecycle, *, table='nvyr_filter', replace_table
         'objects': nftables_lifecycle.object_paths(configuration),
         'interface_contexts': nft_interface_contexts(configuration),
         'log_groups': log_groups or {},
+        'cgnat_zones': cgnat_zones or {'default': 0},
         'table': table,
         'replace_table': replace_table,
     })

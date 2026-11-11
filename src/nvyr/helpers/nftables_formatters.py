@@ -7,7 +7,7 @@ import ipaddress
 from collections.abc import Mapping
 from dataclasses import dataclass, replace
 
-from nvyr.helpers import interface_patterns, nftables_helpers, nftables_timeouts
+from nvyr.helpers import interface_patterns, nftables_helpers, nftables_timeouts, cgnat
 from nvyr.helpers.validators import duration_seconds, limit_amount, RATE_UNITS, DURATION_UNITS, LOG_FLAGS
 from nvyr.helpers.validators import tcp_flags_mask, tcp_flag_values, tcp_flag_requirements
 from nvyr.helpers.validators import connection_quantity, connection_label_mask
@@ -699,7 +699,8 @@ def _nft_dispatch(families, target):
 
 def nft_nat_dispatch(configuration, hook):
     direction = {'prerouting': 'destination', 'postrouting': 'source'}[hook]
-    families = [family for root, family in NAT_FAMILIES.items() if direction in configuration.get(root, {})]
+    families = [family for root, family in NAT_FAMILIES.items()
+                if direction in configuration.get(root, {}) or (root == 'nat' and hook == 'postrouting' and cgnat.enabled(configuration))]
     return _nft_dispatch(families, 'nat_' + hook)
 
 
@@ -1271,6 +1272,35 @@ def nft_nat_rule(direction, number, rule, maps=None, match_groups=None, log_grou
             parts.insert(0, guard)
     parts.extend((statement, 'comment ' + nft_comment(number, rule.get('description', ''))))
 
+    return ' '.join(parts)
+
+
+def nft_cgnat_rule(configuration, number, rule, zones, log_groups=None):
+    """Match one routing domain, then use one native address/port-interval lookup."""
+    matches = {key: value for key, value in rule.items() if key not in ('source-address', 'source-address-group')}
+    match_groups = lookup(configuration, ('firewall', 'group', 'match-group', 'ipv4'), {})
+    vrf = lookup(rule, ('vrf',), 'default')
+    parts = [f'ct zone {zones[vrf]}', 'meta l4proto { tcp, udp, icmp }']
+    sources = []
+    for first, last in cgnat.subscribers(configuration, rule):
+        source = str(ipaddress.IPv4Address(first))
+        sources.append(source if first == last else source + '-' + str(ipaddress.IPv4Address(last)))
+    parts.append('ip saddr { ' + ', '.join(sources) + ' }')
+    members = cgnat.interface_vrfs(configuration)
+    devices = sorted(name for name, owner in members.items() if owner == vrf)
+    if vrf != 'default':
+        # Include the VRF master for locally generated packets bound to that device.
+        parts.append('oifname { ' + ', '.join(f'"{device}"' for device in devices) + ' }')
+    else:
+        devices = sorted(name for name, owner in members.items() if owner != 'default')
+        if devices:
+            parts.append('oifname != { ' + ', '.join(f'"{device}"' for device in devices) + ' }')
+    parts.extend(_nft_parts('ipv4', matches, f'"[ipv4-CGN-{number}]"', match_groups, log_groups=log_groups))
+    parts.append('snat ip to ip saddr map @' + cgnat.map_name(number))
+    port_mapping = lookup(rule, ('port-mapping',), 'default')
+    if port_mapping != 'default':
+        parts.append(port_mapping)
+    parts.append('comment ' + nft_comment(number, lookup(rule, ('description',), '')))
     return ' '.join(parts)
 
 

@@ -10384,6 +10384,44 @@ set
 │       │   └── vrf <name>
 │       └── vrf <name>
 ├── nat
+│   ├── cgnat
+│   │   ├── pool <name>
+│   │   │   ├── block-size <1-65535>
+│   │   │   ├── description <text>
+│   │   │   ├── port-range <start-end>
+│   │   │   └── public-address <x.x.x.x[/x]|start-end>
+│   │   └── rule <1-999999>
+│   │       ├── allocation-offset <number>
+│   │       ├── connection
+│   │       │   └── mark [not] <0-4294967295>
+│   │       ├── counter
+│   │       │   └── group <name>
+│   │       ├── description <text>
+│   │       ├── destination-address [not] <x.x.x.x[/x]|start-end>
+│   │       ├── destination-address-group [not] <name>
+│   │       ├── destination-domain-group [not] <name>
+│   │       ├── destination-port [not] <1-65535|start-end>
+│   │       ├── destination-port-group [not] <name>
+│   │       ├── disable
+│   │       ├── inbound-interface [not] <name|prefix*>
+│   │       ├── inbound-interface-group [not] <name>
+│   │       ├── last-used
+│   │       ├── log
+│   │       │   ├── flags <tcp-sequence|tcp-options|ip-options|skuid|ether|all> [and <value> ...]
+│   │       │   ├── group <name>
+│   │       │   └── level <emerg|alert|crit|err|warn|notice|info|debug>
+│   │       ├── match-group [not] <name>
+│   │       ├── outbound-interface [not] <name|prefix*>
+│   │       ├── outbound-interface-group [not] <name>
+│   │       ├── packet-mark [not] <0-4294967295>
+│   │       ├── pool <name>
+│   │       ├── port-mapping <default|random|fully-random>
+│   │       ├── protocol [not] <tcp|udp|icmp>
+│   │       ├── source-address <x.x.x.x[/x]|start-end>
+│   │       ├── source-address-group <name>
+│   │       ├── source-port [not] <1-65535|start-end>
+│   │       ├── source-port-group [not] <name>
+│   │       └── vrf <default|name>
 │   ├── destination
 │   │   └── rule <1-999999>
 │   │       ├── counter
@@ -15650,6 +15688,14 @@ operational mode
 │   │   └── zebra
 │   │       └── follow
 │   ├── nat
+│   │   ├── cgnat
+│   │   │   ├── pool <name>
+│   │   │   ├── public-address <x.x.x.x>
+│   │   │   │   └── port <1-65535>
+│   │   │   ├── rule <number>
+│   │   │   ├── rules
+│   │   │   └── subscriber <x.x.x.x>
+│   │   │       └── vrf <name>
 │   │   ├── destination
 │   │   │   ├── detail
 │   │   │   ├── rule <number>

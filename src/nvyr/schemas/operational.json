@@ -22799,6 +22799,204 @@
           "kind": "node",
           "description": "Installed NAT rules and active translations",
           "children": {
+            "cgnat": {
+              "kind": "node",
+              "description": "Deterministic carrier-grade NAT pools and subscriber allocations",
+              "command": {
+                "argv": [
+                  "cgnat.nvyr.op",
+                  "pools"
+                ]
+              },
+              "children": {
+                "pool": {
+                  "kind": "tag_node",
+                  "description": "Show a configured public address pool",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[A-Za-z_][A-Za-z0-9_-]{0,62}"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "name": "CGN pool name"
+                  },
+                  "suggestors": [
+                    {
+                      "name": "config-path",
+                      "args": {
+                        "path": "nat cgnat pool"
+                      }
+                    }
+                  ],
+                  "command": {
+                    "argv": [
+                      "cgnat.nvyr.op",
+                      "pools",
+                      "--name",
+                      "@5"
+                    ]
+                  }
+                },
+                "rule": {
+                  "kind": "tag_node",
+                  "description": "Show a CGN policy and its first-packet NAT counters",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "integer-range": {
+                        "name": "integer-range",
+                        "args": {
+                          "minimum": 1,
+                          "maximum": 999999
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "number": "CGN policy number"
+                  },
+                  "suggestors": [
+                    {
+                      "name": "config-path",
+                      "args": {
+                        "path": "nat cgnat rule"
+                      }
+                    }
+                  ],
+                  "command": {
+                    "argv": [
+                      "cgnat.nvyr.op",
+                      "rules",
+                      "--number",
+                      "@5"
+                    ]
+                  }
+                },
+                "rules": {
+                  "kind": "node",
+                  "description": "Show all CGN policies and first-packet NAT counters",
+                  "command": {
+                    "argv": [
+                      "cgnat.nvyr.op",
+                      "rules"
+                    ]
+                  }
+                },
+                "subscriber": {
+                  "kind": "tag_node",
+                  "description": "Look up the configured public address and block for a subscriber",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "ipv4-address": {
+                        "name": "ipv4-address"
+                      }
+                    }
+                  },
+                  "hints": {
+                    "x.x.x.x": "Subscriber IPv4 address"
+                  },
+                  "command": {
+                    "argv": [
+                      "cgnat.nvyr.op",
+                      "allocation",
+                      "--subscriber",
+                      "@5"
+                    ]
+                  },
+                  "children": {
+                    "vrf": {
+                      "kind": "tag_node",
+                      "description": "Restrict lookup to a routing instance",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "regex": {
+                            "name": "regex",
+                            "args": {
+                              "pattern": "[a-zA-Z][a-zA-Z0-9_.-]{0,14}"
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "name": "VRF name or default"
+                      },
+                      "suggestors": [
+                        {
+                          "name": "config-path",
+                          "args": {
+                            "path": "vrf name"
+                          }
+                        }
+                      ],
+                      "command": {
+                        "argv": [
+                          "cgnat.nvyr.op",
+                          "allocation",
+                          "--subscriber",
+                          "@5",
+                          "--vrf",
+                          "@7"
+                        ]
+                      }
+                    }
+                  }
+                },
+                "public-address": {
+                  "kind": "tag_node",
+                  "description": "Reverse lookup a public IPv4 address and translated port or ICMP identifier",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "ipv4-address": {
+                        "name": "ipv4-address"
+                      }
+                    }
+                  },
+                  "hints": {
+                    "x.x.x.x": "Public IPv4 address"
+                  },
+                  "children": {
+                    "port": {
+                      "kind": "tag_node",
+                      "description": "Translated port or ICMP identifier to look up",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "integer-range": {
+                            "name": "integer-range",
+                            "args": {
+                              "minimum": 1,
+                              "maximum": 65535
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "1-65535": "Translated port or echo identifier"
+                      },
+                      "command": {
+                        "argv": [
+                          "cgnat.nvyr.op",
+                          "allocation",
+                          "--public",
+                          "@5",
+                          "--port",
+                          "@7"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            },
             "translations": {
               "kind": "node",
               "anchor": true,

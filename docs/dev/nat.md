@@ -66,6 +66,30 @@ set nat source rule 10 match-group CLIENTS translation address masquerade
 commit owner. Filtering, NAT and their groups apply together at firewall priority
 15, after interface scripts at priority 10. Both `nat` and `nat66` declare this same script owner.
 
+## Deterministic CGN
+
+`nat cgnat` uses the same firewall owner and transaction. `nat.verify_cgnat()`
+checks relationships, static subscriber groups, capacity, VRFs and allocation
+conflicts. CLI validators validate individual values. Allocation arithmetic in
+`helpers/cgnat.py` works on merged integer ranges and per-public-address slices;
+verification and operational inverse lookup do not expand every subscriber.
+
+The NAT Jinja template renders one exact-key map per enabled policy:
+`ipv4_addr : interval ipv4_addr . inet_service`. Its result gives SNAT the public
+address and port interval together. `ipv4_cgnat` contains ordered policies and is
+called at the end of `ipv4_nat_postrouting`. TCP, UDP and ICMP share one rule.
+The source predicate before counters limits observation to allocated subscribers.
+
+The existing VRF conntrack ledger supplies zone numbers after the VRF owner has
+applied. CGN only reads it. Interface membership produces an additional egress
+guard. Changes to pools, subscriber groups and VRF membership invalidate their
+consuming objects through the existing nftables lifecycle. Recovery discovers
+allocation maps by their reserved names. No allocator daemon or separate table
+is introduced, and ordinary firewall rollback restores the previous maps.
+
+Coverage lives in `tests/test_cgnat.py`, `smoketests/test_cgnat.py`, the shared
+`functionaltests/network/test_cgnat.py` scenario, and the acceptance NAT check.
+
 ## Structured operational output
 
 Python operational entry points expose

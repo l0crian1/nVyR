@@ -1,11 +1,30 @@
+{%- set cgnat_rules = cgnat_enabled(configuration) %}
+{%- for number, rule in cgnat_rules %}
+    {%- if ('map', cgnat_map_name(number)) in rebuild %}
+    map {{ cgnat_map_name(number) }} {
+        type ipv4_addr : interval ipv4_addr . inet_service
+        elements = { {{ cgnat_elements(configuration, rule) | join(', ') }} }
+    }
+    {%- endif %}
+{%- endfor %}
+{%- if ('chain', 'ipv4_cgnat') in rebuild %}
+    chain ipv4_cgnat {
+        {%- for number, rule in cgnat_rules %}
+        {{ nft_cgnat_rule(configuration, number, rule, cgnat_zones, log_groups) }}
+        {%- endfor %}
+    }
+{%- endif %}
 {%- for direction, hook, priority in [('source', 'postrouting', 'srcnat'), ('destination', 'prerouting', 'dstnat')] %}
     {%- for root, family in nat_families.items() %}
         {%- set nat = configuration.get(root, {}) %}
         {%- if ('chain', family + '_nat_' + hook) in rebuild %}
     chain {{ family }}_nat_{{ hook }} {
-        {%- for number, rule in numeric_items(nat[direction].get('rule', {})) if not rule.get('disable') %}
+        {%- for number, rule in numeric_items(nat.get(direction, {}).get('rule', {})) if not rule.get('disable') %}
         {{ nft_nat_rule(direction, number, rule, map_config.get(family, {}), group_config.get(family, {}), log_groups, family=family) }}
         {%- endfor %}
+        {%- if family == 'ipv4' and direction == 'source' and cgnat_rules %}
+        jump ipv4_cgnat
+        {%- endif %}
     }
         {%- endif %}
     {%- endfor %}

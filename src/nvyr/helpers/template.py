@@ -16,6 +16,7 @@ from jinja2 import Environment, FileSystemLoader, PackageLoader, StrictUndefined
 from nvyr.errors import RouterError
 from nvyr.helpers import nftables_formatters as nft
 from nvyr.helpers import nftables_helpers
+from nvyr.helpers import cgnat
 from nvyr.helpers import nftables_zones as zones
 from nvyr.helpers import nftables_source_validation as source_validation
 from nvyr.helpers.vrf_conntrack import map_elements as vrf_conntrack_elements
@@ -54,6 +55,10 @@ class TemplateRenderer:
         self._loader = (PackageLoader('nvyr', 'templates') if searchpath is None
                         else FileSystemLoader(searchpath))
         self._functions = {'json_text': json_text,
+                           'cgnat_enabled': cgnat.enabled,
+                           'cgnat_map_name': cgnat.map_name,
+                           'cgnat_elements': cgnat.elements,
+                           'nft_cgnat_rule': nft.nft_cgnat_rule,
                            'lldp_quote': lldp_quote,
                            'lldp_interface_pattern': lldp_interface_pattern,
                            'logging_severity': logging_formatters.severity,

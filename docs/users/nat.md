@@ -2,6 +2,8 @@
 
 Use `nat` for IPv4 and `nat66` for stateful IPv6-to-IPv6 translation. Each family has its own numbered source and destination rules.
 
+For deterministic public-address and per-subscriber port blocks, see [carrier-grade NAT](cgnat.md).
+
 For implementation and testing, see the [developer guide](../dev/nat.md).
 
 For complete map-based SNAT and DNAT scenarios, see [firewall maps](firewall-maps.md).

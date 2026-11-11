@@ -687,6 +687,8 @@ def check_nat(options):
     assert_firewall_object('map', 'ipv6_map_BOOTNAT', '2001:db8:195::10', '8080')
     assert_firewall_rule('ipv6_nat_prerouting', 41990, 'dnat ip6 to', '@ipv6_map_BOOTNAT')
     assert_firewall_rule('ipv6_nat_postrouting', 41990, 'masquerade')
+    assert_firewall_object('map', 'cgnat_allocation_41991', '100.127.255.1', '203.0.113.240', '4096-4607')
+    assert_firewall_rule('ipv4_cgnat', 41991, 'ct zone 0', 'snat ip to ip saddr map @cgnat_allocation_41991')
 
 
 def check_firewall_ipv4_learning_packets(options):

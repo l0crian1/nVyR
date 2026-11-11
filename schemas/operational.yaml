@@ -70,6 +70,7 @@ children: # operational
       - file: operational/nat.yaml.i
         as: nat66
         remove:
+        - /children/cgnat
         - /children/translations
         - /children/source/children/translations
         - /children/destination/children/translations

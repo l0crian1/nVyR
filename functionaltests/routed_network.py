@@ -34,7 +34,8 @@ CONFIGURATIONS = (CONFIGURATION, CONFIGURATION.with_name('network-features.conf'
                   CONFIGURATION.with_name('network-services.conf'),
                   CONFIGURATION.with_name('network-ospf.conf'),
                   CONFIGURATION.with_name('network-rip.conf'),
-                  CONFIGURATION.with_name('network-lists.conf'))
+                  CONFIGURATION.with_name('network-lists.conf'),
+                  CONFIGURATION.with_name('network-cgnat.conf'))
 LINKS = ('veth42061', 'veth42062', 'veth42063', 'veth42064', 'veth42065', 'veth42066',
          'veth42067', 'veth42068',
          'dum42061', 'dum42069', 'dum977', 'dum980', 'dum997', 'dum998', 'dum999', 'veth994', 'veth995',
@@ -72,6 +73,8 @@ def owned_names():
             index = 4 if tokens[3] in {'ipv4', 'ipv6', 'standard', 'expanded'} else 3
             names.add(tokens[index])
         elif tokens[1] == 'firewall' and tokens[3] == 'name':
+            names.add(tokens[4])
+        elif tokens[1:4] == ['nat', 'cgnat', 'pool']:
             names.add(tokens[4])
     return names
 

@@ -287,3 +287,7 @@ set firewall group map ipv4 BOOTFEED result-type verdict
 set firewall group map ipv4 BOOTFEED default-result action continue
 set firewall group map ipv4 BOOTFEED from-csv LOCAL source /config/containers/@assets/firewall-map.csv
 set firewall group map ipv4 BOOTFEED from-csv LOCAL column source-address 1 destination-address 2 destination-port 3 protocol 4 result action 5
+
+# Deterministic CGN allocations recover with the ordinary NAT hooks.
+set nat cgnat pool BOOTCGN public-address 203.0.113.240 block-size 512 port-range 4096-8191 description "Acceptance CGN pool"
+set nat cgnat rule 41991 source-address 100.127.255.1-100.127.255.3 outbound-interface dum995 pool BOOTCGN counter description "Acceptance CGN"

@@ -262,9 +262,10 @@ class Manager:
         return names
 
     def named_state(self):
-        """Discover shared counters, quotas, limits and timeout policies for recovery."""
+        """Discover shared runtime objects and private CGN maps for recovery."""
         objects = []
         patterns = {
+            'map': r'cgnat_allocation_[0-9]{1,6}',
             'counter': r'counter_group_[A-Za-z_][A-Za-z0-9_-]{0,62}',
             'quota': r'quota_group_[A-Za-z_][A-Za-z0-9_-]{0,62}',
             'limit': r'(?:ipv[46]|inet)_limit_group_[A-Za-z_][A-Za-z0-9_-]{0,62}',
