@@ -16,7 +16,7 @@ if __name__ == "__main__":
 
     raise SystemExit(pytest.main([__file__, "-v", "-s", *sys.argv[1:]]))
 
-from smoketests.assertions import assert_equal, assert_firewall_rule_packets, assert_firewall_object
+from smoketests.assertions import assert_equal, assert_firewall_rule, assert_firewall_rule_packets
 from smoketests.firewall_support import send_firewall_udp
 
 
@@ -26,9 +26,12 @@ def test_ipv4_inet_accept_before_family_default(config):
     config.set('set firewall ipv4 input filter default-action drop')
     config.commit()
 
+    # Other routed-scenario traffic can hit the default. Test delivery of our
+    # allowed and denied probes instead of requiring its global counter to be zero.
+    assert_firewall_rule('ipv4_input', 'default', r'\bdrop\b')
+    assert_equal(send_firewall_udp(1, port=53099), 0)
     assert_equal(send_firewall_udp(1), 1)
     assert_firewall_rule_packets('input', 10, 1)
-    assert_firewall_rule_packets('ipv4_input', 'default', 0)
 
 
 def test_ipv6_inet_accept_before_family_default(config):
@@ -37,6 +40,7 @@ def test_ipv6_inet_accept_before_family_default(config):
     config.set('set firewall ipv6 input filter default-action drop')
     config.commit()
 
+    assert_firewall_rule('ipv6_input', 'default', r'\bdrop\b')
+    assert_equal(send_firewall_udp(1, family='ipv6', port=53099), 0)
     assert_equal(send_firewall_udp(1, family='ipv6'), 1)
     assert_firewall_rule_packets('input', 10, 1)
-    assert_firewall_rule_packets('ipv6_input', 'default', 0)

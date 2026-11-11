@@ -1,6 +1,7 @@
 """Exercise boot protection in a disposable namespace, never on the router's links."""
 
 from copy import deepcopy
+from contextlib import nullcontext
 from dataclasses import replace
 import json
 import os
@@ -9,9 +10,10 @@ import socket
 import subprocess
 import sys
 import tempfile
+from unittest.mock import patch
 
 from nvyr.config_scripts import firewall, firewall_failsafe
-from nvyr.helpers import nftables
+from nvyr.helpers import firewall_lists, kernel_settings, nftables, task_schedule
 from nvyr.helpers.dependencies import Dependencies
 from nvyr.helpers.process import cmd
 from nvyr.modules import CommitContext
@@ -69,6 +71,10 @@ def table_snapshot():
 
 def exercise(family, scenario, directory):
     """Check one independently named scenario using a fresh isolated ruleset."""
+    # Keep list cache and schedule discovery inside the temporary test state.
+    firewall_lists.manager = firewall_lists.Manager(directory / 'lists')
+    task_schedule.UNITS = directory / 'units'
+
     address = '127.0.0.1' if family == 'ipv4' else '::1'
     configuration = {'firewall': {'fail-safe': {family: {
         'input': {'filter': {'default-action': 'drop', 'rule': {
@@ -125,19 +131,22 @@ def exercise(family, scenario, directory):
     main = firewall.get_config(main_context)
     firewall.verify(main, main_context)
     rendered = firewall.generate(main, main_context)
-    assert_in('destroy table inet nvyr_filter_failsafe', rendered)
+    assert_in('destroy table inet nvyr_filter_failsafe', rendered['rules'])
 
     if scenario == 'failure':
         # Submit a genuinely invalid native batch, bypassing the preflight check.
         before = table_snapshot()
-        invalid = rendered + '\nadd rule inet nvyr_filter input jump DOES_NOT_EXIST\n'
+        invalid = rendered['rules'] + '\nadd rule inet nvyr_filter input jump DOES_NOT_EXIST\n'
         result = subprocess.run(['nft', '-f', '-'], input=invalid, text=True, capture_output=True)
         assert_not_equal(result.returncode, 0, result.stdout + result.stderr)
         assert_equal(table_snapshot(), before)
         assert_false(packet_received(family, 44446))
         return
 
-    firewall.apply(rendered, main_context)
+    # Kernel policy belongs to host netlinkd and is tested separately. Suppress
+    # that RPC here; the real nftables apply and packet checks stay in this netns.
+    with patch.object(kernel_settings.manager, 'transaction', return_value=nullcontext()):
+        firewall.apply(rendered, main_context)
     assert_false(nftables.manager.table_exists(firewall_failsafe.TABLE))
     assert_true(packet_received(family, 44446))
 
