@@ -268,9 +268,32 @@ for driver extension points, ownership, actuation journals and compensation sema
 Before live apply, a durable transaction record stores the pre-commit explicit state.
 After successful units finish, history and current state are durably written before the
 journal is cleared. A crash in any uncertain interval leaves the journal in place.
-Startup restores the pre-commit state through all registered lifecycles before accepting
-clients. If reconciliation fails, startup fails rather than serving an unverified router.
-Publication errors likewise block further writes until restart recovery.
+Configd binds its management socket before applying startup configuration. Startup
+selects the interrupted transaction's before-state, the unconfirmed before-state, or
+saved configuration for a new boot, then attempts each registered lifecycle once.
+Schema errors exclude the entire owning script from application; an invalid firewall
+match must never become a less restrictive policy by simply removing that match.
+Independent owners, including interfaces and SSH, are still attempted.
+
+Only successfully applied sections enter running configuration. `startup_target` in
+the existing state record retains unresolved intent across daemon restarts; saved
+configuration is untouched. New configuration sessions stage that intent for repair.
+`show config-status` distinguishes applied, failed and not-applied sections and gives
+the errors. Failed scripts may have partial native side effects: absence from running
+configuration is not a claim that those effects were undone.
+
+Startup failures do not set the global unhealthy gate. Existing unsupported paths may
+be deleted explicitly, or an administrator may load a corrected configuration. Set
+and commit validation remain strict. Commit retries failed owners, including owners
+whose explicit configuration is empty. Save is blocked until startup failures are
+resolved, preventing a partial running tree from replacing the saved configuration.
+The CLI announces unresolved startup failures at login. While application is in
+progress, management reads work and mutations wait. Previously committed login roles
+remain usable if login application fails; this does not create accounts or credentials.
+
+Ordinary commit publication/compensation failures still retain their transaction and
+block competing writes until restart reconciliation. Startup catches and reports
+those reconciliation failures without terminating the management service.
 
 Confirmed commits persist their pre-state and owner before apply; the deadline starts
 when publication finishes. The lock remains pinned after the owning connection closes.
@@ -320,9 +343,10 @@ the existing transaction and commit-confirm recovery rules.
 
 Daemon restarts reconcile the durable running state. A changed Linux boot ID selects
 the separately saved boot configuration. Thus unsaved commits survive a daemon restart
-but do not become boot configuration. A machine reboot also reconciles interrupted and
-unconfirmed work before selecting saved state. Recovery reconciles the required
-states before accepting client requests.
+but do not become boot configuration. A machine reboot selects saved state after resolving interrupted/unconfirmed intent.
+Startup application runs separately from the management listener; socket availability
+and systemd readiness mean management is available, not that every section applied.
+Acceptance waits for `startup_pending` to clear and requires empty `startup_errors`.
 
 ## Scaling boundaries
 

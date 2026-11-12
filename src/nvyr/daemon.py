@@ -301,6 +301,7 @@ async def serve(engine, path, *, group=None):
                 notification.connect('\0' + address[1:] if address.startswith('@') else address)
                 notification.sendall(b'READY=1')
 
+        startup = asyncio.create_task(asyncio.to_thread(engine.startup)) if engine.startup_pending else None
         timer = asyncio.create_task(server.timer())
 
         try:
@@ -308,6 +309,8 @@ async def serve(engine, path, *, group=None):
                 await listener.serve_forever()
         finally:
             timer.cancel()
+            if startup:
+                await startup
 
             for connection in server.connections.copy():
                 connection.close()
@@ -339,7 +342,8 @@ def main():
         store = Store(directory, saved_path=saved)
         accounts.initialize(store)
         boot_id = Path("/proc/sys/kernel/random/boot_id").read_text().strip()
-        engine = Engine(schema, registry(schema), store, boot_id=boot_id, session_timeout=args.session_timeout)
+        engine = Engine(schema, registry(schema), store, boot_id=boot_id, session_timeout=args.session_timeout,
+                        defer_startup=True)
 
         try:
             asyncio.run(serve(engine, args.socket, group=args.group))

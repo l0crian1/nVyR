@@ -12,7 +12,7 @@ import uuid
 
 from nvyr.errors import BusyError, ConfirmationRequired, LockError, RouterError, ValidationError, RecoveryError, SessionExpiredError
 from nvyr.errors import Warning
-from nvyr.lexer import lex, quote
+from nvyr.lexer import Token, lex, quote
 from nvyr.modules import CommitContext
 from nvyr.render import diff_commands
 from nvyr.tree import MISSING, Mutation, MutationJournal, ReadOnlyTree, changes, lookup, overlay, projected_value
@@ -43,7 +43,7 @@ class Session:
 
 class Engine:
     def __init__(self, schema, modules, store, *, clock=time.time, boot_id=None,
-                 session_clock=time.monotonic, session_timeout=DEFAULT_SESSION_TIMEOUT):
+                 session_clock=time.monotonic, session_timeout=DEFAULT_SESSION_TIMEOUT, defer_startup=False):
         self.schema, self.modules, self.store, self.clock = schema, modules, store, clock
         self.dependencies = Dependencies(schema)
         self.session_clock = session_clock
@@ -56,48 +56,116 @@ class Engine:
         self.events, self.event_id = deque(maxlen=256), 0
         self.boot_id = boot_id
 
-        state = store.read("state.json", {"id": 0, "configuration": {}})
-        self.running, self.commit_id = state["configuration"], state["id"]
-        schema.validate_configuration(self.running)
+        self.running, self.commit_id = {}, 0
+        self.pending, self.scheduled = None, None
+        self.startup_target = None
+        self.startup_errors = {}
+        self.startup_invalid = []
+        self.startup_results = {}
+        self.startup_pending = True
+        self.startup_accounts = {}
+        self._start_activity('startup')
+        if not defer_startup:
+            self.startup()
 
-        self.pending = store.read("confirmed.json")
-        self.scheduled = None
-        scheduled = store.read('scheduled.json')
-        if scheduled:
-            store.delete('scheduled.json')
-            log.warning('Scheduled commit by %s cancelled because configd restarted', scheduled['user'])
+    def startup(self):
+        """Apply boot intent once, keeping management available after section failures."""
+        try:
+            self._startup()
+        except Exception as error:
+            # Configuration loading/publication must not take down the repair CLI.
+            # Retain the source files and expose the failure; do not invent defaults.
+            log.exception('Configuration startup failed')
+            self.startup_errors['startup'] = str(error)
+        finally:
+            with self.mutex:
+                self.startup_pending = False
+                self._finish_activity()
+                for session in self.sessions.values():
+                    self._seed_startup(session)
+                    session.commit_id = self.commit_id
 
-        transaction = store.read("transaction.json")
-
-        # A crash may leave a completed history write before state publication.
-        # Keep that immutable evidence and allocate a recovery ID; never reuse it.
-        if transaction and store.latest_id() > self.commit_id:
-            self.commit_id = store.latest_id() + 1
-
+    def _startup(self):
+        state = self.store.read("state.json", {"id": 0, "configuration": {}})
+        previous = state['configuration']
+        self.commit_id = state['id']
+        prior = self.schema.validate_configuration(previous, errors=[])
+        self.startup_accounts = {'system': {'login': lookup(prior, ('system', 'login'), {})}}
+        target = state.get('startup_target', previous)
+        transaction = self.store.read('transaction.json')
+        pending = self.store.read('confirmed.json')
         if transaction:
-            # apply may have succeeded immediately before a crash; restore all units.
-            self._restore(transaction["before"], reason="interrupted-commit", force=True)
-            store.delete("transaction.json")
+            target = transaction.get('startup_target', transaction['before'])
+            if self.store.latest_id() > self.commit_id:
+                self.commit_id = self.store.latest_id() + 1
+        if pending:
+            target = pending.get('startup_target', pending['before'])
+        if self.boot_id is not None and state.get('boot_id') != self.boot_id:
+            target = accounts.boot_configuration(self.store.read('boot.json', {}), target)
 
-        if self.pending:
-            # Conservative restart policy: never extend a disconnected confirmation lease.
-            self._restore(self.pending["before"], reason="unconfirmed-restart", force=True)
-            self.pending = None
-            store.delete("confirmed.json")
+        self.startup_target = deepcopy(target)
+        valid = self.schema.validate_configuration(target, errors=self.startup_invalid)
+        invalid_owners = set()
+        for path, message in self.startup_invalid:
+            owners = self.schema.ownership.owners_at(path)
+            invalid_owners.update(owners)
+            for owner in owners or {'startup'}:
+                self.startup_errors[owner] = self.startup_errors.get(owner, '') + message + '\n'
 
-        if boot_id is not None and state.get("boot_id") != boot_id:
-            self._restore(accounts.boot_configuration(store.read("boot.json", {}), self.running), reason="boot", force=True)
-        elif not transaction:
-            self._run_recovery(self.running, self.running, set(schema.owners), startup=True)
+        # A malformed policy is excluded as a unit, never applied with its invalid
+        # match removed. Independent owners still receive their normal boot replay.
+        applicable = self.schema.ownership.publish({}, valid, invalid_owners)
+        effective = self.schema.defaults(applicable)
+        snapshots = (self.schema.ownership.snapshot(effective),
+                     self.schema.ownership.snapshot(self.schema.defaults(prior)))
+        reapplies = reapply.plan(self.dependencies, snapshots[1].configuration, effective)
+        ordered = reapplies.order(set(self.schema.owners), self.schema)
+        for owner in ordered:
+            self._activity_owner(owner)
+            if owner in invalid_owners:
+                self.startup_results[owner] = 'Not applied'
+                continue
+            try:
+                self._lifecycle(owner, effective, prior, recovery=True, startup=True,
+                                snapshots=snapshots, reapply_paths=reapplies.paths.get(owner, ()))
+                self.startup_results[owner] = 'Applied'
+                if owner == 'login':
+                    self.startup_accounts = {'system': {'login': lookup(applicable, ('system', 'login'), {})}}
+            except Exception as error:
+                log.exception('Startup failed for %s', owner)
+                self.startup_errors[owner] = str(error)
+                self.startup_results[owner] = 'Failed'
 
-        self._persist("startup", "configd")
+        with self.mutex:
+            self.running = self.schema.ownership.publish({}, applicable, set(self.startup_errors))
+            if self.running != previous:
+                self.commit_id += 1
+            if not self.startup_errors:
+                self.startup_target = None
+            self._persist('startup', 'configd')
+            # The selected target (including failed intent) is now durable in state.
+            # A restart retries that target rather than resurrecting an old journal.
+            self.store.delete('transaction.json')
+            self.store.delete('confirmed.json')
+            if self.store.read('scheduled.json'):
+                self.store.delete('scheduled.json')
+                log.warning('Scheduled commit cancelled because configd restarted')
+
+    def _seed_startup(self, session):
+        if self.startup_target is not None:
+            session.mutations = MutationJournal([
+                Mutation('set', (), deepcopy(self.startup_target)), *session.mutations])
+            session.dependency_cache = None
 
     def _persist(self, reason, user, *, comment=None):
         for session in self.sessions.values():
             session.dependency_cache = None
 
         self.store.record(self.commit_id, self.running, reason=reason, user=user, comment=comment)
-        self.store.write("state.json", {"id": self.commit_id, "configuration": self.running, "boot_id": self.boot_id})
+        state = {"id": self.commit_id, "configuration": self.running, "boot_id": self.boot_id}
+        if self.startup_target is not None:
+            state['startup_target'] = self.startup_target
+        self.store.write("state.json", state)
 
         # Use the published tree, not another owner's possibly failed proposal.
         # This engine setting also applies when the system branch is absent.
@@ -127,6 +195,7 @@ class Engine:
             session = Session(uuid.uuid4().hex, user, vty, draft, self.commit_id)
             session.expires_at = self.session_clock() + timeout
             self.sessions[session.id] = session
+            self._seed_startup(session)
             self._live_lock()
 
             if not draft and self.lock_owner is None and not self.pending and not self.scheduled and not self.busy:
@@ -187,6 +256,9 @@ class Engine:
     def _idle(self, session):
         self.check_session(session)
         access.require('configure')
+
+        if self.startup_pending:
+            raise BusyError('Startup configuration is still being applied. Use show config-status to inspect progress.')
 
         if self.unhealthy:
             raise BusyError("Configuration changes are unavailable until recovery completes. Check the system logs and restart the configuration service after correcting the failure.")
@@ -258,6 +330,8 @@ class Engine:
             self.check_session(session)
             self._live_lock()
             candidate = self.view(session)
+            if self.startup_errors:
+                candidate = self.schema.validate_configuration(candidate, errors=[])
             changed = sorted(self.schema.ownership.snapshot(self.running).changed(
                 self.schema.ownership.snapshot(candidate)))
             holder = self.sessions.get(self.lock_owner)
@@ -275,6 +349,7 @@ class Engine:
                 'scheduled': self.scheduled_status(),
                 'lock': holder.identity() if holder else ({'session': self.lock_owner} if self.lock_owner else None),
                 'activity': activity, 'unhealthy': self.unhealthy,
+                'startup_errors': dict(self.startup_errors), 'startup_results': dict(self.startup_results),
             }
 
     def references(self, session, tokens):
@@ -429,6 +504,13 @@ class Engine:
                 return messages
 
             words = list(tokens) if absolute else list(session.edit) + list(tokens)
+            # Unsupported saved paths may be removed explicitly, but can never be
+            # created through set. Use exact existing paths, not parser guesses.
+            path = tuple(word.value if isinstance(word, Token) else word for word in words)
+            if operation == 'delete' and any(path[:len(invalid)] == invalid for invalid, _ in self.startup_invalid):
+                if projected_value(self.running, session.mutations, path) is not MISSING:
+                    self._append(session, Mutation('delete', path), check_dependencies=False)
+                    return
             cursor = self.schema.configuration_path(words, operation)
 
             if operation == "edit":
@@ -480,6 +562,7 @@ class Engine:
         with self.mutex:
             self._idle(session)
             session.mutations.clear()
+            self._seed_startup(session)
             session.dependency_cache = None
 
     def up(self, session):
@@ -568,6 +651,9 @@ class Engine:
             if self.pending:
                 raise LockError("Confirm the pending commit before saving")
 
+            if self.startup_errors:
+                raise ValidationError("Correct the startup failures and commit before saving. Use show config-status for details.")
+
             if session.mutations:
                 raise ValidationError("Commit or discard this session's pending changes before save")
 
@@ -620,10 +706,15 @@ class Engine:
 
             before = self.running
             intended = self.view(session)
+            if self.startup_errors:
+                if self.startup_target is None and not session.mutations:
+                    raise ValidationError('Startup could not read the configuration. Load a corrected configuration before committing.')
+                self.schema.validate_configuration(intended)
             access.protect_login(before, intended)
             access.protect_tasks(before, intended)
             effective = self.schema.defaults(intended)
             affected = self.schema.ownership.snapshot(before).changed(self.schema.ownership.snapshot(intended))
+            affected.update(set(self.startup_errors) & self.schema.owners.keys())
             snapshots = (self.schema.ownership.snapshot(effective),
                          self.schema.ownership.snapshot(self.schema.defaults(before)))
             reapplies = reapply.plan(self.dependencies, snapshots[1].configuration, effective)
@@ -685,6 +776,10 @@ class Engine:
 
             before = self.running
             intended = self.view(session)
+            if self.startup_errors:
+                if self.startup_target is None and not session.mutations:
+                    raise ValidationError('Startup could not read the configuration. Load a corrected configuration before committing.')
+                self.schema.validate_configuration(intended)
             access.protect_login(before, intended)
             access.protect_tasks(before, intended)
             effective = self.schema.defaults(intended)
@@ -694,6 +789,7 @@ class Engine:
             prior = self.schema.ownership.snapshot(before)
             current = self.schema.ownership.snapshot(intended)
             affected = prior.changed(current)
+            affected.update(set(self.startup_errors) & self.schema.owners.keys())
             requires = self.schema.ownership.required_parents(prior, current)
             snapshots = (self.schema.ownership.snapshot(effective),
                          self.schema.ownership.snapshot(self.schema.defaults(before)))
@@ -703,17 +799,23 @@ class Engine:
             for consumer, providers in reapplies.requires.items():
                 requires.setdefault(consumer, set()).update(providers)
 
-            if intended == before:
+            if intended == before and not self.startup_errors:
                 session.mutations.clear()
                 session.commit_id = self.commit_id
 
                 return {"commit_id": self.commit_id, "results": {}, "changed": False}
 
             # Persist the recovery target before any script can alter live state.
-            self.store.write("transaction.json", {"before": before, "id": self.commit_id, "owners": sorted(affected)})
+            transaction = {"before": before, "id": self.commit_id, "owners": sorted(affected)}
+            if self.startup_target is not None:
+                transaction['startup_target'] = self.startup_target
+            self.store.write("transaction.json", transaction)
 
             if minutes is not None:
                 pending = {"before": before, "owner": session.id, "deadline": self.clock() + minutes * 60}
+                if self.startup_target is not None:
+                    pending.update(startup_target=deepcopy(self.startup_target),
+                                   startup_errors=dict(self.startup_errors), startup_invalid=list(self.startup_invalid))
 
                 try:
                     self.store.write("confirmed.json", pending)
@@ -784,8 +886,15 @@ class Engine:
 
             with self.mutex:
                 self.running = self.schema.ownership.publish(before, intended, failed)
+                repairing = bool(self.startup_errors)
+                if repairing:
+                    self.startup_errors = {name: row['error'] for name, row in results.items() if not row['success']}
+                    self.startup_target = deepcopy(intended) if self.startup_errors else None
+                    self.startup_invalid = []
+                    for name, row in results.items():
+                        self.startup_results[name] = 'Applied' if row['success'] else 'Failed'
                 changed = self.running != before
-                if changed:
+                if changed or repairing:
                     self.commit_id += 1
                     self._persist("commit-confirm" if minutes is not None else "commit", session.user, comment=comment)
 
@@ -808,6 +917,7 @@ class Engine:
                 self.store.delete("transaction.json")
 
                 return {"commit_id": self.commit_id, "results": results, "changed": changed, "messages": messages,
+                        "startup_repaired": repairing and not self.startup_errors,
                         "elapsed": max(0, self.session_clock() - started),
                         "deadline": self.pending['deadline'] if self.pending else None}
         except Exception:
@@ -867,7 +977,7 @@ class Engine:
             if minutes is not None and confirmed_minutes != minutes:
                 raise ConfirmationRequired(f'Schedule commit in {delay:g} minutes with automatic rollback {minutes:g} minutes after completion?',
                                            details={'confirm_minutes': minutes})
-            if self.view(session) == self.running:
+            if self.view(session) == self.running and not self.startup_errors:
                 return None
 
             frozen = Session(session.id, session.user, session.vty, False, self.commit_id,
@@ -1070,6 +1180,15 @@ class Engine:
             self._restore(self.pending["before"], reason="confirmation-expired")
 
             with self.mutex:
+                if 'startup_target' in self.pending:
+                    self.startup_target = self.pending['startup_target']
+                    self.startup_errors = self.pending['startup_errors']
+                    self.startup_invalid = self.pending['startup_invalid']
+                    for name in self.startup_errors.keys() & self.schema.owners.keys():
+                        self.startup_results[name] = 'Not applied'
+                    for session in self.sessions.values():
+                        self._seed_startup(session)
+                    self._persist('confirmation-expired', 'configd')
                 self.store.delete("confirmed.json")
                 owner_id = self.pending["owner"]
                 owner = self.sessions.get(owner_id)
@@ -1098,4 +1217,6 @@ class Engine:
                     "session_commit_id": session.commit_id if session else None,
                     "session": session.id if session else None,
                     "session_expired": bool(session and session.expired),
-                    "edit": list(self.schema.command_path(session.edit)) if session else []}
+                    "edit": list(self.schema.command_path(session.edit)) if session else [],
+                    "startup_pending": self.startup_pending,
+                    "startup_errors": dict(self.startup_errors)}

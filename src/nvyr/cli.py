@@ -332,6 +332,13 @@ class CLI:
 
         self.event_cursor = status["event_id"]
 
+        errors = status.get('startup_errors', {})
+        if errors != getattr(self, 'startup_errors', {}):
+            if errors:
+                self.emit('Warning: startup configuration is incomplete: ' + ', '.join(sorted(errors)) +
+                          '. Enter configure and use show config-status for details. Failed settings remain pending.')
+            self.startup_errors = errors
+
         if status["session"] == self.session_id:
             if status.get('session_expired') and not self.session_expired:
                 self.emit('Configuration session expired. Exit configuration mode and open a new session.')
@@ -344,7 +351,8 @@ class CLI:
         while True:
             try:
                 status = await asyncio.to_thread(self.client.request, "status", after=self.event_cursor)
-                if status["events"] or (status.get('session_expired') and not self.session_expired):
+                if (status["events"] or (status.get('session_expired') and not self.session_expired)
+                        or status.get('startup_errors', {}) != getattr(self, 'startup_errors', {})):
                     await run_in_terminal(lambda: self.receive_status(status))
                 else:
                     self.receive_status(status)

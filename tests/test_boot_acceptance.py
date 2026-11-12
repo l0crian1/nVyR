@@ -55,6 +55,10 @@ def fake_agent(tmp_path, monkeypatch):
     def configure(config, options):
         state['running']['firewall'] = {'example': {}}
 
+    monkeypatch.setattr(agent, 'Client', lambda path: SimpleNamespace(
+        close=lambda: None,
+        request=lambda operation: {'startup_pending': state.get('startup_pending', False),
+                                   'startup_errors': state.get('startup_errors', {})}))
     monkeypatch.setattr(agent, 'SAVED', saved)
     monkeypatch.setattr(agent, 'ConfigurationSession', lambda **kwargs: Config())
     monkeypatch.setattr(agent, 'check_idle', lambda: None)
@@ -372,3 +376,12 @@ def test_diagnostics_collects_failed_container_units(tmp_path, monkeypatch):
     result = agent.diagnostics(tmp_path)
     assert result['commands']['container_journal'] == 'container startup failure'
     assert ['journalctl', '-b', '--no-pager', '-n', '200', '-u', 'nvyr-container-*'] in commands
+
+
+def test_readiness_waits_for_startup_and_rejects_degraded_service(fake_agent):
+    agent.prepare(fake_agent.directory, OPTIONS)
+    fake_agent.state.update(boot='after', startup_pending=True)
+    assert not agent.ready(fake_agent.directory)['ready']
+    fake_agent.state.update(startup_pending=False, startup_errors={'firewall': 'native apply failed'})
+    with pytest.raises(RuntimeError, match='Startup configuration failed'):
+        agent.ready(fake_agent.directory)

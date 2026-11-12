@@ -211,6 +211,17 @@ def daemon(tmp_path, request):
 
             time.sleep(.02)
 
+        # The socket is deliberately available while boot configuration applies.
+        # These command tests need completed startup, whether healthy or degraded.
+        client = Client(path)
+        try:
+            while client.request('status').get('startup_pending'):
+                if time.monotonic() > deadline:
+                    pytest.fail('Configuration startup did not finish')
+                time.sleep(.02)
+        finally:
+            client.close()
+
         yield path
     finally:
         if process.poll() is None:

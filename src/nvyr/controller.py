@@ -380,6 +380,9 @@ class Controller:
         view = self.engine.view(session) if session else running
         candidate_sections = defaults and command == 'candidate'
 
+        if defaults and self.engine.startup_errors:
+            self.engine.schema.validate_configuration(view)
+
         if candidate_sections:
             running, view = self._candidate_sections(running, view)
         elif defaults:

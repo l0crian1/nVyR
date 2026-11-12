@@ -46,6 +46,8 @@ def commit_progress(schema, event, owner, value):
 
 def commit_summary(schema, result):
     if not result['results']:
+        if result.get('startup_repaired'):
+            return 'Startup configuration errors resolved. Use save to persist the corrected configuration.\n'
         return 'No configuration changes to commit.\n'
 
     failed = [owner for owner, row in result['results'].items() if not row['success']]
@@ -124,4 +126,13 @@ def configuration_status(schema, status):
         ('Recovery required', 'Yes' if status['unhealthy'] else 'No'),
     ]
 
-    return tabulate(rows, tablefmt='presto') + '\n'
+    text = tabulate(rows, tablefmt='presto') + '\n'
+    errors = status.get('startup_errors', {})
+    if errors:
+        text += '\nStartup configuration is incomplete. Failed sections may have partial runtime state.\n'
+        text += 'Correct the pending configuration, then commit and save.\n\n'
+        results = status.get('startup_results', {})
+        details = [(name, results.get(name, 'Not applied'), errors.get(name, '').strip())
+                   for name in sorted(results.keys() | errors.keys())]
+        text += tabulate(details, headers=['Section', 'Startup result', 'Error']) + '\n'
+    return text

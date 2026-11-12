@@ -269,6 +269,39 @@ local to the CLI process, and loaded set paths are absolute even inside `edit`.
 Set imports report errors by line; always review those errors and the resulting
 candidate before committing. Neither import format applies or saves automatically.
 
+## Correcting startup configuration failures
+
+A configuration error at boot does not stop the management service. nVyR attempts
+independent sections, including interfaces and SSH, and displays a warning when you
+log in. In configuration mode, inspect the failure and the retained settings:
+
+```text
+configure
+show config-status
+show
+```
+
+`show config-status` lists the startup result for each section and its error. Running
+configuration contains successfully applied sections; failed settings remain pending.
+A failed section may have partially changed its native service, so inspect its
+operational output when needed.
+
+Remove an unsupported setting by its exact existing path, or load a corrected
+configuration. For example, after upgrading from a version with `firewall fail-safe`:
+
+```text
+delete firewall fail-safe
+commit
+save
+```
+
+If the configuration is valid and the underlying failure has been corrected, `commit`
+retries the failed sections. Save remains unavailable until the failures are resolved.
+The saved file is not changed automatically, and restarting configd retains unresolved
+settings. `discard` removes your edits but retains the startup configuration awaiting
+repair. Use ordinary `show` output to inspect unsupported settings; they cannot be
+rendered as current `set` commands.
+
 ## Output filters and paging
 
 ```text

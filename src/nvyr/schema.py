@@ -838,8 +838,22 @@ class Schema:
 
         return effective
 
-    def validate_configuration(self, configuration):
-        """Validate structure and leaf values; empty containers are valid intent."""
+    def validate_configuration(self, configuration, *, errors=None):
+        """Validate configuration, optionally collecting invalid paths for startup.
+
+        The collecting form returns a schema-valid projection. Callers must exclude
+        the owners of invalid paths from application, not apply a truncated policy.
+        The original configuration is never modified.
+        """
+
+        def visit(node, value, path):
+            try:
+                return walk(node, value, path)
+            except ValidationError as error:
+                if errors is None:
+                    raise
+                errors.append((path, str(error)))
+                return MISSING
 
         def validate_at(node, value, path):
             try:
@@ -867,23 +881,37 @@ class Schema:
                 else:
                     validate_at(node, value, path)
 
-                return
+                return value
 
             if not isinstance(value, dict):
                 raise ValidationError(f"Expected named configuration settings under {' '.join(path) or 'the root'!r}, enclosed in JSON braces.")
 
             if node["kind"] == "tag_node":
+                result = {}
                 for tag, children in value.items():
                     validate_at(node, tag, path)
-                    walk({"kind": "node", "children": node.get("children", {}), "tag_instance": True}, children, path + (tag,))
+                    child = visit({"kind": "node", "children": node.get("children", {}), "tag_instance": True}, children, path + (tag,))
+                    if child is not MISSING:
+                        result[tag] = child
             else:
+                result = {}
                 for name, child in value.items():
                     if name not in node.get("children", {}):
-                        raise ValidationError(f"Unknown configuration key {' '.join(path + (name,))}")
+                        message = f"Unknown configuration key {' '.join(path + (name,))}"
+                        if errors is None:
+                            raise ValidationError(message)
+                        errors.append((path + (name,), message))
+                        continue
 
-                    walk(node["children"][name], child, path + (name,))
+                    child = visit(node["children"][name], child, path + (name,))
+                    if child is not MISSING:
+                        result[name] = child
 
-        walk(self.root, configuration, ())
+            return result
+
+        result = visit(self.root, configuration, ())
+        if errors is not None:
+            return {} if result is MISSING else result
 
 
 def completion_extension(prefix, candidates):

@@ -54,7 +54,11 @@ def peer_role(engine, user):
     if user == 'nvyr-dev' and developer_access.recovery_active():
         return 'dev-admin'
 
-    value = lookup(engine.running, ('system', 'login', 'user', user, 'role'), None)
+    configuration = engine.running
+    if (engine.startup_pending or 'login' in engine.startup_errors
+            or (engine.startup_errors and 'login' not in engine.startup_results)):
+        configuration = engine.startup_accounts
+    value = lookup(configuration, ('system', 'login', 'user', user, 'role'), None)
     if value not in ROLE_GROUPS:
         raise RouterError('This account is not authorized for nVyR')
     if value == 'dev-admin' and not developer_access.enabled():

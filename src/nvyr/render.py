@@ -3,6 +3,7 @@
 import json
 from collections.abc import Mapping
 from nvyr.lexer import Token, quote
+from nvyr.errors import ValidationError
 from nvyr.tree import MISSING, changes, put, lookup
 
 
@@ -76,6 +77,9 @@ def set_commands(schema, tree, path=(), node=None):
         yield "set " + " ".join(map(quote, path))
     else:
         for key, child in sorted(tree.items()):
+            if key not in node.get('children', {}):
+                raise ValidationError(f"Unsupported configuration path: {' '.join(path + (key,))}. "
+                                      'Use show without commands to inspect the saved values, then delete the unsupported path.')
             if node['children'][key].get('_negation_branch'):
                 for field, excluded in sorted(child.items()):
                     yield from set_commands(schema, excluded, path + (field, 'not'),
@@ -137,6 +141,12 @@ def diff_commands(schema, before, after, path=(), *, prefix=None, include_unchan
                 keys.append('not')
 
             for key in keys:
+                if node['kind'] != 'tag_node' and key not in node.get('children', {}):
+                    if key not in new:
+                        yield 'delete ' + ' '.join(map(quote, path + (key,)))
+                        continue
+                    raise ValidationError(f"Unsupported configuration path: {' '.join(path + (key,))}. "
+                                          'Use show without commands to inspect the saved values, then delete the unsupported path.')
                 child = {"kind": "node", "children": node.get("children", {}), "tag_instance": True} if node["kind"] == "tag_node" else node["children"][key]
                 if child.get('_negation_branch'):
                     left, right = old.get(key, {}), new.get(key, {})

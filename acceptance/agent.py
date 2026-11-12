@@ -1,7 +1,7 @@
 """Router-side phases invoked by the external acceptance runner over SSH."""
 
 import base64
-from contextlib import redirect_stdout
+from contextlib import closing, redirect_stdout
 import json
 import os
 from pathlib import Path
@@ -15,6 +15,7 @@ import uuid
 from acceptance import baseline, snapshots
 from acceptance.checks import CheckSkipped
 from nvyr.config_session import ConfigurationSession
+from nvyr.protocol import Client
 from nvyr.storage import atomic_json, read_saved, sync_directory
 
 
@@ -148,6 +149,13 @@ def ready(directory):
     states = command(['systemctl', 'is-active', *SERVICES]).splitlines()
     if states != ['active'] * len(SERVICES):
         raise RuntimeError(f'Services have not all recovered: {dict(zip(SERVICES, states))}')
+    # A reachable management socket is intentionally not proof of successful boot replay.
+    with closing(Client('/run/nvyr/configd.sock')) as client:
+        status = client.request('status')
+    if status['startup_pending']:
+        return {'ready': False, **current}
+    if status['startup_errors']:
+        raise RuntimeError(f"Startup configuration failed: {status['startup_errors']}")
     with ConfigurationSession() as config:
         config.get_config()
     return {'ready': True, **current}
