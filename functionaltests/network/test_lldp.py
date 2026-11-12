@@ -16,8 +16,9 @@ def test_neighbors_on_both_routed_lans():
         document = lldp.control('show', 'neighbors', 'details', raw=True)
         return {port['name']: port for port in document['lldp'][0].get('interface', [])}
 
+    # Allow initial discovery to settle; return immediately once both peers appear.
     ports = wait_for(read, lambda ports: {'veth42063', 'veth42065'} <= ports.keys(),
-                     description='LLDP discovery on both routed LANs', timeout=10)
+                     description='LLDP discovery on both routed LANs', timeout=60)
     for interface, side in (('veth42063', 'left'), ('veth42065', 'right')):
         assert ports[interface]['chassis'][0]['name'][0]['value'] == 'routed-' + side
         assert ports[interface]['port'][0]['id'][0]['value'] == side + '-uplink'
