@@ -4,18 +4,6 @@ firewall:
   command: ['firewall.nvyr.op', 'show']
   children: # firewall
 
-    fail-safe:
-      kind: node
-      description: Installed early firewall protection, when active
-      command: ['firewall.nvyr.op', 'show', '--failsafe']
-      children:
-
-        detail:
-          kind: leaf_node
-          valueless: true
-          description: Detailed early firewall rules and groups
-          command: ['firewall.nvyr.op', 'show', '--failsafe', '--detail']
-
     domain-group:
       kind: node
       description: DNS-backed firewall group lookups

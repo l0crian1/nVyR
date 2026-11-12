@@ -278,5 +278,3 @@ show conntrack ipv4 destination-address 10.60.10.1 detail
 show conntrack statistics
 
 # Normally inactive after the main firewall has loaded: that is the expected result.
-show firewall fail-safe
-show firewall fail-safe detail

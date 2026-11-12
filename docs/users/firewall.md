@@ -19,14 +19,14 @@ lookups, their benefit over long rule lists, and how to inspect matching traffic
 - [Limits](#rate-and-connection-limits), [shared limits/counters](#shared-limit-and-counter-groups),
   [quotas](#byte-quotas), [logging](#kernel-logging-options), and [reject responses](#reject-responses).
 - [Flowtables](#flowtables), [global enrollment](#global-flowtable-enrollment),
-  [global kernel settings](#global-kernel-settings), [fail-safe protection](firewall-failsafe.md),
+  [global kernel settings](#global-kernel-settings),
   and [operational views](nftables-operational-data.md#cli-display).
 
 ## Packet tracing
 
 Add the valueless `nftrace` option to a rule to trace packets that reach and match
 it. This is available in IPv4, IPv6 and inet rules, including named chains, raw
-hooks, ingress, and the fail-safe firewall. It sets `meta nftrace set 1` after
+hooks and ingress. It sets `meta nftrace set 1` after
 matches and before the verdict; it does not change the verdict.
 
 ```sql
@@ -182,7 +182,7 @@ normal firewall policy still applies.
 Each family requires at least one `interface`. Repeat it for multiple interfaces,
 or use a trailing prefix wildcard. Interfaces do not need to exist at commit or
 boot: the kernel attaches the hook when a matching device appears. IPv4 and IPv6
-can select different interfaces. Ingress is not available under `firewall fail-safe`.
+can select different interfaces.
 
 ```sql
 set firewall ipv4 ingress filter interface eth1
@@ -398,8 +398,7 @@ exists. Expired offloaded connections return to normal connection tracking.
 
 Kernel changes and nftables use compensating rollback: a failed apply restores
 previous tunable values and the future-interface profile. They are not a single
-atomic kernel transaction. These options are deliberately excluded from the
-fail-safe subtree so it cannot define competing global settings.
+atomic kernel transaction.
 
 ## Configuration
 
@@ -788,9 +787,6 @@ show firewall inet prerouting raw
 show firewall inet prerouting raw detail
 ```
 
-The same source-validation syntax is available under `firewall fail-safe` and
-uses its separate table and boot-time lifecycle.
-
 ### FIB lookups
 
 FIB matches query routing information using the packet's source or destination
@@ -958,7 +954,7 @@ expose `modify`. Named chains are checked against every caller, including nested
 zone policies and verdict-map targets.
 
 Family-neutral `inet` rules expose marks and MSS. DSCP and TTL remain under `ipv4`
-and `ipv6`. The same supported settings are available in the fail-safe firewall.
+and `ipv6`.
 
 ```text
 set firewall ipv4 forward filter rule 20 description "Clamp forwarded TCP handshakes"

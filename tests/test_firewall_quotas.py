@@ -178,7 +178,7 @@ def test_quota_normalization_and_display(monkeypatch, capsys):
     }
     assert table['chains']['ipv6_output']['rules'][0]['quota'] == {'group': 'SHARED'}
 
-    monkeypatch.setattr(firewall, '_load_table', lambda *, failsafe=False: table)
+    monkeypatch.setattr(firewall, '_load_table', lambda: table)
     for detail in (False, True):
         firewall.show(section='group', group_kind='quota-group', group_name='SHARED', detail=detail)
         text = capsys.readouterr().out

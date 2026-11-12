@@ -91,7 +91,6 @@ def test_event_paths_and_unknown_events():
     assert record['path'] == 'firewall ipv4 input filter rule 10'
     assert record['id'] == '12ab' and record['raw'] == EVENT
     assert trace.rule_path('nvyr_filter', 'forward', '20|') == 'firewall inet forward filter rule 20'
-    assert trace.rule_path('nvyr_filter_failsafe', 'ipv6_name_SSH', '10|') == 'firewall fail-safe ipv6 name SSH rule 10'
     assert trace.rule_path('nvyr_filter', 'ipv4_nat_prerouting', '30|') == 'nat destination rule 30'
     assert trace.rule_path('nvyr_filter', 'ipv6_nat_postrouting', '30|') == 'nat66 source rule 30'
     assert trace.rule_path('foreign', 'ipv4_input', '10|') is None

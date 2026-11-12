@@ -135,13 +135,6 @@ def test_explicit_global_override_and_delete_restore_effective_default(controlle
     assert kernel_settings.firewall_values(effective)['ipv4 echo-request'] == 'enable'
 
 
-def test_failsafe_has_no_second_kernel_settings_owner():
-    schema = Schema.bundled()
-    with pytest.raises(ValidationError):
-        schema.validate_configuration({'firewall': {'fail-safe': {
-            'global-options': {'ipv4': {'echo-request': 'disable'}}}}})
-
-
 def test_inverted_boolean_and_delete_reset(manager):
     path = seed(manager, 'ipv4 echo-request', '0')
     with manager.transaction({'ipv4 echo-request': 'disable'}):
@@ -319,5 +312,5 @@ def test_firewall_apply_keeps_kernel_transaction_open_through_nft(monkeypatch, t
     monkeypatch.setattr(nftables.manager, 'apply', apply)
     context = SimpleNamespace(effective={}, state_directory=tmp_path)
     with pytest.raises(RouterError, match='nft rejected'):
-        firewall.apply('candidate', context)
+        firewall.apply({'rules': 'candidate', 'list-cache': {}, 'list-schedules': []}, context)
     assert events == ['kernel', 'nft', 'restore']

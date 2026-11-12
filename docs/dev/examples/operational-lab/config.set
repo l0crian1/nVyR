@@ -178,12 +178,3 @@ set firewall zone-policy from-zone OPSLOCAL to-zone OPSLAN ipv4-policy OPSPASS i
 
 set nat destination rule 50000 inbound-interface veth60 protocol tcp destination-address 10.60.10.1 destination-port 8080 translation address 10.60.40.10 translation port 8080
 set nat source rule 50000 outbound-interface pd-OPSNET source-address 10.60.0.0/16 destination-address 10.60.40.10 translation address masquerade
-
-set firewall fail-safe ipv4 input filter default-action drop
-set firewall fail-safe ipv4 input filter rule 10 inbound-interface lo action accept
-set firewall fail-safe ipv4 input filter rule 20 protocol tcp destination-port 22 action accept
-set firewall fail-safe ipv4 input filter rule 30 protocol udp source-port 67 destination-port 68 action accept
-set firewall fail-safe ipv6 input filter default-action drop
-set firewall fail-safe ipv6 input filter rule 10 inbound-interface lo action accept
-set firewall fail-safe ipv6 input filter rule 20 protocol tcp destination-port 22 action accept
-set firewall fail-safe ipv6 input filter rule 30 protocol ipv6-icmp action accept

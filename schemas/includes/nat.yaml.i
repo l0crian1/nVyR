@@ -3,10 +3,11 @@ nat:
   description: IPv4 network address translation
   script:
     name: firewall
-    priority: 15
+    priority: 6
     watch:
-    - interfaces
     - vrf name * table
+    watch-before:
+    - interfaces
     - container network
   children: # nat
 

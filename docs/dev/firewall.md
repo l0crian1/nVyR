@@ -13,13 +13,16 @@ nftables syntax through `nft_rule()` and the common keymap in `helpers/nftables_
 CLI schema for individual values/paths and `verify()` for cross-field requirements;
 helpers only format expressions and preserve deterministic ordering. nftables
 normalizes address and port sets.
-Its schema priority is 15, after interface owners at 10, during commits and recovery.
-Flowtable devices do not need to exist when the firewall loads. Firewall and NAT
-share one commit owner; other owners retain their independent commit behavior.
+Its schema priority is 6, after VRF conntrack allocation (4) and VRFs (5), and
+before interface owners (10–12). Firewall, NAT, NAT66 and CGNAT share one commit
+owner. Interface and container-network watches run this owner before those changes,
+so rule generation uses the intended interface/VRF configuration.
 
-Optional [fail-safe protection](firewall-failsafe.md) uses the shared firewall tree
-at `firewall fail-safe`. Its separate owner runs before interface configuration;
-the main firewall removes its temporary table atomically when it loads.
+Exact and wildcard flowtable/ingress devices can be absent at installation; the
+kernel attaches their hooks when devices appear. Boot uses cached external group
+membership, with warnings and empty membership when no cache is available.
+Startup recovery continues with interfaces if firewall application fails and
+reports the failure; it does not deliberately prevent remote recovery access.
 
 [Router initialization](initialization.md) resets the entire nftables ruleset at boot
 and creates the empty `inet nvyr_filter` table. It creates no chains. Normal firewall

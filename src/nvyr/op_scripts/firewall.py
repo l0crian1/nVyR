@@ -8,7 +8,7 @@ from tabulate import tabulate
 
 from nvyr import opmode
 from nvyr.errors import OperationalError
-from nvyr.helpers import firewall_scope, nftables_timeouts
+from nvyr.helpers import nftables_timeouts
 from nvyr.helpers.nftables_formatters import (
     NFT_FILTER_HOOKS, nft_counter_group_name, nft_limit_group_name, nft_quota_group_name,
 )
@@ -23,7 +23,7 @@ MISSING = '—'
 RULE_HEADERS = ['Rule', 'Action', 'Packets', 'Bytes', 'Last used', 'Description']
 
 
-def _load_table(*, read_configuration=True, failsafe=False):
+def _load_table(*, read_configuration=True):
     """Read installed objects once; running configuration supplies group column names."""
     configuration = None
     if read_configuration:
@@ -47,8 +47,7 @@ def _load_table(*, read_configuration=True, failsafe=False):
     except (ValueError, KeyError, TypeError) as error:
         raise OperationalError(f'Cannot interpret firewall data: {error}') from None
 
-    name = firewall_scope.FAILSAFE_TABLE if failsafe else firewall_scope.MAIN_TABLE
-    return normalized['tables'].get('inet', {}).get(name, {})
+    return normalized['tables'].get('inet', {}).get('nvyr_filter', {})
 
 
 def _label(field):
@@ -549,15 +548,12 @@ def show(family: str | None = None, hook: str | None = None, stage: str | None =
          chain_name: str | None = None, rule: str | None = None,
          section: str | None = None, group_kind: str | None = None,
          group_name: str | None = None, strip_private: str | None = None, detail: bool = False,
-         zone_name: str | None = None, failsafe: bool = False):
+         zone_name: str | None = None):
     """Show all firewall objects or a selected family, chain, rule, or group."""
     if rule is not None and named and chain_name is None:
         raise OperationalError('Specify a named chain before selecting a rule.')
 
-    table = _load_table(failsafe=failsafe)
-    if failsafe and not table:
-        print('Fail-safe firewall is not active.')
-        return
+    table = _load_table()
     shown = False
 
     if section == 'state-policy':

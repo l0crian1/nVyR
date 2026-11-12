@@ -16,10 +16,10 @@ add table inet nvyr_filter
 This is one atomic nftables transaction. It deliberately replaces **all** inherited
 rules, including unrelated tables, at startup. It creates no chains or default policy.
 An unconfigured router therefore forwards without nVyR filtering; firewall policy
-must be configured explicitly. Optional [fail-safe protection](firewall-failsafe.md)
-loads into its own table before interface configuration. The main firewall runs
-after interfaces and removes that temporary table in the same transaction that
-installs the full policy.
+must be configured explicitly. Configd applies the full firewall after VRF
+conntrack allocation and VRFs, before configuring interfaces. Missing devices do
+not prevent flowtable or ingress-hook installation. A firewall application failure
+is reported but does not stop subsequent interface startup.
 
 The image enables nftables early in boot, before `network-pre.target`. Configd both
 requires and starts after nftables and `systemd-sysctl.service`. Failure to start a

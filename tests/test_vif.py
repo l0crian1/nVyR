@@ -60,7 +60,7 @@ def test_vlan_vrf_reapply_and_completion(controller, engine, session):
 
     controller.execute('set interfaces virtual-ethernet veth0 vif 10 vrf BLUE', session)
     result = engine.commit(session)
-    assert list(result['results']) == ['vrf_conntrack', 'virtual-ethernet', 'firewall']
+    assert list(result['results']) == ['vrf_conntrack', 'firewall', 'virtual-ethernet']
     assert all(item['success'] for item in result['results'].values())
     context = nft_interface_contexts(engine.running)
     assert 'veth0.10' in context['ipv4', 'input']['members']

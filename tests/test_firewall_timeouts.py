@@ -97,7 +97,7 @@ def test_inherited_protocol_from_match_group():
 def test_pretracking_schema_has_no_assignment(family, hook, stage):
     """Unsupported hooks do not advertise the timeout assignment leaf."""
     schema = Schema.bundled()
-    roots = ('firewall',) if hook == 'ingress' else ('firewall', 'firewall fail-safe')
+    roots = ('firewall',)
     for root in roots:
         cursor = schema.resolve(lex(f'{root} {family} {hook} {stage} rule 10'))
         children = cursor.node['children'].get('connection', {}).get('children', {})
@@ -211,21 +211,3 @@ def test_timeout_display_normalizes_both_native_families(monkeypatch, capsys):
     assert text.count('inet timeout-group DNS_ip') == 1
     assert 'IPv4' in text and 'IPv6' in text
     assert '10s' in text and '30s' in text
-
-
-def test_failsafe_uses_separate_table_and_no_cross_scope_reference():
-    """Fail-safe policies use the existing isolated renderer and verification scope."""
-    from nvyr.config_scripts import firewall_failsafe
-    from tests.lifecycle import firewall_context
-    from nvyr.tree import ReadOnlyTree
-
-    tree = {'firewall': {'fail-safe': configuration()['firewall']}}
-    schema = Schema.bundled()
-    effective = ReadOnlyTree(schema.defaults(tree))
-    context = firewall_context(effective, {}, 'firewall_failsafe', ('firewall', 'fail-safe'),
-                               True, previous_effective={}, schema=schema)
-    scoped = firewall_failsafe.get_config(context)
-    firewall_failsafe.verify(scoped, context)
-    text = firewall_failsafe.generate(scoped, context)
-    assert 'table inet nvyr_filter_failsafe' in text
-    assert 'ct timeout ipv4_timeout_group_APP' in text

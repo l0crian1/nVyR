@@ -169,7 +169,7 @@ def test_vrf_reapply_and_reference_protection(controller, engine, session):
 
     controller.execute('set interfaces virtual-ethernet veth0 vrf BLUE', session)
     result = engine.commit(session)
-    assert list(result['results']) == ['vrf_conntrack', 'virtual-ethernet', 'firewall']
+    assert list(result['results']) == ['vrf_conntrack', 'firewall', 'virtual-ethernet']
     assert all(item['success'] for item in result['results'].values())
 
     with pytest.raises(ValidationError, match='referenced'):

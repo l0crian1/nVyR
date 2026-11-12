@@ -99,7 +99,7 @@ def test_comprehensive_configuration_and_restore(controller, engine, session, mo
     assert 'time.boot.example.invalid' in engine.running['system']['ntp']['server']
     assert '192.0.2.123' not in engine.running['system']['ntp']['server']
 
-    assert set(result['results']) >= {'firewall', 'firewall_failsafe', 'static', 'bgp', 'policy', 'container',
+    assert set(result['results']) >= {'firewall', 'static', 'bgp', 'policy', 'container',
                                       'dhcp-server', 'dhcpv6-server', 'bridge', 'bond', 'ethernet',
                                       'dummy', 'virtual-ethernet', 'loopback', 'vrf', 'vrf_conntrack', 'ntp', 'lldp'}
 

@@ -37,7 +37,6 @@ Configure and operate nVyR. For implementation and maintenance, use the
 - [Connection timeout groups](firewall-timeouts.md)
 - [GeoIP address-groups](firewall-geoip.md)
 - [Domain groups](firewall-domain-groups.md)
-- [Early firewall protection](firewall-failsafe.md)
 - [Packet trace analysis](firewall-tracing.md)
 - [Firewall operational views](nftables-operational-data.md)
 - [IPv4 NAT and NAT66](nat.md)

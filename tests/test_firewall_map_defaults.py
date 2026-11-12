@@ -61,7 +61,7 @@ def test_invalid_default_shape_is_rejected(result):
 
 
 def test_default_target_must_exist():
-    """Verification protects scoped fail-safe rendering as well as registrar clients."""
+    """Verification protects direct rendering as well as registrar clients."""
     with pytest.raises(RouterError, match='is not a named chain'):
         rendered(mapping_tree(result={'action': 'jump', 'jump-target': 'MISSING'}))
 

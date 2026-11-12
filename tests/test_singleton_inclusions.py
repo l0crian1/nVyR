@@ -71,8 +71,8 @@ def test_cli_inclusion_completion_removal_and_dependency_protection(controller, 
     ({'A': {'include-group': ['A']}}, 'A -> A'),
     ({'A': {'include-group': ['B']}, 'B': {'include-group': ['C']}, 'C': {'include-group': ['A']}}, 'A -> B -> C -> A'),
     ({'A': {'include-group': ['MISSING']}}, 'not configured'),
-    ({'A': {'include-group': ['B']}, 'B': {'dynamic': {}}}, 'cannot include dynamic or geoip'),
-    ({'A': {'include-group': ['B']}, 'B': {'geoip': {'country': ['US']}}}, 'cannot include dynamic or geoip'),
+    ({'A': {'include-group': ['B']}, 'B': {'dynamic': {}}}, 'cannot include dynamic, geoip or imported'),
+    ({'A': {'include-group': ['B']}, 'B': {'geoip': {'country': ['US']}}}, 'cannot include dynamic, geoip or imported'),
     ({'A': {'dynamic': {}, 'include-group': ['B']}, 'B': {}}, 'cannot be combined'),
     ({'A': {'geoip': {'country': ['US']}, 'include-group': ['B']}, 'B': {}}, 'cannot be combined'),
 ])
@@ -149,18 +149,3 @@ def test_removed_inclusion_rebuilds_parent_but_preserves_other_child():
     assert destroyed(text, 'set') == {'port_group_A', 'port_group_PARENT'}
     assert 'elements = { 443 };' in text
     assert 'elements = { 80' not in text
-
-
-def test_fail_safe_inclusions_use_local_suggestions_and_verification(controller, engine, session):
-    controller.execute('set firewall group port-group MAIN port 443', session)
-    controller.execute('set firewall fail-safe group port-group CHILD port 22', session)
-    controller.execute('set firewall fail-safe group port-group PARENT include-group CHILD', session)
-    choices = dict(controller.completion('set firewall fail-safe group port-group NEW include-group ', session)['candidates'])
-    assert 'CHILD' in choices and 'MAIN' not in choices
-    assert engine.commit(session)['results']['firewall_failsafe']['success']
-
-    controller.execute('delete firewall fail-safe group port-group CHILD', session)
-    result = engine.commit(session)['results']['firewall_failsafe']
-    assert not result['success']
-    assert 'firewall fail-safe group port-group' in result['error']
-    assert 'not configured' in result['error']

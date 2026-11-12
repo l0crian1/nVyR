@@ -127,8 +127,3 @@ table inet {{ table }} {
     {#- NAT uses the same maps and is installed in this transaction. #}
     {% include 'nat/rules.nft.j2' %}
 }
-
-{% if table == 'nvyr_filter' %}
-{#- Main rules and removal of startup protection share one kernel transaction. #}
-destroy table inet nvyr_filter_failsafe
-{% endif %}

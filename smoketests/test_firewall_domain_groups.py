@@ -67,11 +67,3 @@ def test_domain_group_rejects_duplicate_rule_field(config):
     config.set('set firewall group address-group ipv4 STATIC address 192.0.2.1')
     config.set('set firewall ipv4 name DNS_TEST rule 10 action accept source-domain-group DNS_TEST source-address-group STATIC')
     assert_firewall_commit_rejected(config, 'duplicates source-address')
-
-
-def test_domain_group_and_geoip_excluded_from_failsafe(config):
-    """Early firewall configuration must never require network-backed membership."""
-    with assert_raises(RouterError):
-        config.set('set firewall fail-safe group domain-group ipv4 DNS_TEST domain example.com')
-    with assert_raises(RouterError):
-        config.set('set firewall fail-safe group address-group ipv4 GEO geoip country US')

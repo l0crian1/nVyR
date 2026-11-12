@@ -31,12 +31,8 @@ def configure_python(identifier):
 
 
 def groups(configuration):
-    result = {}
-    for scope, section in (('normal', configuration.get('firewall', {})),
-                           ('failsafe', lookup(configuration, ('firewall', 'fail-safe'), {}))):
-        for name, options in section.get('group', {}).get('log-group', {}).items():
-            result[f'{scope}:{name}'] = options
-    return result
+    return {f'normal:{name}': options for name, options
+            in lookup(configuration, ('firewall', 'group', 'log-group'), {}).items()}
 
 
 def identities(configuration, previous):
@@ -69,9 +65,8 @@ def registry(state=STATE):
 
 
 def group_path(key):
-    scope, name = key.split(':', 1)
-    prefix = 'group-' if scope == 'normal' else 'failsafe-group-'
-    return LOGS / 'firewall' / (prefix + name + '.log')
+    _, name = key.split(':', 1)
+    return LOGS / 'firewall' / ('group-' + name + '.log')
 
 
 def nft_groups(configuration, state=STATE, scope='normal'):

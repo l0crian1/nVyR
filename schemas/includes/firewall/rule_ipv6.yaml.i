@@ -49,7 +49,6 @@ rule:
         /source-port/negatable: true
         /destination-port/negatable: true
         /inbound-interface/negatable: true
-        /inbound-interface/reapply-on-change: [vrf]
         /outbound-interface/negatable: true
       replace:
         /disable/description: Disable this firewall rule

@@ -421,7 +421,7 @@ the same map. VIFs use their own configured VRF, not their parent's assignment.
 The `vrf_conntrack` script installs the map before changed interface providers
 apply. Its prerouting/output chains run at priority -250, after raw rules and
 before conntrack; packets marked `notrack` are left untracked. The automatic table
-exists independently of normal and fail-safe firewall rules.
+exists independently of firewall rules.
 
 Zone IDs are allocated independently of routing table IDs, which may be larger
 than 65535. Allocations survive commits, failed applies and daemon restarts.

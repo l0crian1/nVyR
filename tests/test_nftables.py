@@ -335,8 +335,8 @@ def test_rejected_nft_transaction_keeps_last_file(tmp_path, monkeypatch, stage):
 
 
 def test_check_only_never_applies_or_publishes(tmp_path, monkeypatch):
-    """Inactive fail-safe validation must not change accounting or the saved artifact."""
-    destination = tmp_path / 'firewall_failsafe.nft'
+    """Check-only validation must not change accounting or the saved artifact."""
+    destination = tmp_path / 'test_table.nft'
     destination.write_text('previous')
     calls = []
 
@@ -346,7 +346,7 @@ def test_check_only_never_applies_or_publishes(tmp_path, monkeypatch):
         return 0, ''
 
     monkeypatch.setattr(nftables, 'rc_cmd', run)
-    nftables.Manager().apply('candidate', tmp_path, owner='firewall_failsafe',
+    nftables.Manager().apply('candidate', tmp_path, owner='test_table',
                             accounting=True, check_only=True)
     assert len(calls) == 1
     assert destination.read_text() == 'previous'
@@ -355,10 +355,10 @@ def test_check_only_never_applies_or_publishes(tmp_path, monkeypatch):
 
 def test_table_inventory_checks_family_and_propagates_query_errors(monkeypatch):
     monkeypatch.setattr(nftables, 'cmd', lambda argv: '{"nftables": ['
-                        '{"table": {"family": "ip", "name": "nvyr_filter_failsafe"}},'
+                        '{"table": {"family": "ip", "name": "test_table"}},'
                         '{"table": {"family": "inet", "name": "nvyr_filter"}}]}')
     manager = nftables.Manager()
-    assert not manager.table_exists('nvyr_filter_failsafe')
+    assert not manager.table_exists('test_table')
     assert manager.table_exists('nvyr_filter')
 
     def fail(argv):
@@ -366,7 +366,7 @@ def test_table_inventory_checks_family_and_propagates_query_errors(monkeypatch):
 
     monkeypatch.setattr(nftables, 'cmd', fail)
     with pytest.raises(RouterError, match='inventory failed'):
-        manager.table_exists('nvyr_filter_failsafe')
+        manager.table_exists('test_table')
 
 
 def test_uncertain_nft_load_requires_engine_recovery(tmp_path, monkeypatch):
@@ -451,7 +451,7 @@ def test_dispatch_helper_default_log_and_restricted_actions(controller, session)
     assert set(options) == {'accept', 'drop', 'reject'}
 
 
-def test_firewall_follows_interface_owners_on_commit_and_recovery(engine, controller, session, monkeypatch):
+def test_firewall_precedes_interface_owners_on_commit_and_recovery(engine, controller, session, monkeypatch):
     from tests.lifecycle import LifecycleStub
 
     calls = []
@@ -466,7 +466,7 @@ def test_firewall_follows_interface_owners_on_commit_and_recovery(engine, contro
     interface_owners = [owner for owner, (path, _) in engine.schema.owners.items() if path[0] == 'interfaces']
 
     assert interface_owners
-    assert all(engine.schema.owners['firewall'][1] > engine.schema.owners[owner][1] for owner in interface_owners)
+    assert all(engine.schema.owners['firewall'][1] < engine.schema.owners[owner][1] for owner in interface_owners)
 
     for command in ('set interfaces ethernet eth0', 'set interfaces dummy dum0',
                     'set firewall ipv4 forward filter'):
@@ -474,12 +474,12 @@ def test_firewall_follows_interface_owners_on_commit_and_recovery(engine, contro
 
     engine.commit(session)
 
-    assert calls == ['dummy', 'ethernet', 'firewall']
+    assert calls == ['firewall', 'dummy', 'ethernet']
 
     calls.clear()
     engine._run_recovery(engine.running, engine.running, set(engine.schema.owners))
 
-    assert calls.index('firewall') > max(calls.index(owner) for owner in interface_owners)
+    assert calls.index('firewall') < min(calls.index(owner) for owner in interface_owners)
 
 
 def test_show_firewall_uses_existing_operational_execution(controller, session, monkeypatch):

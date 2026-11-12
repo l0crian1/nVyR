@@ -53,7 +53,7 @@ try:
     command('set interfaces dummy dum98 vrf BLUE')
     assert set(engine.check(session)['results']) == {'dummy', 'firewall'}
     assert 'sdifname' not in chain('ipv4_input')
-    assert list(commit()['results']) == ['dummy', 'firewall']
+    assert list(commit()['results']) == ['firewall', 'dummy']
     assert 'sdifname "dum98"' in chain('ipv4_input')
     assert 'sdifname "dum98"' in chain('ipv6_input')
     assert chain('ipv4_output') == untouched

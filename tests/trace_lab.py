@@ -208,7 +208,6 @@ def main(directory):
         exercise(directory, 'base-policy-drop', policy.replace('accept comment "10|permit"', 'return comment "10|return to policy"'), client('198.51.100.2', 'udp'), success=False, check=require_verdict('drop'))
         state = rules().replace('meta nfproto vmap', 'ct state vmap { established : accept, related : accept }; meta nfproto vmap')
         exercise(directory, 'global-state-policy', state, client('198.51.100.2'))
-        exercise(directory, 'failsafe', rules().replace('nvyr_filter', 'nvyr_filter_failsafe'), client('198.51.100.2', 'udp'))
         tracked = '''counter counter_group_TRAFFIC { }
  quota quota_group_BUDGET { until 10 mbytes; }
  limit ipv4_limit_group_FAST { rate 100/second; }'''

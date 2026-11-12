@@ -33,8 +33,8 @@ def protocol_nodes(node, path=()):
     """Keep schema paths so rule and group-entry contracts can be checked separately."""
     for name, child in node.get('children', {}).items():
         child_path = (*path, name)
-        # Map match selectors choose a field; they do not accept protocol values.
-        if name == 'protocol' and not child.get('valueless'):
+        # Match selectors and CSV column mappings do not accept protocol values.
+        if name == 'protocol' and not child.get('valueless') and 'from-csv' not in child_path:
             yield child_path, child
 
         yield from protocol_nodes(child, child_path)
@@ -46,7 +46,7 @@ def test_all_firewall_and_nat_nodes_use_shared_choices_and_validator():
     nodes.update(protocol_nodes(schema.root['children']['nat'], ('nat',)))
 
     # Check every family and consumer without tying coverage to a schema-wide total.
-    for prefix in [('firewall',), ('firewall', 'fail-safe')]:
+    for prefix in [('firewall',)]:
         for family in ('ipv4', 'ipv6', 'inet'):
             rule = (*prefix, family, 'forward', 'filter', 'rule')
             assert (*rule, 'protocol') in nodes
@@ -70,6 +70,19 @@ def test_all_firewall_and_nat_nodes_use_shared_choices_and_validator():
             schema.validate(node, 'tcp')
             schema.validate(node, 'udp')
             for value in ('icmp', 'sctp', '6', 'all'):
+                with pytest.raises(ValidationError):
+                    schema.validate(node, value)
+            continue
+
+        # CGN translates TCP/UDP ports and ICMP identifiers, not every IP protocol.
+        if 'cgnat' in path:
+            assert node['multi'] and bool(node.get('_negated')) == ('not' in path), path
+            assert set(node['choices']) == {'tcp', 'udp', 'icmp'}, path
+            assert node['validators']['checks'] == {
+                'list': {'name': 'list', 'args': {'values': 'tcp udp icmp'}}}, path
+            for value in ('tcp', 'udp', 'icmp'):
+                schema.validate(node, value)
+            for value in ('sctp', 'gre', '6', 'all'):
                 with pytest.raises(ValidationError):
                     schema.validate(node, value)
             continue

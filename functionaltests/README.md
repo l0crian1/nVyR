@@ -166,9 +166,6 @@ The remaining scripts were reviewed individually:
 - `test_interface_operations.py`: read-only diagnostics reuse one physical-port
   selection; they create no links or configuration.
 - `test_system_operations.py`: read-only system reports create no network state.
-- `test_firewall_failsafe.py`: each case tests a separate boot/handover/failure
-  lifecycle in an isolated namespace. Reusing an already-activated table would
-  invalidate the startup precondition. These cases do not touch configd's network.
 - `test_cli_login.py`: an opt-in disposable image tests account creation, login,
   revocation and configd restart. It cannot run against the shared live session.
 
@@ -185,7 +182,7 @@ effect of a function-scoped fixture.
 - Firewall verdicts, nested jumps, inet dispatch, ingress VLANs, wildcard matches,
   source validation, dynamic learning, shared limits/quotas and zone counters.
 - VRF output bypass and second-pass policy enforcement, flowtable enrollment,
-  timed packet tracing, and early fail-safe firewall handover/failure behavior.
+  and timed packet tracing.
 - Bridge forwarding, learning, VLAN separation, port isolation and learned-MAC
   cleanup; veth/VIF connectivity across routing instances.
 - DHCP process start/stop, lease release/renewal, route preference and MTU behavior;

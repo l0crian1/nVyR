@@ -174,10 +174,6 @@ applies it and `save` makes it the boot configuration.
 - [firewall.py](../../src/nvyr/config_scripts/firewall.py): manages `firewall` and `nat`.
   Validates maps, match-groups and enabled rules, renders the shared effective configuration to nftables
   and applies it atomically. Example: `set firewall ipv4 forward filter rule 10 action accept`.
-- [firewall_failsafe.py](../../src/nvyr/config_scripts/firewall_failsafe.py): verifies
-  and stages early-boot protection using the shared firewall implementation.
-  Live configuration does not activate the fail-safe table; normal firewall
-  application removes it during boot handover. See [fail-safe](firewall-failsafe.md).
 - [nat.py](../../src/nvyr/config_scripts/nat.py): verifies IPv4 and IPv6 source/destination NAT for
   the firewall owner. NAT rules and map consumers are rendered and applied in the
   shared firewall transaction. Example: `set nat source rule 10 outbound-interface eth0 translation address masquerade`.

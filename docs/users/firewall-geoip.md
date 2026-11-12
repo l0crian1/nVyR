@@ -29,10 +29,11 @@ addresses until data is available. `commit check` never downloads the database.
 
 Subsequent configuration changes use the persistent cache in `/config/geoip/` without
 contacting DB-IP. Boot recovery also uses the cache and never attempts a download;
-if no cache exists, it loads empty GeoIP groups and logs a warning. GeoIP is excluded
-from the fail-safe firewall. An existing corrupt or unreadable cache still reports
+if no cache exists, it loads empty GeoIP groups and logs a warning.
+An existing corrupt or unreadable cache still reports
 an error. Keep the cache directory with your router backups. The initial download
-needs DNS and HTTPS access to DB-IP. System name servers are applied before the main firewall.
+needs working DNS and HTTPS access to DB-IP; boot uses the cache before interfaces
+are configured.
 
 ## Updates and status
 

@@ -116,11 +116,11 @@ def test_prefix_reference_reapplies_for_vrf_membership_without_pinning_interface
     engine.commit(session)
 
     controller.execute('set interfaces dummy dum0 vrf BLUE', session)
-    assert list(engine.commit(session)['results']) == ['vrf_conntrack', 'dummy', 'firewall']
+    assert list(engine.commit(session)['results']) == ['vrf_conntrack', 'firewall', 'dummy']
 
     # Removing a wildcard-covered member is allowed, and restores iifname matching.
     controller.execute('delete interfaces dummy dum0', session)
-    assert list(engine.commit(session)['results']) == ['vrf_conntrack', 'dummy', 'firewall']
+    assert list(engine.commit(session)['results']) == ['vrf_conntrack', 'firewall', 'dummy']
 
 
 def test_delete_one_negative_prefix_preserves_other_exclusions(controller, engine, session):
@@ -130,13 +130,3 @@ def test_delete_one_negative_prefix_preserves_other_exclusions(controller, engin
 
     rule = engine.view(session)['firewall']['ipv4']['forward']['filter']['rule']['10']
     assert rule['not']['inbound-interface'] == ['eth1.*']
-
-
-def test_fail_safe_accepts_prefixes_without_interfaces(controller, engine, session):
-    controller.execute('set firewall fail-safe ipv4 input filter rule 10 inbound-interface eth* action accept', session)
-    controller.execute('set firewall fail-safe group interface-group VPN interface wg*', session)
-    # Normal commits verify the fail-safe and let the main firewall remove its table.
-    assert engine.commit(session)['results'] == {
-        'firewall_failsafe': {'success': True},
-        'firewall': {'success': True},
-    }

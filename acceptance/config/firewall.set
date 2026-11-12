@@ -1,17 +1,3 @@
-# Boot protection is removed atomically when the full firewall is ready.
-set firewall fail-safe ipv4 input filter default-action drop
-set firewall fail-safe ipv4 input filter rule 10 action accept inbound-interface lo
-set firewall fail-safe ipv4 input filter rule 20 action accept protocol tcp destination-port 22
-set firewall fail-safe ipv4 input filter rule 30 action accept protocol udp source-port 67 destination-port 68
-set firewall fail-safe ipv4 forward filter default-action drop
-set firewall fail-safe ipv6 input filter default-action drop
-set firewall fail-safe ipv6 input filter rule 10 action accept inbound-interface lo
-set firewall fail-safe ipv6 input filter rule 20 action accept protocol tcp destination-port 22
-set firewall fail-safe ipv6 input filter rule 30 action accept protocol ipv6-icmp
-set firewall fail-safe ipv6 forward filter default-action drop
-set firewall fail-safe inet source-validation interface dum995 mode strict
-set firewall fail-safe inet source-validation interface dum996 mode loose
-
 # Global behavior, flow enrollment, named state and interface identity.
 set firewall global-options counter
 set firewall global-options last-used

@@ -125,7 +125,7 @@ def test_output_vrf_bypass_is_readable_in_operational_output(monkeypatch, capsys
     rule = table['chains']['ipv4_output']['rules'][0]
     assert rule['outbound-interface-kind'] == 'vrf'
     assert 'unsupported' not in rule
-    monkeypatch.setattr(operational, '_load_table', lambda *, failsafe=False: table)
+    monkeypatch.setattr(operational, '_load_table', lambda: table)
 
     operational.show(family='ipv4', hook='output')
     output = capsys.readouterr().out
@@ -251,7 +251,7 @@ def test_zone_map_normalization_and_operational_display(monkeypatch, capsys):
                   {'jump': {'target': 'ipv4_name_WEB'}}]],
     }}]}
     table = normalize(document)['tables']['inet']['nvyr_filter']
-    monkeypatch.setattr(operational, '_load_table', lambda *, failsafe=False: table)
+    monkeypatch.setattr(operational, '_load_table', lambda: table)
     operational.show(section='zone')
     output = capsys.readouterr().out
     assert 'IPv4 zone forward' in output and 'USERS to WAN' in output and 'jump WEB' in output
@@ -285,7 +285,7 @@ def test_zone_display_filters_by_source_including_local(monkeypatch, capsys, fam
         other = deepcopy(mapping)
         other['name'] = name.replace(family, other_family, 1)
         table['maps'][other['name']] = other
-    monkeypatch.setattr(operational, '_load_table', lambda *, failsafe=False: table)
+    monkeypatch.setattr(operational, '_load_table', lambda: table)
 
     operational.show(section='zone', family=family, zone_name='USERS')
     output = capsys.readouterr().out

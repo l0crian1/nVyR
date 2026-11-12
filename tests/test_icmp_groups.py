@@ -277,7 +277,7 @@ def test_normalized_partial_listing_and_opmode(mode, detail, monkeypatch, capsys
     group = table['sets']['ipv4_icmp_group_G']
     assert group['match-fields'] == (['icmp-type', 'icmp-code'] if mode == 'type-code' else ['icmp-type'])
     assert 'unsupported' not in group['entries'][0]
-    monkeypatch.setattr(display, '_load_table', lambda *, failsafe=False: table)
+    monkeypatch.setattr(display, '_load_table', lambda: table)
 
     display.show(section='group', family='ipv4', group_kind='icmp-group', group_name='G', detail=detail)
     text = capsys.readouterr().out

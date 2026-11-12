@@ -72,8 +72,8 @@ lifetime. Successful answers with no records for the selected family clear old a
 
 Answers are stored in `/config/domain-groups/cache.json`. Boot and rollback use this
 cache without querying DNS; missing or unreadable cache data produces a warning and
-empty membership. Neither domain groups nor GeoIP selectors are available beneath
-`firewall fail-safe`, which loads before interfaces.
+empty membership. The firewall loads before interface configuration, using cached
+answers without requiring working DNS at boot.
 
 DNS TTL expiry alone does not remove installed addresses. Refresh on demand, or configure a
 [scheduled task](tasks.md) to run `update firewall domain-group` at the interval you want.

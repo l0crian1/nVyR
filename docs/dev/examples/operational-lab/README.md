@@ -115,9 +115,6 @@ Some Ethernet drivers, especially virtual NICs, cannot supply optical transceive
 ring/channel or vendor statistics. Their unsupported/unavailable output is a
 useful result, not evidence that the example configuration is incomplete.
 
-`show firewall fail-safe` should normally report **inactive**. Its configuration
-is retained for startup; the main firewall removes its table during handover.
-Use the regular configuration display to inspect the stored fail-safe policy.
 
 `clear conntrack` in `actions.txt` affects all connections, including SSH and NAT,
 and prompts for confirmation. Test it last. No general log commands are included.

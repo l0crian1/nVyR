@@ -33,7 +33,6 @@ or consult the complete [command tree](docs/users/command-tree.md).
 - Firewall groups, [maps](docs/users/firewall-maps.md), and [match-groups](docs/users/firewall-match-groups.md)
 - Dynamic firewall groups, [GeoIP filtering](docs/users/firewall-geoip.md), and [DNS domain groups](docs/users/firewall-domain-groups.md)
 - Firewall logging, flow offload, rate limits, connection limits, quotas, and counters
-- [Early-boot fail-safe firewall](docs/users/firewall-failsafe.md)
 - [IPv4 and IPv6 source NAT, destination NAT, masquerading, and port translation](docs/users/nat.md)
 - [DHCPv4/DHCPv6 servers with shared networks, reservations, and VRF support](docs/users/dhcp-server.md)
 - [DNS resolver configuration](docs/users/dns.md)

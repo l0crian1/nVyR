@@ -106,18 +106,14 @@ def chain_description(path):
     words = path.split()
     if not words or words[0] != 'firewall':
         return path
-    failsafe = len(words) > 1 and words[1] == 'fail-safe'
-    if failsafe:
-        words.pop(1)
     if len(words) != 4:
         return path
     _, family, hook, priority = words
     family = {'ipv4': 'IPv4 ', 'ipv6': 'IPv6 ', 'inet': ''}.get(family, family + ' ')
-    prefix = 'fail-safe ' if failsafe else ''
     if hook == 'name':
-        return f'named {prefix}{family}chain {priority}'
+        return f'named {family}chain {priority}'
     raw = ' raw' if priority == 'raw' else ''
-    return f'the {prefix}{family}{hook}{raw} firewall'
+    return f'the {family}{hook}{raw} firewall'
 
 
 def statement_text(event):

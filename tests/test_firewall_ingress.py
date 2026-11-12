@@ -41,10 +41,8 @@ def test_ingress_schema_excludes_unavailable_commands(controller, engine, sessio
 
 
 @pytest.mark.parametrize('family', ['ipv4', 'ipv6'])
-def test_ingress_requires_attachment_and_is_excluded_from_failsafe(controller, session, family):
-    """An ingress chain cannot be globally attached or used as the boot firewall."""
-    with pytest.raises(RouterError):
-        controller.execute(f'set firewall fail-safe {family} ingress filter interface eth1', session)
+def test_ingress_requires_attachment(family):
+    """An ingress chain requires at least one explicit interface selector."""
     tree = ingress_tree(family)
     del tree['firewall'][family]['ingress']['filter']['interface']
     with pytest.raises(RouterError, match='at least one interface'):

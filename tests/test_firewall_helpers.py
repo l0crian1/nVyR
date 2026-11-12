@@ -98,9 +98,6 @@ def test_helper_selection_requires_a_supported_application():
         helpers.verify({'ftp': False})
 
 
-def test_helpers_anchor_and_are_excluded_from_fail_safe(controller, session):
-    """Valueless siblings can be entered together, but early firewall exposes none."""
+def test_helpers_anchor(controller, session):
+    """Valueless helper siblings can be entered together."""
     controller.execute('set firewall global-options connection-tracking helper ftp tftp sip', session)
-    schema = Schema.bundled()
-    cursor = schema.resolve(lex('firewall fail-safe global-options'))
-    assert 'connection-tracking' not in cursor.node['children']

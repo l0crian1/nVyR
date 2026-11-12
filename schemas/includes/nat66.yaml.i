@@ -3,7 +3,7 @@ nat66:
   description: IPv6 network address translation
   script:
     name: firewall
-    priority: 15
+    priority: 6
   children: # nat66
 
     include_schema:

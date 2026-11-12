@@ -94,18 +94,6 @@ def assert_log_output(service, *arguments, expected=(), absent=()):
         assert_not_in(value, output)
 
 
-def assert_failsafe_lifecycle(family, scenario):
-    """Run boot firewall checks without altering the router's management firewall."""
-    import subprocess
-    import sys
-
-    # Pytest's import path is not inherited by children started from the user's shell directory.
-    result = subprocess.run(
-        ['unshare', '--net', sys.executable, '-m', 'smoketests.failsafe_support', family, scenario],
-        cwd=Path(__file__).resolve().parents[1], capture_output=True, text=True, timeout=60)
-    assert_equal(result.returncode, 0, result.stdout + result.stderr)
-
-
 def assert_firewall_trace_capture(address, path):
     """Capture installed trace output while sending probes; remove only our own file."""
     import json
@@ -248,7 +236,6 @@ def assert_ntp_directives(*directives, absent=()):
         assert_in(directive, actual)
     for directive in absent:
         assert_not_in(directive, actual)
-
 
 
 def assert_ntp_configuration(*directives, absent=()):

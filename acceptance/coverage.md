@@ -82,7 +82,7 @@ cross-VRF static-route coverage; the base routing transit is in the default inst
 | Ingress and VLAN matching | `firewall.set` | IPv4/IPv6/inet dispatch, recreated interfaces, future-device prefixes, VLAN concatenations and notrack are checked. |
 | NAT and NAT66 | `firewall.set` | Both families retain their own same-numbered DNAT rule, address/port map and source masquerade across reboot. |
 | Map default results | `firewall.set` | IPv4/IPv6/inet verdict defaults and address/port NAT defaults remain native catch-all entries. |
-| Source validation | `firewall.set` | IPv4/IPv6 strict and loose overrides are scoped to lab links; the fail-safe uses the inet syntax. |
+| Source validation | `firewall.set` | IPv4/IPv6 strict and loose overrides are scoped to lab links. |
 | Packet tracing and modification | `firewall.set` | nftrace, packet/connection marks, DSCP, TTL/hop limit, fixed MSS and route-based MSS statements are checked. |
 | Timeout groups | `firewall.set` | IPv4/IPv6 TCP and inet UDP objects and assignments are checked. All TCP and UDP state options are explicitly configured. |
 | Conntrack helpers | `firewall.set` | FTP, TFTP and both SIP transports are selected through the shared map in INPUT/FORWARD/OUTPUT, in the expected order. |
@@ -113,8 +113,7 @@ scenario and required lab resources.
 - Trace capture/story output and setter/timeout/helper packet semantics have
   separate native tests. This scenario checks their installed definitions.
 - Choice alternatives and rejected combinations remain in feature smoketests.
-- A fail-safe table being absent after startup proves handover, not the duration
-  or packet behavior of the early boot protection window.
+
 
 ## Qualification status — 2026-11-05
 

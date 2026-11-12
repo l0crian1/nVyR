@@ -22,7 +22,7 @@ from nvyr.helpers.nftables_formatters import (
     nft_group_tcp_mask,
 )
 from nvyr.helpers.validators import DSCP_VALUES, RATE_UNITS, TCP_FLAGS, tcp_flag_expression, tcp_flag_values
-from nvyr.helpers import firewall_scope, nftables_timeouts
+from nvyr.helpers import nftables_timeouts
 from nvyr.tree import lookup
 
 
@@ -64,7 +64,7 @@ def _list(value):
 
 def _group_identity(name, table):
     name = name.removeprefix('@')
-    if table in firewall_scope.TABLES:
+    if table == 'nvyr_filter':
         timeout = nftables_timeouts.identity(name)
         if timeout:
             return 'timeout-group', timeout[1]
@@ -75,7 +75,7 @@ def _group_identity(name, table):
 
 
 def _target(name, table):
-    if table in firewall_scope.TABLES:
+    if table == 'nvyr_filter':
         for prefix in ('ipv4_name_', 'ipv6_name_', 'inet_name_'):
             if name.startswith(prefix):
                 return name[len(prefix):]
@@ -258,7 +258,7 @@ def _match(match, table):
         return {'not': _match(dict(match, op='=='), table)}
     if isinstance(value, str) and value.startswith('@') and comparison == '==':
         kind, name = _group_identity(value, table)
-        if table in firewall_scope.TABLES and name.startswith('source_validation_') and fields == ['inbound-interface']:
+        if table == 'nvyr_filter' and name.startswith('source_validation_') and fields == ['inbound-interface']:
             return {'source-validation-interface-set': name}
         if kind == 'match-group':
             return {'match-group': name, 'match-group-fields': fields}
@@ -358,7 +358,7 @@ def _map_reference(mapping, table):
         raise _Unsupported('Not a named map')
     kind, name = _group_identity(mapping['data'], table)
     native = mapping['data'].removeprefix('@')
-    if table in firewall_scope.TABLES and native in {
+    if table == 'nvyr_filter' and native in {
             f'{family}_zone_{hook}' for family in ('ipv4', 'ipv6') for hook in ('input', 'output', 'forward')}:
         return {'zone-dispatch': native, 'map-fields': _fields(mapping['key'])}
     if kind != 'map':
@@ -443,7 +443,7 @@ def _translation(action, data, table):
 
 
 def _update(data, table):
-    if data.get('stmt') and table in firewall_scope.TABLES and data['set'].removeprefix('@').startswith(('rule_limit_', 'rule_connection_limit_')):
+    if data.get('stmt') and table == 'nvyr_filter' and data['set'].removeprefix('@').startswith(('rule_limit_', 'rule_connection_limit_')):
         return _keyed_limit(data)
     if data['op'] != 'update':
         raise _Unsupported('Not a group update')
@@ -555,7 +555,7 @@ def _statement(statement, table):
         return _match(data, table)
     if name == 'ct helper' and isinstance(data, dict):
         mapping = data.get('map', {})
-        if (table in firewall_scope.TABLES and mapping.get('data') == '@conntrack_helpers'
+        if (table == 'nvyr_filter' and mapping.get('data') == '@conntrack_helpers'
                 and mapping.get('key') == {'concat': [
                     {'meta': {'key': 'l4proto'}}, {'payload': {'protocol': 'th', 'field': 'dport'}}]}):
             return {'helper-map': 'conntrack_helpers'}
@@ -565,7 +565,7 @@ def _statement(statement, table):
             kind, target = _group_identity(data, table)
             if kind == 'timeout-group':
                 return {'connection-timeout-group': target}
-        elif isinstance(data, dict) and table in firewall_scope.TABLES:
+        elif isinstance(data, dict) and table == 'nvyr_filter':
             mapping = data.get('map', {})
             entries = mapping.get('data', {}).get('set', [])
             if mapping.get('key') == {'meta': {'key': 'nfproto'}} and len(entries) == 2:
@@ -675,7 +675,7 @@ def _rule(rule):
             # Direct inet ingress rules start with their hook attachment guard.
             # Keep that scope separate from an explicit inbound-interface match:
             # these predicates are intersected, not alternative interfaces.
-            if (index == 0 and rule['table'] in firewall_scope.TABLES and
+            if (index == 0 and rule['table'] == 'nvyr_filter' and
                     rule['chain'] == 'ingress' and str(result.get('number', '')).isdigit() and
                     set(fields) == {'inbound-interface'}):
                 fields = {'ingress-interface': fields['inbound-interface']}
@@ -765,7 +765,7 @@ def _tcp_group_entries(entries, fields, definition):
 def _group(group, *, mapping, configuration):
     excluded = ('family', 'table', 'type', 'map', 'elem', 'stmt', 'comment')
     result = {key: value for key, value in group.items() if key not in excluded}
-    if group['table'] in firewall_scope.TABLES and group['name'] in {
+    if group['table'] == 'nvyr_filter' and group['name'] in {
             f'{family}_zone_{hook}' for family in ('ipv4', 'ipv6') for hook in ('input', 'output', 'forward')}:
         result['zone-hook'] = group['name'].split('_')[-1]
     native_type = group['type']
@@ -880,7 +880,7 @@ def normalize(document, *, configuration=None):
             chain.update({key: value for key, value in data.items() if key not in ('family', 'table')})
         elif kind in ('set', 'map'):
             try:
-                group = _group(data, mapping=kind == 'map', configuration=firewall_scope.for_table(configuration, table_name))
+                group = _group(data, mapping=kind == 'map', configuration=configuration)
             except _Unsupported as error:
                 group = {'name': data['name'], 'unsupported': [
                     {'reason': str(error), 'expression': data},

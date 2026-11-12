@@ -942,7 +942,7 @@ def warn_zone_defaults(firewall, context):
             # Existing chains contain schema defaults. Zones also generate absent
             # chains, whose native fallback is accept without a configuration node.
             if chain is None or chain['default-action'] == 'accept':
-                root = 'firewall fail-safe' if context.owner == 'firewall_failsafe' else 'firewall'
+                root = 'firewall'
                 context.report(Warning(
                     f'{root} {family} {hook} filter defaults to accept. '
                     'Traffic on interfaces not assigned to a zone may be allowed.'
@@ -1127,7 +1127,7 @@ def generate(configuration, context):
 
 
 def render_rules(configuration, lifecycle, *, table='nvyr_filter', replace_table=False, log_groups=None, cgnat_zones=None):
-    """Both firewall owners use the same formatters and native rule ordering."""
+    """Render filtering and NAT with shared formatters and native rule ordering."""
     return render('firewall/filter.nft.j2', {
         'configuration': configuration,
         'lifecycle': lifecycle,

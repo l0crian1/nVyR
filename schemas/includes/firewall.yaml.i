@@ -3,14 +3,16 @@ firewall:
   description: IPv4 and IPv6 packet filtering
   script:
     name: firewall
-    priority: 15
+    priority: 6
     watch:
     - vrf name * table
+    watch-before:
+    - interfaces
+    - container network
   children: # firewall
 
     include_schema:
     - file: firewall/description.yaml.i
-    - file: firewall/fail-safe.yaml.i
     - file: firewall/global-options.yaml.i
     - file: firewall/flowtable.yaml.i
     - file: firewall/zone.yaml.i

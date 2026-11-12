@@ -562,9 +562,10 @@ IPv4 and IPv6 packet functional tests confirmed conntrack's `OFFLOAD` state and 
 successful-enrollment counter increment through a prefix-selected flowtable.
 Exact-device enrollment and rejected TCP-reset enrollment also passed.
 
-nVyR now accepts trailing-`*` prefixes in flowtable interfaces. Exact names still
-require an existing device; overlapping selectors in different equal-priority
-flowtables are rejected. This requires the new ISO kernel, not just an updated
+nVyR accepts trailing-`*` prefixes in flowtable interfaces. Follow-up checks on
+6.18.63 also confirmed absent exact names for flowtables and ingress chains: hooks
+attach when the interface is created. Overlapping selectors in different
+equal-priority flowtables are rejected. This requires the new ISO kernel, not just an updated
 nVyR `.deb`. Regression coverage lives in
 [`tests/test_kernel_flowtables_live.py`](../../tests/test_kernel_flowtables_live.py),
 [`smoketests/test_firewall_interface_patterns.py`](../../smoketests/test_firewall_interface_patterns.py)

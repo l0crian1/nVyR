@@ -39,7 +39,7 @@ def test_check_only_gets_and_verifies_changed_owners_with_defaults(controller, e
     result = controller.execute('commit check', session)
 
     assert result['text'] == 'Configuration check passed.\n'
-    assert calls == ['dummy', 'firewall']
+    assert calls == ['firewall', 'dummy']
     assert engine.running == {} and engine.view(session) == before
     assert persisted(engine) == files
     assert identities == (engine.commit_id, session.commit_id, engine.lock_owner, session.edit)

@@ -276,32 +276,6 @@ def _assert_expanded(value):
             _assert_expanded(item)
 
 
-def _prepare_firewall_failsafe(document):
-    """The ephemeral firewall has local references, not dependency registrations."""
-    node = document.get('children', {}).get('firewall', {}).get('children', {}).get('fail-safe')
-    if node is None:
-        return
-
-    def visit(node):
-        children = node.get('children', {})
-        children.pop('from-list', None)
-        children.pop('from-csv', None)
-        children.pop('source-domain-group', None)
-        children.pop('destination-domain-group', None)
-
-        for key in ('dependency', 'depends', 'reapply-on-change', 'dependency-format'):
-            node.pop(key, None)
-
-        suggestion = node.get('suggestors', {}).get('config-path')
-        if suggestion and suggestion.get('path', '').startswith('firewall '):
-            suggestion['path'] = suggestion['path'].replace('firewall ', 'firewall fail-safe ', 1)
-
-        for child in node.get('children', {}).values():
-            visit(child)
-
-    visit(node)
-
-
 def _describe_defaults(node):
     """Decorate the fully expanded configuration tree, never its source fragments."""
     default = node.get('default')
@@ -689,7 +663,6 @@ def build_schemas(source=ROOT / 'schemas', output=ROOT / 'src/nvyr/schemas', *, 
 
         if path.stem == 'configuration':
             _prepare_firewall_csv_columns(document)
-            _prepare_firewall_failsafe(document)
 
         try:
             _normalize_callbacks(document, operational=path.stem == 'operational')

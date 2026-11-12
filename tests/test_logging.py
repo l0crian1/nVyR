@@ -25,15 +25,14 @@ PREPARE_GROUPS = logging_runtime.prepare_groups
 
 
 def test_nflog_identifiers_are_stable_and_do_not_reuse_deleted_groups():
-    configuration = {'firewall': {'group': {'log-group': {'NEW': {}, 'KEPT': {}}},
-                                  'fail-safe': {'group': {'log-group': {'NEW': {}}}}}}
+    configuration = {'firewall': {'group': {'log-group': {'NEW': {}, 'KEPT': {}}}}}
     previous = {'normal:KEPT': 4, 'normal:DELETED': 1}
     allocated = logging_runtime.identities(configuration, previous)
 
     assert allocated['normal:KEPT'] == 4
     assert allocated['normal:DELETED'] == 1
-    assert len(set(allocated.values())) == 4
-    assert allocated['normal:NEW'] != allocated['failsafe:NEW']
+    assert len(set(allocated.values())) == 3
+    assert allocated['normal:NEW'] not in previous.values()
     assert previous == {'normal:KEPT': 4, 'normal:DELETED': 1}
 
 
@@ -52,33 +51,6 @@ def test_group_generation_and_verification(tmp_path):
     rule['log'] = {'group': 'UNKNOWN'}
     with pytest.raises(ValidationError, match='not configured'):
         render(tree)
-
-
-def test_rendered_nflog_groups_retain_registry_ids_and_scopes(tmp_path):
-    """Normal and fail-safe groups with the same name use distinct subscriptions."""
-    from nvyr.config_scripts import firewall_failsafe
-    from tests.test_firewall_failsafe import context
-
-    group = {'group': {'log-group': {'TEST': {}}}, 'ipv4': {'input': {'filter': {
-        'rule': {'10': {'action': 'accept', 'log': {'group': 'TEST'}}}}}}}
-    tree = {'firewall': deepcopy(group)}
-    tree['firewall']['fail-safe'] = deepcopy(group)
-
-    state = tmp_path / 'logging'
-    state.mkdir()
-    registry = state / 'groups.json'
-    original = json.dumps({'normal:TEST': 37, 'failsafe:TEST': 41})
-    registry.write_text(original)
-
-    normal = render(tree, state_directory=tmp_path)
-    early_context = context(tree, tmp_path)
-    early = firewall_failsafe.generate(firewall_failsafe.get_config(early_context), early_context)
-
-    assert 'group 37 snaplen 65535 queue-threshold 1' in normal
-    assert 'group 41 snaplen 65535 queue-threshold 1' in early
-    assert 'group 41 ' not in normal
-    assert 'group 37 ' not in early
-    assert registry.read_text() == original
 
 
 def test_group_change_rebuilds_consuming_named_chain_and_nested_callers():
@@ -482,3 +454,18 @@ def test_container_rotation_uses_native_conmon_control_fifo(tmp_path, monkeypatc
         assert os.read(reader, 1024) == b'2 0 0\n'
     finally:
         os.close(reader)
+
+
+def test_rendered_nflog_groups_retain_registry_ids(tmp_path):
+    tree = {'firewall': {'group': {'log-group': {'TEST': {}}}, 'ipv4': {'input': {'filter': {
+        'rule': {'10': {'action': 'accept', 'log': {'group': 'TEST'}}}}}}}}
+    state = tmp_path / 'logging'
+    state.mkdir()
+    registry = state / 'groups.json'
+    original = json.dumps({'normal:TEST': 37})
+    registry.write_text(original)
+
+    text = render(tree, state_directory=tmp_path)
+
+    assert 'group 37 snaplen 65535 queue-threshold 1' in text
+    assert registry.read_text() == original

@@ -65,7 +65,7 @@ def check_operational_inventory(options):
     assert_operational_output('show version', 'Version', 'L0crian', 'https://github.com/')
     assert_operational_output('show license | no-more', 'MIT License', 'Permission is hereby granted')
     assert_operational_output('show system config script-priority | no-more',
-                              'firewall_failsafe', 'firewall', 'name-server')
+                              'firewall', 'name-server')
 
 
 def check_system_hostname(options):
@@ -510,12 +510,11 @@ def check_container_pod(options):
     assert_link('pd-BOOTPOD-0', kind='veth', master='pd-BOOTNET')
 
 
-def check_firewall_failsafe_handover(options):
-    """The main firewall has removed the temporary boot table after startup."""
+def check_firewall_table(options):
+    """The main firewall is installed before and after reboot."""
     document = json.loads(cmd(['nft', '-j', 'list', 'tables']))
     names = [item['table']['name'] for item in document['nftables'] if 'table' in item]
     assert_in('nvyr_filter', names)
-    assert_not_in('nvyr_filter_failsafe', names)
 
 
 def check_firewall_ipv4_rules(options):
@@ -857,7 +856,7 @@ CHECKS = (
     check_dhcp_hostfile_hook, check_dhcp_ha, check_dhcp_client_lease, check_dhcpv6_delegation,
     check_container_workload, check_container_network_ipv4,
     check_container_network_ipv6, check_container_persistence, check_container_pod,
-    check_firewall_failsafe_handover,
+    check_firewall_table,
     check_firewall_ipv4_rules, check_firewall_ipv6_rules, check_firewall_ipv4_dynamic,
     check_firewall_ipv6_dynamic, check_firewall_zones_ipv4, check_firewall_zones_ipv6,
     check_firewall_raw, check_firewall_named_state, check_firewall_flowtable, check_nat,

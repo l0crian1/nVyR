@@ -17612,32 +17612,6 @@
             ]
           },
           "children": {
-            "fail-safe": {
-              "kind": "node",
-              "description": "Installed early firewall protection, when active",
-              "command": {
-                "argv": [
-                  "firewall.nvyr.op",
-                  "show",
-                  "--failsafe"
-                ]
-              },
-              "children": {
-                "detail": {
-                  "kind": "leaf_node",
-                  "valueless": true,
-                  "description": "Detailed early firewall rules and groups",
-                  "command": {
-                    "argv": [
-                      "firewall.nvyr.op",
-                      "show",
-                      "--failsafe",
-                      "--detail"
-                    ]
-                  }
-                }
-              }
-            },
             "domain-group": {
               "kind": "node",
               "description": "DNS-backed firewall group lookups",

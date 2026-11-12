@@ -4,7 +4,6 @@
 from tabulate import tabulate
 
 from nvyr import opmode
-from nvyr.helpers.firewall_scope import FAILSAFE_TABLE
 from nvyr.protocol import Client
 
 
@@ -38,7 +37,7 @@ def show():
     ], tablefmt='presto'))
     print()
     if result['groups']:
-        rows = [('Fail-safe' if item['table'] == FAILSAFE_TABLE else 'Main',
+        rows = [('Main',
                  item['family'].replace('ip', 'IP'), item['name'], ', '.join(item['countries']))
                 for item in result['groups']]
         print(tabulate(rows, headers=['Firewall', 'Family', 'Address-group', 'Countries']))

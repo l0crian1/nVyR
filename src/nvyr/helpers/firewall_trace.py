@@ -13,7 +13,6 @@ import subprocess
 import time
 
 from nvyr.errors import OperationalError
-from nvyr.helpers import firewall_scope
 from nvyr.helpers.firewall_trace_parser import event_fields
 
 
@@ -44,9 +43,9 @@ def event_record(line):
     path = rule_path(table, chain, record.get('comment', ''))
     if path:
         record['path'] = path
-    if kind == 'rule' and table in firewall_scope.TABLES:
+    if kind == 'rule' and table == 'nvyr_filter':
         expression = record.get('expression', '')
-        prefix = 'firewall fail-safe' if table == firewall_scope.FAILSAFE_TABLE else 'firewall'
+        prefix = 'firewall'
         if expression.startswith('ct state vmap '):
             record['path'] = prefix + ' global-options state-policy'
         if record.get('comment', '').startswith('global-offload|'):
@@ -62,10 +61,10 @@ def event_record(line):
 
 def rule_path(table, chain, comment):
     """Identify configured rules from native chain names and installed comments."""
-    if table not in firewall_scope.TABLES:
+    if table != 'nvyr_filter':
         return None
 
-    prefix = 'firewall fail-safe' if table == firewall_scope.FAILSAFE_TABLE else 'firewall'
+    prefix = 'firewall'
     hooks = ('input', 'forward', 'output', 'ingress', 'prerouting', 'output_raw')
     if chain in hooks:
         family, suffix = 'inet', chain
@@ -80,7 +79,7 @@ def rule_path(table, chain, comment):
         hook = 'output' if suffix == 'output_raw' else suffix
         priority = 'raw' if suffix in ('prerouting', 'output_raw') else 'filter'
         path = f'{prefix} {family} {hook} {priority}'
-    elif table == firewall_scope.MAIN_TABLE and family in ('ipv4', 'ipv6') and suffix in ('nat_prerouting', 'nat_postrouting'):
+    elif table == 'nvyr_filter' and family in ('ipv4', 'ipv6') and suffix in ('nat_prerouting', 'nat_postrouting'):
         direction = 'source' if chain.endswith('postrouting') else 'destination'
         path = ('nat66 ' if family == 'ipv6' else 'nat ') + direction
     else:

@@ -59,7 +59,7 @@ def _verify_namespace(definitions, path):
 
         longest = (name,)
         for child in includes:
-            # Resolve only within this group type and address family, even in fail-safe mode.
+            # Resolve only within this group type and address family.
             if child not in definitions:
                 raise ValidationError(f'{path} {name}: included group {child!r} is not configured in {path}')
 

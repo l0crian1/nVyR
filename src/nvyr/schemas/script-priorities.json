@@ -28,13 +28,6 @@
     ]
   },
   {
-    "script": "firewall_failsafe",
-    "priority": 2,
-    "paths": [
-      "firewall fail-safe"
-    ]
-  },
-  {
     "script": "vrf_conntrack",
     "priority": 4,
     "paths": [
@@ -46,6 +39,15 @@
     "priority": 5,
     "paths": [
       "vrf name <name>"
+    ]
+  },
+  {
+    "script": "firewall",
+    "priority": 6,
+    "paths": [
+      "firewall",
+      "nat",
+      "nat66"
     ]
   },
   {
@@ -102,15 +104,6 @@
     "priority": 14,
     "paths": [
       "system name-server"
-    ]
-  },
-  {
-    "script": "firewall",
-    "priority": 15,
-    "paths": [
-      "firewall",
-      "nat",
-      "nat66"
     ]
   },
   {

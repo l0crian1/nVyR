@@ -40,21 +40,20 @@ def test_membership_change_runs_consumer_once_and_passes_reference_paths(control
     controller.execute('set interfaces dummy dum0 vrf BLUE', session)
     result = engine.commit(session)
 
-    assert list(result['results']) == ['vrf_conntrack', 'dummy', 'firewall']
+    assert list(result['results']) == ['vrf_conntrack', 'firewall', 'dummy']
     assert len(contexts) == 1
     assert contexts[0].reapply_paths == {
-        ('firewall', 'ipv4', 'input', 'filter', 'rule', '10', 'inbound-interface'),
-        ('firewall', 'ipv4', 'input', 'filter', 'rule', '20', 'not', 'inbound-interface'),
+        ('interfaces',),
     }
     assert not contexts[0].get_changed()
 
 
-def test_unwatched_changes_and_unreferenced_interfaces_do_not_run_firewall(controller, session, engine):
+def test_interface_watches_prepare_firewall_before_all_interface_changes(controller, session, engine):
     initial(controller, session, engine)
     controller.execute('set interfaces dummy dum0 link-group 123', session)
-    assert set(engine.commit(session)['results']) == {'vrf_conntrack', 'dummy'}
+    assert list(engine.commit(session)['results']) == ['vrf_conntrack', 'firewall', 'dummy']
     controller.execute('set interfaces dummy dum1 vrf BLUE', session)
-    assert set(engine.commit(session)['results']) == {'vrf_conntrack', 'dummy'}
+    assert list(engine.commit(session)['results']) == ['vrf_conntrack', 'firewall', 'dummy']
 
 
 def test_check_includes_reapplied_script_without_apply(controller, session, engine):
@@ -106,7 +105,7 @@ def test_failed_consumer_restores_provider_and_leaves_unrelated_success(controll
     assert not engine.unhealthy
 
 
-def test_failed_provider_prevents_consumer_using_unapplied_state(controller, session, engine, monkeypatch):
+def test_failed_interface_restores_prepared_firewall(controller, session, engine, monkeypatch):
     initial(controller, session, engine)
     controller.execute('set interfaces dummy dum0 vrf BLUE', session)
 
@@ -116,9 +115,9 @@ def test_failed_provider_prevents_consumer_using_unapplied_state(controller, ses
     monkeypatch.setattr(engine.modules['dummy'], 'verify', fail)
     result = engine.commit(session)
     assert not result['results']['firewall']['success']
-    # Preparatory zone changes require restoring the whole component, but the
-    # firewall must never apply the failed target configuration.
-    assert all(recovery for _, _, recovery in engine.modules['firewall'].calls)
+    # The earlier firewall apply must be restored when the later interface fails.
+    applies = [recovery for _, stage, recovery in engine.modules['firewall'].calls if stage == 'apply']
+    assert applies == [False, True]
     assert not result['changed']
 
 
@@ -191,7 +190,7 @@ def test_invalid_watch_declarations_fail_schema_validation(watch):
         validate_reapply(root)
 
 
-def test_large_reference_inventory_selects_only_changed_identity():
+def test_interface_watch_does_not_expand_large_rule_inventory():
     schema = Schema.bundled()
     before = {'interfaces': {'dummy': {'dum0': {}, 'dum1': {}}}, 'firewall': {'ipv4': {'input': {'filter': {'rule': {
         str(number): {'inbound-interface': ['dum1'], 'action': 'accept'} for number in range(1, 1001)
@@ -200,7 +199,7 @@ def test_large_reference_inventory_selects_only_changed_identity():
     after = deepcopy(before)
     after['interfaces']['dummy']['dum0']['vrf'] = 'BLUE'
     result = reapply.plan(Dependencies(schema), before, after)
-    assert result.paths == {'firewall': {('firewall', 'ipv4', 'input', 'filter', 'rule', '1001', 'inbound-interface')}}
+    assert result.paths == {'firewall': {('interfaces',)}}
 
 
 def test_bad_watch_fails_generation_with_consumer_and_field_path(tmp_path):

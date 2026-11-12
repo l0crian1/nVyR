@@ -17,7 +17,7 @@ def test_smoketests_do_not_invoke_runtime_probes():
         'assert_bgp_path', 'assert_bgp_neighbor', 'assert_ping_reply',
         'assert_firewall_counter', 'assert_firewall_rule_packets',
         'assert_firewall_map_counter', 'assert_firewall_trace_capture',
-        'assert_failsafe_lifecycle', 'assert_container_running',
+        'assert_container_running',
         'assert_container_restarted', 'assert_dhcp_client', 'assert_dhcp_lease',
         'assert_dhcp_default_route', 'assert_dhcp_client_options',
         'assert_link_addresses', 'assert_ntp_configuration',

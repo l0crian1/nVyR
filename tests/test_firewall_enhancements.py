@@ -179,8 +179,7 @@ def test_flowtable_deletion_recovery_and_shared_nat_cleanup(monkeypatch):
     assert 'destroy flowtable inet nvyr_filter flowtable_OTHER' in deleted
     assert 'hook ingress' not in deleted
     assert 'flush ruleset' not in deleted
-    assert [line for line in deleted.splitlines() if line.startswith('destroy table')] == [
-        'destroy table inet nvyr_filter_failsafe']
+    assert [line for line in deleted.splitlines() if line.startswith('destroy table')] == []
     assert 'destroy chain inet nvyr_filter ipv4_nat_prerouting' not in deleted
     assert 'chain nat_prerouting {' not in deleted
 

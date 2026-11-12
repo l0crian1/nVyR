@@ -194,22 +194,6 @@ def test_vrf_watch_runs_firewall_after_vrf_creation(controller, engine, session)
     assert engine.commit(session)['results']['firewall']['success']
 
 
-def test_failsafe_source_validation_uses_its_own_table(tmp_path):
-    """The same code renders early protection with future VRF/interface names."""
-    from nvyr.config_scripts import firewall_failsafe
-    from tests.test_firewall_failsafe import context
-
-    tree = {'firewall': {'fail-safe': configuration()['firewall']},
-            'vrf': {'name': {'BLUE': {'table': '100'}}}}
-    ctx = context(tree, tmp_path, recovery=True)
-    scoped = firewall_failsafe.get_config(ctx)
-    firewall_failsafe.verify(scoped, ctx)
-    text = firewall_failsafe.generate(scoped, ctx)
-    assert 'table inet nvyr_filter_failsafe {' in text
-    assert 'elements = { "BLUE", "eth1", "eth2" }' in text
-    assert text.count('counter drop comment "source-validation-') == 2
-
-
 def test_display_resolves_private_sets_and_keeps_partial_listings(capsys):
     """Drops appear in raw output with counters and understandable interface detail."""
     rule = {'rule': {'family': 'inet', 'table': 'nvyr_filter', 'chain': 'prerouting',

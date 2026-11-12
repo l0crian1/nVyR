@@ -22,7 +22,7 @@ from urllib.request import Request, urlopen
 import zlib
 
 from nvyr.errors import BusyError, OperationalError, RecoveryError, recovery_required
-from nvyr.helpers import access, firewall_scope, geoip_config, nftables
+from nvyr.helpers import access, geoip_config, nftables
 from nvyr.helpers.nftables_formatters import nft_singleton_name
 from nvyr.storage import atomic_json, sync_directory
 
@@ -151,7 +151,7 @@ class Manager:
         if not path.exists():
             return None
         value = json.loads(path.read_text())
-        if name in ('active', 'active-failsafe', 'downloaded'):
+        if name in ('active', 'downloaded'):
             if not re.fullmatch('[0-9a-f]{40}', value.get('sha1', '')):
                 raise OperationalError('Invalid GeoIP cache metadata')
         return value
@@ -214,8 +214,7 @@ class Manager:
 
     def publish(self, metadata, table='nvyr_filter'):
         with recovery_required('GeoIP sets loaded but cache publication failed; restart configd to recover'):
-            name = 'active-failsafe' if table == firewall_scope.FAILSAFE_TABLE else 'active'
-            self.record(name, metadata | {'applied': now()})
+            self.record('active', metadata | {'applied': now()})
 
     def apply(self, rendered, context, rebuild, *, configuration=None, table='nvyr_filter',
               owner='firewall', check_only=False):
@@ -231,15 +230,12 @@ class Manager:
 
         with self.lock:
             metadata = self.cached(recovery=context.recovery, report=context.report)
-            if table == firewall_scope.FAILSAFE_TABLE:
-                metadata = self.metadata('downloaded') or metadata
 
             if metadata is None:
                 members = {key: [] for key in selections}
             else:
                 # Populate groups left empty by earlier commits before marking this table active.
-                active_key = 'active-failsafe' if table == firewall_scope.FAILSAFE_TABLE else 'active'
-                if self.metadata(active_key) is None:
+                if self.metadata('active') is None:
                     selections = groups
 
                 try:
@@ -268,15 +264,10 @@ class Manager:
             scopes = self.scopes(engine.running)
             if not scopes:
                 return {'text': 'No GeoIP address-groups remain configured.\n'}
-            if firewall_scope.FAILSAFE_TABLE in scopes and not nftables.manager.table_exists(firewall_scope.FAILSAFE_TABLE):
-                del scopes[firewall_scope.FAILSAFE_TABLE]
-            if not scopes:
-                return {'text': f"GeoIP cache ready ({release['release']}); fail-safe firewall is not active.\n"}
             with self.lock:
                 current = []
                 for table in scopes:
-                    key = 'active-failsafe' if table == firewall_scope.FAILSAFE_TABLE else 'active'
-                    metadata = self.metadata(key)
+                    metadata = self.metadata('active')
                     current.append(metadata is not None and metadata['sha1'] == release['sha1'])
                 if all(current):
                     return {'text': f"GeoIP is unchanged ({release['release']}); no sets updated.\n"}
@@ -299,7 +290,7 @@ class Manager:
     @staticmethod
     def scopes(configuration):
         selections = geoip_config.groups(configuration)
-        return {firewall_scope.MAIN_TABLE: selections} if selections else {}
+        return {'nvyr_filter': selections} if selections else {}
 
     @staticmethod
     def ready(engine):

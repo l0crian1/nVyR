@@ -79,8 +79,7 @@ def test_shared_matches_dispatch_numeric_order_disable_and_exclude():
     assert 'meta nfproto vmap { ipv4 : jump ipv4_nat_postrouting }' in text
     assert 'chain nat_prerouting {' not in text and 'ipv6 :' not in text
     assert 'flush ruleset' not in text
-    assert [line for line in text.splitlines() if line.startswith('destroy table')] == [
-        'destroy table inet nvyr_filter_failsafe']
+    assert [line for line in text.splitlines() if line.startswith('destroy table')] == []
     assert 'chain nat_postrouting {' not in generated({})
     assert 'chain nat_prerouting {' in generated({'destination': {}})
     assert nft_nat_dispatch({}, 'prerouting') == ''

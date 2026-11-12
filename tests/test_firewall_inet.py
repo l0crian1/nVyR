@@ -271,26 +271,6 @@ def test_inet_dynamic_group_cleanup(controller, engine, monkeypatch):
     assert calls == [['nft', 'destroy', 'element', 'inet', 'nvyr_filter', 'inet_match_group_LEARNED', '{', '"eth1"', '}']]
 
 
-def test_inet_failsafe_uses_shared_pipeline(controller, engine, session, tmp_path):
-    """Fail-safe supports inet rules but exposes neither ingress nor flow enrollment."""
-    from nvyr.config_scripts import firewall_failsafe
-    from tests.test_firewall_failsafe import context
-
-    controller.execute('set firewall fail-safe inet input filter rule 10 action accept protocol tcp destination-port 22', session)
-    tree = engine.view(session)
-    ctx = context(tree, tmp_path, recovery=True)
-    configuration = firewall_failsafe.get_config(ctx)
-    firewall_failsafe.verify(configuration, ctx)
-    text = firewall_failsafe.generate(configuration, ctx)
-    assert 'nvyr_filter_failsafe' in text
-    assert 'th dport { 22 } accept' in text
-
-    with pytest.raises(RouterError):
-        controller.execute('set firewall fail-safe inet ingress filter interface eth0', session)
-    with pytest.raises(RouterError):
-        controller.execute('set firewall fail-safe inet forward filter rule 10 action offload', session)
-
-
 def test_inet_vrf_membership_rebuilds_base_chain():
     """An interface's VRF transition updates the direct INPUT expression."""
     before = inet_tree()

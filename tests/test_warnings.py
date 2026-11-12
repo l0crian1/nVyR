@@ -123,17 +123,6 @@ def test_local_zone_alone_has_no_active_hook_warnings(controller, session):
     assert 'Configuration check passed.' in result
 
 
-def test_failsafe_warning_identifies_its_own_configuration(controller, session):
-    controller.execute('set firewall fail-safe zone USERS interface eth1', session)
-
-    result = controller.execute('commit check', session)['text']
-
-    assert result.count('Warning:') == 2
-    assert 'firewall fail-safe ipv4 forward filter defaults to accept' in result
-    assert 'firewall fail-safe ipv6 forward filter defaults to accept' in result
-    assert 'Configuration check passed.' in result
-
-
 def test_zone_warnings_cross_rpc_for_check_and_commit(daemon):
     client = Client(daemon)
     try:

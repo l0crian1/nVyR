@@ -10,7 +10,7 @@ from urllib.error import URLError
 
 import pytest
 
-from nvyr.config_scripts import firewall, firewall_failsafe
+from nvyr.config_scripts import firewall
 from nvyr.errors import BusyError, OperationalError, RecoveryError, RouterError, ValidationError
 from nvyr.helpers import access, geoip, geoip_config, nftables, suggestors
 from nvyr.helpers.nftables_formatters import nft_singleton_group
@@ -340,19 +340,6 @@ def test_manual_update_and_unchanged_check(manager, engine, loads, monkeypatch):
     assert 'unchanged' in manager.update(engine)['text']
     assert len(loads) == 1
     assert requests == [geoip.PAGE, metadata['url'], geoip.PAGE]
-
-
-def test_failsafe_excludes_network_backed_groups(controller, session):
-    """Pre-interface protection cannot request DNS or DB-IP downloads."""
-    for command in (
-        'set firewall fail-safe group address-group ipv4 EARLY geoip country US',
-        'set firewall fail-safe group address-group ipv6 EARLY geoip country US',
-        'set firewall fail-safe group domain-group ipv4 EARLY domain example.com',
-        'set firewall fail-safe ipv4 input filter rule 10 source-domain-group EARLY',
-        'set firewall fail-safe ipv6 name EARLY rule 10 destination-domain-group EARLY',
-    ):
-        with pytest.raises(RouterError):
-            controller.execute(command, session)
 
 
 def test_update_failure_keeps_old_active_and_retries_same_download(manager, engine, loads, monkeypatch):
