@@ -12,6 +12,55 @@ IPv4 addresses and virtual-network traffic checks still run without a cable.
 
 ## Recent configuration additions
 
+### 0.3.0 coverage audit
+
+The release adds IS-IS, RIP/RIPng, CGNAT, imported firewall groups, static
+neighbors and LLDP. All six are present in the combined saved configuration.
+IS-IS and RIP/RIPng exchange distinct IPv4/IPv6 destinations between the default
+instance and BOOTLEFT; their routes, forwarding and native FRR configuration are
+checked before and after reboot. CGN's allocation map and lookup output are
+checked in the default VRF; packet translation runs in the shared routed suite.
+Imported IPv4/IPv6 lists and a positional CSV verdict map persist with provenance.
+
+The complementary tests cover:
+
+- IS-IS process/interface options, both levels and address families, policy
+  withdrawal, conditional/always default origination and adjacency reset. Native
+  dependency tests cover table-redistribution edits, removal and late route-map
+  creation/deletion/recreation. Numbered OSPF instances, hidden OSPF timers and
+  the previously deferred features are not part of this release's coverage claim.
+- RIP/RIPng versions, authentication, filters, offsets, metrics, passive and
+  split-horizon transitions. Shared traffic checks cover both families,
+  redistribution, excluded routes and policy withdrawal; native tests retain
+  the route-map lifetime and VRF refresh regressions.
+- CGN allocation capacity/offset/conflict verification, pool updates and
+  disable/re-enable/removal. Two subscribers request the same source port and
+  must receive separate public port blocks with working TCP/UDP replies. ICMP
+  identifiers, ordinary NAT exclusions and unmatched traffic have packet checks.
+- List/CSV invalid-row isolation, ambiguous-key removal, duplicate provenance,
+  unchanged hashes, bounded parallel retrieval, source failure and rollback.
+  Native tests cover every supported import kind/map result, interval overlaps,
+  dynamic expiry and the auto-merge comment limitation. Shared traffic tests
+  verify direct refresh without replacing rules, conflict handling and retention
+  of last published membership when a source becomes unavailable.
+- Permanent ARP/NDP create/edit/delete and metadata readback, with shared
+  forwarding checks for both families. Ownership, rollback and externally
+  changed bindings remain lower-level regressions rather than additional
+  release packet scenarios.
+- LLDP selectors/exclusions, exact overrides, native readback and removal.
+  Shared peers verify discovery on both VRF LANs and operational counters.
+
+Firewall startup ordering has dedicated regressions: VRF zones and VRFs precede
+the main firewall, interfaces follow it, and a firewall failure does not prevent
+interface startup. The reboot scenario verifies the complete resulting ruleset.
+Static management default routes are retained throughout acceptance; unrelated
+routing policy and nondefault static routes still fail preflight.
+
+This is a coverage inventory, not a claim that every hardware mode or external
+service has been qualified. The release ISO must still run acceptance (including
+reboot), smoketests and functional tests. Native dependency suites require their
+documented disposable environment; skipped cases are not counted as passes.
+
 Static ARP and IPv6 neighbors in `interfaces.set` cover permanent bindings and
 descriptions on the shared default/VRF transit pair. `check_static_neighbors`
 verifies both native tables and operational descriptions before and after reboot;

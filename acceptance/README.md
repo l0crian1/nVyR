@@ -23,6 +23,9 @@ python -m pip install -r acceptance/requirements.txt
 Use a dev-admin account: this controller executes test code on the host.
 Container CLI roles do not permit SSH command execution.
 
+Static management addresses and static IPv4/IPv6 default routes are retained
+throughout the run. Other existing routing policy is rejected by preflight.
+
 The runner prompts once for the administrator's password and keeps it only in
 memory for the run, including reconnection after reboot. It uses password login
 directly; there are no identity files, SSH agent login, or SSH config aliases.

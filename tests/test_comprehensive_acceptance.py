@@ -36,6 +36,7 @@ def test_comprehensive_configuration_and_restore(controller, engine, session, mo
     # Preserve management addressing and restore the spare port's original disabled state.
     controller.execute('set interfaces ethernet eth0 address 10.0.101.28/24', session)
     controller.execute('set interfaces ethernet eth1 disable description "Spare port"', session)
+    controller.execute('set protocols static route 0.0.0.0/0 next-hop 10.0.101.1', session)
     controller.execute('set system ntp server 192.0.2.123 prefer', session)
     initial = engine.commit(session)
     assert all(unit['success'] for unit in initial['results'].values())
@@ -58,6 +59,7 @@ def test_comprehensive_configuration_and_restore(controller, engine, session, mo
     result = engine.commit(session)
     failures = {name: unit for name, unit in result['results'].items() if not unit['success']}
     assert failures == {}
+    assert engine.running['protocols']['static']['route']['0.0.0.0/0'] == original['protocols']['static']['route']['0.0.0.0/0']
     firewall = next(text for text in reversed(rendered) if '\ntable inet nvyr_filter {' in text)
     (tmp_path / 'firewall.nft').write_text(firewall)
     (tmp_path / 'configuration.json').write_text(json.dumps(engine.running))

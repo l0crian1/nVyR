@@ -1,4 +1,4 @@
-"""CGN TCP/UDP return translation and ICMP identifiers on the shared routed LANs.
+"""CGN subscriber isolation, TCP/UDP replies, NAT exclusions and ICMP identifiers.
 
 Uses network-cgnat.conf in the single routed scenario. No configuration changes
 or additional interfaces. Incompatible with notrack or NAT replacing these tuples.
@@ -14,11 +14,14 @@ from nvyr.helpers.process import cmd
 
 
 @pytest.mark.parametrize('kind', [socket.SOCK_DGRAM, socket.SOCK_STREAM])
-def test_translated_transport_roundtrip(kind):
+@pytest.mark.parametrize('source,low,high', [('198.18.61.2', 40000, 40999), ('198.18.61.3', 41000, 41999)])
+def test_translated_transport_roundtrip(kind, source, low, high):
     port = 52600 if kind == socket.SOCK_DGRAM else 52601
     with host_socket('nvyr-routed-left', socket.AF_INET, kind) as sender, \
             host_socket('nvyr-routed-right', socket.AF_INET, kind) as listener:
-        sender.bind(('198.18.61.2', 0))
+        # Both subscribers request the same source port outside their blocks.
+        sender.bind((source, 49000))
+        listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         listener.bind(('198.18.62.2', port))
         sender.settimeout(3)
         listener.settimeout(3)
@@ -39,7 +42,23 @@ def test_translated_transport_roundtrip(kind):
                 receiver.sendall(b'reply')
                 assert sender.recv(128) == b'reply'
         assert peer[0] == '198.18.62.1'
-        assert 40000 <= peer[1] <= 40999
+        assert low <= peer[1] <= high
+
+
+@pytest.mark.parametrize('port', [52602, 52603], ids=['ordinary-nat-exclusion', 'unmatched-cgn-rule'])
+def test_untranslated_traffic_and_reply(port):
+    with host_socket('nvyr-routed-left', socket.AF_INET) as sender, \
+            host_socket('nvyr-routed-right', socket.AF_INET) as listener:
+        sender.bind(('198.18.61.2', 0))
+        listener.bind(('198.18.62.2', port))
+        sender.settimeout(3)
+        listener.settimeout(3)
+        sender.sendto(b'bypass', listener.getsockname())
+        data, peer = listener.recvfrom(128)
+        assert data == b'bypass'
+        assert peer == sender.getsockname()
+        listener.sendto(b'reply', peer)
+        assert sender.recvfrom(128)[0] == b'reply'
 
 
 def test_echo_identifier_translation():

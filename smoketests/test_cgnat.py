@@ -6,6 +6,7 @@ functional scenario. Incompatible with another test replacing NAT concurrently.
 
 from smoketests.assertions import assert_firewall_object, assert_firewall_rule, assert_operational_output
 from smoketests.firewall_support import firewall_environment, firewall_suite, firewall_vrf_suite, vrf_environment
+from nvyr.helpers.process import cmd
 
 
 def test_allocation_map_and_pool_update(config):
@@ -31,3 +32,22 @@ def test_vrf_zone_and_interface_scope(config, vrf_environment):
 
     assert_firewall_rule('ipv4_cgnat', 10, 'ct zone [1-9][0-9]*', 'oifname.*NVYRFWSMOKE.*dum999')
     assert_operational_output('show nat cgnat subscriber 100.64.0.1 vrf NVYRFWSMOKE', '203.0.113.10', '1024-2047')
+
+
+def test_disable_reenable_and_remove_allocation(config):
+    config.set('set nat cgnat pool SMOKECGN public-address 203.0.113.10')
+    config.set('set nat cgnat rule 10 source-address 100.64.0.1 outbound-interface dum999 pool SMOKECGN')
+    config.commit()
+    assert_firewall_object('map', 'cgnat_allocation_10', '100.64.0.1')
+
+    config.set('set nat cgnat rule 10 disable')
+    config.commit()
+    assert 'cgnat_allocation_10' not in cmd(['nft', 'list', 'table', 'inet', 'nvyr_filter'])
+
+    config.delete('delete nat cgnat rule 10 disable')
+    config.commit()
+    assert_firewall_object('map', 'cgnat_allocation_10', '100.64.0.1')
+
+    config.delete('delete nat cgnat')
+    config.commit()
+    assert 'cgnat_allocation_10' not in cmd(['nft', 'list', 'table', 'inet', 'nvyr_filter'])

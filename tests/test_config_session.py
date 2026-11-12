@@ -97,7 +97,7 @@ def test_library_reconnect_can_confirm_without_requesting_lock(daemon):
         assert reconnected.get_config()['interfaces']['dummy']['dum0']['description'] == 'candidate'
 
 
-def test_failed_commit_reports_dependency_rollback_and_leaves_candidate(daemon):
+def test_failed_commit_reports_blocked_dependency_and_leaves_candidate(daemon):
     with ConfigurationSession(socket_path=daemon) as config:
         config.set('set interfaces dummy dum0')
         config.set('set firewall ipv4 input filter rule 10 description "No action"')
@@ -108,7 +108,7 @@ def test_failed_commit_reports_dependency_rollback_and_leaves_candidate(daemon):
 
         assert not error.value.result['changed']
         assert not error.value.result['results']['dummy']['success']
-        assert 'dependent configuration operation failed' in error.value.result['results']['dummy']['error']
+        assert 'Required configuration operation failed: firewall' in error.value.result['results']['dummy']['error']
         assert not error.value.result['results']['firewall']['success']
         assert config.get_config() == {}
         assert config.get_config('candidate') == candidate

@@ -34,8 +34,11 @@ def test_combined_configuration(local_session, monkeypatch):
     })
     monkeypatch.setattr(geoip, 'manager', SimpleNamespace(apply=lambda *args, **kwargs: None))
     monkeypatch.setattr(domain_groups, 'manager', SimpleNamespace(prepare=lambda *args: ('', None)))
+    local_session.set('set protocols static route 0.0.0.0/0 next-hop 10.0.101.1')
+    local_session.commit()
     routed_network.configure(local_session)
     running = local_session.get_config()
+    assert running['protocols']['static']['route']['0.0.0.0/0'] == {'next-hop': {'10.0.101.1': {}}}
 
     assert set(running['vrf']['name']) == {'NVYRLEFT', 'NVYRRIGHT', 'NVYRFWSMOKE', 'NVYRSMOKE', 'NTPTEST', 'NVYRDHCPSMOKE'}
     assert 'bgp' in running['vrf']['name']['NVYRLEFT']['protocols']

@@ -89,6 +89,15 @@ def configure(config):
             config.delete('delete ' + section)
     if lookup(running, ('protocols', 'static'), None) is not None:
         config.delete('delete protocols static')
+        # Static management defaults must survive ordinary shared-scenario setup.
+        # Only explicit empty-instance tests need to remove every static route.
+        defaults = {}
+        for family, prefix in (('route', '0.0.0.0/0'), ('route6', '::/0')):
+            route = lookup(running, ('protocols', 'static', family, prefix), None)
+            if route is not None:
+                defaults[family] = {prefix: route}
+        if defaults:
+            config.load({'protocols': {'static': defaults}}, replace=False)
     if lookup(running, ('system', 'ntp'), None) is not None:
         config.delete('delete system ntp')
     if lookup(running, ('service', 'dns'), None) is not None:
@@ -228,6 +237,7 @@ def scenario(config, stop):
 
         configure_host('nvyr-routed-left', 'veth42064', '198.18.61.2/24', '198.18.61.1',
                        '2001:db8:61::2/64', '2001:db8:61::1')
+        cmd(['ip', '-n', 'nvyr-routed-left', 'address', 'add', '198.18.61.3/24', 'dev', 'veth42064'])
         configure_host('nvyr-routed-right', 'veth42066', '198.18.62.2/24', '198.18.62.1',
                        '2001:db8:62::2/64', '2001:db8:62::1')
         configure_host('nvyr-ft-source', 'veth41051', '198.18.50.2/30', '198.18.50.1',

@@ -146,24 +146,22 @@ def test_status_completion_and_scope(controller, session):
             controller.execute(text, caller)
 
 
-def test_commit_feedback_dependency_rollback_and_noop(controller, engine, session, monkeypatch):
+def test_commit_feedback_blocked_dependency_and_noop(controller, engine, session):
     controller.execute('set interfaces dummy dum0', session)
     controller.execute('set firewall ipv4 input filter rule 10 description unfinished', session)
     candidate = engine.view(session)
-    monkeypatch.setattr(engine.modules['dummy'], 'apply', lambda generated, context: context.report('A report without newline'))
     chunks = []
     result = controller.execute('commit', session, on_text=chunks.append)
 
     assert 'Applying dummy...\n' in chunks
-    assert 'A report without newline\n' in chunks
-    assert 'dummy: done\n\n' in chunks
-    assert chunks.index('Applying dummy...\n') < chunks.index('A report without newline\n') < chunks.index('dummy: done\n\n')
+    assert 'dummy: done\n\n' not in chunks
     assert any('firewall: failed' in chunk and 'action is required' in chunk for chunk in chunks)
     assert all(chunk.endswith('\n\n') for chunk in chunks if 'firewall: failed' in chunk)
-    restored = 'dummy: failed — Restored because a dependent configuration operation failed.\n\n'
-    assert restored in chunks and chunks.index('dummy: done\n\n') < chunks.index(restored)
+    blocked = 'dummy: failed — Required configuration operation failed: firewall\n\n'
+    assert blocked in chunks
+    assert chunks.index('Applying firewall...\n') < chunks.index('Applying dummy...\n') < chunks.index(blocked)
     assert 'Commit failed' in result['text'] and '0 applied, 2 failed' in result['text']
-    assert 'Changes remain pending: dummy, firewall.' in result['text']
+    assert 'Changes remain pending: firewall, dummy.' in result['text']
     assert engine.running == {} and engine.commit_id == 0
     assert engine.view(session) == candidate
     assert engine.configuration_status(session)['changed'] == ['dummy', 'firewall']
@@ -175,16 +173,19 @@ def test_commit_feedback_dependency_rollback_and_noop(controller, engine, sessio
     assert controller.execute('commit', session)['text'] == 'No configuration changes to commit.\n'
 
 
-def test_commit_feedback_independent_partial_failure(controller, engine, session):
+def test_commit_feedback_independent_partial_failure(controller, engine, session, monkeypatch):
     # Hostname has no dependency on the invalid firewall configuration.
     controller.execute('set system host-name router', session)
     controller.execute('set firewall ipv4 input filter rule 10 description unfinished', session)
     candidate = engine.view(session)
+    monkeypatch.setattr(engine.modules['system'], 'apply', lambda generated, context: context.report('A report without newline'))
     chunks = []
 
     result = controller.execute('commit', session, on_text=chunks.append)
 
     assert 'system: done\n\n' in chunks
+    assert 'A report without newline\n' in chunks
+    assert chunks.index('Applying system...\n') < chunks.index('A report without newline\n') < chunks.index('system: done\n\n')
     assert any('firewall: failed' in chunk and 'action is required' in chunk for chunk in chunks)
     assert 'partially completed' in result['text'] and '1 applied, 1 failed' in result['text']
     assert 'Changes remain pending: firewall.' in result['text']
@@ -213,10 +214,10 @@ def test_script_runs_and_commit_summary_have_blank_line_separators(controller, e
     text = ''.join(chunks) + result['text']
 
     assert text == (
-        'Applying dummy...\n'
-        'dummy: done\n\n'
         'Applying firewall...\n'
         'firewall: done\n\n'
+        'Applying dummy...\n'
+        'dummy: done\n\n'
         'Applying system...\n'
         'system: done\n\n'
         'Commit 1 completed in 0.00s.\n'

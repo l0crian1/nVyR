@@ -182,11 +182,10 @@ def test_verification_empty_group_cycles_and_duplicate_fields():
         firewall.verify(tree, None)
 
 
-def test_dns_priority_before_firewall_and_after_interfaces(controller):
+def test_dns_priority_after_early_firewall_and_interfaces(controller):
     schema = controller.engine.schema
     priorities = {name: spec[1] for name, spec in schema.owners.items()}
-    assert priorities['dns'] < priorities['firewall']
-    assert priorities['dns'] > priorities['bridge']
+    assert priorities['firewall'] < priorities['bridge'] < priorities['dns']
 
 
 def test_domain_sets_have_tracking_and_no_dns_names():

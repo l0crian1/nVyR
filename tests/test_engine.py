@@ -33,7 +33,7 @@ def test_independent_candidates_rebase_as_intents(engine, session):
 
 
 @pytest.mark.parametrize("stage", ["get_config", "verify", "generate", "apply"])
-def test_partial_commit_retains_entire_failed_unit_and_continues(engine, session, stage, monkeypatch):
+def test_partial_commit_retains_failed_component_and_continues(engine, session, stage, monkeypatch):
     original = getattr(engine.modules['firewall'], stage)
 
     def fail(*args):
@@ -53,13 +53,21 @@ def test_partial_commit_retains_entire_failed_unit_and_continues(engine, session
     assert result["results"]["system"]["success"]
     assert not result["results"]["firewall"]["success"]
     assert result['results']['firewall']['error'] == f'Injected {stage} failure'
-    assert {m.owner for m in session.mutations} == {"firewall"}
-    assert len(session.mutations) == 2
+    assert not result['results']['dummy']['success']
+    assert 'Required configuration operation failed: firewall' in result['results']['dummy']['error']
+    assert {m.owner for m in session.mutations} == {"firewall", "dummy"}
+    assert len(session.mutations) == 3
     assert "firewall" not in engine.running
     assert session.commit_id == 1
     assert engine.commit(session)["commit_id"] == 1
     assert len(list((engine.store.directory / "history").glob("*.json"))) == 2
-    assert len([call for call in engine.modules["dummy"].calls if call[1:] == ("apply", False)]) == 1
+    assert not [call for call in engine.modules['dummy'].calls if call[1:] == ('apply', False)]
+
+    monkeypatch.setattr(engine.modules['firewall'], stage, original)
+    retried = engine.commit(session)
+    assert all(item['success'] for item in retried['results'].values())
+    assert not session.mutations
+    assert len([call for call in engine.modules['dummy'].calls if call[1:] == ('apply', False)]) == 1
 
 
 def test_delete_ancestor_preserves_owner_awareness(engine, session):

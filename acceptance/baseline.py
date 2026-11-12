@@ -85,9 +85,17 @@ def preflight(configuration, options):
     """Require an exclusive minimal lab and explicit hardware/workload inputs."""
     validate_options(options)
     # Global policy cannot be meaningfully checked alongside an unrelated ruleset.
-    for section in ('firewall', 'nat', 'nat66', 'policy', 'protocols', 'container', 'vrf'):
+    for section in ('firewall', 'nat', 'nat66', 'policy', 'container', 'vrf'):
         if configuration.get(section):
             raise ValueError(f'Comprehensive acceptance needs a clean lab {section} section')
+    # Static management defaults do not overlap the lab's explicit destinations.
+    # Retain them throughout the run; other routing policy would alter its results.
+    protocols = configuration.get('protocols', {})
+    static = protocols.get('static', {})
+    if (set(protocols) - {'static'} or set(static) - {'route', 'route6'}
+            or set(static.get('route', {})) - {'0.0.0.0/0'}
+            or set(static.get('route6', {})) - {'::/0'}):
+        raise ValueError('Comprehensive acceptance needs a clean lab protocols section except static default routes')
     for service in ('dhcp-server', 'dhcpv6-server'):
         if lookup(configuration, ('service', service), {}):
             raise ValueError(f'Comprehensive acceptance needs no existing {service}')

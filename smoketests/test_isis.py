@@ -82,6 +82,16 @@ def test_process_options_and_policy(config, scope):
                   'redistribute ipv4 connected level-2 metric 20 route-map NVYRISIS',
                   'redistribute ipv6 static level-2 metric 30 route-map NVYRISIS',
                   'topology ipv6-unicast overload')
+    assert_native('log-adjacency-changes', 'log-pdu-drops', 'purge-originator', 'lsp-mtu 1400',
+                  'set-overload-bit on-startup 10', 'advertise-high-metrics', 'advertise-passive-only',
+                  'attached-bit receive ignore',
+                  'lsp-timers level-2 gen-interval 20 refresh-interval 600 max-lifetime 1000',
+                  'spf-interval level-2 3', 'fast-reroute priority-limit high level-2',
+                  'fast-reroute load-sharing disable level-2',
+                  'fast-reroute lfa tiebreaker downstream index 1 level-2',
+                  'spf-delay-ietf init-delay 50 short-delay 100 long-delay 500 holddown 1000 time-to-learn 500',
+                  'spf prefix-priority critical NVYRISIS',
+                  'default-information originate ipv4 level-2 always route-map NVYRISIS metric 40')
 
 
 @pytest.mark.parametrize('tail,expected', [

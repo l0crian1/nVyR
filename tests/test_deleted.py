@@ -146,7 +146,7 @@ def test_final_diff_ignores_cancelled_deletions_and_new_objects(engine, session)
     assert seen == [{}]
 
 
-def test_partial_commit_retries_deletions_from_previous_running(engine, session):
+def test_failed_component_retries_deletions_from_previous_running(engine, session):
     engine.mutate(session, 'set', ['interfaces', 'dummy', 'dum0'])
     engine.mutate(session, 'set', ['firewall', 'description', 'Remove'])
     engine.commit(session)
@@ -161,7 +161,8 @@ def test_partial_commit_retries_deletions_from_previous_running(engine, session)
     engine.mutate(session, 'delete', ['firewall'])
     result = engine.commit(session)
 
-    assert result['results']['firewall']['success']
+    assert not result['results']['firewall']['success']
+    assert 'Restored because a dependent' in result['results']['firewall']['error']
     assert not result['results']['dummy']['success']
     assert 'dum0' in lookup(engine.running, ('interfaces', 'dummy'))
     assert set(seen[0]) == {('interfaces', 'dummy')}

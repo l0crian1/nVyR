@@ -101,6 +101,12 @@ sessions. The baseline is split into readable literal configurations:
   for FIB installation, preference, ECMP and withdrawal tests.
 - [network-services.conf](configs/network-services.conf): DHCPv4/v6, NTP, logging
   and the default-VRF links used by global flowtable tests.
+- `network-rip.conf` and `network-isis.conf`: dual-stack protocol exchange,
+  dedicated connected/static destinations and independent route policies.
+- `network-cgnat.conf`: two subscribers sharing a public address with separate
+  port blocks, TCP/UDP replies, ICMP identifiers and ordinary NAT exclusions.
+- `network-lists.conf`: imported IPv4 maps and IPv6 tuples. Refresh/failure cases
+  edit only their local feed files; they leave the network topology installed.
 
 BGP convergence and initial end-of-RIB are checked once. Policy changes and hard
 peer resets still wait for their intended withdrawal or reconvergence. Ordinary
@@ -201,8 +207,10 @@ packages clean up once at package exit; native operational fixtures clean up at
 module exit. Deliberately isolated lifecycle cases clean up their own resources.
 No test saves the configuration. Cleanup failures stop subsequent tests.
 
-Use a dedicated test router. Firewall cases temporarily remove firewall/NAT;
-static cases remove default-VRF static routes. Management must not depend on them.
+Use a dedicated test router. Firewall cases temporarily remove firewall/NAT.
+Ordinary routed-scenario setup retains static management default routes; explicit
+empty-instance static cases remove default-VRF static routes temporarily.
+Management must not depend on the policy being removed by those cases.
 Never select the management interface as the spare Ethernet port. Existing test
 names and table IDs cause preflight failure instead of being reused.
 

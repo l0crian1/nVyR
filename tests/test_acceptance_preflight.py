@@ -51,6 +51,24 @@ def test_preflight_refuses_existing_policy(inventory):
         baseline.preflight({'firewall': {'ipv4': {'input': {}}}}, OPTIONS)
 
 
+def test_preflight_allows_static_management_defaults(inventory):
+    baseline.preflight({'protocols': {'static': {
+        'route': {'0.0.0.0/0': {'next-hop': {'10.0.101.1': {}}}},
+        'route6': {'::/0': {'next-hop': {'2001:db8::1': {}}}},
+    }}}, OPTIONS)
+
+
+@pytest.mark.parametrize('protocols', [
+    {'bgp': {'local-as': '64512'}},
+    {'static': {'route': {'10.0.0.0/8': {'blackhole': {}}}}},
+    {'static': {'route6': {'2001:db8::/32': {'blackhole': {}}}}},
+    {'static': {'table': {'100': {}}}},
+])
+def test_preflight_refuses_nondefault_routing_policy(inventory, protocols):
+    with pytest.raises(ValueError, match='clean lab protocols'):
+        baseline.preflight({'protocols': protocols}, OPTIONS)
+
+
 def test_preflight_refuses_native_address_and_route_collisions(inventory):
     inventory['links'][0]['addr_info'] = [{'local': '198.18.196.5', 'prefixlen': 24}]
     with pytest.raises(ValueError, match='address space already in use'):

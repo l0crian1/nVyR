@@ -101,14 +101,14 @@ def test_watches_allow_interface_types_without_vrf():
 
 
 def test_loopback_reference_does_not_trigger_vrf_reapply(controller, session, engine):
-    """An alias change on lo cannot affect a consumer watching VRF membership."""
+    """Interface watches reapply the firewall, but never the unrelated VRF owner."""
     controller.execute('set interfaces loopback lo', session)
     controller.execute('set firewall ipv4 input filter rule 10 inbound-interface lo action accept', session)
     result = engine.commit(session)
     assert all(item['success'] for item in result['results'].values())
 
     controller.execute('set interfaces loopback lo description "Router identity"', session)
-    assert set(engine.commit(session)['results']) == {'loopback'}
+    assert set(engine.commit(session)['results']) == {'loopback', 'firewall'}
 
     with pytest.raises(ValidationError, match='referenced'):
         controller.execute('delete interfaces loopback lo', session)

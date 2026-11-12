@@ -77,7 +77,7 @@ def test_clear_passes_literal_star_without_shell_expansion(monkeypatch):
 ])
 def test_clear_rejects_other_commands_and_embedded_input(monkeypatch, words):
     monkeypatch.setattr(vtysh, 'cmd', lambda argv: pytest.fail('Unsafe reset executed'))
-    with pytest.raises(ValueError, match='single FRR clear bgp, ospf, rip, ripng, or route-map counters command'):
+    with pytest.raises(ValueError, match='single FRR clear bgp, ospf, isis, rip, ripng, or route-map counters command'):
         vtysh.clear(words)
 
 

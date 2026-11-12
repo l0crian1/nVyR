@@ -90,6 +90,17 @@ def test_process_and_policy_options(config, protocol):
     assert_native(f'router {protocol} vrf NVYRRIP', 'allow-ecmp 4', 'default-metric 5',
                   'timers basic 10 60 40', 'redistribute connected metric 3 route-map NVYRRIP',
                   'route-map NVYRRIP in dum41044', 'offset-list NVYRRIP out 4 dum41044')
+    distribute = 'ipv6 distribute-list' if protocol == 'ripng' else 'distribute-list'
+    interface = 'ipv6 ripng' if protocol == 'ripng' else 'ip rip'
+    assert_native(f'network {prefix}', f'route {prefix}', 'network dum41044',
+                  'default-information originate', 'redistribute local', 'passive-interface dum41044',
+                  f'{distribute} NVYRRIP in', f'{distribute} prefix NVYRRIP in',
+                  f'{distribute} prefix NVYRRIP out', f'{distribute} prefix NVYRRIP in dum41044',
+                  f'{distribute} NVYRRIP out dum41044', 'offset-list NVYRRIP in 1',
+                  'offset-list NVYRRIP out 2', 'offset-list NVYRRIP in 3 dum41044',
+                  'route-map NVYRRIP out dum41044', f'{interface} split-horizon poisoned-reverse')
+    if protocol == 'ripng':
+        assert_native('aggregate-address 2001:db8:44::/48')
 
 
 @pytest.mark.parametrize('version', ['1', '2', 'both', 'none'])
@@ -110,6 +121,13 @@ def test_authentication_and_distance(config, authentication):
     config.set(base + ' interface dum41044 authentication ' + authentication)
     config.commit()
     assert_native('distance 125', 'distance 126 192.0.2.0/24 NVYRRIP', 'neighbor 192.0.2.2')
+    mode = 'text' if authentication.startswith('mode text') else 'md5'
+    suffix = ' auth-length rfc' if authentication.endswith(' rfc') else ''
+    assert_native(f'ip rip authentication mode {mode}{suffix}', 'version 2', 'log-neighbor-changes')
+    if 'key-chain' in authentication:
+        assert_native('ip rip authentication key-chain NVYRRIP')
+    else:
+        assert_native('ip rip authentication string rip-smoke')
 
 
 def test_passive_default_removal_restores_active_interface(config):

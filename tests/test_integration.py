@@ -244,12 +244,12 @@ def test_real_unix_rpc_sessions_partial_commit_and_reconnect(daemon):
     try:
         alice.request("open")
         bob.request("open", draft=True)
-        alice.request("execute", text="set interfaces dummy dum0 description LAN")
+        alice.request("execute", text="set system host-name router")
         alice.request("execute", text="set firewall ipv4 forward filter rule 10 description unfinished")
         alice.request("execute", text="commit")
         rendered = alice.request("execute", text="show running-configuration | commands")["text"]
 
-        assert rendered == "set interfaces dummy dum0 description LAN\n"
+        assert rendered == "set system host-name router\n"
         assert "rule 10 description unfinished" in alice.request("execute", text="compare | commands")["text"]
         assert bob.request("execute", text="show candidate-configuration")["text"].strip() == "{}"
 

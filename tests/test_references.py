@@ -88,7 +88,7 @@ def test_reference_completion_uses_only_provider_paths(controller, session):
 
     assert controller.completion('show ref', session, tab=True)['replacement'] == 'references'
     choices = dict(controller.completion('show references ', session, explicit=True)['candidates'])
-    assert set(choices) == {'firewall', 'interfaces', 'vrf', 'container', 'policy'}
+    assert set(choices) == {'firewall', 'nat', 'interfaces', 'vrf', 'container', 'policy'}
     assert set(dict(controller.completion('show references firewall ipv4 ', session, explicit=True)['candidates'])) == {'name'}
     assert controller.completion('show references interfaces dummy dum', session, tab=True)['replacement'] == 'dum0'
     assert '<Enter>' not in dict(controller.completion('show references interfaces dummy ', session, explicit=True)['candidates'])
