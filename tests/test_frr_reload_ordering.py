@@ -100,3 +100,16 @@ def test_isis_padding_removal_restores_always(before):
     lines = functions['lines_to_config'](('interface eth1',), before, True)
     assert 'isis hello padding' in [line.strip() for line in lines]
     assert 'no isis hello padding' not in [line.strip() for line in lines]
+
+
+@pytest.mark.parametrize('before', ['ip ospf mpls ldp-sync', 'no ip ospf mpls ldp-sync'])
+def test_ospf_sync_override_removal_restores_inheritance(before):
+    functions = runpy.run_path('/usr/lib/frr/frr-reload.py')
+    lines = functions['lines_to_config'](('interface eth1',), before, True)
+    assert 'default ip ospf mpls ldp-sync' in [line.strip() for line in lines]
+
+
+def test_ospf_sync_zero_timer_removal_uses_valid_reset():
+    functions = runpy.run_path('/usr/lib/frr/frr-reload.py')
+    lines = functions['lines_to_config'](('interface eth1',), 'ip ospf mpls ldp-sync holddown 0', True)
+    assert 'no ip ospf mpls ldp-sync holddown' in [line.strip() for line in lines]

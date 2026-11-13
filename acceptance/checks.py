@@ -838,7 +838,23 @@ def check_static_neighbors(options):
         assert_in(description, cmd(['neighbors.nvyr.op', 'show', f'show arp interface {interface}']))
 
 
+def check_mpls_ldp(options):
+    assert_equal(Path('/proc/sys/net/mpls/platform_labels').read_text().strip(), '1048575')
+    assert_equal(Path('/proc/sys/net/mpls/conf/veth997/input').read_text().strip(), '1')
+    lines = {' '.join(line.split()) for line in cmd(['vtysh', '-c', 'show running-config no-header']).splitlines()}
+    for command in ('mpls ldp', 'discovery hello interval 2', 'discovery hello holdtime 10',
+                    'discovery transport-address 198.18.192.2',
+                    'discovery transport-address 2001:db8:192::2',
+                    'label local allocate host-routes', 'label local advertise explicit-null',
+                    'mpls ldp-sync holddown 2', 'ip ospf mpls ldp-sync holddown 1',
+                    'isis mpls ldp-sync holddown 1'):
+        assert_in(command, lines)
+    for family in ('ipv4', 'ipv6'):
+        assert_in('veth997', cmd(['mpls.nvyr.op', 'show', f'show mpls ldp {family} interface']))
+
+
 CHECKS = (
+    check_mpls_ldp,
     check_static_neighbors,
     check_lldp,
     check_kernel_release, check_operational_inventory,

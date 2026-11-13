@@ -1,6 +1,10 @@
 {% set native = 'ospf6' if version == 3 else 'ospf' -%}
 {% for vrf, settings in configuration['instances'].items() | sort(case_sensitive=true) -%}
 router {{ native }}{{ ' vrf ' ~ vrf if vrf != 'default' else '' }}
+{% if 'ldp-sync' in settings %} mpls ldp-sync
+{% if 'hold-down' in settings['ldp-sync'] %} mpls ldp-sync holddown {{ settings['ldp-sync']['hold-down'] | int }}
+{% endif -%}
+{% endif -%}
 {% for key, value in settings.get('options', {}).items() -%}
 {% if key == 'send-extra-data' %} {{ native }} send-extra-data zebra
 {% elif key == 'opaque-lsa' %} capability opaque
@@ -104,6 +108,10 @@ router {{ native }}{{ ' vrf ' ~ vrf if vrf != 'default' else '' }}
 exit
 {% for name, interface in settings.get('interface', {}).items() | sort(case_sensitive=true) -%}
 interface {{ name }}
+{% if 'ldp-sync' in interface %} {{ 'no ' if 'disable' in interface['ldp-sync'] else '' }}ip ospf mpls ldp-sync
+{% if 'hold-down' in interface['ldp-sync'] %} ip ospf mpls ldp-sync holddown {{ interface['ldp-sync']['hold-down'] | int }}
+{% endif -%}
+{% endif -%}
 {% for command in ospf_interface_commands(interface, version) %} {{ command }}
 {% endfor -%}
 exit

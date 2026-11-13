@@ -60,6 +60,8 @@ vrf:
               remove:
               - /children/options/children/opaque-lsa
               - /children/router-info
+              - /children/ldp-sync
+              - /children/interface/children/ldp-sync
               replace:
                 /script/register/vrf: {tag: name}
             - file: protocols/ospfv3.yaml.i
@@ -67,6 +69,9 @@ vrf:
                 /script/register/vrf: {tag: name}
 
             - file: protocols/isis.yaml.i
+              remove:
+              - /children/ldp-sync
+              - /children/interface/children/ldp-sync
               replace:
                 /script/register/vrf: {tag: name}
             - file: protocols/rip.yaml.i

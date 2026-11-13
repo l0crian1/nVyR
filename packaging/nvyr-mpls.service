@@ -1,0 +1,9 @@
+[Unit]
+Description=nVyR MPLS kernel modules
+Before=nvyr-netlinkd.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/sbin/modprobe mpls_router
+ExecStart=/usr/sbin/modprobe mpls_iptunnel

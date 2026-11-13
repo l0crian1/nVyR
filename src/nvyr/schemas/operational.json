@@ -1755,6 +1755,55 @@
             }
           }
         },
+        "mpls": {
+          "kind": "node",
+          "description": "Reset MPLS protocol state",
+          "children": {
+            "ldp": {
+              "kind": "node",
+              "description": "Reset LDP sessions",
+              "children": {
+                "neighbor": {
+                  "kind": "node",
+                  "description": "Reset all LDP neighbors",
+                  "command": {
+                    "argv": [
+                      "mpls.nvyr.op",
+                      "clear",
+                      "@line"
+                    ]
+                  },
+                  "children": {
+                    "address": {
+                      "kind": "tag_node",
+                      "description": "Neighbor transport address",
+                      "command": {
+                        "argv": [
+                          "mpls.nvyr.op",
+                          "clear",
+                          "@line"
+                        ]
+                      },
+                      "positional": true,
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "inet-address": {
+                            "name": "inet-address"
+                          }
+                        }
+                      },
+                      "hints": {
+                        "address": "Neighbor transport address"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "access": "net-admin"
+        },
         "rip": {
           "kind": "node",
           "description": "Clear learned RIP routes",
@@ -15566,6 +15615,56 @@
             ]
           },
           "children": {
+            "mpls": {
+              "kind": "node",
+              "description": "MPLS integration",
+              "children": {
+                "ldp-sync": {
+                  "kind": "node",
+                  "description": "LDP synchronization state",
+                  "command": {
+                    "argv": [
+                      "isis.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  },
+                  "children": {
+                    "interface": {
+                      "kind": "tag_node",
+                      "description": "Select an interface",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "regex": {
+                            "name": "regex",
+                            "args": {
+                              "pattern": "[A-Za-z_][A-Za-z0-9_.-]{0,14}"
+                            }
+                          }
+                        }
+                      },
+                      "choices": {
+                        "all": "All interfaces"
+                      },
+                      "suggestors": [
+                        {
+                          "name": "interfaces"
+                        }
+                      ],
+                      "command": {
+                        "argv": [
+                          "isis.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {}
+                    }
+                  }
+                }
+              }
+            },
             "summary": {
               "kind": "node",
               "description": "IS-IS summary",
@@ -16720,6 +16819,1404 @@
                   }
                 }
               ]
+            }
+          }
+        },
+        "mpls": {
+          "kind": "node",
+          "description": "MPLS forwarding and label distribution",
+          "children": {
+            "status": {
+              "kind": "node",
+              "description": "MPLS platform status",
+              "command": {
+                "argv": [
+                  "mpls.nvyr.op",
+                  "show",
+                  "@line"
+                ]
+              }
+            },
+            "table": {
+              "kind": "node",
+              "description": "MPLS forwarding table",
+              "command": {
+                "argv": [
+                  "mpls.nvyr.op",
+                  "show",
+                  "@line"
+                ]
+              },
+              "children": {
+                "label": {
+                  "kind": "tag_node",
+                  "description": "Incoming label",
+                  "command": {
+                    "argv": [
+                      "mpls.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  },
+                  "children": {
+                    "json": {
+                      "kind": "node",
+                      "description": "Native JSON output",
+                      "command": {
+                        "argv": [
+                          "mpls.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      }
+                    }
+                  },
+                  "positional": true,
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "integer-range": {
+                        "name": "integer-range",
+                        "args": {
+                          "minimum": 16,
+                          "maximum": 1048575
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "16-1048575": "Incoming label"
+                  }
+                },
+                "json": {
+                  "kind": "node",
+                  "description": "Native JSON output",
+                  "command": {
+                    "argv": [
+                      "mpls.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  }
+                }
+              }
+            },
+            "fec": {
+              "kind": "node",
+              "description": "Forwarding equivalence classes",
+              "command": {
+                "argv": [
+                  "mpls.nvyr.op",
+                  "show",
+                  "@line"
+                ]
+              },
+              "children": {
+                "prefix": {
+                  "kind": "tag_node",
+                  "description": "Destination prefix",
+                  "command": {
+                    "argv": [
+                      "mpls.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  },
+                  "positional": true,
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "address": {
+                        "name": "address"
+                      }
+                    }
+                  },
+                  "hints": {
+                    "prefix": "Destination prefix"
+                  }
+                }
+              }
+            },
+            "ldp": {
+              "kind": "node",
+              "description": "Label Distribution Protocol",
+              "children": {
+                "binding": {
+                  "kind": "node",
+                  "description": "Label bindings",
+                  "command": {
+                    "argv": [
+                      "mpls.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  },
+                  "children": {
+                    "local-label": {
+                      "kind": "leaf_node",
+                      "description": "Locally assigned label",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "integer-range": {
+                            "name": "integer-range",
+                            "args": {
+                              "minimum": 0,
+                              "maximum": 1048575
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "0-1048575": "Locally assigned label"
+                      },
+                      "command": {
+                        "argv": [
+                          "mpls.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      }
+                    },
+                    "remote-label": {
+                      "kind": "leaf_node",
+                      "description": "Remotely assigned label",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "integer-range": {
+                            "name": "integer-range",
+                            "args": {
+                              "minimum": 0,
+                              "maximum": 1048575
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "0-1048575": "Remotely assigned label"
+                      },
+                      "command": {
+                        "argv": [
+                          "mpls.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      }
+                    },
+                    "neighbor": {
+                      "kind": "leaf_node",
+                      "description": "Neighbor LSR ID",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "ipv4-address": {
+                            "name": "ipv4-address"
+                          }
+                        }
+                      },
+                      "hints": {
+                        "lsr-id": "Neighbor LSR ID"
+                      },
+                      "command": {
+                        "argv": [
+                          "mpls.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      }
+                    },
+                    "detail": {
+                      "kind": "node",
+                      "description": "Detailed bindings",
+                      "command": {
+                        "argv": [
+                          "mpls.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {
+                        "json": {
+                          "kind": "node",
+                          "description": "Native JSON output",
+                          "command": {
+                            "argv": [
+                              "mpls.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    "prefix": {
+                      "kind": "tag_node",
+                      "description": "Destination prefix",
+                      "command": {
+                        "argv": [
+                          "mpls.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {
+                        "local-label": {
+                          "kind": "leaf_node",
+                          "description": "Locally assigned label",
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "integer-range": {
+                                "name": "integer-range",
+                                "args": {
+                                  "minimum": 0,
+                                  "maximum": 1048575
+                                }
+                              }
+                            }
+                          },
+                          "hints": {
+                            "0-1048575": "Locally assigned label"
+                          },
+                          "command": {
+                            "argv": [
+                              "mpls.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          }
+                        },
+                        "remote-label": {
+                          "kind": "leaf_node",
+                          "description": "Remotely assigned label",
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "integer-range": {
+                                "name": "integer-range",
+                                "args": {
+                                  "minimum": 0,
+                                  "maximum": 1048575
+                                }
+                              }
+                            }
+                          },
+                          "hints": {
+                            "0-1048575": "Remotely assigned label"
+                          },
+                          "command": {
+                            "argv": [
+                              "mpls.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          }
+                        },
+                        "neighbor": {
+                          "kind": "leaf_node",
+                          "description": "Neighbor LSR ID",
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "ipv4-address": {
+                                "name": "ipv4-address"
+                              }
+                            }
+                          },
+                          "hints": {
+                            "lsr-id": "Neighbor LSR ID"
+                          },
+                          "command": {
+                            "argv": [
+                              "mpls.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          }
+                        },
+                        "detail": {
+                          "kind": "node",
+                          "description": "Detailed bindings",
+                          "command": {
+                            "argv": [
+                              "mpls.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          },
+                          "children": {
+                            "json": {
+                              "kind": "node",
+                              "description": "Native JSON output",
+                              "command": {
+                                "argv": [
+                                  "mpls.nvyr.op",
+                                  "show",
+                                  "@line"
+                                ]
+                              }
+                            }
+                          }
+                        },
+                        "longer-prefixes": {
+                          "kind": "node",
+                          "description": "Include more-specific prefixes",
+                          "command": {
+                            "argv": [
+                              "mpls.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          },
+                          "children": {
+                            "json": {
+                              "kind": "node",
+                              "description": "Native JSON output",
+                              "command": {
+                                "argv": [
+                                  "mpls.nvyr.op",
+                                  "show",
+                                  "@line"
+                                ]
+                              }
+                            }
+                          }
+                        },
+                        "json": {
+                          "kind": "node",
+                          "description": "Native JSON output",
+                          "command": {
+                            "argv": [
+                              "mpls.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          }
+                        }
+                      },
+                      "positional": true,
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "address": {
+                            "name": "address"
+                          }
+                        }
+                      },
+                      "hints": {
+                        "prefix": "Destination prefix"
+                      }
+                    },
+                    "json": {
+                      "kind": "node",
+                      "description": "Native JSON output",
+                      "command": {
+                        "argv": [
+                          "mpls.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      }
+                    }
+                  },
+                  "anchor": true
+                },
+                "discovery": {
+                  "kind": "node",
+                  "description": "LDP discovery",
+                  "command": {
+                    "argv": [
+                      "mpls.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  },
+                  "children": {
+                    "detail": {
+                      "kind": "node",
+                      "description": "Detailed discovery",
+                      "command": {
+                        "argv": [
+                          "mpls.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {
+                        "json": {
+                          "kind": "node",
+                          "description": "Native JSON output",
+                          "command": {
+                            "argv": [
+                              "mpls.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    "json": {
+                      "kind": "node",
+                      "description": "Native JSON output",
+                      "command": {
+                        "argv": [
+                          "mpls.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      }
+                    }
+                  }
+                },
+                "interface": {
+                  "kind": "node",
+                  "description": "LDP interfaces",
+                  "command": {
+                    "argv": [
+                      "mpls.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  },
+                  "children": {
+                    "json": {
+                      "kind": "node",
+                      "description": "Native JSON output",
+                      "command": {
+                        "argv": [
+                          "mpls.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      }
+                    }
+                  }
+                },
+                "ipv4": {
+                  "kind": "node",
+                  "description": "IPv4 LDP",
+                  "children": {
+                    "binding": {
+                      "kind": "node",
+                      "description": "Label bindings",
+                      "command": {
+                        "argv": [
+                          "mpls.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {
+                        "local-label": {
+                          "kind": "leaf_node",
+                          "description": "Locally assigned label",
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "integer-range": {
+                                "name": "integer-range",
+                                "args": {
+                                  "minimum": 0,
+                                  "maximum": 1048575
+                                }
+                              }
+                            }
+                          },
+                          "hints": {
+                            "0-1048575": "Locally assigned label"
+                          },
+                          "command": {
+                            "argv": [
+                              "mpls.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          }
+                        },
+                        "remote-label": {
+                          "kind": "leaf_node",
+                          "description": "Remotely assigned label",
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "integer-range": {
+                                "name": "integer-range",
+                                "args": {
+                                  "minimum": 0,
+                                  "maximum": 1048575
+                                }
+                              }
+                            }
+                          },
+                          "hints": {
+                            "0-1048575": "Remotely assigned label"
+                          },
+                          "command": {
+                            "argv": [
+                              "mpls.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          }
+                        },
+                        "neighbor": {
+                          "kind": "leaf_node",
+                          "description": "Neighbor LSR ID",
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "ipv4-address": {
+                                "name": "ipv4-address"
+                              }
+                            }
+                          },
+                          "hints": {
+                            "lsr-id": "Neighbor LSR ID"
+                          },
+                          "command": {
+                            "argv": [
+                              "mpls.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          }
+                        },
+                        "detail": {
+                          "kind": "node",
+                          "description": "Detailed bindings",
+                          "command": {
+                            "argv": [
+                              "mpls.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          },
+                          "children": {
+                            "json": {
+                              "kind": "node",
+                              "description": "Native JSON output",
+                              "command": {
+                                "argv": [
+                                  "mpls.nvyr.op",
+                                  "show",
+                                  "@line"
+                                ]
+                              }
+                            }
+                          }
+                        },
+                        "prefix": {
+                          "kind": "tag_node",
+                          "description": "Destination prefix",
+                          "command": {
+                            "argv": [
+                              "mpls.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          },
+                          "children": {
+                            "local-label": {
+                              "kind": "leaf_node",
+                              "description": "Locally assigned label",
+                              "validators": {
+                                "mode": "AND",
+                                "checks": {
+                                  "integer-range": {
+                                    "name": "integer-range",
+                                    "args": {
+                                      "minimum": 0,
+                                      "maximum": 1048575
+                                    }
+                                  }
+                                }
+                              },
+                              "hints": {
+                                "0-1048575": "Locally assigned label"
+                              },
+                              "command": {
+                                "argv": [
+                                  "mpls.nvyr.op",
+                                  "show",
+                                  "@line"
+                                ]
+                              }
+                            },
+                            "remote-label": {
+                              "kind": "leaf_node",
+                              "description": "Remotely assigned label",
+                              "validators": {
+                                "mode": "AND",
+                                "checks": {
+                                  "integer-range": {
+                                    "name": "integer-range",
+                                    "args": {
+                                      "minimum": 0,
+                                      "maximum": 1048575
+                                    }
+                                  }
+                                }
+                              },
+                              "hints": {
+                                "0-1048575": "Remotely assigned label"
+                              },
+                              "command": {
+                                "argv": [
+                                  "mpls.nvyr.op",
+                                  "show",
+                                  "@line"
+                                ]
+                              }
+                            },
+                            "neighbor": {
+                              "kind": "leaf_node",
+                              "description": "Neighbor LSR ID",
+                              "validators": {
+                                "mode": "AND",
+                                "checks": {
+                                  "ipv4-address": {
+                                    "name": "ipv4-address"
+                                  }
+                                }
+                              },
+                              "hints": {
+                                "lsr-id": "Neighbor LSR ID"
+                              },
+                              "command": {
+                                "argv": [
+                                  "mpls.nvyr.op",
+                                  "show",
+                                  "@line"
+                                ]
+                              }
+                            },
+                            "detail": {
+                              "kind": "node",
+                              "description": "Detailed bindings",
+                              "command": {
+                                "argv": [
+                                  "mpls.nvyr.op",
+                                  "show",
+                                  "@line"
+                                ]
+                              },
+                              "children": {
+                                "json": {
+                                  "kind": "node",
+                                  "description": "Native JSON output",
+                                  "command": {
+                                    "argv": [
+                                      "mpls.nvyr.op",
+                                      "show",
+                                      "@line"
+                                    ]
+                                  }
+                                }
+                              }
+                            },
+                            "longer-prefixes": {
+                              "kind": "node",
+                              "description": "Include more-specific prefixes",
+                              "command": {
+                                "argv": [
+                                  "mpls.nvyr.op",
+                                  "show",
+                                  "@line"
+                                ]
+                              },
+                              "children": {
+                                "json": {
+                                  "kind": "node",
+                                  "description": "Native JSON output",
+                                  "command": {
+                                    "argv": [
+                                      "mpls.nvyr.op",
+                                      "show",
+                                      "@line"
+                                    ]
+                                  }
+                                }
+                              }
+                            },
+                            "json": {
+                              "kind": "node",
+                              "description": "Native JSON output",
+                              "command": {
+                                "argv": [
+                                  "mpls.nvyr.op",
+                                  "show",
+                                  "@line"
+                                ]
+                              }
+                            }
+                          },
+                          "positional": true,
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "address": {
+                                "name": "address"
+                              }
+                            }
+                          },
+                          "hints": {
+                            "prefix": "Destination prefix"
+                          }
+                        },
+                        "json": {
+                          "kind": "node",
+                          "description": "Native JSON output",
+                          "command": {
+                            "argv": [
+                              "mpls.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          }
+                        }
+                      },
+                      "anchor": true
+                    },
+                    "discovery": {
+                      "kind": "node",
+                      "description": "LDP discovery",
+                      "command": {
+                        "argv": [
+                          "mpls.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {
+                        "detail": {
+                          "kind": "node",
+                          "description": "Detailed discovery",
+                          "command": {
+                            "argv": [
+                              "mpls.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          },
+                          "children": {
+                            "json": {
+                              "kind": "node",
+                              "description": "Native JSON output",
+                              "command": {
+                                "argv": [
+                                  "mpls.nvyr.op",
+                                  "show",
+                                  "@line"
+                                ]
+                              }
+                            }
+                          }
+                        },
+                        "json": {
+                          "kind": "node",
+                          "description": "Native JSON output",
+                          "command": {
+                            "argv": [
+                              "mpls.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    "interface": {
+                      "kind": "node",
+                      "description": "LDP interfaces",
+                      "command": {
+                        "argv": [
+                          "mpls.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {
+                        "json": {
+                          "kind": "node",
+                          "description": "Native JSON output",
+                          "command": {
+                            "argv": [
+                              "mpls.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "ipv6": {
+                  "kind": "node",
+                  "description": "IPv6 LDP",
+                  "children": {
+                    "binding": {
+                      "kind": "node",
+                      "description": "Label bindings",
+                      "command": {
+                        "argv": [
+                          "mpls.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {
+                        "local-label": {
+                          "kind": "leaf_node",
+                          "description": "Locally assigned label",
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "integer-range": {
+                                "name": "integer-range",
+                                "args": {
+                                  "minimum": 0,
+                                  "maximum": 1048575
+                                }
+                              }
+                            }
+                          },
+                          "hints": {
+                            "0-1048575": "Locally assigned label"
+                          },
+                          "command": {
+                            "argv": [
+                              "mpls.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          }
+                        },
+                        "remote-label": {
+                          "kind": "leaf_node",
+                          "description": "Remotely assigned label",
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "integer-range": {
+                                "name": "integer-range",
+                                "args": {
+                                  "minimum": 0,
+                                  "maximum": 1048575
+                                }
+                              }
+                            }
+                          },
+                          "hints": {
+                            "0-1048575": "Remotely assigned label"
+                          },
+                          "command": {
+                            "argv": [
+                              "mpls.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          }
+                        },
+                        "neighbor": {
+                          "kind": "leaf_node",
+                          "description": "Neighbor LSR ID",
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "ipv4-address": {
+                                "name": "ipv4-address"
+                              }
+                            }
+                          },
+                          "hints": {
+                            "lsr-id": "Neighbor LSR ID"
+                          },
+                          "command": {
+                            "argv": [
+                              "mpls.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          }
+                        },
+                        "detail": {
+                          "kind": "node",
+                          "description": "Detailed bindings",
+                          "command": {
+                            "argv": [
+                              "mpls.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          },
+                          "children": {
+                            "json": {
+                              "kind": "node",
+                              "description": "Native JSON output",
+                              "command": {
+                                "argv": [
+                                  "mpls.nvyr.op",
+                                  "show",
+                                  "@line"
+                                ]
+                              }
+                            }
+                          }
+                        },
+                        "prefix": {
+                          "kind": "tag_node",
+                          "description": "Destination prefix",
+                          "command": {
+                            "argv": [
+                              "mpls.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          },
+                          "children": {
+                            "local-label": {
+                              "kind": "leaf_node",
+                              "description": "Locally assigned label",
+                              "validators": {
+                                "mode": "AND",
+                                "checks": {
+                                  "integer-range": {
+                                    "name": "integer-range",
+                                    "args": {
+                                      "minimum": 0,
+                                      "maximum": 1048575
+                                    }
+                                  }
+                                }
+                              },
+                              "hints": {
+                                "0-1048575": "Locally assigned label"
+                              },
+                              "command": {
+                                "argv": [
+                                  "mpls.nvyr.op",
+                                  "show",
+                                  "@line"
+                                ]
+                              }
+                            },
+                            "remote-label": {
+                              "kind": "leaf_node",
+                              "description": "Remotely assigned label",
+                              "validators": {
+                                "mode": "AND",
+                                "checks": {
+                                  "integer-range": {
+                                    "name": "integer-range",
+                                    "args": {
+                                      "minimum": 0,
+                                      "maximum": 1048575
+                                    }
+                                  }
+                                }
+                              },
+                              "hints": {
+                                "0-1048575": "Remotely assigned label"
+                              },
+                              "command": {
+                                "argv": [
+                                  "mpls.nvyr.op",
+                                  "show",
+                                  "@line"
+                                ]
+                              }
+                            },
+                            "neighbor": {
+                              "kind": "leaf_node",
+                              "description": "Neighbor LSR ID",
+                              "validators": {
+                                "mode": "AND",
+                                "checks": {
+                                  "ipv4-address": {
+                                    "name": "ipv4-address"
+                                  }
+                                }
+                              },
+                              "hints": {
+                                "lsr-id": "Neighbor LSR ID"
+                              },
+                              "command": {
+                                "argv": [
+                                  "mpls.nvyr.op",
+                                  "show",
+                                  "@line"
+                                ]
+                              }
+                            },
+                            "detail": {
+                              "kind": "node",
+                              "description": "Detailed bindings",
+                              "command": {
+                                "argv": [
+                                  "mpls.nvyr.op",
+                                  "show",
+                                  "@line"
+                                ]
+                              },
+                              "children": {
+                                "json": {
+                                  "kind": "node",
+                                  "description": "Native JSON output",
+                                  "command": {
+                                    "argv": [
+                                      "mpls.nvyr.op",
+                                      "show",
+                                      "@line"
+                                    ]
+                                  }
+                                }
+                              }
+                            },
+                            "longer-prefixes": {
+                              "kind": "node",
+                              "description": "Include more-specific prefixes",
+                              "command": {
+                                "argv": [
+                                  "mpls.nvyr.op",
+                                  "show",
+                                  "@line"
+                                ]
+                              },
+                              "children": {
+                                "json": {
+                                  "kind": "node",
+                                  "description": "Native JSON output",
+                                  "command": {
+                                    "argv": [
+                                      "mpls.nvyr.op",
+                                      "show",
+                                      "@line"
+                                    ]
+                                  }
+                                }
+                              }
+                            },
+                            "json": {
+                              "kind": "node",
+                              "description": "Native JSON output",
+                              "command": {
+                                "argv": [
+                                  "mpls.nvyr.op",
+                                  "show",
+                                  "@line"
+                                ]
+                              }
+                            }
+                          },
+                          "positional": true,
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "address": {
+                                "name": "address"
+                              }
+                            }
+                          },
+                          "hints": {
+                            "prefix": "Destination prefix"
+                          }
+                        },
+                        "json": {
+                          "kind": "node",
+                          "description": "Native JSON output",
+                          "command": {
+                            "argv": [
+                              "mpls.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          }
+                        }
+                      },
+                      "anchor": true
+                    },
+                    "discovery": {
+                      "kind": "node",
+                      "description": "LDP discovery",
+                      "command": {
+                        "argv": [
+                          "mpls.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {
+                        "detail": {
+                          "kind": "node",
+                          "description": "Detailed discovery",
+                          "command": {
+                            "argv": [
+                              "mpls.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          },
+                          "children": {
+                            "json": {
+                              "kind": "node",
+                              "description": "Native JSON output",
+                              "command": {
+                                "argv": [
+                                  "mpls.nvyr.op",
+                                  "show",
+                                  "@line"
+                                ]
+                              }
+                            }
+                          }
+                        },
+                        "json": {
+                          "kind": "node",
+                          "description": "Native JSON output",
+                          "command": {
+                            "argv": [
+                              "mpls.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    "interface": {
+                      "kind": "node",
+                      "description": "LDP interfaces",
+                      "command": {
+                        "argv": [
+                          "mpls.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {
+                        "json": {
+                          "kind": "node",
+                          "description": "Native JSON output",
+                          "command": {
+                            "argv": [
+                              "mpls.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "neighbor": {
+                  "kind": "node",
+                  "description": "LDP neighbors",
+                  "command": {
+                    "argv": [
+                      "mpls.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  },
+                  "children": {
+                    "detail": {
+                      "kind": "node",
+                      "description": "Detailed neighbor information",
+                      "command": {
+                        "argv": [
+                          "mpls.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {
+                        "json": {
+                          "kind": "node",
+                          "description": "Native JSON output",
+                          "command": {
+                            "argv": [
+                              "mpls.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    "capabilities": {
+                      "kind": "node",
+                      "description": "Neighbor capabilities",
+                      "command": {
+                        "argv": [
+                          "mpls.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {
+                        "json": {
+                          "kind": "node",
+                          "description": "Native JSON output",
+                          "command": {
+                            "argv": [
+                              "mpls.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    "lsr-id": {
+                      "kind": "tag_node",
+                      "description": "Neighbor LSR ID",
+                      "command": {
+                        "argv": [
+                          "mpls.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {
+                        "detail": {
+                          "kind": "node",
+                          "description": "Detailed neighbor information",
+                          "command": {
+                            "argv": [
+                              "mpls.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          },
+                          "children": {
+                            "json": {
+                              "kind": "node",
+                              "description": "Native JSON output",
+                              "command": {
+                                "argv": [
+                                  "mpls.nvyr.op",
+                                  "show",
+                                  "@line"
+                                ]
+                              }
+                            }
+                          }
+                        },
+                        "capabilities": {
+                          "kind": "node",
+                          "description": "Neighbor capabilities",
+                          "command": {
+                            "argv": [
+                              "mpls.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          },
+                          "children": {
+                            "json": {
+                              "kind": "node",
+                              "description": "Native JSON output",
+                              "command": {
+                                "argv": [
+                                  "mpls.nvyr.op",
+                                  "show",
+                                  "@line"
+                                ]
+                              }
+                            }
+                          }
+                        },
+                        "json": {
+                          "kind": "node",
+                          "description": "Native JSON output",
+                          "command": {
+                            "argv": [
+                              "mpls.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          }
+                        }
+                      },
+                      "positional": true,
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "ipv4-address": {
+                            "name": "ipv4-address"
+                          }
+                        }
+                      },
+                      "hints": {
+                        "lsr-id": "Neighbor LSR ID"
+                      }
+                    },
+                    "json": {
+                      "kind": "node",
+                      "description": "Native JSON output",
+                      "command": {
+                        "argv": [
+                          "mpls.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      }
+                    }
+                  }
+                },
+                "capabilities": {
+                  "kind": "node",
+                  "description": "Local capabilities",
+                  "command": {
+                    "argv": [
+                      "mpls.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  },
+                  "children": {
+                    "json": {
+                      "kind": "node",
+                      "description": "Native JSON output",
+                      "command": {
+                        "argv": [
+                          "mpls.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      }
+                    }
+                  }
+                },
+                "igp-sync": {
+                  "kind": "node",
+                  "description": "IGP synchronization",
+                  "command": {
+                    "argv": [
+                      "mpls.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  },
+                  "children": {
+                    "json": {
+                      "kind": "node",
+                      "description": "Native JSON output",
+                      "command": {
+                        "argv": [
+                          "mpls.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
             }
           }
         },
@@ -39032,6 +40529,81 @@
                 ]
               },
               "children": {
+                "mpls": {
+                  "kind": "node",
+                  "description": "MPLS integration",
+                  "children": {
+                    "ldp-sync": {
+                      "kind": "node",
+                      "description": "LDP synchronization state",
+                      "command": {
+                        "argv": [
+                          "ospf.nvyr.op",
+                          "show",
+                          "@line"
+                        ]
+                      },
+                      "children": {
+                        "interface": {
+                          "kind": "tag_node",
+                          "description": "Select an interface",
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "regex": {
+                                "name": "regex",
+                                "args": {
+                                  "pattern": "[A-Za-z_][A-Za-z0-9_.-]{0,14}"
+                                }
+                              }
+                            }
+                          },
+                          "choices": {
+                            "all": "All interfaces"
+                          },
+                          "suggestors": [
+                            {
+                              "name": "interfaces"
+                            }
+                          ],
+                          "command": {
+                            "argv": [
+                              "ospf.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          },
+                          "children": {
+                            "json": {
+                              "kind": "node",
+                              "description": "Native JSON output",
+                              "command": {
+                                "argv": [
+                                  "ospf.nvyr.op",
+                                  "show",
+                                  "@line"
+                                ]
+                              },
+                              "children": {}
+                            }
+                          }
+                        },
+                        "json": {
+                          "kind": "node",
+                          "description": "Native JSON output",
+                          "command": {
+                            "argv": [
+                              "ospf.nvyr.op",
+                              "show",
+                              "@line"
+                            ]
+                          },
+                          "children": {}
+                        }
+                      }
+                    }
+                  }
+                },
                 "interface": {
                   "kind": "node",
                   "description": "OSPF interfaces",

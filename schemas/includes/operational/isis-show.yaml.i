@@ -7,6 +7,29 @@ isis:
   - '@line'
   children:
 
+    mpls:
+      kind: node
+      description: MPLS integration
+      children:
+
+        ldp-sync:
+          kind: node
+          description: LDP synchronization state
+          command: ['isis.nvyr.op', 'show', '@line']
+          children:
+
+            interface:
+              kind: tag_node
+              description: Select an interface
+              validators:
+                regex: {pattern: '[A-Za-z_][A-Za-z0-9_.-]{0,14}'}
+              choices:
+                all: All interfaces
+              suggestors:
+                interfaces: {}
+              command: ['isis.nvyr.op', 'show', '@line']
+              children: {}
+
     summary:
       kind: node
       description: IS-IS summary

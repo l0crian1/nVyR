@@ -7,6 +7,41 @@ ospf:
   - "@line"
   children:
 
+    mpls:
+      kind: node
+      description: MPLS integration
+      children:
+
+        ldp-sync:
+          kind: node
+          description: LDP synchronization state
+          command: ['ospf.nvyr.op', 'show', '@line']
+          children:
+
+            interface:
+              kind: tag_node
+              description: Select an interface
+              validators:
+                regex: {pattern: '[A-Za-z_][A-Za-z0-9_.-]{0,14}'}
+              choices:
+                all: All interfaces
+              suggestors:
+                interfaces: {}
+              command: ['ospf.nvyr.op', 'show', '@line']
+              children:
+
+                json:
+                  kind: node
+                  description: Native JSON output
+                  command: ['ospf.nvyr.op', 'show', '@line']
+                  children: {}
+
+            json:
+              kind: node
+              description: Native JSON output
+              command: ['ospf.nvyr.op', 'show', '@line']
+              children: {}
+
     include_schema:
     - file: operational/ospf-context.yaml.i
       as: null

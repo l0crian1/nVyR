@@ -1,6 +1,6 @@
 [Unit]
 Description=nVyR Netlink interface manager
-Requires=nvyr-interface-naming.service nvyr-resolver-init.service nvyr-conntrack.service
+Requires=nvyr-interface-naming.service nvyr-resolver-init.service nvyr-conntrack.service nvyr-mpls.service
 After=local-fs.target systemd-sysctl.service nvyr-interface-naming.service systemd-networkd.service nvyr-resolver-init.service nvyr-conntrack.service rsyslog.service
 Wants=rsyslog.service
 Before=nvyr-configd.service network-online.target
@@ -28,7 +28,7 @@ RestartMaxDelaySec=30
 NoNewPrivileges=true
 ProtectSystem=strict
 ReadWritePaths=/run/nvyr-resolver
-ReadWritePaths=/proc/sys/net/ipv4 /proc/sys/net/ipv6 /proc/sys/net/netfilter
+ReadWritePaths=/proc/sys/net/ipv4 /proc/sys/net/ipv6 /proc/sys/net/netfilter /proc/sys/net/mpls
 ReadWritePaths=/run/sysctl.d /run/nvyr-kernel-settings /config
 ProtectHome=true
 PrivateTmp=true

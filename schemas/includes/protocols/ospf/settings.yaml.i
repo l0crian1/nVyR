@@ -1,5 +1,8 @@
 children:
 
+  include_schema:
+  - file: protocols/ldp-sync.yaml.i
+
   options:
     kind: node
     description: OSPF process options
@@ -1105,6 +1108,9 @@ children:
     hints:
       interface: Interface participating in OSPF
     children:
+
+      include_schema:
+      - file: protocols/ldp-sync-interface.yaml.i
 
       area:
         kind: leaf_node

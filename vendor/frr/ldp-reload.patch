@@ -1,0 +1,131 @@
+--- a/tools/frr-reload.py
++++ b/tools/frr-reload.py
+@@ -850,6 +850,14 @@
+             if (len(ctx_keys) == 1 and ctx_keys[0].startswith("interface ")
+                     and line == "ipv6 ripng split-horizon poisoned-reverse"):
+                 line = "no ipv6 ripng split-horizon"
++            # Removing an explicit sync choice restores process inheritance.
++            if (len(ctx_keys) == 1 and ctx_keys[0].startswith("interface ")
++                    and line in ("ip ospf mpls ldp-sync", "no ip ospf mpls ldp-sync")):
++                line = "no default ip ospf mpls ldp-sync"
++            # The positive OSPF hold-down accepts zero, its negative form does not.
++            if (len(ctx_keys) == 1 and ctx_keys[0].startswith("interface ")
++                    and line.startswith("ip ospf mpls ldp-sync holddown ")):
++                line = "ip ospf mpls ldp-sync holddown"
+             # OSPF reset forms do not all accept their positive-form operands.
+             if len(ctx_keys) == 1 and ctx_keys[0].startswith(("router ospf", "router ospf6")):
+                 if line.startswith("aggregation timer "):
+@@ -1910,6 +1918,13 @@
+             if "router bgp" in running_ctx_keys[0] and len(running_ctx_keys) == 1:
+                 delete_bgpd = True
+                 lines_to_del.append((running_ctx_keys, None))
++
++            # Removing the LDP process also removes its children. Entering the
++            # parent again to negate an AF would recreate and enable LDP.
++            elif (running_ctx_keys[0] == "mpls ldp"
++                  and len(running_ctx_keys) > 1
++                  and ("mpls ldp",) not in newconf.contexts):
++                continue
+ 
+             # We cannot do 'no interface' or 'no vrf' in FRR, and so deal with it
+             # If we try 'no interface' for still active interface, FRR tries to delete it and fails.
+--- a/ospfd/ospf_ldp_sync.c
++++ b/ospfd/ospf_ldp_sync.c
+@@ -900,12 +900,41 @@
+ 	 *  stop holddown timer if running
+ 	 *  restore ospf cost
+ 	 */
+-	UNSET_FLAG(ldp_sync_info->flags, LDP_SYNC_FLAG_IF_CONFIG);
++	SET_FLAG(ldp_sync_info->flags, LDP_SYNC_FLAG_IF_CONFIG);
+ 	ldp_sync_info->enabled = LDP_IGP_SYNC_DEFAULT;
+ 	ldp_sync_info->state = LDP_IGP_SYNC_STATE_NOT_REQUIRED;
+ 	event_cancel(&ldp_sync_info->t_holddown);
+ 	ospf_if_recalculate_output_cost(ifp);
+ 
++	return CMD_SUCCESS;
++}
++
++/* Restore process inheritance without retaining an explicit interface disable. */
++DEFPY (default_mpls_ldp_sync,
++       default_mpls_ldp_sync_cmd,
++       "default ip ospf mpls ldp-sync",
++       "Restore default configuration\n"
++       IP_STR
++       "OSPF interface commands\n"
++       MPLS_STR
++       MPLS_LDP_SYNC_STR)
++{
++	VTY_DECLVAR_CONTEXT(interface, ifp);
++	struct ospf_if_params *params = IF_DEF_PARAMS(ifp);
++	struct ldp_sync_info *info = params->ldp_sync_info;
++	struct ospf *ospf;
++
++	if (info == NULL)
++		return CMD_SUCCESS;
++
++	UNSET_FLAG(info->flags, LDP_SYNC_FLAG_IF_CONFIG);
++	info->enabled = LDP_IGP_SYNC_DEFAULT;
++	info->state = LDP_IGP_SYNC_STATE_NOT_REQUIRED;
++	event_cancel(&info->t_holddown);
++	ospf = ospf_lookup_by_vrf_id(ifp->vrf->vrf_id);
++	if (ospf && CHECK_FLAG(ospf->ldp_sync_cmd.flags, LDP_SYNC_FLAG_ENABLE))
++		ospf_if_set_ldp_sync_enable(ospf, ifp);
++	ospf_if_recalculate_output_cost(ifp);
+ 	return CMD_SUCCESS;
+ }
+ 
+@@ -1052,6 +1081,7 @@
+ 	/* Interface lsp-igp sync commands */
+ 	install_element(INTERFACE_NODE, &mpls_ldp_sync_cmd);
+ 	install_element(INTERFACE_NODE, &no_mpls_ldp_sync_cmd);
++	install_element(INTERFACE_NODE, &default_mpls_ldp_sync_cmd);
+ 	install_element(INTERFACE_NODE, &mpls_ldp_sync_holddown_cmd);
+ 	install_element(INTERFACE_NODE, &no_mpls_ldp_sync_holddown_cmd);
+ 
+--- a/ldpd/ldp_vty_conf.c
++++ b/ldpd/ldp_vty_conf.c
+@@ -111,12 +111,10 @@
+ 		vty_out (vty, "  !\n");
+ 		vty_out (vty, "  interface %s\n", iface->name);
+ 
+-		if (ia->hello_holdtime != LINK_DFLT_HOLDTIME &&
+-		    ia->hello_holdtime != 0)
++		if (ia->hello_holdtime != 0)
+ 			vty_out (vty, "   discovery hello holdtime %u\n",
+ 			    ia->hello_holdtime);
+-		if (ia->hello_interval != DEFAULT_HELLO_INTERVAL &&
+-		    ia->hello_interval != 0)
++		if (ia->hello_interval != 0)
+ 			vty_out (vty, "   discovery hello interval %u\n",
+ 			    ia->hello_interval);
+ 		if (ia->disable_establish_hello)
+@@ -138,12 +136,10 @@
+ 	vty_out (vty, " !\n");
+ 	vty_out (vty, " address-family %s\n", af_name(af));
+ 
+-	if (af_conf->lhello_holdtime != LINK_DFLT_HOLDTIME &&
+-	    af_conf->lhello_holdtime != 0 )
++	if (af_conf->lhello_holdtime != 0)
+ 		vty_out (vty, "  discovery hello holdtime %u\n",
+ 		    af_conf->lhello_holdtime);
+-	if (af_conf->lhello_interval != DEFAULT_HELLO_INTERVAL &&
+-	    af_conf->lhello_interval != 0)
++	if (af_conf->lhello_interval != 0)
+ 		vty_out (vty, "  discovery hello interval %u\n",
+ 		    af_conf->lhello_interval);
+ 
+@@ -155,12 +151,10 @@
+ 		vty_out (vty, "\n");
+ 	}
+ 
+-	if (af_conf->thello_holdtime != TARGETED_DFLT_HOLDTIME &&
+-	    af_conf->thello_holdtime != 0)
++	if (af_conf->thello_holdtime != 0)
+ 		vty_out (vty, "  discovery targeted-hello holdtime %u\n",
+ 		    af_conf->thello_holdtime);
+-	if (af_conf->thello_interval != DEFAULT_HELLO_INTERVAL &&
+-	    af_conf->thello_interval != 0)
++	if (af_conf->thello_interval != 0)
+ 		vty_out (vty, "  discovery targeted-hello interval %u\n",
+ 		    af_conf->thello_interval);
+ 

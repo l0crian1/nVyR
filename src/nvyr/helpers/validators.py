@@ -1152,6 +1152,20 @@ def bgp_router_id(value):
     return ipv4_address(value) and bgp_address(value)
 
 
+@register('ldp-address', 'a unicast LDP address accepted by the selected address family')
+def ldp_address(value, version=4, link_local=True):
+    if not _ip_address(value, int(version)):
+        return False
+    address = ipaddress.ip_address(value)
+    if address.version == 4:
+        first = int(address) >> 24
+        return first not in (0, 127) and first < 224
+    return (not address.is_unspecified and not address.is_loopback
+            and not address.is_multicast and not address.is_site_local
+            and address.ipv4_mapped is None and int(address) >= 2 ** 32
+            and (link_local or not address.is_link_local))
+
+
 @register('bgp-update-source', 'an interface name or unicast IPv4/IPv6 address')
 def bgp_update_source(value):
     try:

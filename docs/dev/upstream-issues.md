@@ -693,3 +693,34 @@ re-evaluation. The native regression configures the reference first, then create
 deletes and recreates the map while checking IPv4 and IPv6 advertisements. It fails
 on the unpatched callback. Retest this sequence before removing the patch on an
 FRR upgrade; no upstream fix or report is claimed.
+
+## FRR-LDP-001: deleting LDP recreates its parent
+
+FRR 10.7.1 reload emits `no mpls ldp`, then enters `mpls ldp` again to remove
+address families. This leaves the process enabled. `vendor/frr/ldp-reload.patch`
+skips child-context deletions only when the complete parent is removed. Retest
+whole-process deletion/recreation and individual AF removal when upgrading FRR.
+
+## FRR-LDP-002: inherited timer overrides disappear from readback
+
+The LDP AF/interface writer omits ordinary hello defaults (5-second interval,
+15-second link holdtime, 45-second targeted holdtime) even when they override
+different parent settings. Absence means inheritance at these scopes, not the
+ordinary fixed default. The LDP patch writes every nonzero AF/interface override;
+zero still means inherit. Global default suppression is unchanged. Retest explicit
+defaults beneath nondefault parents and override deletion before removing it.
+
+## FRR-OSPF-LDP-001: interface disable does not persist
+
+FRR 10.7.1's `no ip ospf mpls ldp-sync` clears the interface override flag.
+Global enablement or interface initialization can subsequently enable it again,
+and the writer omits the disable. The same code was present in upstream master
+when reviewed on 2026-11-13.
+
+The LDP patch preserves the explicit disable flag and provides
+`default ip ospf mpls ldp-sync` to clear an override and restore inheritance.
+Reload uses that reset when deleting either explicit choice. It also removes
+hold-downs without their old numeric operand because the negative grammar rejects
+zero even though the positive grammar accepts it. Retest disable persistence,
+process timer changes, override removal, zero hold-down removal, and full process
+removal. No upstream acceptance of this patch is claimed.

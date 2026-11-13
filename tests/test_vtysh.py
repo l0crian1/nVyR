@@ -74,10 +74,13 @@ def test_clear_passes_literal_star_without_shell_expansion(monkeypatch):
     ['clear', 'ip', 'rip', 'extra'], ['clear', 'ipv6', 'ripng', 'vrf'],
     ['clear', 'ip', 'rip', 'vrf', 'BLUE;exit'],
     ['clear', 'ipv6', 'ripng', 'vrf', 'BLUE\nconfigure terminal'],
+    ['clear', 'mpls', 'ldp'], ['clear', 'mpls', 'ldp', 'neighbor', '*'],
+    ['clear', 'mpls', 'ldp', 'neighbor', '192.0.2.1;exit'],
+    ['clear', 'mpls', 'ldp', 'neighbor', '2001:db8::1\nconfigure terminal'],
 ])
 def test_clear_rejects_other_commands_and_embedded_input(monkeypatch, words):
     monkeypatch.setattr(vtysh, 'cmd', lambda argv: pytest.fail('Unsafe reset executed'))
-    with pytest.raises(ValueError, match='single FRR clear bgp, ospf, isis, rip, ripng, or route-map counters command'):
+    with pytest.raises(ValueError, match='single FRR clear bgp, ospf, isis, rip, ripng, mpls ldp, or route-map counters command'):
         vtysh.clear(words)
 
 
@@ -116,3 +119,14 @@ def test_clear_route_map_all_or_named(monkeypatch):
 
     assert calls == [['vtysh', '-c', 'clear route-map counters'],
                      ['vtysh', '-c', 'clear route-map counters IMPORT']]
+
+
+@pytest.mark.parametrize('address', [None, '192.0.2.1', '2001:db8::1'])
+def test_clear_ldp_preserves_native_transport_selector(monkeypatch, address):
+    calls = []
+    monkeypatch.setattr(vtysh, 'cmd', lambda argv: calls.append(argv) or '')
+    words = ['clear', 'mpls', 'ldp', 'neighbor']
+    if address:
+        words.append(address)
+    vtysh.clear(words)
+    assert calls == [['vtysh', '-c', ' '.join(words)]]

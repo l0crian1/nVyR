@@ -62,6 +62,7 @@ children: # operational
       - file: operational/ntp.yaml.i
       - file: operational/dns-show.yaml.i
       - file: operational/isis-show.yaml.i
+      - file: operational/mpls-show.yaml.i
       - file: operational/lldp-show.yaml.i
       - file: operational/dhcp-show.yaml.i
         as: null

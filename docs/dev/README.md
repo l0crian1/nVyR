@@ -15,6 +15,7 @@ operational commands, use the [user documentation](../users/README.md).
 - [Task scheduling and feature-owned timers](task-scheduling.md)
 - [Router initialization](initialization.md)
 - [FRR integration](frr.md)
+- [MPLS and LDP ownership and tests](mpls.md)
 
 ## Build, test, and release
 

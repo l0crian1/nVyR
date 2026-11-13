@@ -136,6 +136,13 @@
     ]
   },
   {
+    "script": "mpls",
+    "priority": 44,
+    "paths": [
+      "protocols mpls"
+    ]
+  },
+  {
     "script": "bgp",
     "priority": 45,
     "paths": [
@@ -173,6 +180,13 @@
     "paths": [
       "protocols rip",
       "vrf name <name> protocols rip"
+    ]
+  },
+  {
+    "script": "ldp",
+    "priority": 49,
+    "paths": [
+      "protocols ldp"
     ]
   },
   {

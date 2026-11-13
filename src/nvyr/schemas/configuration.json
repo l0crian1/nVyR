@@ -112922,6 +112922,1357 @@
       "kind": "node",
       "description": "Routing protocols",
       "children": {
+        "mpls": {
+          "kind": "node",
+          "description": "MPLS kernel forwarding",
+          "anchor": true,
+          "children": {
+            "interface": {
+              "kind": "leaf_node",
+              "multi": true,
+              "description": "Accept labeled packets on this interface",
+              "validators": {
+                "mode": "AND",
+                "checks": {
+                  "regex": {
+                    "name": "regex",
+                    "args": {
+                      "pattern": "[A-Za-z][A-Za-z0-9_.-]{0,14}"
+                    }
+                  }
+                }
+              },
+              "hints": {
+                "interface": "MPLS input interface"
+              },
+              "suggestors": [
+                {
+                  "name": "interfaces"
+                }
+              ]
+            },
+            "label-table-size": {
+              "kind": "leaf_node",
+              "description": "Number of incoming label slots in the kernel (default: 1048575)",
+              "validators": {
+                "mode": "AND",
+                "checks": {
+                  "integer-range": {
+                    "name": "integer-range",
+                    "args": {
+                      "minimum": 16,
+                      "maximum": 1048575
+                    }
+                  }
+                }
+              },
+              "hints": {
+                "16-1048575": "Label-table capacity"
+              },
+              "default": {
+                "mode": "direct",
+                "value": "1048575"
+              }
+            }
+          },
+          "script": {
+            "name": "mpls",
+            "priority": 44,
+            "watch-before": [
+              "interfaces"
+            ]
+          }
+        },
+        "ldp": {
+          "kind": "node",
+          "description": "Label Distribution Protocol",
+          "anchor": true,
+          "children": {
+            "options": {
+              "kind": "node",
+              "description": "LDP process settings",
+              "anchor": true,
+              "children": {
+                "router-id": {
+                  "kind": "leaf_node",
+                  "description": "IPv4-style LSR identifier",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "ldp-address": {
+                        "name": "ldp-address"
+                      }
+                    }
+                  },
+                  "hints": {
+                    "router-id": "IPv4-style LSR identifier"
+                  }
+                },
+                "ordered-control": {
+                  "kind": "leaf_node",
+                  "description": "Use ordered label distribution control",
+                  "valueless": true
+                },
+                "allow-broken-lsps": {
+                  "kind": "leaf_node",
+                  "description": "Allow label installation before the downstream path is complete",
+                  "valueless": true
+                },
+                "wait-for-sync": {
+                  "kind": "leaf_node",
+                  "description": "Wait for synchronization in seconds",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "integer-range": {
+                        "name": "integer-range",
+                        "args": {
+                          "minimum": 1,
+                          "maximum": 10000
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "1-10000": "Wait for synchronization in seconds"
+                  }
+                },
+                "dual-stack": {
+                  "kind": "node",
+                  "description": "Dual-stack interoperability",
+                  "anchor": true,
+                  "children": {
+                    "transport-preference": {
+                      "kind": "leaf_node",
+                      "description": "Preferred TCP transport family",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "list": {
+                            "name": "list",
+                            "args": {
+                              "values": "ipv4 ipv6"
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "value": "Preferred TCP transport family"
+                      },
+                      "choices": {
+                        "ipv4": "ipv4",
+                        "ipv6": "ipv6"
+                      }
+                    },
+                    "cisco-interop": {
+                      "kind": "leaf_node",
+                      "description": "Use Cisco dual-stack interoperability mode",
+                      "valueless": true
+                    }
+                  }
+                }
+              }
+            },
+            "discovery": {
+              "kind": "node",
+              "description": "LDP discovery",
+              "anchor": true,
+              "children": {
+                "hello": {
+                  "kind": "node",
+                  "description": "Link discovery timers",
+                  "anchor": true,
+                  "children": {
+                    "interval": {
+                      "kind": "leaf_node",
+                      "description": "Hello interval in seconds",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "integer-range": {
+                            "name": "integer-range",
+                            "args": {
+                              "minimum": 1,
+                              "maximum": 65535
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "1-65535": "Hello interval in seconds"
+                      }
+                    },
+                    "holdtime": {
+                      "kind": "leaf_node",
+                      "description": "Hello holdtime in seconds",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "integer-range": {
+                            "name": "integer-range",
+                            "args": {
+                              "minimum": 1,
+                              "maximum": 65535
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "1-65535": "Hello holdtime in seconds"
+                      }
+                    }
+                  }
+                },
+                "targeted-hello": {
+                  "kind": "node",
+                  "description": "Targeted discovery timers",
+                  "anchor": true,
+                  "children": {
+                    "interval": {
+                      "kind": "leaf_node",
+                      "description": "Hello interval in seconds",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "integer-range": {
+                            "name": "integer-range",
+                            "args": {
+                              "minimum": 1,
+                              "maximum": 65535
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "1-65535": "Hello interval in seconds"
+                      }
+                    },
+                    "holdtime": {
+                      "kind": "leaf_node",
+                      "description": "Hello holdtime in seconds",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "integer-range": {
+                            "name": "integer-range",
+                            "args": {
+                              "minimum": 1,
+                              "maximum": 65535
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "1-65535": "Hello holdtime in seconds"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "neighbor": {
+              "kind": "tag_node",
+              "description": "Neighbor LSR identifier",
+              "anchor": true,
+              "validators": {
+                "mode": "AND",
+                "checks": {
+                  "ldp-address": {
+                    "name": "ldp-address"
+                  }
+                }
+              },
+              "hints": {
+                "lsr-id": "Neighbor IPv4 LSR identifier"
+              },
+              "children": {
+                "password": {
+                  "kind": "leaf_node",
+                  "description": "TCP MD5 password, up to 79 characters",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[^\\s\"\\\\]{1,79}"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "secret": "TCP MD5 password, up to 79 characters"
+                  },
+                  "secret": true
+                },
+                "session-holdtime": {
+                  "kind": "leaf_node",
+                  "description": "Session holdtime in seconds",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "integer-range": {
+                        "name": "integer-range",
+                        "args": {
+                          "minimum": 15,
+                          "maximum": 65535
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "15-65535": "Session holdtime in seconds"
+                  }
+                },
+                "ttl-security": {
+                  "kind": "node",
+                  "description": "Neighbor TTL security override",
+                  "anchor": true,
+                  "children": {
+                    "disable": {
+                      "kind": "leaf_node",
+                      "description": "Disable TTL checking for this neighbor",
+                      "valueless": true
+                    },
+                    "hops": {
+                      "kind": "leaf_node",
+                      "description": "Maximum distance in hops",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "integer-range": {
+                            "name": "integer-range",
+                            "args": {
+                              "minimum": 1,
+                              "maximum": 254
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "1-254": "Maximum distance in hops"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "address-family": {
+              "kind": "node",
+              "description": "LDP address families",
+              "anchor": true,
+              "children": {
+                "ipv4": {
+                  "kind": "node",
+                  "description": "ipv4 LDP",
+                  "anchor": true,
+                  "children": {
+                    "transport-address": {
+                      "kind": "leaf_node",
+                      "description": "Local LDP transport address",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "ldp-address": {
+                            "name": "ldp-address",
+                            "args": {
+                              "version": 4
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "address": "Local LDP transport address"
+                      }
+                    },
+                    "session-holdtime": {
+                      "kind": "leaf_node",
+                      "description": "Session holdtime in seconds",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "integer-range": {
+                            "name": "integer-range",
+                            "args": {
+                              "minimum": 15,
+                              "maximum": 65535
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "15-65535": "Session holdtime in seconds"
+                      }
+                    },
+                    "ttl-security": {
+                      "kind": "node",
+                      "description": "Generalized TTL security",
+                      "anchor": true,
+                      "children": {
+                        "disable": {
+                          "kind": "leaf_node",
+                          "description": "Disable TTL checking",
+                          "valueless": true
+                        }
+                      }
+                    },
+                    "discovery": {
+                      "kind": "node",
+                      "description": "LDP discovery",
+                      "anchor": true,
+                      "children": {
+                        "hello": {
+                          "kind": "node",
+                          "description": "Link discovery timers",
+                          "anchor": true,
+                          "children": {
+                            "interval": {
+                              "kind": "leaf_node",
+                              "description": "Hello interval in seconds",
+                              "validators": {
+                                "mode": "AND",
+                                "checks": {
+                                  "integer-range": {
+                                    "name": "integer-range",
+                                    "args": {
+                                      "minimum": 1,
+                                      "maximum": 65535
+                                    }
+                                  }
+                                }
+                              },
+                              "hints": {
+                                "1-65535": "Hello interval in seconds"
+                              }
+                            },
+                            "holdtime": {
+                              "kind": "leaf_node",
+                              "description": "Hello holdtime in seconds",
+                              "validators": {
+                                "mode": "AND",
+                                "checks": {
+                                  "integer-range": {
+                                    "name": "integer-range",
+                                    "args": {
+                                      "minimum": 1,
+                                      "maximum": 65535
+                                    }
+                                  }
+                                }
+                              },
+                              "hints": {
+                                "1-65535": "Hello holdtime in seconds"
+                              }
+                            }
+                          }
+                        },
+                        "targeted-hello": {
+                          "kind": "node",
+                          "description": "Targeted discovery timers",
+                          "anchor": true,
+                          "children": {
+                            "interval": {
+                              "kind": "leaf_node",
+                              "description": "Hello interval in seconds",
+                              "validators": {
+                                "mode": "AND",
+                                "checks": {
+                                  "integer-range": {
+                                    "name": "integer-range",
+                                    "args": {
+                                      "minimum": 1,
+                                      "maximum": 65535
+                                    }
+                                  }
+                                }
+                              },
+                              "hints": {
+                                "1-65535": "Hello interval in seconds"
+                              }
+                            },
+                            "holdtime": {
+                              "kind": "leaf_node",
+                              "description": "Hello holdtime in seconds",
+                              "validators": {
+                                "mode": "AND",
+                                "checks": {
+                                  "integer-range": {
+                                    "name": "integer-range",
+                                    "args": {
+                                      "minimum": 1,
+                                      "maximum": 65535
+                                    }
+                                  }
+                                }
+                              },
+                              "hints": {
+                                "1-65535": "Hello holdtime in seconds"
+                              }
+                            },
+                            "accept": {
+                              "kind": "node",
+                              "description": "Accept targeted hellos",
+                              "anchor": true,
+                              "children": {
+                                "from-access-list": {
+                                  "kind": "leaf_node",
+                                  "description": "Restrict accepted targeted hello source addresses",
+                                  "validators": {
+                                    "mode": "AND",
+                                    "checks": {
+                                      "regex": {
+                                        "name": "regex",
+                                        "args": {
+                                          "pattern": "[A-Za-z_][A-Za-z0-9_.-]{0,127}"
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "hints": {
+                                    "name": "Restrict accepted targeted hello source addresses"
+                                  },
+                                  "depends": "policy-access-list-ipv4",
+                                  "suggestors": [
+                                    {
+                                      "name": "config-path",
+                                      "args": {
+                                        "path": "policy access-list ipv4"
+                                      }
+                                    }
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "interface": {
+                      "kind": "tag_node",
+                      "description": "LDP discovery interface",
+                      "anchor": true,
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "regex": {
+                            "name": "regex",
+                            "args": {
+                              "pattern": "[A-Za-z][A-Za-z0-9_.-]{0,14}"
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "interface": "LDP discovery interface"
+                      },
+                      "suggestors": [
+                        {
+                          "name": "interfaces"
+                        }
+                      ],
+                      "children": {
+                        "hello": {
+                          "kind": "node",
+                          "description": "Interface discovery timers",
+                          "anchor": true,
+                          "children": {
+                            "interval": {
+                              "kind": "leaf_node",
+                              "description": "Hello interval in seconds",
+                              "validators": {
+                                "mode": "AND",
+                                "checks": {
+                                  "integer-range": {
+                                    "name": "integer-range",
+                                    "args": {
+                                      "minimum": 1,
+                                      "maximum": 65535
+                                    }
+                                  }
+                                }
+                              },
+                              "hints": {
+                                "1-65535": "Hello interval in seconds"
+                              }
+                            },
+                            "holdtime": {
+                              "kind": "leaf_node",
+                              "description": "Hello holdtime in seconds",
+                              "validators": {
+                                "mode": "AND",
+                                "checks": {
+                                  "integer-range": {
+                                    "name": "integer-range",
+                                    "args": {
+                                      "minimum": 1,
+                                      "maximum": 65535
+                                    }
+                                  }
+                                }
+                              },
+                              "hints": {
+                                "1-65535": "Hello holdtime in seconds"
+                              }
+                            }
+                          }
+                        },
+                        "disable-establish-hello": {
+                          "kind": "leaf_node",
+                          "description": "Do not send extra hellos when a session establishes",
+                          "valueless": true
+                        }
+                      }
+                    },
+                    "targeted-neighbor": {
+                      "kind": "leaf_node",
+                      "description": "Remote targeted discovery address",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "ldp-address": {
+                            "name": "ldp-address",
+                            "args": {
+                              "version": 4,
+                              "link_local": false
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "address": "Remote targeted discovery address"
+                      },
+                      "multi": true
+                    },
+                    "label": {
+                      "kind": "node",
+                      "description": "Label distribution policy",
+                      "anchor": true,
+                      "children": {
+                        "local": {
+                          "kind": "node",
+                          "description": "Local label policy",
+                          "anchor": true,
+                          "children": {
+                            "allocate": {
+                              "kind": "node",
+                              "description": "Restrict label allocation",
+                              "anchor": true,
+                              "children": {
+                                "host-routes": {
+                                  "kind": "leaf_node",
+                                  "description": "Allocate labels only for host routes",
+                                  "valueless": true
+                                },
+                                "access-list": {
+                                  "kind": "leaf_node",
+                                  "description": "Allocate labels for matching prefixes",
+                                  "validators": {
+                                    "mode": "AND",
+                                    "checks": {
+                                      "regex": {
+                                        "name": "regex",
+                                        "args": {
+                                          "pattern": "[A-Za-z_][A-Za-z0-9_.-]{0,127}"
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "hints": {
+                                    "name": "Allocate labels for matching prefixes"
+                                  },
+                                  "depends": "policy-access-list-ipv4",
+                                  "suggestors": [
+                                    {
+                                      "name": "config-path",
+                                      "args": {
+                                        "path": "policy access-list ipv4"
+                                      }
+                                    }
+                                  ]
+                                }
+                              }
+                            },
+                            "advertise": {
+                              "kind": "node",
+                              "description": "Restrict label advertisements",
+                              "anchor": true,
+                              "children": {
+                                "to-access-list": {
+                                  "kind": "leaf_node",
+                                  "description": "Filter neighbor LSR IDs",
+                                  "validators": {
+                                    "mode": "AND",
+                                    "checks": {
+                                      "regex": {
+                                        "name": "regex",
+                                        "args": {
+                                          "pattern": "[A-Za-z_][A-Za-z0-9_.-]{0,127}"
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "hints": {
+                                    "name": "Filter neighbor LSR IDs"
+                                  },
+                                  "depends": "policy-access-list-ipv4",
+                                  "suggestors": [
+                                    {
+                                      "name": "config-path",
+                                      "args": {
+                                        "path": "policy access-list ipv4"
+                                      }
+                                    }
+                                  ]
+                                },
+                                "for-access-list": {
+                                  "kind": "leaf_node",
+                                  "description": "Filter advertised prefixes",
+                                  "validators": {
+                                    "mode": "AND",
+                                    "checks": {
+                                      "regex": {
+                                        "name": "regex",
+                                        "args": {
+                                          "pattern": "[A-Za-z_][A-Za-z0-9_.-]{0,127}"
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "hints": {
+                                    "name": "Filter advertised prefixes"
+                                  },
+                                  "depends": "policy-access-list-ipv4",
+                                  "suggestors": [
+                                    {
+                                      "name": "config-path",
+                                      "args": {
+                                        "path": "policy access-list ipv4"
+                                      }
+                                    }
+                                  ]
+                                },
+                                "explicit-null": {
+                                  "kind": "node",
+                                  "description": "Advertise explicit null labels",
+                                  "anchor": true,
+                                  "children": {
+                                    "for-access-list": {
+                                      "kind": "leaf_node",
+                                      "description": "Advertise explicit null only for matching prefixes",
+                                      "validators": {
+                                        "mode": "AND",
+                                        "checks": {
+                                          "regex": {
+                                            "name": "regex",
+                                            "args": {
+                                              "pattern": "[A-Za-z_][A-Za-z0-9_.-]{0,127}"
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "hints": {
+                                        "name": "Advertise explicit null only for matching prefixes"
+                                      },
+                                      "depends": "policy-access-list-ipv4",
+                                      "suggestors": [
+                                        {
+                                          "name": "config-path",
+                                          "args": {
+                                            "path": "policy access-list ipv4"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "remote": {
+                          "kind": "node",
+                          "description": "Remote label policy",
+                          "anchor": true,
+                          "children": {
+                            "accept": {
+                              "kind": "node",
+                              "description": "Restrict accepted label mappings",
+                              "anchor": true,
+                              "children": {
+                                "from-access-list": {
+                                  "kind": "leaf_node",
+                                  "description": "Filter neighbor LSR IDs",
+                                  "validators": {
+                                    "mode": "AND",
+                                    "checks": {
+                                      "regex": {
+                                        "name": "regex",
+                                        "args": {
+                                          "pattern": "[A-Za-z_][A-Za-z0-9_.-]{0,127}"
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "hints": {
+                                    "name": "Filter neighbor LSR IDs"
+                                  },
+                                  "depends": "policy-access-list-ipv4",
+                                  "suggestors": [
+                                    {
+                                      "name": "config-path",
+                                      "args": {
+                                        "path": "policy access-list ipv4"
+                                      }
+                                    }
+                                  ]
+                                },
+                                "for-access-list": {
+                                  "kind": "leaf_node",
+                                  "description": "Filter accepted prefixes",
+                                  "validators": {
+                                    "mode": "AND",
+                                    "checks": {
+                                      "regex": {
+                                        "name": "regex",
+                                        "args": {
+                                          "pattern": "[A-Za-z_][A-Za-z0-9_.-]{0,127}"
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "hints": {
+                                    "name": "Filter accepted prefixes"
+                                  },
+                                  "depends": "policy-access-list-ipv4",
+                                  "suggestors": [
+                                    {
+                                      "name": "config-path",
+                                      "args": {
+                                        "path": "policy access-list ipv4"
+                                      }
+                                    }
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "ipv6": {
+                  "kind": "node",
+                  "description": "ipv6 LDP",
+                  "anchor": true,
+                  "children": {
+                    "transport-address": {
+                      "kind": "leaf_node",
+                      "description": "Local LDP transport address",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "ldp-address": {
+                            "name": "ldp-address",
+                            "args": {
+                              "version": 6
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "address": "Local LDP transport address"
+                      }
+                    },
+                    "session-holdtime": {
+                      "kind": "leaf_node",
+                      "description": "Session holdtime in seconds",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "integer-range": {
+                            "name": "integer-range",
+                            "args": {
+                              "minimum": 15,
+                              "maximum": 65535
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "15-65535": "Session holdtime in seconds"
+                      }
+                    },
+                    "ttl-security": {
+                      "kind": "node",
+                      "description": "Generalized TTL security",
+                      "anchor": true,
+                      "children": {
+                        "disable": {
+                          "kind": "leaf_node",
+                          "description": "Disable TTL checking",
+                          "valueless": true
+                        }
+                      }
+                    },
+                    "discovery": {
+                      "kind": "node",
+                      "description": "LDP discovery",
+                      "anchor": true,
+                      "children": {
+                        "hello": {
+                          "kind": "node",
+                          "description": "Link discovery timers",
+                          "anchor": true,
+                          "children": {
+                            "interval": {
+                              "kind": "leaf_node",
+                              "description": "Hello interval in seconds",
+                              "validators": {
+                                "mode": "AND",
+                                "checks": {
+                                  "integer-range": {
+                                    "name": "integer-range",
+                                    "args": {
+                                      "minimum": 1,
+                                      "maximum": 65535
+                                    }
+                                  }
+                                }
+                              },
+                              "hints": {
+                                "1-65535": "Hello interval in seconds"
+                              }
+                            },
+                            "holdtime": {
+                              "kind": "leaf_node",
+                              "description": "Hello holdtime in seconds",
+                              "validators": {
+                                "mode": "AND",
+                                "checks": {
+                                  "integer-range": {
+                                    "name": "integer-range",
+                                    "args": {
+                                      "minimum": 1,
+                                      "maximum": 65535
+                                    }
+                                  }
+                                }
+                              },
+                              "hints": {
+                                "1-65535": "Hello holdtime in seconds"
+                              }
+                            }
+                          }
+                        },
+                        "targeted-hello": {
+                          "kind": "node",
+                          "description": "Targeted discovery timers",
+                          "anchor": true,
+                          "children": {
+                            "interval": {
+                              "kind": "leaf_node",
+                              "description": "Hello interval in seconds",
+                              "validators": {
+                                "mode": "AND",
+                                "checks": {
+                                  "integer-range": {
+                                    "name": "integer-range",
+                                    "args": {
+                                      "minimum": 1,
+                                      "maximum": 65535
+                                    }
+                                  }
+                                }
+                              },
+                              "hints": {
+                                "1-65535": "Hello interval in seconds"
+                              }
+                            },
+                            "holdtime": {
+                              "kind": "leaf_node",
+                              "description": "Hello holdtime in seconds",
+                              "validators": {
+                                "mode": "AND",
+                                "checks": {
+                                  "integer-range": {
+                                    "name": "integer-range",
+                                    "args": {
+                                      "minimum": 1,
+                                      "maximum": 65535
+                                    }
+                                  }
+                                }
+                              },
+                              "hints": {
+                                "1-65535": "Hello holdtime in seconds"
+                              }
+                            },
+                            "accept": {
+                              "kind": "node",
+                              "description": "Accept targeted hellos",
+                              "anchor": true,
+                              "children": {
+                                "from-access-list": {
+                                  "kind": "leaf_node",
+                                  "description": "Restrict accepted targeted hello source addresses",
+                                  "validators": {
+                                    "mode": "AND",
+                                    "checks": {
+                                      "regex": {
+                                        "name": "regex",
+                                        "args": {
+                                          "pattern": "[A-Za-z_][A-Za-z0-9_.-]{0,127}"
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "hints": {
+                                    "name": "Restrict accepted targeted hello source addresses"
+                                  },
+                                  "depends": "policy-access-list-ipv6",
+                                  "suggestors": [
+                                    {
+                                      "name": "config-path",
+                                      "args": {
+                                        "path": "policy access-list ipv6"
+                                      }
+                                    }
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "interface": {
+                      "kind": "tag_node",
+                      "description": "LDP discovery interface",
+                      "anchor": true,
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "regex": {
+                            "name": "regex",
+                            "args": {
+                              "pattern": "[A-Za-z][A-Za-z0-9_.-]{0,14}"
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "interface": "LDP discovery interface"
+                      },
+                      "suggestors": [
+                        {
+                          "name": "interfaces"
+                        }
+                      ],
+                      "children": {
+                        "hello": {
+                          "kind": "node",
+                          "description": "Interface discovery timers",
+                          "anchor": true,
+                          "children": {
+                            "interval": {
+                              "kind": "leaf_node",
+                              "description": "Hello interval in seconds",
+                              "validators": {
+                                "mode": "AND",
+                                "checks": {
+                                  "integer-range": {
+                                    "name": "integer-range",
+                                    "args": {
+                                      "minimum": 1,
+                                      "maximum": 65535
+                                    }
+                                  }
+                                }
+                              },
+                              "hints": {
+                                "1-65535": "Hello interval in seconds"
+                              }
+                            },
+                            "holdtime": {
+                              "kind": "leaf_node",
+                              "description": "Hello holdtime in seconds",
+                              "validators": {
+                                "mode": "AND",
+                                "checks": {
+                                  "integer-range": {
+                                    "name": "integer-range",
+                                    "args": {
+                                      "minimum": 1,
+                                      "maximum": 65535
+                                    }
+                                  }
+                                }
+                              },
+                              "hints": {
+                                "1-65535": "Hello holdtime in seconds"
+                              }
+                            }
+                          }
+                        },
+                        "disable-establish-hello": {
+                          "kind": "leaf_node",
+                          "description": "Do not send extra hellos when a session establishes",
+                          "valueless": true
+                        }
+                      }
+                    },
+                    "targeted-neighbor": {
+                      "kind": "leaf_node",
+                      "description": "Remote targeted discovery address",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "ldp-address": {
+                            "name": "ldp-address",
+                            "args": {
+                              "version": 6,
+                              "link_local": false
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "address": "Remote targeted discovery address"
+                      },
+                      "multi": true
+                    },
+                    "label": {
+                      "kind": "node",
+                      "description": "Label distribution policy",
+                      "anchor": true,
+                      "children": {
+                        "local": {
+                          "kind": "node",
+                          "description": "Local label policy",
+                          "anchor": true,
+                          "children": {
+                            "allocate": {
+                              "kind": "node",
+                              "description": "Restrict label allocation",
+                              "anchor": true,
+                              "children": {
+                                "host-routes": {
+                                  "kind": "leaf_node",
+                                  "description": "Allocate labels only for host routes",
+                                  "valueless": true
+                                },
+                                "access-list": {
+                                  "kind": "leaf_node",
+                                  "description": "Allocate labels for matching prefixes",
+                                  "validators": {
+                                    "mode": "AND",
+                                    "checks": {
+                                      "regex": {
+                                        "name": "regex",
+                                        "args": {
+                                          "pattern": "[A-Za-z_][A-Za-z0-9_.-]{0,127}"
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "hints": {
+                                    "name": "Allocate labels for matching prefixes"
+                                  },
+                                  "depends": "policy-access-list-ipv6",
+                                  "suggestors": [
+                                    {
+                                      "name": "config-path",
+                                      "args": {
+                                        "path": "policy access-list ipv6"
+                                      }
+                                    }
+                                  ]
+                                }
+                              }
+                            },
+                            "advertise": {
+                              "kind": "node",
+                              "description": "Restrict label advertisements",
+                              "anchor": true,
+                              "children": {
+                                "to-access-list": {
+                                  "kind": "leaf_node",
+                                  "description": "Filter neighbor LSR IDs",
+                                  "validators": {
+                                    "mode": "AND",
+                                    "checks": {
+                                      "regex": {
+                                        "name": "regex",
+                                        "args": {
+                                          "pattern": "[A-Za-z_][A-Za-z0-9_.-]{0,127}"
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "hints": {
+                                    "name": "Filter neighbor LSR IDs"
+                                  },
+                                  "depends": "policy-access-list-ipv4",
+                                  "suggestors": [
+                                    {
+                                      "name": "config-path",
+                                      "args": {
+                                        "path": "policy access-list ipv4"
+                                      }
+                                    }
+                                  ]
+                                },
+                                "for-access-list": {
+                                  "kind": "leaf_node",
+                                  "description": "Filter advertised prefixes",
+                                  "validators": {
+                                    "mode": "AND",
+                                    "checks": {
+                                      "regex": {
+                                        "name": "regex",
+                                        "args": {
+                                          "pattern": "[A-Za-z_][A-Za-z0-9_.-]{0,127}"
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "hints": {
+                                    "name": "Filter advertised prefixes"
+                                  },
+                                  "depends": "policy-access-list-ipv6",
+                                  "suggestors": [
+                                    {
+                                      "name": "config-path",
+                                      "args": {
+                                        "path": "policy access-list ipv6"
+                                      }
+                                    }
+                                  ]
+                                },
+                                "explicit-null": {
+                                  "kind": "node",
+                                  "description": "Advertise explicit null labels",
+                                  "anchor": true,
+                                  "children": {
+                                    "for-access-list": {
+                                      "kind": "leaf_node",
+                                      "description": "Advertise explicit null only for matching prefixes",
+                                      "validators": {
+                                        "mode": "AND",
+                                        "checks": {
+                                          "regex": {
+                                            "name": "regex",
+                                            "args": {
+                                              "pattern": "[A-Za-z_][A-Za-z0-9_.-]{0,127}"
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "hints": {
+                                        "name": "Advertise explicit null only for matching prefixes"
+                                      },
+                                      "depends": "policy-access-list-ipv6",
+                                      "suggestors": [
+                                        {
+                                          "name": "config-path",
+                                          "args": {
+                                            "path": "policy access-list ipv6"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "remote": {
+                          "kind": "node",
+                          "description": "Remote label policy",
+                          "anchor": true,
+                          "children": {
+                            "accept": {
+                              "kind": "node",
+                              "description": "Restrict accepted label mappings",
+                              "anchor": true,
+                              "children": {
+                                "from-access-list": {
+                                  "kind": "leaf_node",
+                                  "description": "Filter neighbor LSR IDs",
+                                  "validators": {
+                                    "mode": "AND",
+                                    "checks": {
+                                      "regex": {
+                                        "name": "regex",
+                                        "args": {
+                                          "pattern": "[A-Za-z_][A-Za-z0-9_.-]{0,127}"
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "hints": {
+                                    "name": "Filter neighbor LSR IDs"
+                                  },
+                                  "depends": "policy-access-list-ipv4",
+                                  "suggestors": [
+                                    {
+                                      "name": "config-path",
+                                      "args": {
+                                        "path": "policy access-list ipv4"
+                                      }
+                                    }
+                                  ]
+                                },
+                                "for-access-list": {
+                                  "kind": "leaf_node",
+                                  "description": "Filter accepted prefixes",
+                                  "validators": {
+                                    "mode": "AND",
+                                    "checks": {
+                                      "regex": {
+                                        "name": "regex",
+                                        "args": {
+                                          "pattern": "[A-Za-z_][A-Za-z0-9_.-]{0,127}"
+                                        }
+                                      }
+                                    }
+                                  },
+                                  "hints": {
+                                    "name": "Filter accepted prefixes"
+                                  },
+                                  "depends": "policy-access-list-ipv6",
+                                  "suggestors": [
+                                    {
+                                      "name": "config-path",
+                                      "args": {
+                                        "path": "policy access-list ipv6"
+                                      }
+                                    }
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "script": {
+            "name": "ldp",
+            "priority": 49,
+            "watch-before": [
+              "interfaces",
+              "policy",
+              "protocols mpls"
+            ]
+          }
+        },
         "static": {
           "kind": "node",
           "description": "Static routes managed by FRR",
@@ -121301,6 +122652,32 @@
           "description": "OSPFv2 IPv4 routing",
           "anchor": true,
           "children": {
+            "ldp-sync": {
+              "kind": "node",
+              "description": "Synchronize IGP reachability with LDP",
+              "anchor": true,
+              "children": {
+                "hold-down": {
+                  "kind": "leaf_node",
+                  "description": "Maximum synchronization wait in seconds",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "integer-range": {
+                        "name": "integer-range",
+                        "args": {
+                          "minimum": 1,
+                          "maximum": 10000
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "1-10000": "Maximum synchronization wait"
+                  }
+                }
+              }
+            },
             "options": {
               "kind": "node",
               "description": "OSPF process options",
@@ -123211,6 +124588,37 @@
                 "interface": "Interface participating in OSPF"
               },
               "children": {
+                "ldp-sync": {
+                  "kind": "node",
+                  "description": "Override LDP synchronization on this interface",
+                  "anchor": true,
+                  "children": {
+                    "disable": {
+                      "kind": "leaf_node",
+                      "valueless": true,
+                      "description": "Disable synchronization on this interface"
+                    },
+                    "hold-down": {
+                      "kind": "leaf_node",
+                      "description": "Maximum wait in seconds; zero waits indefinitely",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "integer-range": {
+                            "name": "integer-range",
+                            "args": {
+                              "minimum": 0,
+                              "maximum": 10000
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "0-10000": "Maximum synchronization wait"
+                      }
+                    }
+                  }
+                },
                 "area": {
                   "kind": "leaf_node",
                   "description": "Area assigned to this interface",
@@ -128693,6 +130101,32 @@
           "description": "IS-IS IPv4 and IPv6 routing",
           "anchor": true,
           "children": {
+            "ldp-sync": {
+              "kind": "node",
+              "description": "Synchronize IGP reachability with LDP",
+              "anchor": true,
+              "children": {
+                "hold-down": {
+                  "kind": "leaf_node",
+                  "description": "Maximum synchronization wait in seconds",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "integer-range": {
+                        "name": "integer-range",
+                        "args": {
+                          "minimum": 0,
+                          "maximum": 10000
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "0-10000": "Maximum wait; zero waits indefinitely"
+                  }
+                }
+              }
+            },
             "net": {
               "kind": "leaf_node",
               "description": "Network Entity Title containing area, system ID and zero selector",
@@ -130298,6 +131732,37 @@
               "description": "Participating interface",
               "anchor": true,
               "children": {
+                "ldp-sync": {
+                  "kind": "node",
+                  "description": "Override LDP synchronization on this interface",
+                  "anchor": true,
+                  "children": {
+                    "disable": {
+                      "kind": "leaf_node",
+                      "valueless": true,
+                      "description": "Disable synchronization on this interface"
+                    },
+                    "hold-down": {
+                      "kind": "leaf_node",
+                      "description": "Maximum wait in seconds; zero inherits the process timer",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "integer-range": {
+                            "name": "integer-range",
+                            "args": {
+                              "minimum": 0,
+                              "maximum": 10000
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "0-10000": "Maximum wait; zero inherits the process timer"
+                      }
+                    }
+                  }
+                },
                 "address-family": {
                   "kind": "leaf_node",
                   "description": "Address family carried on this interface",

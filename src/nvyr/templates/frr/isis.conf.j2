@@ -1,5 +1,9 @@
 {% for vrf, settings in configuration['instances'].items() | sort(case_sensitive=true) -%}
 router isis nvyr{{ ' vrf ' ~ vrf if vrf != 'default' else '' }}
+{% if 'ldp-sync' in settings %} mpls ldp-sync
+{% if 'hold-down' in settings['ldp-sync'] %} mpls ldp-sync holddown {{ settings['ldp-sync']['hold-down'] | int }}
+{% endif -%}
+{% endif -%}
 {% for net in settings['net'] | sort %} net {{ net | lower }}
 {% endfor -%}
 {% set options = settings.get('options', {}) -%}
@@ -64,6 +68,10 @@ exit
 interface {{ name }}
 {% for family in interface['address-family'] | sort %} {{ 'ip' if family == 'ipv4-unicast' else 'ipv6' }} router isis nvyr
 {% endfor -%}
+{% if 'ldp-sync' in interface %} {{ 'no ' if 'disable' in interface['ldp-sync'] else '' }}isis mpls ldp-sync
+{% if 'hold-down' in interface['ldp-sync'] %} isis mpls ldp-sync holddown {{ interface['ldp-sync']['hold-down'] | int }}
+{% endif -%}
+{% endif -%}
 {% if 'circuit-type' in interface %} isis circuit-type {{ 'level-2-only' if interface['circuit-type'] == 'level-2' else interface['circuit-type'] }}
 {% endif -%}
 {% if 'network' in interface %} {{ 'no ' if interface['network'] == 'broadcast' else '' }}isis network point-to-point

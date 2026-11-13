@@ -64,7 +64,7 @@ class Schedule:
             names.update(manager.failures.keys() & manager.claims.keys())
             self.retry = now + 5
 
-        if full or names or ('DNS' in manager.failures and retry):
+        if full or names or (retry and {'DNS', 'MPLS'} & manager.failures.keys()):
             log.debug('Scheduled reconciliation: audit=%s, interfaces=%d', full, len(names))
 
             try:
@@ -131,6 +131,9 @@ def dispatch(manager, request):
 
     if operation == 'replace-kernel-settings':
         return manager.replace_kernel_settings(request.get('values'))
+
+    if operation == 'replace-mpls':
+        return manager.replace_mpls(request.get('values'))
 
     if operation == 'dns-status':
         if manager.resolver is None:

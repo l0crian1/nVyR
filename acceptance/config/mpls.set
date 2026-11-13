@@ -1,0 +1,15 @@
+# Persist kernel MPLS membership and both LDP families across the acceptance reboot.
+# The opposite end is a VRF, so adjacency/label forwarding belongs to the routed
+# functional scenario. Finite IGP hold-downs allow this transit to remain usable.
+set protocols mpls interface veth997
+set protocols ldp options router-id 198.18.192.2 wait-for-sync 20
+set protocols ldp options dual-stack transport-preference ipv4
+set protocols ldp discovery hello interval 2 holdtime 10
+set protocols ldp address-family ipv4 transport-address 198.18.192.2 interface veth997
+set protocols ldp address-family ipv6 transport-address 2001:db8:192::2 interface veth997
+set protocols ldp address-family ipv4 label local allocate host-routes
+set protocols ldp address-family ipv6 label local advertise explicit-null
+set protocols ospf ldp-sync hold-down 2
+set protocols ospf interface veth997 ldp-sync hold-down 1
+set protocols isis ldp-sync hold-down 2
+set protocols isis interface veth997 ldp-sync hold-down 1

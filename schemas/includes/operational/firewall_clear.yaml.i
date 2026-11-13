@@ -5,6 +5,7 @@ clear:
 
     include_schema:
     - file: operational/isis-clear.yaml.i
+    - file: operational/mpls-clear.yaml.i
     - file: operational/rip-clear.yaml.i
     - file: operational/ripng-clear.yaml.i
     - file: operational/bgp-clear.yaml.i

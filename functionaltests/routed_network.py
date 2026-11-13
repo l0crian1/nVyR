@@ -24,6 +24,7 @@ from smoketests.assertions import (
 )
 from smoketests.support import defer_interrupt, wait_for
 from functionaltests.lldp_lab import daemon as lldp_peer
+from functionaltests.mpls_peer import daemon as mpls_peer
 
 
 CONFIGURATION = Path(__file__).with_name('configs') / 'routed-network.conf'
@@ -35,11 +36,12 @@ CONFIGURATIONS = (CONFIGURATION, CONFIGURATION.with_name('network-features.conf'
                   CONFIGURATION.with_name('network-ospf.conf'),
                   CONFIGURATION.with_name('network-rip.conf'),
                   CONFIGURATION.with_name('network-isis.conf'),
+                  CONFIGURATION.with_name('network-mpls.conf'),
                   CONFIGURATION.with_name('network-lists.conf'),
                   CONFIGURATION.with_name('network-cgnat.conf'))
 LINKS = ('veth42061', 'veth42062', 'veth42063', 'veth42064', 'veth42065', 'veth42066',
-         'veth42067', 'veth42068',
-         'dum42061', 'dum42069', 'dum977', 'dum980', 'dum997', 'dum998', 'dum999', 'veth994', 'veth995',
+         'veth42067', 'veth42068', 'veth42071', 'veth42072',
+         'dum42061', 'dum42069', 'dum42071', 'dum977', 'dum980', 'dum997', 'dum998', 'dum999', 'veth994', 'veth995',
          'veth41050', 'veth41051', 'veth41052', 'veth41053')
 NAMESPACES = ('nvyr-routed-left', 'nvyr-routed-right', 'nvyr-ft-source', 'nvyr-ft-destination')
 POLICIES = ('RNCOMM', 'RNLARGE', 'RNAS', 'RNCALL', 'RNIN4', 'RNIN6', 'RNOUT4', 'RNOUT6',
@@ -230,6 +232,7 @@ def scenario(config, stop):
             namespaces.append(namespace)
         for namespace, interface in (('nvyr-routed-left', 'veth42064'),
                                      ('nvyr-routed-right', 'veth42066'),
+                                     ('nvyr-routed-right', 'veth42072'),
                                      ('nvyr-ft-source', 'veth41051'),
                                      ('nvyr-ft-destination', 'veth41053')):
             cmd(['ip', 'link', 'set', interface, 'netns', namespace])
@@ -251,6 +254,7 @@ def scenario(config, stop):
         with tempfile.TemporaryDirectory(prefix='nvyr-routed-lldp-') as temporary, ExitStack() as peers:
             directory = Path(temporary)
             directory.chmod(0o755)
+            peers.enter_context(mpls_peer(directory / 'mpls', 'nvyr-routed-right'))
             for side, interface in (('left', 'veth42064'), ('right', 'veth42066')):
                 peers.enter_context(lldp_peer(directory / side, 'nvyr-routed-' + side, {
                     'system-name': 'routed-' + side, 'chassis-id': 'routed-' + side,

@@ -21,7 +21,7 @@ from nvyr.errors import RecoveryError, RouterError, ValidationError
 from nvyr.storage import atomic_json, sync_directory
 from nvyr.helpers.netlink import TYPES, interface_name, normalize, read_attributes
 from nvyr.helpers.dhcp_options import lease_routes, lease_spec
-from nvyr.helpers import interface_ip, ipv6_ra, kernel_settings
+from nvyr.helpers import interface_ip, ipv6_ra, kernel_settings, mpls
 from nvyr.helpers.kernel_settings_map import SETTINGS
 
 log = logging.getLogger(__name__)
@@ -118,6 +118,39 @@ class Manager:
                 raise
         return {'previous': previous}
 
+    def replace_mpls(self, values):
+        mpls.validate(values)
+        self.reconcile_mpls()
+        previous = self.state.get('mpls', {'interfaces': [], 'label-table-size': 0})
+        if values == previous:
+            return {}
+
+        self.state['mpls-pending'] = {'before': previous, 'target': values}
+        self.save()
+        try:
+            mpls.apply(values, previous['interfaces'])
+            self.state['mpls'] = values
+            self.state.pop('mpls-pending')
+            self.save()
+        except Exception as error:
+            self.state['mpls-pending'] = {'before': previous, 'target': values}
+            try:
+                self.reconcile_mpls()
+            except Exception as restore_error:
+                raise RecoveryError(f'MPLS apply failed ({error}); restoration failed ({restore_error})') from restore_error
+            raise RouterError(f'MPLS apply failed; previous settings restored: {error}') from error
+        return {}
+
+    def reconcile_mpls(self):
+        pending = self.state.get('mpls-pending')
+        if pending:
+            mpls.apply(pending['before'], pending['target']['interfaces'])
+            self.state['mpls'] = pending['before']
+            self.state.pop('mpls-pending')
+            self.save()
+        elif 'mpls' in self.state:
+            mpls.apply(self.state['mpls'])
+
     def save_record(self, name):
         with self.updates.open('ab') as stream:
             stream.write((json.dumps([self.state['epoch'], name, self.state['records'].get(name)],
@@ -129,7 +162,7 @@ class Manager:
         self.claims = {name: owner for owner, links in self.state['owners'].items() for name in links}
         self.observed = {name: value for name, value in self.observed.items() if name in self.claims}
         self.failures = {name: value for name, value in self.failures.items()
-                         if name in self.claims or name == 'DNS'}
+                         if name in self.claims or name in ('DNS', 'MPLS')}
         self.indices = {rec['index']: name for name, rec in self.state['records'].items()}
         self.dhcp_names = {name for owner, links in self.state['owners'].items() for name, spec in links.items()
                            if spec['dhcp4'] and not spec['disabled'] and owner not in self.state['pending']}
@@ -176,6 +209,8 @@ class Manager:
             event = message.get('event', '')
             if event in ('RTM_NEWLINK', 'RTM_DELLINK'):
                 name = message.get_attr('IFLA_IFNAME')
+                if name in self.state.get('mpls', {}).get('interfaces', ()):
+                    names.add(name)
                 if event == 'RTM_DELLINK' and self.ra:
                     self.ra.forget(message['index'])
                 old_name = self.indices.get(message['index'])
@@ -217,7 +252,7 @@ class Manager:
                     names.add(child)
                     queue.append(child)
 
-        affected = names & self.claims.keys()
+        affected = names & (self.claims.keys() | set(self.state.get('mpls', {}).get('interfaces', ())))
         if affected and log.isEnabledFor(logging.DEBUG):
             log.debug('Kernel notifications require drift check: %s', ', '.join(sorted(affected)))
 
@@ -392,6 +427,9 @@ class Manager:
         for name in self._ordered(target):
             self.reconcile_link(owner, name, target[name], allow_missing=allow_missing, links=target)
 
+        # MPLS may have been configured before these links existed. Apply it
+        # before acknowledging interface creation, including rollback/recovery.
+        self.reconcile_mpls()
         self.kernel.flush_addresses()
         waiting = []
 
@@ -717,7 +755,7 @@ class Manager:
 
         if names is None:
             self.failures = {name: message for name, message in self.failures.items()
-                             if name in self.claims or name == 'DNS'}
+                             if name in self.claims or name in ('DNS', 'MPLS')}
 
         checked = set()
 
@@ -769,6 +807,12 @@ class Manager:
                     self.kernel.ready(name)  # Report asynchronous DAD failures.
             except Exception as error:
                 self.failures[name] = str(error)
+
+        try:
+            self.reconcile_mpls()
+            self.failures.pop('MPLS', None)
+        except Exception as error:
+            self.failures['MPLS'] = str(error)
 
         for name, message in self.failures.items():
             if name != 'DNS' and previous_failures.get(name) != message:

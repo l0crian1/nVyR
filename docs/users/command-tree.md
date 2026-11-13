@@ -6911,6 +6911,9 @@ set
 │   │   │   ├── circuit-type <level-1|level-2|level-1-2>
 │   │   │   ├── disable-three-way-handshake
 │   │   │   ├── hello-padding <always|during-adjacency-formation|disabled>
+│   │   │   ├── ldp-sync
+│   │   │   │   ├── disable
+│   │   │   │   └── hold-down <0-10000>
 │   │   │   ├── level <level-1|level-2>
 │   │   │   │   ├── fast-reroute
 │   │   │   │   │   └── lfa
@@ -6928,6 +6931,8 @@ set
 │   │   │   └── topology <standard|ipv6-unicast|ipv4-multicast|ipv6-multicast|ipv4-management|
 │   │   │                 ipv6-management|ipv6-dstsrc>
 │   │   │       └── disable
+│   │   ├── ldp-sync
+│   │   │   └── hold-down <0-10000>
 │   │   ├── level <level-1|level-2>
 │   │   │   ├── authentication
 │   │   │   │   ├── mode <plaintext|md5>
@@ -6972,6 +6977,100 @@ set
 │   │   └── topology <ipv6-unicast|ipv4-multicast|ipv6-multicast|ipv4-management|ipv6-management|
 │   │                 ipv6-dstsrc>
 │   │       └── overload
+│   ├── ldp
+│   │   ├── address-family
+│   │   │   ├── ipv4
+│   │   │   │   ├── discovery
+│   │   │   │   │   ├── hello
+│   │   │   │   │   │   ├── holdtime <1-65535>
+│   │   │   │   │   │   └── interval <1-65535>
+│   │   │   │   │   └── targeted-hello
+│   │   │   │   │       ├── accept
+│   │   │   │   │       │   └── from-access-list <name>
+│   │   │   │   │       ├── holdtime <1-65535>
+│   │   │   │   │       └── interval <1-65535>
+│   │   │   │   ├── interface <interface>
+│   │   │   │   │   ├── disable-establish-hello
+│   │   │   │   │   └── hello
+│   │   │   │   │       ├── holdtime <1-65535>
+│   │   │   │   │       └── interval <1-65535>
+│   │   │   │   ├── label
+│   │   │   │   │   ├── local
+│   │   │   │   │   │   ├── advertise
+│   │   │   │   │   │   │   ├── explicit-null
+│   │   │   │   │   │   │   │   └── for-access-list <name>
+│   │   │   │   │   │   │   ├── for-access-list <name>
+│   │   │   │   │   │   │   └── to-access-list <name>
+│   │   │   │   │   │   └── allocate
+│   │   │   │   │   │       ├── access-list <name>
+│   │   │   │   │   │       └── host-routes
+│   │   │   │   │   └── remote
+│   │   │   │   │       └── accept
+│   │   │   │   │           ├── for-access-list <name>
+│   │   │   │   │           └── from-access-list <name>
+│   │   │   │   ├── session-holdtime <15-65535>
+│   │   │   │   ├── targeted-neighbor <address>
+│   │   │   │   ├── transport-address <address>
+│   │   │   │   └── ttl-security
+│   │   │   │       └── disable
+│   │   │   └── ipv6
+│   │   │       ├── discovery
+│   │   │       │   ├── hello
+│   │   │       │   │   ├── holdtime <1-65535>
+│   │   │       │   │   └── interval <1-65535>
+│   │   │       │   └── targeted-hello
+│   │   │       │       ├── accept
+│   │   │       │       │   └── from-access-list <name>
+│   │   │       │       ├── holdtime <1-65535>
+│   │   │       │       └── interval <1-65535>
+│   │   │       ├── interface <interface>
+│   │   │       │   ├── disable-establish-hello
+│   │   │       │   └── hello
+│   │   │       │       ├── holdtime <1-65535>
+│   │   │       │       └── interval <1-65535>
+│   │   │       ├── label
+│   │   │       │   ├── local
+│   │   │       │   │   ├── advertise
+│   │   │       │   │   │   ├── explicit-null
+│   │   │       │   │   │   │   └── for-access-list <name>
+│   │   │       │   │   │   ├── for-access-list <name>
+│   │   │       │   │   │   └── to-access-list <name>
+│   │   │       │   │   └── allocate
+│   │   │       │   │       ├── access-list <name>
+│   │   │       │   │       └── host-routes
+│   │   │       │   └── remote
+│   │   │       │       └── accept
+│   │   │       │           ├── for-access-list <name>
+│   │   │       │           └── from-access-list <name>
+│   │   │       ├── session-holdtime <15-65535>
+│   │   │       ├── targeted-neighbor <address>
+│   │   │       ├── transport-address <address>
+│   │   │       └── ttl-security
+│   │   │           └── disable
+│   │   ├── discovery
+│   │   │   ├── hello
+│   │   │   │   ├── holdtime <1-65535>
+│   │   │   │   └── interval <1-65535>
+│   │   │   └── targeted-hello
+│   │   │       ├── holdtime <1-65535>
+│   │   │       └── interval <1-65535>
+│   │   ├── neighbor <lsr-id>
+│   │   │   ├── password <secret>
+│   │   │   ├── session-holdtime <15-65535>
+│   │   │   └── ttl-security
+│   │   │       ├── disable
+│   │   │       └── hops <1-254>
+│   │   └── options
+│   │       ├── allow-broken-lsps
+│   │       ├── dual-stack
+│   │       │   ├── cisco-interop
+│   │       │   └── transport-preference <ipv4|ipv6|value>
+│   │       ├── ordered-control
+│   │       ├── router-id <router-id>
+│   │       └── wait-for-sync <1-10000>
+│   ├── mpls
+│   │   ├── interface <interface>
+│   │   └── label-table-size <16-1048575>
 │   ├── ospf
 │   │   ├── area <0-4294967295|x.x.x.x>
 │   │   │   ├── authentication <plaintext|message-digest>
@@ -7065,6 +7164,9 @@ set
 │   │   │   ├── fast-hello <2-20>
 │   │   │   ├── graceful-restart-hello-delay <1-1800>
 │   │   │   ├── hello-interval <1-65535>
+│   │   │   ├── ldp-sync
+│   │   │   │   ├── disable
+│   │   │   │   └── hold-down <0-10000>
 │   │   │   ├── mtu-ignore
 │   │   │   ├── neighbor-filter <name>
 │   │   │   ├── network
@@ -7081,6 +7183,8 @@ set
 │   │   │   ├── retransmit-interval <1-65535>
 │   │   │   ├── retransmit-window <20-1000>
 │   │   │   └── transmit-delay <1-65535>
+│   │   ├── ldp-sync
+│   │   │   └── hold-down <1-10000>
 │   │   ├── log-adjacency-changes
 │   │   │   └── detail
 │   │   ├── max-metric
@@ -9644,6 +9748,10 @@ operational mode
 │   │   └── vrf <default|all|vrf>
 │   │       └── neighbor
 │   │           └── <system-id>
+│   ├── mpls
+│   │   └── ldp
+│   │       └── neighbor
+│   │           └── <address>
 │   ├── rip
 │   │   ├── all
 │   │   └── vrf <default|vrf>
@@ -11053,6 +11161,11 @@ operational mode
 │   │   │   │   ├── <interface>
 │   │   │   │   └── traffic
 │   │   │   │       └── <interface>
+│   │   │   ├── mpls
+│   │   │   │   └── ldp-sync
+│   │   │   │       ├── interface <all>
+│   │   │   │       │   └── json
+│   │   │   │       └── json
 │   │   │   ├── neighbor
 │   │   │   │   ├── detail
 │   │   │   │   └── <router-id>
@@ -11455,6 +11568,9 @@ operational mode
 │   │   │   ├── json
 │   │   │   └── <interface>
 │   │   │       └── json
+│   │   ├── mpls
+│   │   │   └── ldp-sync
+│   │   │       └── interface <all>
 │   │   ├── neighbor
 │   │   │   ├── detail
 │   │   │   │   └── json
@@ -11721,6 +11837,99 @@ operational mode
 │   │   ├── task <name>
 │   │   └── zebra
 │   │       └── follow
+│   ├── mpls
+│   │   ├── fec
+│   │   │   └── <prefix>
+│   │   ├── ldp
+│   │   │   ├── binding
+│   │   │   │   ├── detail
+│   │   │   │   │   └── json
+│   │   │   │   ├── json
+│   │   │   │   ├── local-label <0-1048575>
+│   │   │   │   ├── neighbor <lsr-id>
+│   │   │   │   ├── <prefix>
+│   │   │   │   │   ├── detail
+│   │   │   │   │   │   └── json
+│   │   │   │   │   ├── json
+│   │   │   │   │   ├── local-label <0-1048575>
+│   │   │   │   │   ├── longer-prefixes
+│   │   │   │   │   │   └── json
+│   │   │   │   │   ├── neighbor <lsr-id>
+│   │   │   │   │   └── remote-label <0-1048575>
+│   │   │   │   └── remote-label <0-1048575>
+│   │   │   ├── capabilities
+│   │   │   │   └── json
+│   │   │   ├── discovery
+│   │   │   │   ├── detail
+│   │   │   │   │   └── json
+│   │   │   │   └── json
+│   │   │   ├── igp-sync
+│   │   │   │   └── json
+│   │   │   ├── interface
+│   │   │   │   └── json
+│   │   │   ├── ipv4
+│   │   │   │   ├── binding
+│   │   │   │   │   ├── detail
+│   │   │   │   │   │   └── json
+│   │   │   │   │   ├── json
+│   │   │   │   │   ├── local-label <0-1048575>
+│   │   │   │   │   ├── neighbor <lsr-id>
+│   │   │   │   │   ├── <prefix>
+│   │   │   │   │   │   ├── detail
+│   │   │   │   │   │   │   └── json
+│   │   │   │   │   │   ├── json
+│   │   │   │   │   │   ├── local-label <0-1048575>
+│   │   │   │   │   │   ├── longer-prefixes
+│   │   │   │   │   │   │   └── json
+│   │   │   │   │   │   ├── neighbor <lsr-id>
+│   │   │   │   │   │   └── remote-label <0-1048575>
+│   │   │   │   │   └── remote-label <0-1048575>
+│   │   │   │   ├── discovery
+│   │   │   │   │   ├── detail
+│   │   │   │   │   │   └── json
+│   │   │   │   │   └── json
+│   │   │   │   └── interface
+│   │   │   │       └── json
+│   │   │   ├── ipv6
+│   │   │   │   ├── binding
+│   │   │   │   │   ├── detail
+│   │   │   │   │   │   └── json
+│   │   │   │   │   ├── json
+│   │   │   │   │   ├── local-label <0-1048575>
+│   │   │   │   │   ├── neighbor <lsr-id>
+│   │   │   │   │   ├── <prefix>
+│   │   │   │   │   │   ├── detail
+│   │   │   │   │   │   │   └── json
+│   │   │   │   │   │   ├── json
+│   │   │   │   │   │   ├── local-label <0-1048575>
+│   │   │   │   │   │   ├── longer-prefixes
+│   │   │   │   │   │   │   └── json
+│   │   │   │   │   │   ├── neighbor <lsr-id>
+│   │   │   │   │   │   └── remote-label <0-1048575>
+│   │   │   │   │   └── remote-label <0-1048575>
+│   │   │   │   ├── discovery
+│   │   │   │   │   ├── detail
+│   │   │   │   │   │   └── json
+│   │   │   │   │   └── json
+│   │   │   │   └── interface
+│   │   │   │       └── json
+│   │   │   └── neighbor
+│   │   │       ├── capabilities
+│   │   │       │   └── json
+│   │   │       ├── detail
+│   │   │       │   └── json
+│   │   │       ├── json
+│   │   │       └── <lsr-id>
+│   │   │           ├── capabilities
+│   │   │           │   └── json
+│   │   │           ├── detail
+│   │   │           │   └── json
+│   │   │           └── json
+│   │   ├── status
+│   │   └── table
+│   │       ├── json
+│   │       └── <16-1048575>
+│   │           └── json
 │   ├── nat
 │   │   ├── cgnat
 │   │   │   ├── pool <name>

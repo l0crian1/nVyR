@@ -4,6 +4,12 @@ isis:
   anchor: true
   children:
 
+    include_schema:
+    - file: protocols/ldp-sync.yaml.i
+      replace:
+        /children/hold-down/validators/integer-range/minimum: 0
+        /children/hold-down/hints: {0-10000: Maximum wait; zero waits indefinitely}
+
     net:
       kind: leaf_node
       description: Network Entity Title containing area, system ID and zero selector
@@ -951,6 +957,12 @@ isis:
       description: Participating interface
       anchor: true
       children:
+
+        include_schema:
+        - file: protocols/ldp-sync-interface.yaml.i
+          replace:
+            /children/hold-down/description: Maximum wait in seconds; zero inherits the process timer
+            /children/hold-down/hints: {0-10000: Maximum wait; zero inherits the process timer}
 
         address-family:
           kind: leaf_node

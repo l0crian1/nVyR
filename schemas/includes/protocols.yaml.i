@@ -4,6 +4,8 @@ protocols:
   children: # protocols
 
     include_schema:
+    - file: protocols/mpls.yaml.i
+    - file: protocols/ldp.yaml.i
     - file: protocols/static.yaml.i
     - file: protocols/bgp.yaml.i
     - file: protocols/ospf.yaml.i

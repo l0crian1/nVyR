@@ -136,6 +136,7 @@ install -D -m 0644 "$repository/packaging/20-nvyr-rsyslog.conf" "$stage/usr/lib/
 install -D -m 0644 "$repository/packaging/20-nvyr-journal.conf" "$stage/usr/lib/systemd/journald.conf.d/20-nvyr.conf"
 
 install -m 0644 "$repository/packaging/nvyr-netlinkd.service" "$stage/usr/lib/systemd/system/nvyr-netlinkd.service"
+install -m 0644 "$repository/packaging/nvyr-mpls.service" "$stage/usr/lib/systemd/system/nvyr-mpls.service"
 install -m 0644 "$repository/packaging/nvyr-resolver-init.service" "$stage/usr/lib/systemd/system/nvyr-resolver-init.service"
 for unit in nvyr-dhcp6@.service nvyr-pd-ra@.service; do
     install -m 0644 "$repository/packaging/$unit" "$stage/usr/lib/systemd/system/$unit"

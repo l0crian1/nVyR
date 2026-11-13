@@ -134,6 +134,9 @@ def verify(configuration, context):
             if 'no-advertise' in summary and 'tag' in summary:
                 raise ValidationError(f'{path} summary-address {prefix}: no-advertise excludes tag')
         for name, interface in lookup(settings, ('interface',), {}).items():
+            # FRR explicitly rejects synchronization on the host loopback.
+            if name == 'lo' and 'ldp-sync' in interface:
+                raise ValidationError(f'{path} interface lo: LDP synchronization requires a transit interface')
             configured = lookup(configuration, ('interfaces', name), {})
             assigned_vrf = lookup(configured, ('vrf',), 'default')
             # A configured interface cannot participate in another VRF's OSPF process.

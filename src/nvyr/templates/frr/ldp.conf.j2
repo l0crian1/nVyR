@@ -1,0 +1,72 @@
+{% set settings = configuration['ldp'] -%}
+{% if settings is not none -%}
+mpls ldp
+{% set options = settings.get('options', {}) -%}
+{% if 'router-id' in options %} router-id {{ ip_address(options['router-id']) }}
+{% endif -%}
+{% if 'ordered-control' in options %} ordered-control
+{% endif -%}
+{% if 'allow-broken-lsps' in options %} install allow-broken-lsps
+{% endif -%}
+{% if 'wait-for-sync' in options %} wait-for-sync {{ options['wait-for-sync'] | int }}
+{% endif -%}
+{% set dual = options.get('dual-stack', {}) -%}
+{% if dual.get('transport-preference') == 'ipv4' %} dual-stack transport-connection prefer ipv4
+{% endif -%}
+{% if 'cisco-interop' in dual %} dual-stack cisco-interop
+{% endif -%}
+{% for kind, timers in settings.get('discovery', {}).items() | sort -%}
+{% for key in ('interval', 'holdtime') -%}
+{% if key in timers %} discovery {{ kind }} {{ key }} {{ timers[key] | int }}
+{% endif -%}
+{% endfor -%}
+{% endfor -%}
+{% for name, neighbor in settings.get('neighbor', {}).items() | sort -%}
+{% if 'password' in neighbor %} neighbor {{ name }} password {{ neighbor['password'] }}
+{% endif -%}
+{% if 'session-holdtime' in neighbor %} neighbor {{ name }} session holdtime {{ neighbor['session-holdtime'] | int }}
+{% endif -%}
+{% set security = neighbor.get('ttl-security', {}) -%}
+{% if 'disable' in security %} neighbor {{ name }} ttl-security disable
+{% elif 'hops' in security %} neighbor {{ name }} ttl-security hops {{ security['hops'] | int }}
+{% endif -%}
+{% endfor -%}
+{% for family, values in settings.get('address-family', {}).items() | sort %} address-family {{ family }}
+{% if 'transport-address' in values %}  discovery transport-address {{ ip_address(values['transport-address']) }}
+{% endif -%}
+{% if 'session-holdtime' in values %}  session holdtime {{ values['session-holdtime'] | int }}
+{% endif -%}
+{% if 'disable' in values.get('ttl-security', {}) %}  ttl-security disable
+{% endif -%}
+{% for kind, timers in values.get('discovery', {}).items() | sort -%}
+{% for key in ('interval', 'holdtime') -%}
+{% if key in timers %}  discovery {{ kind }} {{ key }} {{ timers[key] | int }}
+{% endif -%}
+{% endfor -%}
+{% if kind == 'targeted-hello' and 'accept' in timers %}  discovery targeted-hello accept{{ ' from ' ~ timers['accept']['from-access-list'] if 'from-access-list' in timers['accept'] else '' }}
+{% endif -%}
+{% endfor -%}
+{% set local = values.get('label', {}).get('local', {}) -%}
+{% set allocation = local.get('allocate', {}) -%}
+{% if 'host-routes' in allocation %}  label local allocate host-routes
+{% elif 'access-list' in allocation %}  label local allocate for {{ allocation['access-list'] }}
+{% endif -%}
+{% set advertise = local.get('advertise', {}) -%}
+{% if 'to-access-list' in advertise or 'for-access-list' in advertise %}  label local advertise{{ ' to ' ~ advertise['to-access-list'] if 'to-access-list' in advertise else '' }}{{ ' for ' ~ advertise['for-access-list'] if 'for-access-list' in advertise else '' }}
+{% endif -%}
+{% if 'explicit-null' in advertise %}  label local advertise explicit-null{{ ' for ' ~ advertise['explicit-null']['for-access-list'] if 'for-access-list' in advertise['explicit-null'] else '' }}
+{% endif -%}
+{% set accept = values.get('label', {}).get('remote', {}).get('accept', {}) -%}
+{% if 'from-access-list' in accept or 'for-access-list' in accept %}  label remote accept{{ ' from ' ~ accept['from-access-list'] if 'from-access-list' in accept else '' }}{{ ' for ' ~ accept['for-access-list'] if 'for-access-list' in accept else '' }}
+{% endif -%}
+{% for address in values.get('targeted-neighbor', ()) | sort %}  neighbor {{ ip_address(address) }} targeted
+{% endfor -%}
+{% for name, interface in values.get('interface', {}).items() | sort %}  interface {{ name }}
+{% for key, value in interface.get('hello', {}).items() | sort %}   discovery hello {{ key }} {{ value | int }}
+{% endfor -%}
+{% if 'disable-establish-hello' in interface %}   disable-establish-hello
+{% endif %}  exit
+{% endfor %} exit-address-family
+{% endfor -%}
+exit
+{% endif -%}

@@ -277,7 +277,7 @@ class NetlinkManager:
                 if response.get('version') != 1 or ('error' not in response and not isinstance(response.get('result'), dict)):
                     raise ValueError('Invalid or unsupported netlinkd response')
         except (OSError, EOFError, ValueError, RouterError) as error:
-            exception = RecoveryError if sent and operation in ('replace', 'replace-dns', 'replace-kernel-settings') else RouterError
+            exception = RecoveryError if sent and operation in ('replace', 'replace-dns', 'replace-kernel-settings', 'replace-mpls') else RouterError
             raise exception(f'Cannot communicate with nvyr-netlinkd: {error}. Check nvyr-netlinkd.service; '
                             'a lost apply reply requires configd recovery.') from error
 

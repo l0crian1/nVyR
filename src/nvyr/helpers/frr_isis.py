@@ -41,10 +41,12 @@ def normalize(commands, interface):
     if interface:
         result.difference_update({'no isis passive', 'no isis network point-to-point',
                                   'isis three-way-handshake', 'isis hello padding',
-                                  'isis circuit-type level-1-2', 'isis topology standard'})
+                                  'isis circuit-type level-1-2', 'isis topology standard',
+                                  'isis mpls ldp-sync', 'isis mpls ldp-sync holddown 0'})
     else:
         result.difference_update({'is-type level-1-2', 'metric-style wide', 'hostname dynamic',
-                                  'lsp-mtu 1497', 'set-overload-bit on-startup 0', 'attached-bit send'})
+                                  'lsp-mtu 1497', 'set-overload-bit on-startup 0', 'attached-bit send',
+                                  'mpls ldp-sync holddown 0'})
     return result
 
 
