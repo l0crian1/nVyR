@@ -48,7 +48,7 @@ def register(name):
 def geoip_countries(context):
     from nvyr.helpers.geoip_config import COUNTRIES
 
-    return [Suggestion(country, 'DB-IP country code ' + country) for country in sorted(COUNTRIES)]
+    return [Suggestion(code, name) for code, name in sorted(COUNTRIES.items())]
 
 
 @register('cpu-policy')

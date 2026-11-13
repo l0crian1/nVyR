@@ -94,9 +94,16 @@ def test_country_schema_multi_completion_and_typos(controller, session):
     controller.execute('set firewall group address-group ipv4 USA geoip country US country CA', session)
     controller.execute('set firewall group address-group ipv6 USA geoip country US', session)
     assert geoip_config.groups(controller.engine.view(session))['ipv4', 'USA'] == ('CA', 'US')
-    assert 'US' in {item.value for item in suggestors.geoip_countries(None)}
+    countries = suggestors.geoip_countries(None)
+    assert [item.value for item in countries] == sorted(geoip_config.COUNTRIES)
     choices = controller.completion('set firewall group address-group ipv4 USA geoip country ', session, explicit=True)
-    assert 'GB' in dict(choices['candidates'])
+    descriptions = dict(choices['candidates'])
+    assert descriptions['AD'] == 'Andorra'
+    assert descriptions['AE'] == 'United Arab Emirates'
+    assert descriptions['GB'] == 'United Kingdom'
+    assert descriptions['US'] == 'United States'
+    assert descriptions['XK'] == 'Kosovo'
+    assert descriptions['ZZ'] == 'Unlocated/reserved'
     for code in ('XX', 'us', 'USA', 'US,CA'):
         with pytest.raises(RouterError):
             controller.execute('set firewall group address-group ipv4 USA geoip country ' + code, session)
