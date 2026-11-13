@@ -28,6 +28,8 @@ def route_path(kind, name, hop, vrf):
         parts.append(f"metric {int(hop['metric'])}")
     if hop.get('vrf', vrf) != vrf:
         parts.append('nexthop-vrf ' + hop['vrf'])
+    if 'label' in hop:
+        parts.append('label ' + '/'.join(str(int(label)) for label in hop['label'].split('/')))
     if 'weight' in hop:
         parts.append(f"weight {int(hop['weight'])}")
     if 'onlink' in hop:

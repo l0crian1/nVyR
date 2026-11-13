@@ -42,7 +42,7 @@ CONFIGURATIONS = (CONFIGURATION, CONFIGURATION.with_name('network-features.conf'
                   CONFIGURATION.with_name('network-lists.conf'),
                   CONFIGURATION.with_name('network-cgnat.conf'))
 LINKS = ('veth42061', 'veth42062', 'veth42063', 'veth42064', 'veth42065', 'veth42066',
-         'veth42067', 'veth42068', 'veth42071', 'veth42072',
+         'veth42067', 'veth42068', 'veth42071', 'veth42072', 'veth42073', 'veth42074',
          'dum42061', 'dum42069', 'dum42071', 'dum977', 'dum980', 'dum997', 'dum998', 'dum999', 'veth994', 'veth995',
          'veth41050', 'veth41051', 'veth41052', 'veth41053')
 NAMESPACES = ('nvyr-routed-left', 'nvyr-routed-right', 'nvyr-ft-source', 'nvyr-ft-destination')
@@ -237,6 +237,7 @@ def scenario(config, stop):
             cmd(['ip', 'netns', 'add', namespace])
             namespaces.append(namespace)
         for namespace, interface in (('nvyr-routed-left', 'veth42064'),
+                                     ('nvyr-routed-left', 'veth42074'),
                                      ('nvyr-routed-right', 'veth42066'),
                                      ('nvyr-routed-right', 'veth42072'),
                                      ('nvyr-ft-source', 'veth41051'),

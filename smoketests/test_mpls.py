@@ -2,7 +2,7 @@
 
 Checks native settings, filters, synchronization and removal; no adjacency or
 packet tests. The routed functional scenario owns those observations. Named-VRF
-LDP, VPNs and static labels are outside this feature's scope.
+LDP and VPNs are outside this feature's scope.
 """
 
 from pathlib import Path
@@ -60,13 +60,40 @@ def test_kernel_default_and_membership(config):
     assert Path('/proc/sys/net/mpls/platform_labels').read_text().strip() == '1048575'
     assert Path('/proc/sys/net/mpls/conf/veth41091/input').read_text().strip() == '1'
     assert Path('/proc/sys/net/mpls/conf/veth41092/input').read_text().strip() == '0'
-    config.set('set protocols mpls interface veth41092 label-table-size 65536')
+    config.set('set protocols mpls interface veth41092')
     config.commit()
-    assert Path('/proc/sys/net/mpls/platform_labels').read_text().strip() == '65536'
+    assert Path('/proc/sys/net/mpls/platform_labels').read_text().strip() == '1048575'
     assert Path('/proc/sys/net/mpls/conf/veth41092/input').read_text().strip() == '1'
     config.delete('delete protocols mpls interface veth41092')
     config.commit()
     assert Path('/proc/sys/net/mpls/conf/veth41092/input').read_text().strip() == '0'
+
+
+def test_ttl_controls(config):
+    config.set('set protocols mpls disable-ttl-propagation default-ttl 64')
+    config.commit()
+    assert Path('/proc/sys/net/mpls/ip_ttl_propagate').read_text().strip() == '0'
+    assert Path('/proc/sys/net/mpls/default_ttl').read_text().strip() == '64'
+    config.delete('delete protocols mpls disable-ttl-propagation')
+    config.delete('delete protocols mpls default-ttl')
+    config.commit()
+    assert Path('/proc/sys/net/mpls/ip_ttl_propagate').read_text().strip() == '1'
+    assert Path('/proc/sys/net/mpls/default_ttl').read_text().strip() == '255'
+
+
+def test_static_labels_and_recursive_resolution(config):
+    config.set('set protocols mpls fec nexthop-resolution')
+    config.set('set protocols mpls lsp 16000 description smoke next-hop 192.0.2.92 outgoing-label 17000')
+    config.set('set protocols mpls lsp 16001 next-hop 192.0.2.92 outgoing-label implicit-null')
+    config.set('set protocols mpls lsp 16002 next-hop 2001:db8:91::2 outgoing-label explicit-null')
+    config.set('set protocols static route 198.51.100.91/32 next-hop 192.0.2.92 label 17000/18000')
+    config.set('set protocols static route6 2001:db8:92::/64 next-hop 2001:db8:91::2 label 17000/18000')
+    config.commit()
+    assert {'mpls fec nexthop-resolution', 'mpls label dynamic-block 100000 1048574',
+            'mpls lsp 16000 192.0.2.92 17000', 'mpls lsp 16001 192.0.2.92 implicit-null',
+            'mpls lsp 16002 2001:db8:91::2 explicit-null',
+            'ip route 198.51.100.91/32 192.0.2.92 label 17000/18000',
+            'ipv6 route 2001:db8:92::/64 2001:db8:91::2 label 17000/18000'} <= native_lines()
 
 
 @pytest.mark.parametrize('tail,expected', [

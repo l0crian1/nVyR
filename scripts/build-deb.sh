@@ -111,6 +111,7 @@ for entry in 'nvyr-session nvyr.helpers.session_runtime' 'nvyr-developer-boot nv
 done
 install -D -m 0644 "$repository/build_tools/session_images.py" "$stage/usr/lib/nvyr/build-session-images.py"
 install -D -m 0644 "$repository/packaging/session-containers.conf" "$stage/usr/share/nvyr/session-containers.conf"
+install -D -m 0644 "$repository/packaging/frr-zebra.conf" "$stage/usr/share/nvyr/frr/zebra.conf"
 for unit in nvyr-developer-access.service nvyr-session-images.service nvyr-session-reap.service nvyr-session-reap.timer; do
     install -m 0644 "$repository/packaging/$unit" "$stage/usr/lib/systemd/system/$unit"
 done

@@ -8,6 +8,13 @@ from nvyr.helpers.process import cmd
 
 
 CONFIGURATION = '''
+access-list EXPLICIT4 permit host 198.19.62.2
+ipv6 access-list EXPLICIT6 permit 2001:db8:64::2/128
+route-map RECURSIVE-IN deny 10
+exit
+route-map RECURSIVE6 permit 10
+ set ipv6 next-hop global 2001:db8:77::2
+exit
 router bgp 65072
  bgp router-id 198.18.71.2
  no bgp default ipv4-unicast
@@ -16,19 +23,29 @@ router bgp 65072
  bgp labeled-unicast explicit-null
  neighbor 198.18.71.1 remote-as 65071
  neighbor 198.18.71.1 capability dynamic
+ neighbor 198.18.73.1 remote-as 65071
+ neighbor 198.18.73.1 ebgp-multihop 2
+ neighbor 198.18.73.1 update-source 198.19.77.2
  address-family ipv4 unicast
   network 198.19.72.2/32
   network 198.19.72.3/32
+  network 198.19.76.2/32
  exit-address-family
  address-family ipv6 unicast
   network 2001:db8:72::2/128
   network 2001:db8:72::3/128
+  network 2001:db8:76::2/128
  exit-address-family
  address-family ipv4 labeled-unicast
   neighbor 198.18.71.1 activate
+  neighbor 198.18.73.1 activate
+  neighbor 198.18.73.1 route-map RECURSIVE-IN in
  exit-address-family
  address-family ipv6 labeled-unicast
   neighbor 198.18.71.1 activate
+  neighbor 198.18.73.1 activate
+  neighbor 198.18.73.1 route-map RECURSIVE-IN in
+  neighbor 198.18.73.1 route-map RECURSIVE6 out
  exit-address-family
 exit
 interface veth42072
@@ -51,18 +68,39 @@ mpls ldp
  discovery hello holdtime 6
  address-family ipv4
   discovery transport-address 198.18.71.2
-  label local advertise explicit-null
+  label local advertise explicit-null for EXPLICIT4
   interface veth42072
   exit
  exit-address-family
  address-family ipv6
   discovery transport-address 2001:db8:71::2
-  label local advertise explicit-null
+  label local advertise explicit-null for EXPLICIT6
   interface veth42072
   exit
  exit-address-family
 exit
 '''
+
+
+def static_forwarding(namespace):
+    """Use the existing left/right namespaces for a real two-label transit path."""
+    left = ['ip', '-n', 'nvyr-routed-left']
+    right = ['ip', '-n', namespace]
+    cmd(left + ['link', 'set', 'veth42074', 'up'])
+    cmd(left + ['address', 'add', '198.18.73.2/30', 'dev', 'veth42074'])
+    cmd(left + ['-6', 'address', 'add', '2001:db8:73::2/64', 'dev', 'veth42074', 'nodad'])
+    for version, destination, gateway, stack, inner in (
+        ('-4', '198.19.73.2/32', '198.18.73.1', '17000/18000', '18000'),
+        ('-4', '198.19.74.2/32', '198.18.73.1', '17001', None),
+        ('-6', '2001:db8:74::2/128', '2001:db8:73::1', '17002/18002', '18002'),
+        ('-6', '2001:db8:75::2/128', '2001:db8:73::1', '17003', None),
+    ):
+        cmd(right + [version, 'address', 'add', destination, 'dev', 'lu0', *(['nodad'] if version == '-6' else [])])
+        cmd(left + [version, 'route', 'add', destination, 'encap', 'mpls', stack, 'via', gateway, 'dev', 'veth42074'])
+        if inner:
+            cmd(right + ['-f', 'mpls', 'route', 'add', inner, 'dev', 'lo'])
+    cmd(right + ['route', 'add', '198.18.73.0/30', 'via', '198.18.71.1'])
+    cmd(right + ['-6', 'route', 'add', '2001:db8:73::/64', 'via', '2001:db8:71::1'])
 
 
 @contextmanager
@@ -76,8 +114,13 @@ def daemon(directory, namespace):
          'net.mpls.conf.veth42072.input=1'])
     cmd(['ip', '-n', namespace, 'link', 'add', 'lu0', 'type', 'dummy'])
     cmd(['ip', '-n', namespace, 'link', 'set', 'lu0', 'up'])
+    cmd(['ip', '-n', namespace, 'address', 'add', '198.19.77.2/32', 'dev', 'lo'])
+    cmd(['ip', '-n', namespace, '-6', 'address', 'add', '2001:db8:77::2/128', 'dev', 'lo', 'nodad'])
     cmd(['ip', '-n', namespace, 'address', 'add', '198.19.72.2/32', 'dev', 'lu0'])
     cmd(['ip', '-n', namespace, '-6', 'address', 'add', '2001:db8:72::2/128', 'dev', 'lu0', 'nodad'])
+    cmd(['ip', '-n', namespace, 'address', 'add', '198.19.76.2/32', 'dev', 'lu0'])
+    cmd(['ip', '-n', namespace, '-6', 'address', 'add', '2001:db8:76::2/128', 'dev', 'lu0', 'nodad'])
+    static_forwarding(namespace)
     config = directory / 'frr.conf'
     config.write_text(CONFIGURATION)
     config.chmod(0o644)

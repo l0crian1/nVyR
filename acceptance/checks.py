@@ -852,6 +852,20 @@ def check_bgp_labeled_unicast(options):
 
 def check_mpls_ldp(options):
     assert_equal(Path('/proc/sys/net/mpls/platform_labels').read_text().strip(), '1048575')
+    assert_equal(Path('/proc/sys/net/mpls/default_ttl').read_text().strip(), '96')
+    assert_equal(Path('/proc/sys/net/mpls/ip_ttl_propagate').read_text().strip(), '1')
+    native = cmd(['vtysh', '-c', 'show running-config no-header'])
+    for line in ('mpls label dynamic-block 100000 1048574', 'mpls fec nexthop-resolution',
+                 'mpls lsp 16011 198.18.195.2 implicit-null',
+                 'ip route 198.19.245.1/32 198.18.195.2 label 18000/18001',
+                 'ipv6 route 2001:db8:245::1/128 2001:db8:195::2 label 18000/18002'):
+        assert_in(line, native)
+    allocation = json.loads(cmd(['mpls.nvyr.op', 'show', 'show debugging label-table json']))
+    assert_equal(allocation['dynamicBlock'], {'lowerBound': 100000, 'upperBound': 1048574})
+    assert any(chunk['protocol'] == 'ldp' for chunk in allocation['chunks'])
+    for chunk in allocation['chunks']:
+        if chunk['dynamic']:
+            assert 100000 <= chunk['start'] <= chunk['end'] <= 1048574, chunk
     assert_equal(Path('/proc/sys/net/mpls/conf/veth997/input').read_text().strip(), '1')
     lines = {' '.join(line.split()) for line in cmd(['vtysh', '-c', 'show running-config no-header']).splitlines()}
     for command in ('mpls ldp', 'discovery hello interval 2', 'discovery hello holdtime 10',

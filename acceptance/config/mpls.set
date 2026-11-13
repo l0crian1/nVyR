@@ -2,6 +2,10 @@
 # The opposite end is a VRF, so adjacency/label forwarding belongs to the routed
 # functional scenario. Finite IGP hold-downs allow this transit to remain usable.
 set protocols mpls interface veth997
+set protocols mpls fec nexthop-resolution default-ttl 96
+set protocols mpls lsp 16011 next-hop 198.18.195.2 outgoing-label implicit-null
+set protocols static route 198.19.245.1/32 next-hop 198.18.195.2 label 18000/18001
+set protocols static route6 2001:db8:245::1/128 next-hop 2001:db8:195::2 label 18000/18002
 set protocols ldp options router-id 198.18.192.2 wait-for-sync 20
 set protocols ldp options dual-stack transport-preference ipv4
 set protocols ldp discovery hello interval 2 holdtime 10

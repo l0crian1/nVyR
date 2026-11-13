@@ -565,6 +565,20 @@ def integer_range(value, minimum, maximum, allow_range=False):
     return prepare_integer_range(minimum, maximum, allow_range)(value)
 
 
+@register('mpls-outgoing-label', 'a label from 16 to 1048575, explicit-null or implicit-null')
+def mpls_outgoing_label(value):
+    return value in {'explicit-null', 'implicit-null'} or integer_range(value, 16, 1048575)
+
+
+@register('mpls-label-stack', '1-16 slash-separated labels (16-1048575), outermost first; optional final explicit-null 0 or 2')
+def mpls_label_stack(value):
+    labels = value.split('/')
+    if not 1 <= len(labels) <= 16:
+        return False
+    return all(integer_range(label, 16, 1048575) or index == len(labels) - 1 and label in {'0', '2'}
+               for index, label in enumerate(labels))
+
+
 @register('firewall-mark', 'an unsigned 32-bit mark in decimal or hexadecimal (0x prefix)')
 def firewall_mark(value):
     if re.fullmatch(r'0[xX][0-9a-fA-F]+', value):

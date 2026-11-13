@@ -7301,8 +7301,15 @@ set
 │   │       ├── router-id <router-id>
 │   │       └── wait-for-sync <1-10000>
 │   ├── mpls
+│   │   ├── default-ttl <1-255>
+│   │   ├── disable-ttl-propagation
+│   │   ├── fec
+│   │   │   └── nexthop-resolution
 │   │   ├── interface <interface>
-│   │   └── label-table-size <16-1048575>
+│   │   └── lsp <label>
+│   │       ├── description <text>
+│   │       └── next-hop <address>
+│   │           └── outgoing-label <explicit-null|implicit-null|16-1048575>
 │   ├── ospf
 │   │   ├── area <0-4294967295|x.x.x.x>
 │   │   │   ├── authentication <plaintext|message-digest>
@@ -7798,6 +7805,7 @@ set
 │       │   │   ├── description <text>
 │       │   │   ├── disable
 │       │   │   ├── distance <1-255>
+│       │   │   ├── label <label/label>
 │       │   │   ├── metric <0-4294967295>
 │       │   │   ├── tag <1-4294967295>
 │       │   │   ├── vrf <default|name>
@@ -7807,6 +7815,7 @@ set
 │       │   │   ├── disable
 │       │   │   ├── distance <1-255>
 │       │   │   ├── interface <name>
+│       │   │   ├── label <label/label>
 │       │   │   ├── metric <0-4294967295>
 │       │   │   ├── onlink
 │       │   │   ├── tag <1-4294967295>
@@ -7831,6 +7840,7 @@ set
 │           │   ├── description <text>
 │           │   ├── disable
 │           │   ├── distance <1-255>
+│           │   ├── label <label/label>
 │           │   ├── metric <0-4294967295>
 │           │   ├── tag <1-4294967295>
 │           │   ├── vrf <default|name>
@@ -7840,6 +7850,7 @@ set
 │           │   ├── disable
 │           │   ├── distance <1-255>
 │           │   ├── interface <name>
+│           │   ├── label <label/label>
 │           │   ├── metric <0-4294967295>
 │           │   ├── onlink
 │           │   ├── tag <1-4294967295>
@@ -7865,6 +7876,7 @@ set
 │                   │   ├── description <text>
 │                   │   ├── disable
 │                   │   ├── distance <1-255>
+│                   │   ├── label <label/label>
 │                   │   ├── metric <0-4294967295>
 │                   │   ├── tag <1-4294967295>
 │                   │   ├── vrf <default|name>
@@ -7874,6 +7886,7 @@ set
 │                   │   ├── disable
 │                   │   ├── distance <1-255>
 │                   │   ├── interface <name>
+│                   │   ├── label <label/label>
 │                   │   ├── metric <0-4294967295>
 │                   │   ├── onlink
 │                   │   ├── tag <1-4294967295>
@@ -9210,6 +9223,7 @@ set
         │       │   │   ├── description <text>
         │       │   │   ├── disable
         │       │   │   ├── distance <1-255>
+        │       │   │   ├── label <label/label>
         │       │   │   ├── metric <0-4294967295>
         │       │   │   ├── tag <1-4294967295>
         │       │   │   ├── vrf <default|name>
@@ -9219,6 +9233,7 @@ set
         │       │   │   ├── disable
         │       │   │   ├── distance <1-255>
         │       │   │   ├── interface <name>
+        │       │   │   ├── label <label/label>
         │       │   │   ├── metric <0-4294967295>
         │       │   │   ├── onlink
         │       │   │   ├── tag <1-4294967295>
@@ -9243,6 +9258,7 @@ set
         │           │   ├── description <text>
         │           │   ├── disable
         │           │   ├── distance <1-255>
+        │           │   ├── label <label/label>
         │           │   ├── metric <0-4294967295>
         │           │   ├── tag <1-4294967295>
         │           │   ├── vrf <default|name>
@@ -9252,6 +9268,7 @@ set
         │           │   ├── disable
         │           │   ├── distance <1-255>
         │           │   ├── interface <name>
+        │           │   ├── label <label/label>
         │           │   ├── metric <0-4294967295>
         │           │   ├── onlink
         │           │   ├── tag <1-4294967295>
@@ -9277,6 +9294,7 @@ set
         │                   │   ├── description <text>
         │                   │   ├── disable
         │                   │   ├── distance <1-255>
+        │                   │   ├── label <label/label>
         │                   │   ├── metric <0-4294967295>
         │                   │   ├── tag <1-4294967295>
         │                   │   ├── vrf <default|name>
@@ -9286,6 +9304,7 @@ set
         │                   │   ├── disable
         │                   │   ├── distance <1-255>
         │                   │   ├── interface <name>
+        │                   │   ├── label <label/label>
         │                   │   ├── metric <0-4294967295>
         │                   │   ├── onlink
         │                   │   ├── tag <1-4294967295>
@@ -11351,6 +11370,9 @@ operational mode
 │   │       └── name <name>
 │   │           └── follow
 │   ├── date
+│   ├── debugging
+│   │   └── label-table
+│   │       └── json
 │   ├── dhcp-client
 │   │   ├── detail
 │   │   └── interface <interface>

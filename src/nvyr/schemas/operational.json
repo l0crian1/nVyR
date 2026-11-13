@@ -11229,6 +11229,36 @@
       "kind": "node",
       "description": "Show router state",
       "children": {
+        "debugging": {
+          "kind": "node",
+          "description": "Native routing diagnostics",
+          "children": {
+            "label-table": {
+              "kind": "node",
+              "description": "FRR label allocation by protocol",
+              "command": {
+                "argv": [
+                  "mpls.nvyr.op",
+                  "show",
+                  "@line"
+                ]
+              },
+              "children": {
+                "json": {
+                  "kind": "node",
+                  "description": "Native JSON output",
+                  "command": {
+                    "argv": [
+                      "mpls.nvyr.op",
+                      "show",
+                      "@line"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
         "interfaces": {
           "kind": "tag_node",
           "optional_value": true,

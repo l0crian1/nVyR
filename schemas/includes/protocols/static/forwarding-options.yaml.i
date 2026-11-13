@@ -22,3 +22,11 @@ children: # forwarding path (shared)
       integer-range: {minimum: 1, maximum: 65535}
     hints:
       1-65535: Multipath weight
+
+  label:
+    kind: leaf_node
+    description: Outgoing MPLS label stack, outermost label first
+    validators:
+      mpls-label-stack: {}
+    hints:
+      label/label: Ordered label stack

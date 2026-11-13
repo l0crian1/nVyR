@@ -46,13 +46,14 @@ def native(tmp_path_factory):
         run('ip', 'netns', 'add', namespace)
         cleanup.callback(run, 'ip', 'netns', 'del', namespace)
         run('ip', '-n', namespace, 'link', 'set', 'lo', 'up')
-        for daemon in ('mgmtd', 'zebra', 'bgpd'):
+        for daemon in ('mgmtd', 'zebra', 'bgpd', 'staticd', 'ldpd'):
             config = directory / (daemon + '.conf')
-            config.write_text('')
+            startup = Path(__file__).resolve().parents[1] / 'packaging/frr-zebra.conf'
+            config.write_text(startup.read_text() if daemon == 'zebra' else '')
             arguments = ['ip', 'netns', 'exec', namespace, '/usr/lib/frr/' + daemon,
                          '-N', namespace, '-z', str(directory / 'zserv.api'),
                          '--vty_socket', str(directory), '-i', str(directory / (daemon + '.pid')), '-P', '0']
-            if daemon != 'mgmtd':
+            if daemon not in ('mgmtd', 'staticd'):
                 arguments.extend(['-f', str(config)])
             log = cleanup.enter_context((directory / (daemon + '.log')).open('w'))
             process = subprocess.Popen(arguments, stdout=log, stderr=log)

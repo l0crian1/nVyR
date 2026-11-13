@@ -24,7 +24,7 @@ def get_config(context):
     return configuration
 
 
-def _verify_paths(route, vrf, path, local):
+def _verify_paths(route, vrf, path, local, version):
     """Check relationships between enabled paths, not schema-validated values."""
     identities = set()
     preferences = {}
@@ -42,6 +42,11 @@ def _verify_paths(route, vrf, path, local):
         resolution_vrf = lookup(values, ('vrf',), vrf)
         interface = name if kind == 'interface' else lookup(values, ('interface',), '')
         address = ipaddress.ip_address(name) if kind == 'next-hop' else None
+
+        # An explicit-null bottom label must identify the payload's address family.
+        labels = lookup(values, ('label',), '').split('/')
+        if labels[-1] == ('2' if version == 4 else '0'):
+            raise ValidationError(f'{location}: explicit-null label does not match IPv{version}')
 
         if kind == 'next-hop':
             # On-link resolution needs an explicit egress interface.
@@ -105,7 +110,7 @@ def verify(configuration, context):
                         continue
 
                     location = path if source is None else f'{path} source-specific from {source}'
-                    has_paths, has_gateways = _verify_paths(values, vrf, location, local)
+                    has_paths, has_gateways = _verify_paths(values, vrf, location, local, 4 if family == 'route' else 6)
                     skipped |= context.check_only and has_gateways
 
                     if not has_paths:

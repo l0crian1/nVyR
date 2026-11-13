@@ -55,6 +55,22 @@ children: # operational
     description: Show router state
     children: # show
 
+      debugging:
+        kind: node
+        description: Native routing diagnostics
+        children:
+
+          label-table:
+            kind: node
+            description: FRR label allocation by protocol
+            command: ['mpls.nvyr.op', 'show', '@line']
+            children:
+
+              json:
+                kind: node
+                description: Native JSON output
+                command: ['mpls.nvyr.op', 'show', '@line']
+
       include_schema:
       - file: operational/interfaces.yaml.i
       - file: operational/system.yaml.i

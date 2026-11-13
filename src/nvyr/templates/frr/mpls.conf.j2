@@ -1,0 +1,10 @@
+{% if configuration is not none -%}
+{% if 'nexthop-resolution' in configuration.get('fec', {}) -%}
+mpls fec nexthop-resolution
+{% endif -%}
+{% for label, settings in configuration.get('lsp', {}).items() -%}
+{% for address, hop in settings.get('next-hop', {}).items() -%}
+mpls lsp {{ label | int }} {{ ip_address(address) }} {{ hop['outgoing-label'] if hop['outgoing-label'] in ('explicit-null', 'implicit-null') else hop['outgoing-label'] | int }}
+{% endfor -%}
+{% endfor -%}
+{% endif -%}

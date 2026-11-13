@@ -2,8 +2,8 @@
 
 MPLS input interfaces belong under `protocols mpls`. LDP distributes labels;
 your IGP or static routes still provide IP reachability to peers and destinations.
-This release provides basic MPLS forwarding and dual-stack LDP in the default
-VRF. VPN address families, BGP labeled-unicast and pseudowires are separate work.
+MPLS forwarding and dual-stack LDP operate in the default VRF. BGP labeled-unicast
+is also available; VPN address families and Segment Routing are separate work.
 
 ## Basic configuration
 
@@ -26,15 +26,82 @@ FRR's default is IPv6; select IPv4 explicitly when needed:
 set protocols ldp options dual-stack transport-preference ipv4
 ```
 
-Enabling MPLS creates a label table with 1,048,575 slots by default. The capacity
-can be changed with `set protocols mpls label-table-size <16-1048575>`.
-Reducing the table removes kernel entries outside the new capacity. Removing
-`protocols mpls` clears its table and disables input on its configured interfaces;
+Enabling MPLS creates a label table with 1,048,575 slots. This capacity is fixed.
+Removing `protocols mpls` clears its table and disables input on its configured interfaces;
 remove LDP first or in the same commit.
 
 MPLS input is reapplied when a selected interface is recreated. Removing an
 interface from the MPLS list disables labeled input without deleting the link.
 LDP interfaces must also appear in the MPLS interface list.
+
+## Label allocation
+
+The fixed dynamic label range is **100000–1048574**. FRR allocates chunks from
+this range as protocols need them; defining the range does not allocate every
+label. Labels **16–99999** remain outside dynamic allocation for static labels
+and a future Segment Routing global block. This does not configure an SRGB today.
+
+```text
+show debugging label-table
+show debugging label-table json
+```
+
+Zebra loads this range before LDP starts, so even LDP's first reserved chunk uses
+the fixed range. Neither the range nor the table capacity is configurable.
+Static incoming labels use **16–99999**. Outgoing labels belong to the next router
+and do not share that restriction.
+
+## Static label forwarding
+
+Use `lsp` for an incoming MPLS label and static IP routes for label imposition:
+
+```text
+set protocols mpls lsp 16000 description 'Transit to PE2' next-hop 192.0.2.2 outgoing-label 17000
+set protocols mpls lsp 16001 next-hop 192.0.2.2 outgoing-label implicit-null
+set protocols mpls lsp 16002 next-hop 2001:db8::2 outgoing-label explicit-null
+set protocols static route 198.51.100.0/24 next-hop 192.0.2.2 label 17000/18000
+set protocols static route6 2001:db8:100::/64 next-hop 2001:db8::2 label 17000/18002
+```
+
+A numeric outgoing label swaps the incoming label. `implicit-null` pops it;
+`explicit-null` sends the appropriate explicit-null label for the next-hop address
+family. Multiple next hops can be configured for one incoming label. Static LSP
+next hops must be reachable; IPv6 link-local next hops are not supported by FRR's
+static LSP command because it cannot include an interface scope.
+
+Static IP routes accept slash-separated stacks, outermost label first, with up to
+16 labels. The final label may be `0` for IPv4 explicit-null or `2` for IPv6
+explicit-null. Configure the receiving router to handle the labels you send.
+
+## Recursive labeled-unicast and TTL
+
+```text
+set protocols mpls fec nexthop-resolution
+set protocols mpls disable-ttl-propagation
+set protocols mpls default-ttl 64
+```
+
+FEC next-hop resolution allows FRR to resolve a labeled-unicast route through an
+underlying labeled route to its next hop. It does not create that transport route:
+the IGP/LDP or static transport must already provide it.
+
+Use penultimate-hop popping for transport to an explicit-null LU endpoint. In the
+Linux forwarding tests, a recursive stack containing two explicit-null labels
+(`0/0` or `2/2`) was installed but dropped on receipt. The separate direct LDP
+and LU paths with one explicit-null label worked normally.
+
+By default, Linux propagates IP TTL/hop-limit into the MPLS label stack (uniform
+mode). `disable-ttl-propagation` selects pipe behavior, using `default-ttl` for
+imposed labels instead. Its default is 255. Removing these settings restores the
+native defaults.
+
+## MTU
+
+Each MPLS label adds four bytes. A 1500-byte IP packet with two labels needs a
+1508-byte link MTU along the part of the path carrying both labels. Configure the
+interfaces and intervening switches accordingly; enabling MPLS does not raise MTU
+automatically. Check the maximum stack depth along the whole path, including any
+future VPN or Segment Routing labels.
 
 ## Discovery and session settings
 

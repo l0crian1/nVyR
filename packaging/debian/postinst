@@ -2,6 +2,13 @@
 set -eu
 
 if [ "$1" = configure ]; then
+    # Zebra must read the fixed allocation block before LDP connects. Integrated
+    # vtysh startup runs too late; an explicit per-daemon file is read first.
+    if ! grep -qF '/usr/share/nvyr/frr/zebra.conf' /etc/frr/daemons; then
+        sed -i 's|^zebra_options="\(.*\)"$|zebra_options="\1 -f /usr/share/nvyr/frr/zebra.conf"|' /etc/frr/daemons
+    fi
+    grep -q '^zebra_options=".*-f /usr/share/nvyr/frr/zebra.conf' /etc/frr/daemons
+
     for group in nvyr-access nvyr-users nvyr-dev-admin nvyr-sys-admin nvyr-net-admin nvyr-read-only; do
         if ! getent group "$group" >/dev/null; then
             addgroup --system "$group"

@@ -14669,6 +14669,21 @@
                               "hints": {
                                 "1-65535": "Multipath weight"
                               }
+                            },
+                            "label": {
+                              "kind": "leaf_node",
+                              "description": "Outgoing MPLS label stack, outermost label first",
+                              "validators": {
+                                "mode": "AND",
+                                "checks": {
+                                  "mpls-label-stack": {
+                                    "name": "mpls-label-stack"
+                                  }
+                                }
+                              },
+                              "hints": {
+                                "label/label": "Ordered label stack"
+                              }
                             }
                           }
                         },
@@ -15000,6 +15015,21 @@
                                 "1-65535": "Multipath weight"
                               }
                             },
+                            "label": {
+                              "kind": "leaf_node",
+                              "description": "Outgoing MPLS label stack, outermost label first",
+                              "validators": {
+                                "mode": "AND",
+                                "checks": {
+                                  "mpls-label-stack": {
+                                    "name": "mpls-label-stack"
+                                  }
+                                }
+                              },
+                              "hints": {
+                                "label/label": "Ordered label stack"
+                              }
+                            },
                             "interface": {
                               "kind": "leaf_node",
                               "description": "Outgoing interface for this next hop",
@@ -15217,6 +15247,21 @@
                               },
                               "hints": {
                                 "1-65535": "Multipath weight"
+                              }
+                            },
+                            "label": {
+                              "kind": "leaf_node",
+                              "description": "Outgoing MPLS label stack, outermost label first",
+                              "validators": {
+                                "mode": "AND",
+                                "checks": {
+                                  "mpls-label-stack": {
+                                    "name": "mpls-label-stack"
+                                  }
+                                }
+                              },
+                              "hints": {
+                                "label/label": "Ordered label stack"
                               }
                             }
                           }
@@ -15548,6 +15593,21 @@
                                 "1-65535": "Multipath weight"
                               }
                             },
+                            "label": {
+                              "kind": "leaf_node",
+                              "description": "Outgoing MPLS label stack, outermost label first",
+                              "validators": {
+                                "mode": "AND",
+                                "checks": {
+                                  "mpls-label-stack": {
+                                    "name": "mpls-label-stack"
+                                  }
+                                }
+                              },
+                              "hints": {
+                                "label/label": "Ordered label stack"
+                              }
+                            },
                             "interface": {
                               "kind": "leaf_node",
                               "description": "Outgoing interface for this next hop",
@@ -15766,6 +15826,21 @@
                                       },
                                       "hints": {
                                         "1-65535": "Multipath weight"
+                                      }
+                                    },
+                                    "label": {
+                                      "kind": "leaf_node",
+                                      "description": "Outgoing MPLS label stack, outermost label first",
+                                      "validators": {
+                                        "mode": "AND",
+                                        "checks": {
+                                          "mpls-label-stack": {
+                                            "name": "mpls-label-stack"
+                                          }
+                                        }
+                                      },
+                                      "hints": {
+                                        "label/label": "Ordered label stack"
                                       }
                                     }
                                   }
@@ -16095,6 +16170,21 @@
                                       },
                                       "hints": {
                                         "1-65535": "Multipath weight"
+                                      }
+                                    },
+                                    "label": {
+                                      "kind": "leaf_node",
+                                      "description": "Outgoing MPLS label stack, outermost label first",
+                                      "validators": {
+                                        "mode": "AND",
+                                        "checks": {
+                                          "mpls-label-stack": {
+                                            "name": "mpls-label-stack"
+                                          }
+                                        }
+                                      },
+                                      "hints": {
+                                        "label/label": "Ordered label stack"
                                       }
                                     },
                                     "interface": {
@@ -112924,7 +113014,7 @@
       "children": {
         "mpls": {
           "kind": "node",
-          "description": "MPLS kernel forwarding",
+          "description": "MPLS forwarding and label allocation",
           "anchor": true,
           "children": {
             "interface": {
@@ -112951,9 +113041,49 @@
                 }
               ]
             },
-            "label-table-size": {
+            "disable-ttl-propagation": {
               "kind": "leaf_node",
-              "description": "Number of incoming label slots in the kernel (default: 1048575)",
+              "description": "Use pipe TTL behavior instead of copying the IP TTL",
+              "valueless": true
+            },
+            "default-ttl": {
+              "kind": "leaf_node",
+              "description": "MPLS TTL when the IP TTL cannot be propagated (default: 255)",
+              "validators": {
+                "mode": "AND",
+                "checks": {
+                  "integer-range": {
+                    "name": "integer-range",
+                    "args": {
+                      "minimum": 1,
+                      "maximum": 255
+                    }
+                  }
+                }
+              },
+              "hints": {
+                "1-255": "MPLS TTL"
+              },
+              "default": {
+                "mode": "direct",
+                "value": "255"
+              }
+            },
+            "fec": {
+              "kind": "node",
+              "description": "Forwarding equivalence class resolution",
+              "children": {
+                "nexthop-resolution": {
+                  "kind": "leaf_node",
+                  "description": "Allow recursive resolution of labeled BGP next hops",
+                  "valueless": true
+                }
+              }
+            },
+            "lsp": {
+              "kind": "tag_node",
+              "anchor": true,
+              "description": "Static incoming-label forwarding entry",
               "validators": {
                 "mode": "AND",
                 "checks": {
@@ -112961,23 +113091,65 @@
                     "name": "integer-range",
                     "args": {
                       "minimum": 16,
-                      "maximum": 1048575
+                      "maximum": 99999
                     }
                   }
                 }
               },
               "hints": {
-                "16-1048575": "Label-table capacity"
+                "label": "Incoming label"
               },
-              "default": {
-                "mode": "direct",
-                "value": "1048575"
+              "children": {
+                "description": {
+                  "kind": "leaf_node",
+                  "description": "Description of this static label",
+                  "hints": {
+                    "text": "Description"
+                  }
+                },
+                "next-hop": {
+                  "kind": "tag_node",
+                  "anchor": true,
+                  "description": "Next hop in the default VRF",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "inet-address": {
+                        "name": "inet-address"
+                      }
+                    }
+                  },
+                  "hints": {
+                    "address": "IPv4 or IPv6 next-hop address"
+                  },
+                  "children": {
+                    "outgoing-label": {
+                      "kind": "leaf_node",
+                      "description": "Swap label or request explicit/implicit null",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "mpls-outgoing-label": {
+                            "name": "mpls-outgoing-label"
+                          }
+                        }
+                      },
+                      "hints": {
+                        "16-1048575": "Outgoing label"
+                      },
+                      "choices": {
+                        "explicit-null": "Send an explicit-null label",
+                        "implicit-null": "Pop the incoming label"
+                      }
+                    }
+                  }
+                }
               }
             }
           },
           "script": {
             "name": "mpls",
-            "priority": 44,
+            "priority": 39,
             "watch-before": [
               "interfaces"
             ]
@@ -114472,6 +114644,21 @@
                       "hints": {
                         "1-65535": "Multipath weight"
                       }
+                    },
+                    "label": {
+                      "kind": "leaf_node",
+                      "description": "Outgoing MPLS label stack, outermost label first",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "mpls-label-stack": {
+                            "name": "mpls-label-stack"
+                          }
+                        }
+                      },
+                      "hints": {
+                        "label/label": "Ordered label stack"
+                      }
                     }
                   }
                 },
@@ -114803,6 +114990,21 @@
                         "1-65535": "Multipath weight"
                       }
                     },
+                    "label": {
+                      "kind": "leaf_node",
+                      "description": "Outgoing MPLS label stack, outermost label first",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "mpls-label-stack": {
+                            "name": "mpls-label-stack"
+                          }
+                        }
+                      },
+                      "hints": {
+                        "label/label": "Ordered label stack"
+                      }
+                    },
                     "interface": {
                       "kind": "leaf_node",
                       "description": "Outgoing interface for this next hop",
@@ -115020,6 +115222,21 @@
                       },
                       "hints": {
                         "1-65535": "Multipath weight"
+                      }
+                    },
+                    "label": {
+                      "kind": "leaf_node",
+                      "description": "Outgoing MPLS label stack, outermost label first",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "mpls-label-stack": {
+                            "name": "mpls-label-stack"
+                          }
+                        }
+                      },
+                      "hints": {
+                        "label/label": "Ordered label stack"
                       }
                     }
                   }
@@ -115351,6 +115568,21 @@
                         "1-65535": "Multipath weight"
                       }
                     },
+                    "label": {
+                      "kind": "leaf_node",
+                      "description": "Outgoing MPLS label stack, outermost label first",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "mpls-label-stack": {
+                            "name": "mpls-label-stack"
+                          }
+                        }
+                      },
+                      "hints": {
+                        "label/label": "Ordered label stack"
+                      }
+                    },
                     "interface": {
                       "kind": "leaf_node",
                       "description": "Outgoing interface for this next hop",
@@ -115569,6 +115801,21 @@
                               },
                               "hints": {
                                 "1-65535": "Multipath weight"
+                              }
+                            },
+                            "label": {
+                              "kind": "leaf_node",
+                              "description": "Outgoing MPLS label stack, outermost label first",
+                              "validators": {
+                                "mode": "AND",
+                                "checks": {
+                                  "mpls-label-stack": {
+                                    "name": "mpls-label-stack"
+                                  }
+                                }
+                              },
+                              "hints": {
+                                "label/label": "Ordered label stack"
                               }
                             }
                           }
@@ -115898,6 +116145,21 @@
                               },
                               "hints": {
                                 "1-65535": "Multipath weight"
+                              }
+                            },
+                            "label": {
+                              "kind": "leaf_node",
+                              "description": "Outgoing MPLS label stack, outermost label first",
+                              "validators": {
+                                "mode": "AND",
+                                "checks": {
+                                  "mpls-label-stack": {
+                                    "name": "mpls-label-stack"
+                                  }
+                                }
+                              },
+                              "hints": {
+                                "label/label": "Ordered label stack"
                               }
                             },
                             "interface": {

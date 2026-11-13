@@ -19,16 +19,21 @@ def test_schema_defaults_and_pipeline(controller, session, engine):
     assert result['results']['ldp']['success'], result
 
 
-@pytest.mark.parametrize('tail', ['label-table-size 0', 'label-table-size 1048576', 'interface ../bad'])
+@pytest.mark.parametrize('tail', ['label-table-size 1048575', 'dynamic-label-block 100000-1048574', 'interface ../bad'])
 def test_invalid_mpls_cli(controller, session, tail):
     with pytest.raises(RouterError):
         controller.execute('set protocols mpls ' + tail, session)
 
 
 def test_mpls_generate_uses_effective_default():
-    assert protocols_mpls.generate({'interface': ['dum1'], 'label-table-size': '1048575'}, None) == {
-        'interfaces': ['dum1'], 'label-table-size': 1048575}
-    assert protocols_mpls.generate(None, None) == {'interfaces': [], 'label-table-size': 0}
+    configuration = {'interface': ['dum1'], 'default-ttl': '255'}
+    generated = protocols_mpls.generate(configuration, None)
+    assert generated['kernel'] == {'interfaces': ['dum1'], 'label-table-size': 1048575,
+                                   'ip-ttl-propagate': 1, 'default-ttl': 255}
+    assert generated['frr'] == {'global': []}
+    assert protocols_mpls.generate(None, None) == {
+        'kernel': {'interfaces': [], 'label-table-size': 0, 'ip-ttl-propagate': 1, 'default-ttl': 255},
+        'frr': {'global': []}}
 
 
 def test_nested_ldp_adapter_preserves_other_protocols():
@@ -71,6 +76,8 @@ def test_ipv6_peer_filters_use_ipv4_lsr_ids():
 def sysctls(tmp_path, monkeypatch):
     monkeypatch.setattr(mpls, 'ROOT', tmp_path)
     (tmp_path / 'platform_labels').write_text('0')
+    (tmp_path / 'ip_ttl_propagate').write_text('1')
+    (tmp_path / 'default_ttl').write_text('255')
     for name in ('dum1', 'dum2'):
         path = tmp_path / 'conf' / name
         path.mkdir(parents=True)
