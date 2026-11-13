@@ -127,3 +127,24 @@ Circuit option resets also precede removal of the final IS-IS address-family
 binding and process, so removal does not recreate an interface container missing
 its mandatory area tag. The native runtime test verifies advertisement metrics,
 route-map withdrawal, table removal and complete interface cleanup.
+
+`bgp-addpath.patch` repairs AddPath receive-limit inheritance. The old handler
+propagated the flag but left member limits at zero, producing invalid running
+configuration. The patch updates existing/new members, preserves overrides,
+restores inherited values, suppresses inherited writer lines, and sends dynamic
+capability changes to actual neighbors. It does not change LU's intentionally
+shared unicast AddPath transmit strategy. The Paths-Limit decoder and received
+state refresh/reset also backport the relevant changes from upstream commits
+`7729617471d870aa5d01207a990aa8df96268ac3` and
+`dacf6806f52679152ad176ee44eebed6aba8499b` by Donatas Abraitis.
+See `tests/test_bgp_lu_native.py` and
+FRR-BGP-ADDPATH-001 in the upstream-issues document before removing the patch.
+
+The patched files are [`bgpd/bgpd.c`](https://github.com/FRRouting/frr/blob/frr-10.7.1/bgpd/bgpd.c)
+and [`bgpd/bgp_vty.c`](https://github.com/FRRouting/frr/blob/frr-10.7.1/bgpd/bgp_vty.c)
+from tag `frr-10.7.1`, licensed GPL-2.0-or-later, copyright (C) 1996–2000
+Kunihiro Ishiguro. No upstream acceptance of this patch is claimed.
+
+It also modifies `bgpd/bgp_packet.c` (copyright 1999 Kunihiro Ishiguro and
+2017 Cumulus Networks) and `bgpd/bgp_fsm.c`, under the same GPL-2.0-or-later
+license; their original notices remain in the source.

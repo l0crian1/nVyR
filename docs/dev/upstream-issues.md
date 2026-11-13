@@ -724,3 +724,32 @@ hold-downs without their old numeric operand because the negative grammar reject
 zero even though the positive grammar accepts it. Retest disable persistence,
 process timer changes, override removal, zero hold-down removal, and full process
 removal. No upstream acceptance of this patch is claimed.
+
+## FRR-BGP-ADDPATH-001: peer-group receive-limit value is not inherited
+
+FRR 10.7.1 copies `PEER_FLAG_ADDPATH_RX_PATHS_LIMIT` to group members but
+does not propagate the configured numeric limit. Its writer consequently emits
+`neighbor <member> addpath-rx-paths-limit 0`, which its own parser rejects.
+This affects ordinary unicast as well as LU and can block unrelated reloads.
+The same set-handler logic remained in upstream master when reviewed on
+2026-11-13; no upstream acceptance of our fix is claimed.
+
+`vendor/frr/bgp-addpath.patch` propagates the value to existing members and
+newly joined/activated members, preserves explicit member overrides, and
+restores inheritance when an override is removed. The writer suppresses
+inherited values. Capability updates go to actual neighbors, including
+withdrawal/re-advertisement when removing a limit so an established session
+can clear the old limit.
+
+Live LU testing also exposed incorrect IANA SAFI conversion in the dynamic
+Paths-Limit decoder. The patch includes the Paths-Limit correction from
+[7729617471d8](https://github.com/FRRouting/frr/commit/7729617471d870aa5d01207a990aa8df96268ac3),
+plus the receive-state reset and route-refresh corrections from
+[dacf6806f526](https://github.com/FRRouting/frr/commit/dacf6806f52679152ad176ee44eebed6aba8499b).
+These are upstream fixes, distinct from our peer-group inheritance repair.
+
+Retest group creation before/after members, edits, overrides, override removal,
+group-limit removal, all four unicast/LU families, and live capability updates
+when upgrading FRR. Native round-trip tests are in `tests/test_bgp_lu_native.py`.
+Live changes and removal are covered in the shared routed suite's
+`functionaltests/network/test_bgp_lu.py`.

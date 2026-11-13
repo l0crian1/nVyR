@@ -1,4 +1,4 @@
-# BGP unicast
+# BGP unicast and labeled-unicast
 
 For implementation and testing, see the [developer guide](../dev/bgp.md).
 
@@ -37,7 +37,7 @@ and referenced policies cannot be deleted.
 
 ## IPv6, VRFs, and peer groups
 
-The same tree is available at `vrf name <name> protocols bgp`:
+The unicast tree is also available at `vrf name <name> protocols bgp`:
 
 ```text
 set vrf name BLUE table 101
@@ -335,7 +335,7 @@ set protocols bgp parameters listen limit 100
 set protocols bgp parameters listen range 192.0.2.0/24 peer-group CLIENTS
 ```
 
-Labeled-unicast remains deferred. Native FRR defects also defer
+Native FRR defects defer
 `always-compare-med`, `deterministic-med`, `bestpath use-imported-attributes`,
 the latest software-version capability encoding, the default-originate scan
 timer, and an instance shutdown message. See [upstream issues](../dev/upstream-issues.md)
@@ -356,3 +356,56 @@ Verification includes configured interface/VIF addresses and, during a normal
 commit, live addresses such as DHCP leases. `commit check` checks proposed
 interface addresses and reports that live checks are deferred until commit.
 An address belonging to a different VRF remains a valid peer destination.
+
+## Labeled-unicast (BGP-LU)
+
+Use `ipv4-labeled-unicast` or `ipv6-labeled-unicast` beneath a neighbor or
+peer-group to exchange labeled routes. Creating the family activates it;
+`disable` deactivates it. The existing import/export policies, next-hop controls,
+communities, prefix limits, route reflection and AddPath syntax remain available.
+FRR 10.7.1 supports these families only in the default BGP instance.
+
+```text
+set protocols mpls interface eth2
+set protocols bgp local-as 65000 parameters router-id 192.0.2.1
+set protocols bgp neighbor 192.0.2.2 remote-as 65001
+set protocols bgp neighbor 192.0.2.2 address-family ipv4-labeled-unicast
+set protocols bgp neighbor 192.0.2.2 address-family ipv6-labeled-unicast
+set protocols bgp address-family ipv4-unicast network 198.51.100.1/32
+set protocols bgp address-family ipv6-unicast network 2001:db8:1::1/128
+commit
+```
+
+MPLS input must be enabled on interfaces receiving labeled traffic. LDP is not
+required for BGP-LU itself. Configure transport reachability and an appropriate
+export policy for your topology, just as for ordinary BGP.
+
+Unicast and LU share FRR's underlying route table. Configure `network`,
+redistribution and aggregation under the existing unicast families, then select
+the advertised routes with each neighbor family's export policy. Configuring a
+unicast `network` does not activate unicast advertisements toward a neighbor.
+
+```text
+set protocols bgp address-family ipv4-labeled-unicast maximum-paths ebgp 4 ibgp 4
+set protocols bgp address-family ipv6-labeled-unicast next-hop prefer-global
+set protocols bgp parameters labeled-unicast explicit-null both
+```
+
+`explicit-null` accepts `ipv4`, `ipv6`, or `both`. Without it, FRR uses
+implicit-null for locally originated prefixes. AddPath **transmit strategy** is
+shared between the unicast and LU family for the same peer; configure it in
+either location, or use identical settings in both. Receive limits remain
+family-specific.
+
+```text
+show bgp ipv4 labeled-unicast
+show bgp ipv6 labeled-unicast summary
+show bgp ipv4 labeled-unicast neighbors 192.0.2.2 advertised-routes
+show bgp labelpool summary
+show bgp labelpool inuse
+show bgp labelpool ledger
+show bgp labelpool requests
+show bgp labelpool chunks
+show mpls table
+clear bgp ipv4 labeled-unicast 192.0.2.2 soft out
+```

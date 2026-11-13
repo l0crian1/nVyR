@@ -13,3 +13,15 @@ set protocols ospf ldp-sync hold-down 2
 set protocols ospf interface veth997 ldp-sync hold-down 1
 set protocols isis ldp-sync hold-down 2
 set protocols isis interface veth997 ldp-sync hold-down 1
+
+# LU readback and inheritance survive reboot alongside the established unicast
+# acceptance sessions. Labeled packet delivery uses the routed functional peer.
+set protocols bgp parameters labeled-unicast explicit-null both
+set protocols bgp peer-group BOOTLU remote-as 65199
+set protocols bgp peer-group BOOTLU address-family ipv4-labeled-unicast next-hop-self force soft-reconfiguration inbound
+set protocols bgp peer-group BOOTLU address-family ipv6-labeled-unicast next-hop-self force soft-reconfiguration inbound
+set protocols bgp peer-group BOOTLU address-family ipv4-labeled-unicast addpath receive-limit 4
+set protocols bgp peer-group BOOTLU address-family ipv6-labeled-unicast addpath receive-limit 4
+set protocols bgp neighbor 198.18.192.3 peer-group BOOTLU shutdown
+set protocols bgp address-family ipv4-labeled-unicast maximum-paths ebgp 4 ibgp 2
+set protocols bgp address-family ipv6-labeled-unicast maximum-paths ebgp 4 ibgp 2 next-hop prefer-global

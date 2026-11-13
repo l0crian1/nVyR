@@ -22,6 +22,15 @@ children:
           - file: "operational/bgp-clear-target.yaml.i"
             as: null
 
+      labeled-unicast:
+        kind: "node"
+        description: "Reset labeled-unicast peers"
+        children:
+
+          include_schema:
+          - file: "operational/bgp-clear-target.yaml.i"
+            as: null
+
   ipv6:
     kind: "node"
     description: "Reset IPv6 peers"
@@ -34,6 +43,15 @@ children:
       unicast:
         kind: "node"
         description: "Reset unicast peers"
+        children:
+
+          include_schema:
+          - file: "operational/bgp-clear-target.yaml.i"
+            as: null
+
+      labeled-unicast:
+        kind: "node"
+        description: "Reset labeled-unicast peers"
         children:
 
           include_schema:

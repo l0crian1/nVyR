@@ -108,7 +108,7 @@ def test_dampening_rejects_unsupported_vrf():
     'set protocols bgp parameters default software-version-capability latest',
     'set protocols bgp parameters default-originate timer 0',
     'set protocols bgp parameters shutdown-message maintenance',
-    'set protocols bgp parameters labeled-unicast',
+    'set protocols bgp parameters labeled-unicast explicit-null invalid',
 ])
 def test_parameter_schema_rejects_invalid_or_deferred_settings(controller, session, command):
     with pytest.raises(RouterError):

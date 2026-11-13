@@ -36,7 +36,7 @@ router bgp {{ instance['local-as'] | int }}{{ ' vrf ' ~ vrf if vrf != 'default' 
 {% for prefix, options in parameters.get('listen', {}).get('range', {}).items() %} bgp listen range {{ ip_network(prefix) }} peer-group {{ options['peer-group'] }}
 {% endfor -%}
 
-{% for family in ('ipv4-unicast', 'ipv6-unicast') -%}
+{% for family in ('ipv4-unicast', 'ipv6-unicast', 'ipv4-labeled-unicast', 'ipv6-labeled-unicast') -%}
 {% set body -%}
 {% for command in bgp_family_commands(instance.get('address-family', {}).get(family, {})) -%}
 {{ command }}
@@ -63,7 +63,7 @@ router bgp {{ instance['local-as'] | int }}{{ ' vrf ' ~ vrf if vrf != 'default' 
 {% endif -%}
 {% endfor -%}
 {% endset -%}
-{% if body %} address-family {{ family.replace('-', ' ') }}
+{% if body %} address-family {{ family.replace('-', ' ', 1) }}
 {{ body }} exit-address-family
 {% endif -%}
 {% endfor -%}

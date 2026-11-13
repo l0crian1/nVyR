@@ -15,6 +15,7 @@ import uuid
 import tempfile
 
 from nvyr.helpers.process import cmd, rc_cmd
+from nvyr.helpers.frr_bgp import adapter as bgp_adapter
 from nvyr.helpers.nftables_normalizer import normalize
 from nvyr.tree import lookup
 from smoketests.assertions import (
@@ -37,6 +38,7 @@ CONFIGURATIONS = (CONFIGURATION, CONFIGURATION.with_name('network-features.conf'
                   CONFIGURATION.with_name('network-rip.conf'),
                   CONFIGURATION.with_name('network-isis.conf'),
                   CONFIGURATION.with_name('network-mpls.conf'),
+                  CONFIGURATION.with_name('network-bgp-lu.conf'),
                   CONFIGURATION.with_name('network-lists.conf'),
                   CONFIGURATION.with_name('network-cgnat.conf'))
 LINKS = ('veth42061', 'veth42062', 'veth42063', 'veth42064', 'veth42065', 'veth42066',
@@ -120,6 +122,10 @@ def configure(config):
 def preflight(config):
     """Reject configured or native resource collisions before taking ownership."""
     original = config.get_config()
+    assert_not_in('bgp', lookup(original, ('protocols',), {}),
+                  msg='The routed LU scenario requires an unused default BGP instance')
+    running = cmd(['vtysh', '-c', 'show running-config no-header'])
+    assert_not_in('router bgp', '\n'.join(bgp_adapter.select(running, ['default'])['default']))
     assert_config_names_unused(original, *LINKS, *POLICIES, *owned_names(), 'NVYRLEFT', 'NVYRRIGHT',
                                'RNMAP', 'RNMATCH', 'RNINNER', 'RNOUTER',
                                'RNTTLWITHIN', 'RNTTLOUTSIDE', 'RNIN', 'RNPORT',
@@ -261,7 +267,7 @@ def scenario(config, stop):
                     'interface': {interface: {'port-id': side + '-uplink'}},
                     'transmit-interval': '1', 'hold-multiplier': '3',
                 }))
-            yield
+            yield directory / 'mpls'
     finally:
         try:
             with defer_interrupt():

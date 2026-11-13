@@ -1,0 +1,135 @@
+--- a/bgpd/bgp_vty.c
++++ b/bgpd/bgp_vty.c
+@@ -10097,6 +10097,39 @@
+ 	return peer_flag_set_vty(vty, neighbor, PEER_FLAG_AS_LOOP_DETECTION);
+ }
+ 
++/* Update the configured receive limit and notify actual neighbors, not the
++ * peer-group template. A withdrawn capability clears a previous limit too.
++ */
++static void peer_paths_limit_update(struct peer *peer, afi_t afi, safi_t safi,
++                                   uint16_t limit)
++{
++	peer->addpath_paths_limit[afi][safi].send = limit;
++	if (!CHECK_FLAG(peer->sflags, PEER_STATUS_GROUP)) {
++		bgp_capability_send(peer->connection, afi, safi,
++				    CAPABILITY_CODE_PATHS_LIMIT,
++				    CAPABILITY_ACTION_UNSET);
++		bgp_capability_send(peer->connection, afi, safi,
++				    CAPABILITY_CODE_PATHS_LIMIT,
++				    CAPABILITY_ACTION_SET);
++	}
++}
++
++static void peer_group_paths_limit_update(struct peer *peer, afi_t afi,
++                                         safi_t safi, uint16_t limit)
++{
++	struct peer *member;
++	struct listnode *node;
++
++	peer_paths_limit_update(peer, afi, safi, limit);
++	if (!CHECK_FLAG(peer->sflags, PEER_STATUS_GROUP))
++		return;
++	for (ALL_LIST_ELEMENTS_RO(peer->group->peer, node, member)) {
++		if (!CHECK_FLAG(member->af_flags_override[afi][safi],
++				PEER_FLAG_ADDPATH_RX_PATHS_LIMIT))
++			peer_paths_limit_update(member, afi, safi, limit);
++	}
++}
++
+ DEFPY (neighbor_addpath_paths_limit,
+        neighbor_addpath_paths_limit_cmd,
+        "neighbor <A.B.C.D|X:X::X:X|WORD>$neighbor addpath-rx-paths-limit (1-65535)$paths_limit",
+@@ -10117,10 +10150,8 @@
+ 	ret = peer_af_flag_set_vty(vty, neighbor, afi, safi,
+ 				   PEER_FLAG_ADDPATH_RX_PATHS_LIMIT);
+ 
+-	peer->addpath_paths_limit[afi][safi].send = paths_limit;
+-
+-	bgp_capability_send(peer->connection, afi, safi, CAPABILITY_CODE_PATHS_LIMIT,
+-			    CAPABILITY_ACTION_SET);
++	if (ret == CMD_SUCCESS)
++		peer_group_paths_limit_update(peer, afi, safi, paths_limit);
+ 
+ 	return ret;
+ }
+@@ -10146,10 +10177,11 @@
+ 	ret = peer_af_flag_unset_vty(vty, neighbor, afi, safi,
+ 				     PEER_FLAG_ADDPATH_RX_PATHS_LIMIT);
+ 
+-	peer->addpath_paths_limit[afi][safi].send = 0;
+-
+-	bgp_capability_send(peer->connection, afi, safi, CAPABILITY_CODE_PATHS_LIMIT,
+-			    CAPABILITY_ACTION_SET);
++	if (ret == CMD_SUCCESS) {
++		uint16_t limit = peer_group_active(peer)
++			? peer->group->conf->addpath_paths_limit[afi][safi].send : 0;
++		peer_group_paths_limit_update(peer, afi, safi, limit);
++	}
+ 
+ 	return ret;
+ }
+@@ -21527,8 +21559,8 @@
+ 	if (CHECK_FLAG(peer->af_flags[afi][safi], PEER_FLAG_DISABLE_ADDPATH_RX))
+ 		vty_out(vty, "  neighbor %s disable-addpath-rx\n", addr);
+ 
+-	if (CHECK_FLAG(peer->af_flags[afi][safi],
+-		       PEER_FLAG_ADDPATH_RX_PATHS_LIMIT))
++	if (peergroup_af_flag_check(peer, afi, safi,
++				    PEER_FLAG_ADDPATH_RX_PATHS_LIMIT))
+ 		vty_out(vty, "  neighbor %s addpath-rx-paths-limit %u\n", addr,
+ 			peer->addpath_paths_limit[afi][safi].send);
+ 
+--- a/bgpd/bgpd.c
++++ b/bgpd/bgpd.c
+@@ -2504,6 +2504,10 @@
+ 	SET_FLAG(peer->af_flags_invert[afi][safi],
+ 		 conf->af_flags_invert[afi][safi]);
+ 
++	/* Inherit the value as well as the flag when a member joins or activates. */
++	if (!CHECK_FLAG(pflags_ovrd, PEER_FLAG_ADDPATH_RX_PATHS_LIMIT))
++		PEER_ATTR_INHERIT(peer, group, addpath_paths_limit[afi][safi].send);
++
+ 	/* maximum-prefix */
+ 	if (!CHECK_FLAG(pflags_ovrd, PEER_FLAG_MAX_PREFIX)) {
+ 		PEER_ATTR_INHERIT(peer, group, pmax[afi][safi]);
+--- a/bgpd/bgp_packet.c
++++ b/bgpd/bgp_packet.c
+@@ -3253,7 +3253,7 @@
+ 
+ 			memcpy(&bpl, data, sizeof(bpl));
+ 			pkt_afi = ntohs(bpl.afi);
+-			pkt_safi = safi_int2iana(bpl.safi);
++			pkt_safi = bpl.safi;
+ 			paths_limit = ntohs(bpl.paths_limit);
+ 
+ 			if (bgp_debug_neighbor_events(peer))
+@@ -3289,12 +3289,17 @@
+ 			data += CAPABILITY_CODE_PATHS_LIMIT_LEN;
+ 		}
+ 	} else {
+-		FOREACH_AFI_SAFI (afi, safi)
++		FOREACH_AFI_SAFI (afi, safi) {
+ 			UNSET_FLAG(peer->af_cap[afi][safi],
+ 				   PEER_CAP_PATHS_LIMIT_AF_RCV);
++			peer->addpath_paths_limit[afi][safi].receive = 0;
++		}
+ 
+ 		UNSET_FLAG(peer->cap, PEER_CAP_PATHS_LIMIT_RCV);
+ 	}
++
++	update_group_adjust_peer_afs(peer);
++	bgp_announce_route_all(peer);
+ }
+ 
+ static void bgp_dynamic_capability_enhe(uint8_t *pnt, int action, struct capability_header *hdr,
+--- a/bgpd/bgp_fsm.c
++++ b/bgpd/bgp_fsm.c
+@@ -2305,6 +2305,7 @@
+ 
+ 		/* peer address family capability flags*/
+ 		peer->af_cap[afi][safi] = 0;
++		peer->addpath_paths_limit[afi][safi].receive = 0;
+ 
+ 		/* peer address family status flags*/
+ 		/* Don't clear WAIT_EOR */

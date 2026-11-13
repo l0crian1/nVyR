@@ -27,6 +27,36 @@ bgp:
           command: ['bgp.nvyr.op', 'show', '@line']
     - file: operational/policy-as-path.yaml.i
 
+    labelpool:
+      kind: node
+      description: BGP label allocation
+      children:
+
+        summary:
+          kind: node
+          description: Label-pool summary
+          command: ["bgp.nvyr.op", "show", "@line"]
+
+        inuse:
+          kind: node
+          description: Labels currently in use
+          command: ["bgp.nvyr.op", "show", "@line"]
+
+        ledger:
+          kind: node
+          description: Label allocation ledger
+          command: ["bgp.nvyr.op", "show", "@line"]
+
+        requests:
+          kind: node
+          description: Pending label requests
+          command: ["bgp.nvyr.op", "show", "@line"]
+
+        chunks:
+          kind: node
+          description: Label chunks assigned by Zebra
+          command: ["bgp.nvyr.op", "show", "@line"]
+
     vrf:
       kind: "tag_node"
       description: "BGP state in a routing instance"

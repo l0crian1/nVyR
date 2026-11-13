@@ -82,6 +82,11 @@ commands. The fixtures are deliberately readable and reviewable:
   transit, with separate destinations from BGP. Both sides must form adjacencies,
   install OSPF routes and exchange traffic before and after reboot. Global opaque
   capability and router-info coexist with the VRF configuration.
+- [MPLS and LDP](config/mpls.set): kernel MPLS input, label-table capacity,
+  dual-stack LDP timers and OSPF/IS-IS synchronization survive reboot. IPv4/IPv6
+  BGP-LU peer-group activation, inherited receive limits, explicit-null labels
+  and multipath settings are verified in native configuration and operational
+  output. Labeled packet forwarding is tested in the shared functional scenario.
 - [IS-IS](config/isis.set): dual-stack, MD5-authenticated default/BOOTLEFT peers
   on the same transit, dedicated connected-route export policies, IPv6 multi-topology,
   LSP/SPF and circuit timers, local LFA settings, route installation and traffic

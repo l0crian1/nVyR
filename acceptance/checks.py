@@ -838,6 +838,18 @@ def check_static_neighbors(options):
         assert_in(description, cmd(['neighbors.nvyr.op', 'show', f'show arp interface {interface}']))
 
 
+def check_bgp_labeled_unicast(options):
+    native = cmd(['vtysh', '-c', 'show running-config no-header'])
+    assert_in('bgp labeled-unicast explicit-null', native)
+    for family in ('ipv4', 'ipv6'):
+        block = native.split(' address-family ' + family + ' labeled-unicast\n', 1)[1].split(' exit-address-family', 1)[0]
+        for line in ('neighbor BOOTLU activate', 'neighbor BOOTLU next-hop-self force',
+                     'neighbor BOOTLU addpath-rx-paths-limit 4', 'maximum-paths 4', 'maximum-paths ibgp 2'):
+            assert_in(line, block)
+        assert_in('198.18.192.3', cmd(['bgp.nvyr.op', 'show', f'show bgp {family} labeled-unicast summary']))
+    assert_not_in('neighbor 198.18.192.3 addpath-rx-paths-limit 0', native)
+
+
 def check_mpls_ldp(options):
     assert_equal(Path('/proc/sys/net/mpls/platform_labels').read_text().strip(), '1048575')
     assert_equal(Path('/proc/sys/net/mpls/conf/veth997/input').read_text().strip(), '1')
@@ -855,6 +867,7 @@ def check_mpls_ldp(options):
 
 CHECKS = (
     check_mpls_ldp,
+    check_bgp_labeled_unicast,
     check_static_neighbors,
     check_lldp,
     check_kernel_release, check_operational_inventory,

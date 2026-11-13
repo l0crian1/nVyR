@@ -31,6 +31,15 @@ def configuration_lines(text):
 
 def normalize(header, sections):
     """Compare contexts, not writer ordering or redundant inherited statements."""
+    # LU shares unicast's AddPath transmit strategy in FRR. The CLI accepts it
+    # in either family, but FRR always writes it under unicast.
+    for family in ('ipv4', 'ipv6'):
+        labeled = sections.get(f'address-family {family} labeled-unicast', set())
+        transmit = {line for line in labeled if re.match(r'neighbor \S+ addpath-tx-', line)}
+        if transmit:
+            sections.setdefault(f'address-family {family} unicast', set()).update(transmit)
+            labeled.difference_update(transmit)
+
     global_lines = sections.setdefault('', set())
     bgp_parameters.normalize(global_lines)
     global_lines.discard('timers bgp 60 180')

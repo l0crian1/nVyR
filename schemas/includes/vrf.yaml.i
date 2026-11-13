@@ -54,6 +54,14 @@ vrf:
               replace:
                 /script/register/vrf: {tag: name}
             - file: protocols/bgp.yaml.i
+              remove:
+              - /children/parameters/children/labeled-unicast
+              - /children/address-family/children/ipv4-labeled-unicast
+              - /children/address-family/children/ipv6-labeled-unicast
+              - /children/neighbor/children/address-family/children/ipv4-labeled-unicast
+              - /children/neighbor/children/address-family/children/ipv6-labeled-unicast
+              - /children/peer-group/children/address-family/children/ipv4-labeled-unicast
+              - /children/peer-group/children/address-family/children/ipv6-labeled-unicast
               replace:
                 /script/register/vrf: {tag: name}
             - file: protocols/ospf.yaml.i

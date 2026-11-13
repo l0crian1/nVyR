@@ -6,14 +6,19 @@ from functionaltests.routed_network import remove_firewall, scenario
 from smoketests.support import configuration_case
 
 
-@pytest.fixture(scope='package', autouse=True)
-def routed_network(config, request):
+@pytest.fixture(scope='package')
+def routed_peer(config, request):
     """Prepare all compatible features before any test, independent of selection."""
     def stop(message):
         request.session.shouldstop = message
 
-    with scenario(config, stop):
-        yield config.get_config()
+    with scenario(config, stop) as directory:
+        yield directory
+
+
+@pytest.fixture(scope='package', autouse=True)
+def routed_network(config, routed_peer):
+    return config.get_config()
 
 
 @pytest.fixture(autouse=True)

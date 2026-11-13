@@ -1,4 +1,4 @@
-"""Unicast BGP instances applied through the shared FRR reload transaction."""
+"""BGP instances applied through the shared FRR reload transaction."""
 
 import ipaddress
 from collections.abc import Mapping
@@ -268,6 +268,13 @@ def verify_peer(options, instance, policies, path, *, require_remote):
     confederation_peers = lookup(parameters, ('confederation', 'peers'), ())
     confederation_peer = str(remote).isdecimal() and int(remote) in {int(peer) for peer in confederation_peers}
     verify_timers(lookup(options, ('timers',), {}), lookup(parameters, ('timers',), {}), path)
+    for version in ('ipv4', 'ipv6'):
+        unicast = lookup(options, ('address-family', version + '-unicast', 'addpath', 'transmit'), {})
+        labeled = lookup(options, ('address-family', version + '-labeled-unicast', 'addpath', 'transmit'), {})
+        # Both SAFIs share FRR's transmit strategy; contradictory aliases cannot converge.
+        if unicast and labeled and unicast != labeled:
+            raise ValidationError(f'{path}: {version} unicast and labeled-unicast must use the same AddPath transmit strategy')
+
     for family, settings in bgp_parameters.families(parameters, options).items():
         verify_peer_family(settings, internal, f'{path} {family}')
         # An explicitly deactivated family needs no import or export policy.

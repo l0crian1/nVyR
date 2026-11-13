@@ -102,6 +102,16 @@ children:
           - file: "operational/bgp-table.yaml.i"
             as: null
 
+      labeled-unicast:
+        kind: "node"
+        description: "Labeled-unicast BGP routing state"
+        command: ["bgp.nvyr.op","show","@line"]
+        children:
+
+          include_schema:
+          - file: "operational/bgp-table.yaml.i"
+            as: null
+
   ipv6:
     kind: "node"
     description: "IPv6 BGP unicast routing state"
@@ -123,6 +133,16 @@ children:
       unicast:
         kind: "node"
         description: "Unicast BGP routing state"
+        command: ["bgp.nvyr.op","show","@line"]
+        children:
+
+          include_schema:
+          - file: "operational/bgp-table.yaml.i"
+            as: null
+
+      labeled-unicast:
+        kind: "node"
+        description: "Labeled-unicast BGP routing state"
         command: ["bgp.nvyr.op","show","@line"]
         children:
 

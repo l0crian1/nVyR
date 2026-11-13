@@ -4,6 +4,22 @@ parameters:
   anchor: true
   children:
 
+    labeled-unicast:
+      kind: node
+      description: Labeled-unicast label advertisements
+      children:
+
+        explicit-null:
+          kind: leaf_node
+          description: Advertise explicit-null for locally originated prefixes instead of implicit-null
+          validators:
+            list:
+              values: ipv4 ipv6 both
+          choices:
+            ipv4: Explicit-null for IPv4 prefixes
+            ipv6: Explicit-null for IPv6 prefixes
+            both: Explicit-null for both address families
+
     allow-martian-nexthop:
       kind: leaf_node
       description: Accept otherwise invalid next-hop addresses

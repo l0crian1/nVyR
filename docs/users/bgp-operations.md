@@ -4,7 +4,8 @@ For implementation and testing, see the [developer guide](../dev/bgp-operations.
 
 BGP commands preserve FRR's keyword and argument order and return its native text.
 Use `run` in configuration mode. Existing paging and output pipes apply. This
-tree covers IPv4 and IPv6 unicast; other address families remain deferred.
+tree covers IPv4 and IPv6 unicast and labeled-unicast. LU configuration is
+supported in the default BGP instance; VPN families remain deferred.
 
 ## Displays
 
@@ -18,6 +19,9 @@ show bgp summary remote-as 65001
 
 show bgp ipv4 unicast
 show bgp ipv6 unicast summary
+show bgp ipv4 labeled-unicast
+show bgp ipv6 labeled-unicast summary
+show bgp labelpool summary
 show bgp vrf BLUE ipv4 unicast summary
 show bgp vrf all ipv6 unicast
 
@@ -65,7 +69,7 @@ show bgp import-check-table detail
 
 The generated [command tree](command-tree.md) lists the full combinations.
 FRR permits neighbor detail with no AFI or with `ipv4`/`ipv6`, but after an
-explicit `unicast` it requires a route/status subcommand. The CLI respects that
+explicit `unicast` or `labeled-unicast` it requires a route/status subcommand. The CLI respects that
 distinction instead of rearranging the command. Received routes require FRR's
 inbound soft-reconfiguration storage; native errors remain visible.
 

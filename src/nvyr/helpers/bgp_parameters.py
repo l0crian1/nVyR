@@ -77,6 +77,11 @@ def commands(parameters):
         if name in parameters:
             result.append(f'bgp {name} {parameters[name]}')
 
+    explicit_null = lookup(parameters, ('labeled-unicast', 'explicit-null'), None)
+    if explicit_null is not None:
+        qualifier = '' if explicit_null == 'both' else explicit_null + '-'
+        result.append(f'bgp labeled-unicast {qualifier}explicit-null')
+
     confederation = parameters.get('confederation', {})
     if 'identifier' in confederation:
         result.append(f'bgp confederation identifier {int(confederation["identifier"])}')

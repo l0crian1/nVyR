@@ -154,7 +154,7 @@ def test_one_scenario_for_selected_cases_in_any_order(pytester):
 from contextlib import contextmanager
 import pytest
 from functionaltests.network import conftest as suite
-from functionaltests.network.conftest import routed_network
+from functionaltests.network.conftest import routed_network, routed_peer
 
 events = []
 

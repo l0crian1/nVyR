@@ -1,6 +1,6 @@
 bgp:
   kind: node
-  description: IPv4 and IPv6 unicast BGP
+  description: IPv4 and IPv6 BGP
   anchor: true
   children:
 
@@ -90,6 +90,8 @@ bgp:
         include_schema:
         - file: protocols/bgp/ipv4.yaml.i
         - file: protocols/bgp/ipv6.yaml.i
+        - file: protocols/bgp/ipv4-lu.yaml.i
+        - file: protocols/bgp/ipv6-lu.yaml.i
     include_schema:
     - file: protocols/bgp/parameters.yaml.i
   script:

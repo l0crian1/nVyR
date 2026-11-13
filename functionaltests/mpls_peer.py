@@ -1,4 +1,4 @@
-"""Native LDP/OSPF peer in the routed suite's existing right-side host namespace."""
+"""Native LDP/OSPF/BGP-LU peer in the routed suite's right-side host namespace."""
 
 from contextlib import contextmanager, ExitStack
 import subprocess
@@ -8,6 +8,29 @@ from nvyr.helpers.process import cmd
 
 
 CONFIGURATION = '''
+router bgp 65072
+ bgp router-id 198.18.71.2
+ no bgp default ipv4-unicast
+ no bgp ebgp-requires-policy
+ no bgp network import-check
+ bgp labeled-unicast explicit-null
+ neighbor 198.18.71.1 remote-as 65071
+ neighbor 198.18.71.1 capability dynamic
+ address-family ipv4 unicast
+  network 198.19.72.2/32
+  network 198.19.72.3/32
+ exit-address-family
+ address-family ipv6 unicast
+  network 2001:db8:72::2/128
+  network 2001:db8:72::3/128
+ exit-address-family
+ address-family ipv4 labeled-unicast
+  neighbor 198.18.71.1 activate
+ exit-address-family
+ address-family ipv6 labeled-unicast
+  neighbor 198.18.71.1 activate
+ exit-address-family
+exit
 interface veth42072
  ip ospf area 0
  ip ospf network point-to-point
@@ -51,6 +74,10 @@ def daemon(directory, namespace):
     cmd(['ip', '-n', namespace, '-6', 'address', 'add', '2001:db8:71::2/64', 'dev', 'veth42072', 'nodad'])
     cmd(['ip', 'netns', 'exec', namespace, 'sysctl', '-qw', 'net.mpls.platform_labels=1048575',
          'net.mpls.conf.veth42072.input=1'])
+    cmd(['ip', '-n', namespace, 'link', 'add', 'lu0', 'type', 'dummy'])
+    cmd(['ip', '-n', namespace, 'link', 'set', 'lu0', 'up'])
+    cmd(['ip', '-n', namespace, 'address', 'add', '198.19.72.2/32', 'dev', 'lu0'])
+    cmd(['ip', '-n', namespace, '-6', 'address', 'add', '2001:db8:72::2/128', 'dev', 'lu0', 'nodad'])
     config = directory / 'frr.conf'
     config.write_text(CONFIGURATION)
     config.chmod(0o644)
@@ -58,7 +85,7 @@ def daemon(directory, namespace):
     empty.write_text('')
     empty.chmod(0o644)
     with ExitStack() as cleanup:
-        for name in ('mgmtd', 'zebra', 'ldpd', 'ospfd'):
+        for name in ('mgmtd', 'zebra', 'ldpd', 'ospfd', 'bgpd'):
             args = ['ip', 'netns', 'exec', namespace, '/usr/lib/frr/' + name,
                     '-N', 'nvyr-routed-mpls', '-z', str(directory / 'zserv.api'),
                     '--vty_socket', str(directory), '-i', str(directory / (name + '.pid')), '-P', '0']

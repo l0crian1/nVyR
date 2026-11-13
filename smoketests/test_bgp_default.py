@@ -67,6 +67,36 @@ def test_dampening_defaults(config):
     assert_bgp_commands(vrf='default', absent=('bgp dampening',))
 
 
+@pytest.mark.parametrize('family', ['ipv4', 'ipv6'])
+def test_labeled_unicast_translation(config, family):
+    config.set('set protocols bgp peer-group LUSMOKE remote-as external')
+    config.set('set protocols bgp neighbor 192.0.2.2 peer-group LUSMOKE shutdown')
+    scope = 'set protocols bgp peer-group LUSMOKE address-family ' + family + '-labeled-unicast'
+    config.set(scope + ' next-hop-self force soft-reconfiguration inbound')
+    config.set(scope + ' addpath transmit best-selected 2 receive-limit 4')
+    config.set(scope + ' maximum-prefix limit 100 threshold 90 warning-only force')
+    config.set(scope + ' maximum-prefix-out 150')
+    config.set('set protocols bgp address-family ' + family + '-labeled-unicast maximum-paths ebgp 4 ibgp 2')
+    config.commit()
+
+    native = cmd(['vtysh', '-c', 'show running-config no-header'])
+    block = native.split(' address-family ' + family + ' labeled-unicast\n', 1)[1].split(' exit-address-family', 1)[0]
+    for line in ('neighbor LUSMOKE activate', 'neighbor LUSMOKE next-hop-self force',
+                 'neighbor LUSMOKE addpath-rx-paths-limit 4', 'maximum-paths 4', 'maximum-paths ibgp 2'):
+        assert line in block
+    assert 'neighbor 192.0.2.2 addpath-rx-paths-limit 0' not in native
+
+
+@pytest.mark.parametrize('value,native', [('ipv4', 'ipv4-explicit-null'), ('ipv6', 'ipv6-explicit-null'), ('both', 'explicit-null')])
+def test_lu_explicit_null_and_removal(config, value, native):
+    config.set('set protocols bgp parameters labeled-unicast explicit-null ' + value)
+    config.commit()
+    assert_bgp_commands('bgp labeled-unicast ' + native, vrf='default')
+    config.delete('delete protocols bgp parameters labeled-unicast')
+    config.commit()
+    assert_bgp_commands(vrf='default', absent=('bgp labeled-unicast ' + native,))
+
+
 def test_dampening_custom_thresholds(config):
     """Custom IPv4 decay and suppression thresholds survive native readback."""
     config.set('set protocols bgp parameters dampening state enable half-life 10 reuse 500 suppress 1500 max-suppress-time 40')
