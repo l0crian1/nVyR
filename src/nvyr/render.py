@@ -1,15 +1,38 @@
 """Daemon-side rendering and reversible CLI serialization."""
 
 import json
+import re
 from collections.abc import Mapping
 from nvyr.lexer import Token, quote
 from nvyr.errors import ValidationError
 from nvyr.tree import MISSING, changes, put, lookup
 
 
+def natural_key(value):
+    """Sort digit runs by magnitude, with stable ties for leading-zero names."""
+    value = str(value)
+    parts = []
+    for part in re.split(r'([0-9]+)', value):
+        if part.isascii() and part.isdecimal():
+            digits = part.lstrip('0') or '0'
+            parts.append((1, len(digits), digits))
+        else:
+            parts.append((0, part))
+
+    return tuple(parts), len(value), value
+
+
+def ordered_tree(tree):
+    """Order mapping keys for display without mutating data or reordering lists."""
+    if isinstance(tree, Mapping):
+        return {key: ordered_tree(tree[key]) for key in sorted(tree, key=natural_key)}
+    if isinstance(tree, (list, tuple)):
+        return [ordered_tree(value) for value in tree]
+    return tree
+
+
 def json_text(tree):
-    return json.dumps(tree, indent=2, ensure_ascii=False, sort_keys=True,
-                      default=lambda value: dict(value) if isinstance(value, Mapping) else value) + "\n"
+    return json.dumps(ordered_tree(tree), indent=2, ensure_ascii=False) + "\n"
 
 
 def leaf_value(node, value):
@@ -66,7 +89,8 @@ def set_commands(schema, tree, path=(), node=None):
             for value in tree if node.get("multi") else [tree]:
                 yield prefix + " " + leaf_value(node, value)
     elif node["kind"] == "tag_node":
-        for tag, value in sorted(tree.items()):
+        for tag in sorted(tree, key=natural_key):
+            value = tree[tag]
             token = tag_token(node, tag)
             if not value:
                 yield "set " + " ".join(map(quote, path + (token,)))
@@ -76,13 +100,14 @@ def set_commands(schema, tree, path=(), node=None):
     elif node.get("tag_instance") and not tree:
         yield "set " + " ".join(map(quote, path))
     else:
-        for key, child in sorted(tree.items()):
+        for key in sorted(tree, key=natural_key):
+            child = tree[key]
             if key not in node.get('children', {}):
                 raise ValidationError(f"Unsupported configuration path: {' '.join(path + (key,))}. "
                                       'Use show without commands to inspect the saved values, then delete the unsupported path.')
             if node['children'][key].get('_negation_branch'):
-                for field, excluded in sorted(child.items()):
-                    yield from set_commands(schema, excluded, path + (field, 'not'),
+                for field in sorted(child, key=natural_key):
+                    yield from set_commands(schema, child[field], path + (field, 'not'),
                                             node['children'][key]['children'][field])
                 continue
             yield from set_commands(schema, child, path + (key,), node["children"][key])
@@ -134,7 +159,7 @@ def diff_commands(schema, before, after, path=(), *, prefix=None, include_unchan
             else:
                 yield from set_commands(schema, new, path, node)
         else:
-            keys = sorted(old.keys() | new.keys())
+            keys = sorted(old.keys() | new.keys(), key=natural_key)
             # Emit exclusions after ordinary fields: broad field deletions clear both.
             if node['kind'] != 'tag_node' and node.get('children', {}).get('not', {}).get('_negation_branch') and 'not' in keys:
                 keys.remove('not')
@@ -150,7 +175,7 @@ def diff_commands(schema, before, after, path=(), *, prefix=None, include_unchan
                 child = {"kind": "node", "children": node.get("children", {}), "tag_instance": True} if node["kind"] == "tag_node" else node["children"][key]
                 if child.get('_negation_branch'):
                     left, right = old.get(key, {}), new.get(key, {})
-                    for field in sorted(left.keys() | right.keys()):
+                    for field in sorted(left.keys() | right.keys(), key=natural_key):
                         previous = left.get(field, MISSING)
                         # Deleting an entire field also removes its exclusions.
                         # Restore any retained exclusions after that broad deletion.
@@ -201,9 +226,10 @@ def marked_json(before, after):
             padding = "  " * depth
             label = "" if key is None else json.dumps(key, ensure_ascii=False) + ": "
             yield "  " + padding + label + "{"
-            old_last, new_last = max(old), max(new)
+            old_last = max(old, key=natural_key)
+            new_last = max(new, key=natural_key)
 
-            for child in sorted(old.keys() | new.keys()):
+            for child in sorted(old.keys() | new.keys(), key=natural_key):
                 yield from walk(old.get(child, MISSING), new.get(child, MISSING), depth + 1, child,
                                 "" if child == old_last else ",", "" if child == new_last else ",")
 
@@ -222,7 +248,8 @@ def marked_json(before, after):
 def yaml_diff(before, after):
     lines = []
 
-    for path, old, new in changes(before, after):
+    differences = sorted(changes(before, after), key=lambda change: tuple(natural_key(part) for part in change[0]))
+    for path, old, new in differences:
         lines.append(" / ".join(map(quote, path)) + ":")
 
         if old is not MISSING:

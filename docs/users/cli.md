@@ -114,6 +114,11 @@ relative to the selected section. Use a root-level display for a complete export
 Showing defaults does not configure them; importing an export containing defaults
 makes them explicit.
 
+Configuration displays and comparisons use natural key ordering: rule `5` precedes
+`10`, and `eth2` precedes `eth10`. The same ordering applies with `| commands`,
+including scoped and default-expanded output. Multi-value lists retain their
+configured order; display sorting does not change the configuration.
+
 ## Copy, rename and inspect references
 
 Copy and rename operate on instances of the same tag node. Both paths name the
