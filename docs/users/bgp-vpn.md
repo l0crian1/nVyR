@@ -6,11 +6,14 @@ customer VRF imports and exports routes through its IPv4/IPv6 unicast family.
 Configure MPLS on transport interfaces and provide labeled transport next hops;
 see [MPLS](mpls.md) for LDP and static labeled forwarding.
 
-Use loopback peering over a working MPLS transport. The validated VPNv6 path uses
-IPv6 transport next hops. Testing VPNv6 with IPv4-mapped next hops on the current
-FRR/kernel combination reached the BGP table but failed kernel installation with
-“IPv6 routes can not use an IPv4 nexthop”; IPv4-only VPNv6 transport is not yet
-validated as working.
+Use loopback peering over a working MPLS transport. The validated nVyR VPNv6 path
+uses IPv6 transport next hops. Packaged FRR 10.7.1 has a nexthop-programming defect
+for VPNv6 over IPv4 MPLS transport (6VPE): it resolves the mapped BGP next hop to
+an IPv4 kernel nexthop, which Linux rejects for an IPv6 route. Linux can forward
+this traffic when the nexthop is correctly encoded; this is not an inherent
+IPv4 MPLS transport limitation. Native tests confirmed bidirectional forwarding
+with manually corrected nexthops, but that correction is not yet implemented in
+nVyR. See the [verified upstream issue](../dev/upstream-issues.md#vpnv6-over-ipv4-mpls-transport-incorrect-nexthop-programming).
 
 ## Provider peer and customer VRF
 

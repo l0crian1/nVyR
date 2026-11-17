@@ -833,17 +833,47 @@ deletion and independent AF cleanup in another BGP instance.
 Recheck these fixes when upgrading FRR; do not remove this patch based solely on
 the ownership commit being present.
 
-## VPNv6 over IPv4-only transport: kernel next-hop rejection
+## VPNv6 over IPv4 MPLS transport: incorrect nexthop programming
 
-With packaged FRR 10.7.1 and Linux 6.18.64, a VPNv6 route exported with an
-IPv4-mapped next hop resolved through OSPF/LDP, became best in the customer VRF,
-and was rejected during kernel installation. Zebra reported `IPv6 routes can not
-use an IPv4 nexthop` and marked the route `B>r`. IPv4 VPN traffic and VPNv6 using
-IPv6 transport next hops both passed bidirectional packet tests in the same
-shared topology. An ordinary IPv4 value in the VPNv6 export next-hop setting did
-not produce a usable imported route either.
+Native reproduction on 2026-11-17 used packaged FRR
+`10.7.1-0~deb13u1+nvyr8` and Linux `6.18.64-nvyr-amd64` on the test router.
+Three network namespaces formed PE1–P–PE3, using IPv4 loopbacks, OSPFv2, LDPv4,
+IPv4 BGP peering, and IPv6 customer routes in VRF BLUE. No global IPv6 core
+addresses, IPv6 IGP, export nexthop overrides, or nVyR configuration rendering
+were involved. Zebra's documented `--v6-with-v4-nexthops` startup option was
+needed for BGP IPv6 AF establishment with the IPv4-only update-source.
 
-No native fix or global next-hop behavior change has been introduced for this
-case. Reproduce with the pinned packages and inspect the netlink request before
-claiming IPv4-only VPNv6 transport support. This record identifies the observed
-failure, not a confirmed attribution to either FRR or Linux.
+The route exchange and label resolution succeeded. The failure was in Zebra's
+kernel programming, matching [FRR issue #21031](https://github.com/FRRouting/frr/issues/21031):
+
+- With kernel nexthop objects enabled, Zebra created an IPv4 gateway with the
+  correct transport/service label stack, then referenced it through `RTA_NH_ID`
+  from the IPv6 route. Linux rejected it with `IPv6 routes can not use an IPv4
+  nexthop`; both PEs showed `B>r`, and neither direction forwarded.
+- After `no zebra nexthop kernel enable` and withdrawal/re-advertisement of the
+  customer routes, the inline routes installed with the correct labels but no
+  gateway. Both directions still lost all packets. Disabling nexthop objects is
+  not a working solution for this reproduction.
+- Re-enabling objects and re-advertising reproduced the original rejection.
+- A control manually installed IPv6 nexthop objects with the same label stacks,
+  gateway `::ffff:192.0.2.2` / `::ffff:192.0.2.5`, and `onlink`. Both directions
+  passed 3/3 pings. Packet capture showed IPv6 ICMP inside MPLS, with two labels
+  toward the transit router and the service label after penultimate-hop popping.
+  No static neighbor entries were necessary.
+
+Linux therefore supports the tested 6VPE dataplane; the packaged FRR resolved
+nexthop representation is wrong. In `zebra_nhg.c`, mapped IPv6 recursion retains
+the resolving IPv4 gateway type. In `rt_netlink.c`, the inline encoder omits the
+gateway for a mapped recursive parent. A
+[contributor patch](https://github.com/demetrius-skypulse/frr/commit/2604cddd19a923c847ef7b7da954961ee1d358e1)
+addresses both paths by preserving an onlink mapped IPv6 gateway. Its existence
+does not establish that it is merged or included in a release; it has not been
+applied or validated as a patch here. The issue was automatically closed for
+inactivity, not because a fix was verified.
+
+The experiment and evidence are retained under the ignored
+`experiments/bgp-vpn/verify-6vpe.py`, `verify-6vpe.log`, and
+`6vpe-mapped-nexthop-evidence.tgz`. All experiment namespaces and daemons were
+removed. No production startup flags, global nexthop settings, or native patches
+were changed. Keep the supported-path restriction until a proper fix passes
+route-installation, forwarding, withdrawal, and recovery tests.
