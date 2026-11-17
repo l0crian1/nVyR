@@ -205,19 +205,21 @@ than silently included. Rebuilding the builder normally fixes this without
 
 ## Kernel maintenance
 
-The image uses **Linux 6.18 LTS**, pinned to **6.18.63** in
+The image uses **Linux 6.18 LTS**, pinned to **6.18.64** in
 `images/kernel-sources.lock`. Debian remains the userspace distribution. The
 builder compiles upstream Linux with the general-purpose Debian amd64 kernel
 configuration, retaining hardware drivers, module support and BTF. It replaces
 Debian-specific certificate paths and adds the `-nvyr-amd64` release suffix.
 Separate debug-symbol packages are not included in the image.
 
-The 6.18.63 maintenance update stays on the supported upstream longterm branch
+The 6.18.64 maintenance update stays on the supported upstream longterm branch
 listed at [kernel.org](https://www.kernel.org/). Its source hash comes from the
 [upstream checksums](https://cdn.kernel.org/pub/linux/kernel/v6.x/sha256sums.asc).
-The Debian configuration baseline is unchanged. Review the intervening stable
-changelogs, particularly nftables payload validation, conntrack, IPv6 address
-lifecycle and bonding fixes, when validating this update.
+The Debian configuration baseline is unchanged. The
+[6.18.64 changelog](https://cdn.kernel.org/pub/linux/kernel/v6.x/ChangeLog-6.18.64)
+includes fixes for raw IPv6 transmission through VRFs, failed IPv6 datagram
+connection rollback, veth carrier reporting and transmit queue handling.
+Validate these paths alongside firewall/NAT, MPLS, containers and reboot recovery.
 
 The ISO includes Debian's `firmware-realtek` package from `non-free-firmware`
 for Realtek NIC firmware, including the RTL8168H onboard and RTL8156B USB

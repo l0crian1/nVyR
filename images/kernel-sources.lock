@@ -1,11 +1,11 @@
 {
-  "version": "6.18.63",
-  "package_version": "6.18.63-1nvyr1",
+  "version": "6.18.64",
+  "package_version": "6.18.64-1nvyr1",
   "local_version": "-nvyr-amd64",
-  "source_date_epoch": 1794334026,
+  "source_date_epoch": 1794910300,
   "source": {
-    "url": "https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.18.63.tar.xz",
-    "sha256": "81764a545072d160748beff4d9de2e7d95aa9f16e8261110288f067a2cc61d71"
+    "url": "https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.18.64.tar.xz",
+    "sha256": "020d45510c539972e6f14c5c71566878d3b7ef56fb082b3e09134f2ebaade562"
   },
   "configuration": {
     "url": "https://deb.debian.org/debian/pool/main/l/linux-signed-amd64/linux-image-6.18.15+deb13-amd64_6.18.15-1~bpo13+1_amd64.deb",
