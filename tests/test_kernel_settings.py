@@ -312,5 +312,5 @@ def test_firewall_apply_keeps_kernel_transaction_open_through_nft(monkeypatch, t
     monkeypatch.setattr(nftables.manager, 'apply', apply)
     context = SimpleNamespace(effective={}, state_directory=tmp_path)
     with pytest.raises(RouterError, match='nft rejected'):
-        firewall.apply({'rules': 'candidate', 'list-cache': {}, 'list-schedules': []}, context)
+        firewall.apply({'rules': 'candidate', 'list-cache': {}, 'list-schedules': [], 'conntrack-log': None}, context)
     assert events == ['kernel', 'nft', 'restore']

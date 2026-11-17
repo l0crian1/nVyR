@@ -13,4 +13,5 @@ packaging/** text eol=lf
 src/nvyr/op_scripts/*.py text eol=lf
 # Unified-diff context prefixes are not source indentation or trailing whitespace.
 vendor/frr/*.patch text eol=lf whitespace=-blank-at-eol,-blank-at-eof,-space-before-tab
+vendor/ulogd/*.patch text eol=lf whitespace=-blank-at-eol,-blank-at-eof,-space-before-tab
 images/bootloaders/**/*.cfg text eol=lf

@@ -65,6 +65,7 @@ class TemplateRenderer:
                            'logging_program_condition': logging_formatters.program_condition,
                            'logging_services': logging_formatters.SERVICES,
                            'logging_root': logging_formatters.ROOT,
+                           'conntrack_filters': logging_formatters.conntrack_filters,
                            'container_attachment': container_formatters.attachment,
                            'container_network_gateway': container_formatters.network_gateway,
                            'container_network_ipv6': container_formatters.network_ipv6,

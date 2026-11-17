@@ -21,6 +21,7 @@ RUNTIME = Path('/run/nvyr-logging')
 STATE = Path('/var/lib/nvyr/logging')
 LOGS = Path(formats.ROOT)
 NFLOG_STATUS = Path('/proc/net/netfilter/nfnetlink_log')
+NETLINK_STATUS = Path('/proc/net/netlink')
 
 
 def configure_python(identifier):
@@ -151,6 +152,37 @@ def wait_for_group(number):
     raise RouterError(f'{unit}: collector did not bind its NFLOG group')
 
 
+def apply_conntrack(prepared):
+    """Apply a rendered event collector; unchanged commits keep its subscription."""
+    path = RUNTIME / 'conntrack.conf'
+    unit = 'nvyr-conntrack-log.service'
+    if prepared is None:
+        if path.exists():
+            cmd(['systemctl', 'stop', unit])
+            path.unlink()
+        return
+
+    _directories()
+    changed = not path.exists() or path.read_text() != prepared['contents']
+    _write(path, prepared['contents'])
+    cmd(['systemctl', 'restart' if changed else 'start', unit])
+    wait_for_conntrack(prepared['mask'])
+
+
+def wait_for_conntrack(mask):
+    """Confirm the collector subscribed to every requested conntrack event."""
+    unit = 'nvyr-conntrack-log.service'
+    pid = cmd(['systemctl', 'show', '--property=MainPID', '--value', unit]).strip()
+    deadline = time.monotonic() + 3
+    while time.monotonic() < deadline:
+        for line in NETLINK_STATUS.read_text().splitlines()[1:]:
+            fields = line.split()
+            if fields[1:3] == ['12', pid] and int(fields[3], 16) & mask == mask:
+                return
+        time.sleep(0.05)
+    raise RouterError(f'{unit}: collector did not subscribe to connection events')
+
+
 class FrrLogging:
     """Own only FRR's syslog target inside the shared integrated configuration."""
 
@@ -225,7 +257,7 @@ def reopen():
 
     def reopen_packet_logs():
         units = cmd(['systemctl', 'list-units', '--state=running', '--no-legend', '--plain',
-                     'nvyr-nflog@*.service'])
+                     'nvyr-nflog@*.service', 'nvyr-conntrack-log.service'])
         for line in units.splitlines():
             unit = line.split()[0]
             attempt(lambda: cmd(['systemctl', 'kill', '--kill-whom=main', '--signal=HUP', unit]))

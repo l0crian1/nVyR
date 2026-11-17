@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Inspect tracked connections and NAT translations, or explicitly clear them."""
 
+import ipaddress
 import json
 
 from tabulate import tabulate
@@ -36,7 +37,8 @@ def _options(line):
         return record
 
     mapping = {name.replace('_', '-'): select(name) for name in
-               ('protocol', 'state', 'source_address', 'destination_address', 'detail', 'statistics')}
+               ('protocol', 'state', 'source_address', 'destination_address', 'offload', 'accounting',
+                'sort_by', 'reverse', 'detail', 'statistics')}
     mapping.update({'ipv4': family('ipv4'), 'ipv6': family('ipv6')})
     path, _ = opmode.command_arguments(line, mapping)
     return path, options
@@ -63,6 +65,47 @@ def _translated(record):
             if field in record['reply']:
                 translated[destination + '-' + suffix] = record['reply'][field]
     return translated
+
+
+def _total(record, field):
+    """Do not present an incomplete directional count as a combined total."""
+    original = record['original'].get(field)
+    reply = record['reply'].get(field)
+    if original is None or reply is None:
+        return None
+    return original + reply
+
+
+def _ordered(records, value, descending):
+    """Sort available values while keeping missing values last in either order."""
+    present = []
+    missing = []
+    for record in records:
+        key = value(record)
+        if key is None:
+            missing.append(record)
+        else:
+            present.append((key, record))
+    present.sort(key=lambda item: item[0], reverse=descending)
+    return [record for _, record in present] + missing
+
+
+def _sort(records, field, reverse):
+    descending = (field in ('packets', 'bytes', 'timeout')) != reverse
+    if field in ('source', 'destination'):
+        def address(record):
+            text = record['original'].get(field + '-address')
+            if text is None:
+                return None
+            parsed = ipaddress.ip_address(text)
+            return parsed.version, int(parsed)
+
+        # Stable passes keep numeric ports ordered within each numeric address.
+        records = _ordered(records, lambda record: record['original'].get(field + '-port'), descending)
+        return _ordered(records, address, descending)
+    if field in ('packets', 'bytes'):
+        return _ordered(records, lambda record: _total(record, field), descending)
+    return _ordered(records, lambda record: record.get(field), descending)
 
 
 def _detail(record):
@@ -95,11 +138,18 @@ def show(line: str, raw: bool = False):
             raise OperationalError('Statistics cannot be combined with connection filters or detail.')
         return statistics(raw=raw)
     detail = options.pop('detail', False)
+    sort_by = options.pop('sort_by', None)
+    reverse = options.pop('reverse', False)
+    if reverse and sort_by is None:
+        raise OperationalError('reverse requires sort-by.')
+    accounting_columns = options.get('accounting', False) or sort_by in ('packets', 'bytes')
     translations = tuple(path[:2]) == ('show', 'nat')
     records = tracking.read(**options)
     if translations:
         required = {'source': 'snat', 'destination': 'dnat'}.get(path[2])
         records = [record for record in records if record['nat'] and (required is None or required in record['nat'])]
+    if sort_by:
+        records = _sort(records, sort_by, reverse)
     if raw:
         return json.dumps(records)
     if not records:
@@ -113,7 +163,7 @@ def show(line: str, raw: bool = False):
     headers = ['Family', 'Protocol', 'Source', 'Destination']
     if translations:
         headers.extend(['Translated source', 'Translated destination', 'NAT'])
-    headers.extend(['State', 'Timeout (s)'])
+    headers.extend(['Packets', 'Bytes'] if accounting_columns else ['State', 'Timeout (s)'])
     rows = []
     for record in records:
         row = [record['family'].replace('ip', 'IP'), record['protocol'],
@@ -122,7 +172,12 @@ def show(line: str, raw: bool = False):
             translated = _translated(record)
             row.extend([_endpoint(translated, 'source'), _endpoint(translated, 'destination'),
                         '+'.join(record['nat']).upper()])
-        row.extend([record.get('state', MISSING), record['timeout']])
+        if accounting_columns:
+            for field in ('packets', 'bytes'):
+                total = _total(record, field)
+                row.append(total if total is not None else MISSING)
+        else:
+            row.extend([record.get('state', MISSING), record['timeout']])
         rows.append(row)
     print(tabulate(rows, headers=headers, disable_numparse=True))
 

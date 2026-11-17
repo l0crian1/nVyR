@@ -22,6 +22,45 @@ from tests.test_firewall_enhancements import render
 # with only external processes and filesystem locations substituted.
 INSTALL_LOGGING = logging_runtime.install
 PREPARE_GROUPS = logging_runtime.prepare_groups
+APPLY_CONNTRACK = logging_runtime.apply_conntrack
+
+
+def test_conntrack_generation_selects_native_events_without_changing_accounting():
+    from nvyr.config_scripts import firewall
+
+    options = {'event': ['destroy', 'new'], 'filter': {'protocol': ['udp', 'tcp']}}
+    configuration = {'firewall': {'global-options': {'connection-tracking': {'logging': options}}}}
+    original = deepcopy(configuration)
+    firewall.verify(configuration, firewall_context(configuration, {}, 'firewall', ('firewall',), previous_effective={}))
+    prepared = logging_formatters.conntrack(configuration)
+    assert prepared['mask'] == 5
+    assert 'hash_enable=0' in prepared['contents']
+    assert 'accept_proto_filter="tcp,udp"' in prepared['contents']
+    assert 'PRINTFLOW' in prepared['contents']
+    assert configuration == original
+    assert logging_formatters.conntrack({}) is None
+
+
+@pytest.mark.parametrize('options, events, message', [
+    ({'filter': {'protocol': ['udp']}}, 'auto', 'at least one event'),
+    ({'event': ['new']}, 'disable', 'requires events auto or enable'),
+])
+def test_conntrack_verification_rejects_incomplete_or_disabled_event_source(options, events, message):
+    from nvyr.config_scripts import firewall
+
+    configuration = {'firewall': {'global-options': {'connection-tracking': {'logging': options, 'events': events}}}}
+    with pytest.raises(ValidationError, match=message):
+        firewall.verify(configuration, firewall_context(configuration, {}, 'firewall', ('firewall',), previous_effective={}))
+
+
+def test_conntrack_protocol_selection_cannot_be_silently_truncated():
+    from nvyr.config_scripts import firewall
+    from nvyr.helpers.validators import IP_PROTOCOLS
+
+    options = {'event': ['new'], 'filter': {'protocol': sorted(IP_PROTOCOLS)}}
+    configuration = {'firewall': {'global-options': {'connection-tracking': {'logging': options}}}}
+    with pytest.raises(ValidationError, match='224-character limit'):
+        firewall.verify(configuration, firewall_context(configuration, {}, 'firewall', ('firewall',), previous_effective={}))
 
 
 def test_nflog_identifiers_are_stable_and_do_not_reuse_deleted_groups():
@@ -117,6 +156,13 @@ def test_reader_rejects_paths_and_symlinks(tmp_path):
         list(log_reader.records(paths, pattern))
 
 
+def test_conntrack_log_is_selected_independently(tmp_path):
+    (tmp_path / 'conntrack.log').write_text('connection event\n')
+    (tmp_path / 'system.log').write_text('unrelated service\n')
+    paths, pattern = log_reader.select('conntrack', root=tmp_path)
+    assert [line for _, line in log_reader.records(paths, pattern)] == ['connection event\n']
+
+
 def test_container_logs_exclude_host_service_activity(tmp_path):
     folder = tmp_path / 'containers'
     folder.mkdir()
@@ -191,7 +237,7 @@ def test_only_follow_log_commands_stream():
 
 
 @pytest.mark.parametrize('configuration_mode', [False, True])
-@pytest.mark.parametrize('scope', ['', 'system', 'container ntopng', 'task ispcheck',
+@pytest.mark.parametrize('scope', ['', 'system', 'conntrack', 'container ntopng', 'task ispcheck',
                                  'firewall ipv4 input filter rule 10', 'nat66 source rule 10'])
 def test_log_output_modifiers(controller, session, monkeypatch, configuration_mode, scope):
     calls = []
@@ -270,6 +316,41 @@ def test_group_collectors_start_without_global_logging_configuration(tmp_path, m
     assert ready == [identifier]
     assert commands == [['systemctl', 'restart', f'nvyr-nflog@{identifier}.service']]
     assert (tmp_path / f'nflog-{identifier}.conf').is_file()
+
+
+def test_conntrack_collector_preserves_unchanged_subscription_and_removes_cleanly(tmp_path, monkeypatch):
+    commands = []
+    masks = []
+    monkeypatch.setattr(logging_runtime, 'RUNTIME', tmp_path)
+    monkeypatch.setattr(logging_runtime, '_directories', lambda: None)
+    monkeypatch.setattr(logging_runtime, 'cmd', lambda argv: commands.append(argv))
+    monkeypatch.setattr(logging_runtime, 'wait_for_conntrack', masks.append)
+    prepared = {'contents': 'event_mask=5\n', 'mask': 5}
+
+    APPLY_CONNTRACK(prepared)
+    APPLY_CONNTRACK(prepared)
+    APPLY_CONNTRACK({'contents': 'event_mask=4\n', 'mask': 4})
+    APPLY_CONNTRACK(None)
+
+    assert [command[1] for command in commands] == ['restart', 'start', 'restart', 'stop']
+    assert masks == [5, 5, 4]
+    assert not (tmp_path / 'conntrack.conf').exists()
+
+
+def test_conntrack_readiness_requires_our_pid_and_every_requested_event(tmp_path, monkeypatch):
+    status = tmp_path / 'netlink'
+    status.write_text('sk Eth Pid Groups Rmem Wmem Dump Locks Drops Inode\n0 12 123 00000001 0 0 0 2 0 99\n')
+    monkeypatch.setattr(logging_runtime, 'NETLINK_STATUS', status)
+    monkeypatch.setattr(logging_runtime, 'cmd', lambda argv: '123\n')
+    clock = iter((0, 0, 4))
+    monkeypatch.setattr(logging_runtime.time, 'monotonic', lambda: next(clock))
+    monkeypatch.setattr(logging_runtime.time, 'sleep', lambda _: None)
+    with pytest.raises(RouterError, match='did not subscribe'):
+        logging_runtime.wait_for_conntrack(5)
+
+    status.write_text('sk Eth Pid Groups Rmem Wmem Dump Locks Drops Inode\n0 12 123 00000005 0 0 0 2 0 99\n')
+    monkeypatch.setattr(logging_runtime.time, 'monotonic', lambda: 0)
+    logging_runtime.wait_for_conntrack(5)
 
 
 def test_readiness_requires_the_collectors_kernel_subscription(tmp_path, monkeypatch):

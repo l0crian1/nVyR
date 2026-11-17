@@ -36,6 +36,58 @@ Logs are stored under `/var/log/nvyr`. Rotated archives use numbered suffixes an
 compression; the newest archive remains uncompressed until the next rotation.
 Writers reopen their files without restarting routing daemons or containers.
 
+## Connection events
+
+Connection logs are separate from firewall rule packet logs. Select either or
+both events; logging is disabled until an event is configured:
+
+```text
+set firewall global-options connection-tracking logging event new
+set firewall global-options connection-tracking logging event destroy
+set firewall global-options connection-accounting
+```
+
+`new` records a newly tracked connection. `destroy` records its removal or expiry.
+With connection accounting enabled, records include original and reply packet
+and byte counters. New records normally have zero counters; destroy records
+contain the totals reported by the kernel. Accounting applies to connections
+created after it is enabled. Logging does not enable or disable accounting itself.
+
+Flowtable-offloaded connections also produce lifecycle records. With flowtable
+counters and connection accounting enabled, their counters include offloaded
+traffic. The log does not identify which connections were offloaded: the native
+formatter omits that status, and the kernel clears it when offload ends. A
+DESTROY record therefore cannot reliably establish earlier offload use.
+
+Optionally limit the collector to one or more protocols. Multiple protocols are
+alternatives; omitting the filter includes all protocols:
+
+```text
+set firewall global-options connection-tracking logging filter protocol tcp protocol udp
+```
+
+```text
+show log conntrack
+show log conntrack | match 'DST=192.0.2.10'
+show log conntrack follow
+```
+
+Records use readable `KEY=value` text in `/var/log/nvyr/conntrack.log`, with the
+same rotation policy as other local logs. TCP and UDP records include original
+and reply addresses and ports, including their NAT translations. Other protocols
+contain the fields supported by the native formatter; ICMPv6 currently appears
+as `PROTO=58` without type/code fields.
+
+Logging requires kernel connection events (`auto`, the default, or `enable`).
+Explicitly disabling events while logging is configured is rejected. Connections
+handled by `notrack` produce no connection events. Events that occurred before
+the collector started are not replayed, and overload can lose events; this is
+operational logging rather than a guaranteed accounting ledger.
+
+Address filters and UPDATE events are deferred because of native filtering and
+event-delivery limitations. The formatted protocol-filter value is limited to
+224 characters by ulogd; excessively long combined selections are rejected.
+
 ## Service logs
 
 ```text

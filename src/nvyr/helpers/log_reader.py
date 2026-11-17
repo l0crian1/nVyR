@@ -57,7 +57,7 @@ def select(service, *, root=ROOT, name='', vrf='default', family='', hook='', st
         paths = lambda: [root / 'containers' / (container + '.log')]
     elif service in ('dhcp-server', 'dhcpv6-server', 'dns-forwarding'):
         paths = lambda: [root / service / (identifier(vrf).encode().hex() + '.log')]
-    elif service in SERVICES or service in ('system', 'kernel', 'authentication'):
+    elif service in SERVICES or service in ('system', 'kernel', 'authentication', 'conntrack'):
         paths = lambda: [root / (service + '.log')]
     else:
         raise OperationalError('Unknown log service.')

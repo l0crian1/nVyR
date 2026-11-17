@@ -7,6 +7,7 @@ from nvyr.helpers import domain_groups, geoip, geoip_config, nftables, nftables_
 from nvyr.helpers import interface_patterns, kernel_settings, nftables_helpers, nftables_timeouts
 from nvyr.helpers import nftables_modify
 from nvyr.helpers import nftables_zones
+from nvyr.helpers import logging_formatters
 from nvyr.helpers import nftables_source_validation as source_validation
 from nvyr.helpers.nftables_singletons import verify_group_inclusions
 from nvyr.helpers.template import render
@@ -970,6 +971,20 @@ def verify(configuration, context):
             nat.verify(configuration, context, root=root, family=family)
 
     firewall = lookup(configuration, ('firewall',), {})
+    tracking = lookup(firewall, ('global-options', 'connection-tracking'), {})
+    event_logging = lookup(tracking, ('logging',), None)
+    if event_logging is not None:
+        # A collector needs an explicit event selection; filters alone do not enable logging.
+        if not lookup(event_logging, ('event',), []):
+            raise ValidationError('firewall global-options connection-tracking logging: at least one event is required')
+        # Disabled kernel events cannot feed a configured event collector.
+        if lookup(tracking, ('events',), None) == 'disable':
+            raise ValidationError('firewall global-options connection-tracking logging requires events auto or enable')
+
+        for field, value in logging_formatters.conntrack_filters(event_logging).items():
+            # ulogd's fixed-size configuration strings must fit without truncation.
+            if len(value) >= 225:
+                raise ValidationError(f'connection-tracking logging filter: {field} exceeds the native 224-character limit')
 
     # Helper selection must be complete before generating native objects and their map.
     helpers = lookup(configuration, nftables_helpers.PATH, None)
@@ -1123,6 +1138,7 @@ def generate(configuration, context):
     zones = cgnat.zone_numbers(configuration, context.state_directory)
     rendered = render_rules(configuration, lifecycle, log_groups=log_groups, cgnat_zones=zones)
     return {'rules': rendered + statements, 'list-cache': cache,
+            'conntrack-log': logging_formatters.conntrack(configuration),
             'list-schedules': firewall_lists.schedules(firewall_lists.groups(configuration))}
 
 
@@ -1149,6 +1165,7 @@ def apply(configuration, context):
     """
     cache = configuration['list-cache']
     schedules = configuration['list-schedules']
+    conntrack_log = configuration['conntrack-log']
     configuration = configuration['rules']
     from nvyr.helpers import logging_runtime
     logging_runtime.prepare_groups(context.effective, context.state_directory / 'logging')
@@ -1175,5 +1192,7 @@ def apply(configuration, context):
 
         with recovery_required('Firewall loaded but list schedules could not be installed'):
             task_schedule.reconcile('firewalllists', schedules, recover=context.recovery)
+        with recovery_required('Firewall loaded but connection event logging could not be applied'):
+            logging_runtime.apply_conntrack(conntrack_log)
         firewall_lists.manager.publish(cache)
         logging_runtime.cleanup(context.effective, context.state_directory / 'logging')

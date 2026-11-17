@@ -10,6 +10,31 @@ global-options:
       replace:
         /connection-tracking/description: Connection tracking settings and application helpers
       add:
+        /connection-tracking/children/logging:
+          kind: node
+          anchor: true
+          description: Log selected connection events to the conntrack log
+          children:
+
+            event:
+              kind: leaf_node
+              multi: true
+              description: Connection event to log
+              validators:
+                list: {values: 'new destroy'}
+              choices:
+                new: A connection tracking entry was created
+                destroy: A connection tracking entry was removed or expired
+
+            filter:
+              kind: node
+              anchor: true
+              description: Select which connection protocols are logged
+              children:
+
+                include_schema:
+                - file: nftables/protocol.yaml.i
+
         /connection-tracking/children/helper:
           kind: node
           anchor: true

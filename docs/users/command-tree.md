@@ -125,6 +125,15 @@ set
 │   │   │   │   ├── sip
 │   │   │   │   └── tftp
 │   │   │   ├── log-invalid <none|all|icmp|icmpv6|tcp|udp|udplite>
+│   │   │   ├── logging
+│   │   │   │   ├── event <new|destroy>
+│   │   │   │   └── filter
+│   │   │   │       └── protocol <ip|icmp|igmp|ggp|ipencap|st|tcp|egp|igp|pup|udp|hmp|xns-idp|rdp|
+│   │   │   │                     iso-tp4|dccp|xtp|ddp|idpr-cmtp|ipv6|ipv6-route|ipv6-frag|idrp|
+│   │   │   │                     rsvp|gre|esp|ah|skip|ipv6-icmp|ipv6-nonxt|ipv6-opts|rspf|vmtp|
+│   │   │   │                     eigrp|ospf|ax.25|ipip|etherip|encap|pim|ipcomp|vrrp|l2tp|isis|
+│   │   │   │                     sctp|fc|mobility-header|udplite|mpls-in-ip|manet|hip|shim6|wesp|
+│   │   │   │                     rohc|ethernet>
 │   │   │   ├── maximum-entries <auto|number>
 │   │   │   ├── maximum-expectations <auto|number>
 │   │   │   ├── tcp
@@ -11343,15 +11352,19 @@ operational mode
 │   │   └── vrfs
 │   │       └── <name>
 │   ├── conntrack
+│   │   ├── accounting
 │   │   ├── destination-address <x.x.x.x|x:x:x:x:x:x>
 │   │   ├── detail
 │   │   ├── ipv4
 │   │   ├── ipv6
+│   │   ├── offload
 │   │   ├── protocol <ip|icmp|igmp|ggp|ipencap|st|tcp|egp|igp|pup|udp|hmp|xns-idp|rdp|iso-tp4|dccp|
 │   │   │             xtp|ddp|idpr-cmtp|ipv6|ipv6-route|ipv6-frag|idrp|rsvp|gre|esp|ah|skip|
 │   │   │             ipv6-icmp|ipv6-nonxt|ipv6-opts|rspf|vmtp|eigrp|ospf|ax.25|ipip|etherip|encap|
 │   │   │             pim|ipcomp|vrrp|l2tp|isis|sctp|fc|mobility-header|udplite|mpls-in-ip|manet|
 │   │   │             hip|shim6|wesp|rohc|ethernet>
+│   │   ├── reverse
+│   │   ├── sort-by <packets|bytes|source|destination|state|timeout>
 │   │   ├── source-address <x.x.x.x|x:x:x:x:x:x>
 │   │   ├── state <none|syn-sent|syn-recv|established|fin-wait|close-wait|last-ack|time-wait|close|
 │   │   │          syn-sent2|closed|cookie-wait|cookie-echoed|shutdown-sent|shutdown-recd|
@@ -12306,6 +12319,8 @@ operational mode
 │   │   │   └── follow
 │   │   ├── configd
 │   │   │   └── follow
+│   │   ├── conntrack
+│   │   │   └── follow
 │   │   ├── container <name>
 │   │   │   └── follow
 │   │   ├── dhcp-server
@@ -12600,15 +12615,19 @@ operational mode
 │   │   │   ├── rule <number>
 │   │   │   │   └── detail
 │   │   │   └── translations
+│   │   │       ├── accounting
 │   │   │       ├── destination-address <x.x.x.x|x:x:x:x:x:x>
 │   │   │       ├── detail
 │   │   │       ├── ipv4
 │   │   │       ├── ipv6
+│   │   │       ├── offload
 │   │   │       ├── protocol <ip|icmp|igmp|ggp|ipencap|st|tcp|egp|igp|pup|udp|hmp|xns-idp|rdp|
 │   │   │       │             iso-tp4|dccp|xtp|ddp|idpr-cmtp|ipv6|ipv6-route|ipv6-frag|idrp|rsvp|
 │   │   │       │             gre|esp|ah|skip|ipv6-icmp|ipv6-nonxt|ipv6-opts|rspf|vmtp|eigrp|ospf|
 │   │   │       │             ax.25|ipip|etherip|encap|pim|ipcomp|vrrp|l2tp|isis|sctp|fc|
 │   │   │       │             mobility-header|udplite|mpls-in-ip|manet|hip|shim6|wesp|rohc|ethernet>
+│   │   │       ├── reverse
+│   │   │       ├── sort-by <packets|bytes|source|destination|state|timeout>
 │   │   │       ├── source-address <x.x.x.x|x:x:x:x:x:x>
 │   │   │       └── state <none|syn-sent|syn-recv|established|fin-wait|close-wait|last-ack|
 │   │   │                  time-wait|close|syn-sent2|closed|cookie-wait|cookie-echoed|shutdown-sent|
@@ -12619,30 +12638,38 @@ operational mode
 │   │   │   ├── rule <number>
 │   │   │   │   └── detail
 │   │   │   └── translations
+│   │   │       ├── accounting
 │   │   │       ├── destination-address <x.x.x.x|x:x:x:x:x:x>
 │   │   │       ├── detail
 │   │   │       ├── ipv4
 │   │   │       ├── ipv6
+│   │   │       ├── offload
 │   │   │       ├── protocol <ip|icmp|igmp|ggp|ipencap|st|tcp|egp|igp|pup|udp|hmp|xns-idp|rdp|
 │   │   │       │             iso-tp4|dccp|xtp|ddp|idpr-cmtp|ipv6|ipv6-route|ipv6-frag|idrp|rsvp|
 │   │   │       │             gre|esp|ah|skip|ipv6-icmp|ipv6-nonxt|ipv6-opts|rspf|vmtp|eigrp|ospf|
 │   │   │       │             ax.25|ipip|etherip|encap|pim|ipcomp|vrrp|l2tp|isis|sctp|fc|
 │   │   │       │             mobility-header|udplite|mpls-in-ip|manet|hip|shim6|wesp|rohc|ethernet>
+│   │   │       ├── reverse
+│   │   │       ├── sort-by <packets|bytes|source|destination|state|timeout>
 │   │   │       ├── source-address <x.x.x.x|x:x:x:x:x:x>
 │   │   │       └── state <none|syn-sent|syn-recv|established|fin-wait|close-wait|last-ack|
 │   │   │                  time-wait|close|syn-sent2|closed|cookie-wait|cookie-echoed|shutdown-sent|
 │   │   │                  shutdown-recd|shutdown-ack-sent|heartbeat-sent|heartbeat-acked|request|
 │   │   │                  respond|partopen|open|closereq|closing|timewait>
 │   │   └── translations
+│   │       ├── accounting
 │   │       ├── destination-address <x.x.x.x|x:x:x:x:x:x>
 │   │       ├── detail
 │   │       ├── ipv4
 │   │       ├── ipv6
+│   │       ├── offload
 │   │       ├── protocol <ip|icmp|igmp|ggp|ipencap|st|tcp|egp|igp|pup|udp|hmp|xns-idp|rdp|iso-tp4|
 │   │       │             dccp|xtp|ddp|idpr-cmtp|ipv6|ipv6-route|ipv6-frag|idrp|rsvp|gre|esp|ah|
 │   │       │             skip|ipv6-icmp|ipv6-nonxt|ipv6-opts|rspf|vmtp|eigrp|ospf|ax.25|ipip|
 │   │       │             etherip|encap|pim|ipcomp|vrrp|l2tp|isis|sctp|fc|mobility-header|udplite|
 │   │       │             mpls-in-ip|manet|hip|shim6|wesp|rohc|ethernet>
+│   │       ├── reverse
+│   │       ├── sort-by <packets|bytes|source|destination|state|timeout>
 │   │       ├── source-address <x.x.x.x|x:x:x:x:x:x>
 │   │       └── state <none|syn-sent|syn-recv|established|fin-wait|close-wait|last-ack|time-wait|
 │   │                  close|syn-sent2|closed|cookie-wait|cookie-echoed|shutdown-sent|shutdown-recd|

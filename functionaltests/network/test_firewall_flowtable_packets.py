@@ -26,7 +26,8 @@ from smoketests.assertions import (
     assert_equal, assert_in, assert_connection_accounting,
     firewall_rule_packets, assert_firewall_rule_packets, assert_raises,
 )
-from smoketests.support import configuration_case
+from smoketests.logging_support import CONNTRACK_LOG
+from smoketests.support import configuration_case, wait_for
 
 
 @pytest.fixture(scope='module')
@@ -35,6 +36,7 @@ def global_offload(config, request, routed_network):
     with configuration_case(config, request, routed_network):
         remove_firewall(config)
         config.set('set firewall global-options connection-accounting')
+        config.set('set firewall global-options connection-tracking logging event new event destroy')
         config.set('set firewall flowtable FAST interface veth41050 interface veth41052 counter')
         config.set('set firewall global-options state-policy established action accept')
         config.set('set firewall global-options flowtable FAST')
@@ -148,6 +150,33 @@ def test_ipv6_flowtable_packet_accounting(config):
     source_port, destination_port = exchange_datagrams('ipv6')
     assert_connection_accounting('ipv6', '2001:db8:5050::2', '2001:db8:5051::2', 6,
                                  source_port=source_port, destination_port=destination_port)
+
+
+@pytest.mark.parametrize('family', ['ipv4', 'ipv6'])
+def test_offloaded_connection_events(config, family):
+    """Actually offloaded flows still produce lifecycle records with both counters."""
+    source = '198.18.50.2' if family == 'ipv4' else '2001:db8:5050::2'
+    destination = '198.18.51.2' if family == 'ipv4' else '2001:db8:5051::2'
+    offset = CONNTRACK_LOG.stat().st_size
+    source_port, destination_port = exchange_datagrams(family)
+    selector = ['-f', family, '-p', 'udp', '-s', source, '-d', destination,
+                '--sport', str(source_port), '--dport', str(destination_port)]
+    assert_in('[OFFLOAD]', cmd(['conntrack', '-L', *selector]))
+    assert_connection_accounting(family, source, destination, 6,
+                                 source_port=source_port, destination_port=destination_port)
+    cmd(['conntrack', '-D', *selector])
+
+    identity = f'SRC={source} DST={destination} PROTO=UDP SPT={source_port} DPT={destination_port}'
+    text = wait_for(lambda: CONNTRACK_LOG.read_bytes()[offset:].decode(),
+                    lambda text: any(identity in line and '[DESTROY]' in line for line in text.splitlines()),
+                    description='offloaded connection destroy record')
+    lines = [line for line in text.splitlines() if identity in line]
+    assert_in('[NEW]', '\n'.join(lines))
+    destroyed = next(line for line in lines if '[DESTROY]' in line)
+    for direction in destroyed.split(', REPLY:', 1):
+        fields = dict(item.split('=', 1) for item in direction.split() if '=' in item)
+        assert int(fields['PKTS']) >= 6, destroyed
+        assert int(fields['BYTES']) > 0, destroyed
 
 
 def test_ipv4_prefix_enrollment_counter(config):

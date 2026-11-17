@@ -211,7 +211,7 @@ def iso_build(tmp_path):
         (repository / directory).mkdir(parents=True)
 
     for relative in ['images/build.sh', 'images/assemble.sh', 'images/packages.lock', 'images/container-sources.lock',
-                     'images/frr-sources.lock', 'images/kernel-sources.lock', 'images/router.list.chroot',
+                     'images/frr-sources.lock', 'images/kernel-sources.lock', 'images/ulogd-sources.lock', 'images/router.list.chroot',
                      'images/0100-router.hook.chroot',
                      'build_tools/build_metadata.py', 'build_tools/image_build.py', 'pyproject.toml']:
         shutil.copyfile(ROOT / relative, repository / relative)
@@ -231,6 +231,11 @@ def iso_build(tmp_path):
         'assert sys.argv[1:3] == ["--cache", "/opt/nvyr-frr-packages"]\n'
         'destination = pathlib.Path(sys.argv[-1])\n'
         '(destination / "frr-packages.json").write_text("{}")\n')
+    (repository / 'build_tools/ulogd_packages.py').write_text(
+        'import pathlib, sys\n'
+        'assert sys.argv[1:3] == ["--cache", "/opt/nvyr-ulogd-packages"]\n'
+        'destination = pathlib.Path(sys.argv[-1])\n'
+        '(destination / "ulogd-packages.json").write_text("{}")\n')
     (repository / 'build_tools/kernel_packages.py').write_text(
         'import pathlib, sys\n'
         'assert sys.argv[1:3] == ["--cache", "/opt/nvyr-kernel-packages"]\n'

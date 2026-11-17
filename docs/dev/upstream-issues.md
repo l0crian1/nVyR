@@ -2,12 +2,51 @@
 
 Track dependency defects observed while developing nVyR, the evidence separating
 them from nVyR defects, and the conditions for removing temporary restrictions.
-Last reviewed: 2026-11-11.
+Last reviewed: 2026-11-17.
 
 These entries are local investigation records, not confirmation that an upstream
 report has been filed or a fix merged. No upstream report or verified fix is
 recorded for the issues below. Add report URLs, patch/commit IDs, affected versions,
 and retest results as they become available.
+
+## ULOGD-001: ICMP PRINTFLOW swaps type and code
+
+**Status:** Reproduced with Debian ulogd2 2.0.8-3. The same reversed key
+references remain in upstream 2.0.9. Fixed locally by
+`vendor/ulogd/icmp-printflow.patch`, package `2.0.8-3+nvyr1`.
+
+An IPv4 echo request was printed as `TYPE=0 CODE=8`; the NFCT structured values
+were correctly type 8, code 0. Both PRINTFLOW direction blocks used the code key
+for TYPE and the type key for CODE. The patch swaps those four references.
+Native validation observes `TYPE=8 CODE=0` and unchanged IPv4/IPv6 accounting.
+This does not add ICMPv6 type/code fields or change the native formatter's use of
+the original ICMP fields in both direction blocks.
+
+## ULOGD-002: Immediate NFCT mode ignores UPDATE events
+
+**Status:** UPDATE selection deferred by decision. No local patch.
+
+With `hash_enable=0` and `event_mask=7`, actual TCP transitions and a targeted
+`conntrack -U --mark` produced no UPDATE record. The native
+`event_handler_no_hashtable` switch accepts NEW and DESTROY but rejects UPDATE
+as unsupported. Enabling the userspace hash changes delivery semantics and is
+not a substitute for immediate event logging. Do not expose `update` until
+actual update delivery has been implemented and verified.
+
+## ULOGD-003: Address filters do not reliably separate IPv4 and IPv6
+
+**Status:** Source/destination address filters deferred by decision. No local patch.
+
+In an isolated network namespace, a mixed `127.0.0.1/32,::1/128` destination
+filter omitted IPv6 events; IPv6-only source or destination filters admitted
+IPv4 events. Protocol-only filtering worked for both families. Inspection found
+uninitialized opposite-family exclusion structures in ulogd's NFCT input and
+non-nest-bounded IPv4 attribute searches in libnetfilter_conntrack's filter
+builder. Native fixes must be validated against both families, positive and
+negative cases, and combined source/destination selection before exposing them.
+
+Sources: [ulogd releases](https://www.netfilter.org/projects/ulogd/downloads.html),
+[libnetfilter_conntrack](https://www.netfilter.org/projects/libnetfilter_conntrack/).
 
 ## FRR-RIP-002: Shared policy refresh omits named VRFs
 

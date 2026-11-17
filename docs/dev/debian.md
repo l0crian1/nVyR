@@ -47,7 +47,7 @@ The first line of `images/Dockerfile` controls the builder release version:
 ```
 
 Increase this `MAJOR.MINOR.PATCH` value when changing the builder, including its
-copied kernel/FRR/container source locks, packaging helpers or FRR patches. Commit the
+copied kernel/FRR/container/ulogd source locks, packaging helpers or native patches. Commit the
 version bump together with those changes.
 
 The [Publish image builder workflow](../../.github/workflows/image-builder.yml)
@@ -293,6 +293,13 @@ The repository's package declarations and locks are the source of truth:
 - [`images/frr-sources.lock`](../../images/frr-sources.lock) and
   [`build_tools/frr_packages.py`](../../build_tools/frr_packages.py) define the FRR build.
   Approved patches live in [`vendor/frr/`](../../vendor/frr).
+- [`images/ulogd-sources.lock`](../../images/ulogd-sources.lock) and
+  [`build_tools/ulogd_packages.py`](../../build_tools/ulogd_packages.py) retain
+  Debian Trixie's supported ulogd package with the ICMP PRINTFLOW correction in
+  [`vendor/ulogd/`](../../vendor/ulogd). Debian's Netfilter Packaging Team maintains
+  the base package; upstream is the [Netfilter ulogd project](https://www.netfilter.org/projects/ulogd/).
+  Its checked cache is `/opt/nvyr-ulogd-packages`; rebuild the builder after a
+  source, packaging or patch change.
 - [`images/container-sources.lock`](../../images/container-sources.lock) and
   [`build_tools/container_packages.py`](../../build_tools/container_packages.py) define
   Podman, Netavark, Aardvark DNS and containers-common packaging.
@@ -307,8 +314,9 @@ When changing a pinned dependency, update its lock and any corresponding version
 requirements/checks together, then rebuild and test the resulting image.
 
 Downloaded packages are checked against their hashes and package metadata. Kernel,
-FRR and container packages are cached in `/opt/nvyr-kernel-packages`,
-`/opt/nvyr-frr-packages` and `/opt/nvyr-container-packages` inside the builder; their recipe and artifact hashes
+FRR, container and ulogd packages are cached in `/opt/nvyr-kernel-packages`,
+`/opt/nvyr-frr-packages`, `/opt/nvyr-container-packages` and `/opt/nvyr-ulogd-packages`
+inside the builder; their recipe and artifact hashes
 are verified before ISO staging. Do not bypass those checks to get a build through.
 
 These locks do not freeze every Debian userspace package. Updating the pinned

@@ -654,6 +654,13 @@ def check_logging_container(options):
     assert_log_output('container', '--name', 'BOOTBOX', expected=(marker,))
 
 
+def check_logging_conntrack(options):
+    """Connection events and accounting survive the same acceptance reboot."""
+    from smoketests.logging_support import check_connection_events
+    check_connection_events('ipv4')
+    check_connection_events('ipv6')
+
+
 def check_logging_ipv4_packets(options):
     """A new IPv4 packet must reach its NFLOG file and scoped operational view."""
     path = logging_runtime.group_path('normal:BOOTLOG4')
@@ -907,6 +914,7 @@ CHECKS = (
     check_firewall_imports, check_firewall_ipv4_inclusions, check_firewall_ipv6_inclusions, check_firewall_singleton_inclusions,
     check_firewall_ipv4_prefixes, check_firewall_ipv6_prefixes,
     check_logging_service, check_logging_container, check_logging_ipv4_packets, check_logging_ipv6_packets,
+    check_logging_conntrack,
     check_complete_rule_inventory,
     check_kernel_settings, check_interface_ip_options, check_vrf_conntrack, check_ntp,
     check_firewall_inet, check_firewall_ingress_ipv4, check_firewall_ingress_ipv6,

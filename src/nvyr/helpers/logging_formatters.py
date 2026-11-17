@@ -26,6 +26,29 @@ SERVICES = {
 ROOT = '/var/log/nvyr'
 
 
+def conntrack_filters(options):
+    """Format protocol selection for ulogd's native NFCT subscription."""
+    selected = lookup(options, ('filter',), {})
+    result = {}
+    protocols = lookup(selected, ('protocol',), [])
+    if protocols:
+        result['accept_proto_filter'] = ','.join(sorted(set(protocols)))
+    return result
+
+
+def conntrack(configuration):
+    """Prepare a selected event stream without changing connection accounting."""
+    from nvyr.helpers import template
+
+    options = lookup(configuration, ('firewall', 'global-options', 'connection-tracking', 'logging'), None)
+    if options is None:
+        return None
+    bits = {'new': 1, 'destroy': 4}
+    mask = sum(bits[event] for event in set(lookup(options, ('event',), [])))
+    contents = template.render('logging/conntrack.conf.j2', {'configuration': options, 'event_mask': mask})
+    return {'contents': contents, 'mask': mask}
+
+
 def level(configuration, service):
     options = lookup(configuration, ('system', 'logging'), {})
     return lookup(options, ('service', service, 'level'), options.get('level', 'info'))

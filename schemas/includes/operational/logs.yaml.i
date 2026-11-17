@@ -37,6 +37,18 @@ log:
           command: ["logs.nvyr.op", "show", "system", "--follow"]
           stream: true
 
+    conntrack:
+      kind: node
+      description: Connection creation and removal logs
+      command: ['logs.nvyr.op', 'show', 'conntrack']
+      children:
+
+        follow:
+          kind: node
+          description: Follow new connection event records
+          command: ['logs.nvyr.op', 'show', 'conntrack', '--follow']
+          stream: true
+
     dns:
       kind: node
       description: DNS service logs

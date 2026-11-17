@@ -1,0 +1,12 @@
+{
+  "version": "2.0.8-3+nvyr1",
+  "source_date_epoch": 1794916800,
+  "source": {
+    "url": "https://deb.debian.org/debian/pool/main/u/ulogd2/ulogd2_2.0.8.orig.tar.bz2",
+    "sha256": "4ead6c3970c3f57fa1e89fe2d7cc483ba6fe2bd1b08701521e0b3afd667df291"
+  },
+  "debian": {
+    "url": "https://deb.debian.org/debian/pool/main/u/ulogd2/ulogd2_2.0.8-3.debian.tar.xz",
+    "sha256": "7d0bf949776bd626e580ef002abae2aa3ea8d4d0b5d6a67abf9c70504ad1f36c"
+  }
+}

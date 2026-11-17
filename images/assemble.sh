@@ -77,6 +77,8 @@ python3 "$repository/build_tools/frr_packages.py" \
     --cache /opt/nvyr-frr-packages config/packages.chroot
 python3 "$repository/build_tools/kernel_packages.py" \
     --cache /opt/nvyr-kernel-packages config/packages.chroot
+python3 "$repository/build_tools/ulogd_packages.py" \
+    --cache /opt/nvyr-ulogd-packages config/packages.chroot
 install -m 0644 "$repository/images/packages.lock" config/includes.chroot/usr/share/nvyr/packages.lock
 install -m 0644 "$repository/images/container-sources.lock" config/includes.chroot/usr/share/nvyr/container-sources.lock
 install -m 0644 config/packages.chroot/container-packages.json config/includes.chroot/usr/share/nvyr/container-packages.json
@@ -84,6 +86,8 @@ install -m 0644 "$repository/images/frr-sources.lock" config/includes.chroot/usr
 install -m 0644 config/packages.chroot/frr-packages.json config/includes.chroot/usr/share/nvyr/frr-packages.json
 install -m 0644 "$repository/images/kernel-sources.lock" config/includes.chroot/usr/share/nvyr/kernel-sources.lock
 install -m 0644 config/packages.chroot/kernel-packages.json config/includes.chroot/usr/share/nvyr/kernel-packages.json
+install -m 0644 "$repository/images/ulogd-sources.lock" config/includes.chroot/usr/share/nvyr/ulogd-sources.lock
+install -m 0644 config/packages.chroot/ulogd-packages.json config/includes.chroot/usr/share/nvyr/ulogd-packages.json
 cp "$repository/images/router.list.chroot" config/package-lists/router.list.chroot
 cp "$output/nvyr-router_${version}_all.deb" config/packages.chroot/
 install -m 0755 "$repository/images/0100-router.hook.chroot" config/hooks/live/0100-router.hook.chroot

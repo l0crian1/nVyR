@@ -1,0 +1,15 @@
+[Unit]
+Description=nVyR connection event collector
+After=nvyr-logging-prepare.service nvyr-conntrack.service
+
+[Service]
+Type=simple
+ExecStart=/usr/sbin/ulogd -c /run/nvyr-logging/conntrack.conf -p /run/nvyr-logging/conntrack.pid
+Restart=on-failure
+UMask=0027
+Group=nvyr-access
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/run/nvyr-logging /var/log/nvyr
+RestrictAddressFamilies=AF_NETLINK AF_UNIX AF_INET AF_INET6

@@ -1,0 +1,24 @@
+--- a/util/printflow.c
++++ b/util/printflow.c
+@@ -188,8 +188,8 @@
+ 
+ 	case IPPROTO_ICMP:
+ 		buf_cur += sprintf(buf_cur, "PROTO=ICMP ");
+-		pp_print_u(buf_cur, "TYPE", res, PRINTFLOW_ICMP_CODE, u8);
+-		pp_print_u(buf_cur, "CODE", res, PRINTFLOW_ICMP_TYPE, u8);
++		pp_print_u(buf_cur, "TYPE", res, PRINTFLOW_ICMP_TYPE, u8);
++		pp_print_u(buf_cur, "CODE", res, PRINTFLOW_ICMP_CODE, u8);
+ 		break;
+ 
+ 	case IPPROTO_ESP:
+@@ -239,8 +239,8 @@
+ 
+ 	case IPPROTO_ICMP:
+ 		buf_cur += sprintf(buf_cur, "PROTO=ICMP ");
+-		pp_print_u(buf_cur, "TYPE", res, PRINTFLOW_ICMP_CODE, u8);
+-		pp_print_u(buf_cur, "CODE", res, PRINTFLOW_ICMP_TYPE, u8);
++		pp_print_u(buf_cur, "TYPE", res, PRINTFLOW_ICMP_TYPE, u8);
++		pp_print_u(buf_cur, "CODE", res, PRINTFLOW_ICMP_CODE, u8);
+ 		break;
+ 
+ 	case IPPROTO_ESP:

@@ -8,6 +8,35 @@ children:
     valueless: true
     description: IPv6 connections only
 
+  offload:
+    kind: leaf_node
+    valueless: true
+    description: Currently software- or hardware-offloaded connections only
+
+  accounting:
+    kind: leaf_node
+    valueless: true
+    description: Connections with packet accounting counters available
+
+  sort-by:
+    kind: leaf_node
+    description: Order connections by counters, original endpoints, state or timeout
+    validators:
+      list:
+        values: packets bytes source destination state timeout
+    choices:
+      packets: Combined original and reply packets, highest first
+      bytes: Combined original and reply bytes, highest first
+      source: Original source address, then source port, ascending
+      destination: Original destination address, then destination port, ascending
+      state: Transport state, alphabetical
+      timeout: Remaining timeout, highest first
+
+  reverse:
+    kind: leaf_node
+    valueless: true
+    description: Reverse the selected sort order, keeping missing values last
+
   include_schema:
   - file: nftables/protocol.yaml.i
     remove: [/multi]

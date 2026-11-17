@@ -1,0 +1,15 @@
+[global]
+logfile="syslog"
+loglevel=5
+stack=events:NFCT,addresses:IP2STR,print:PRINTFLOW,file:LOGEMU
+
+[events]
+hash_enable=0
+event_mask={{ event_mask }}
+{% for key, value in conntrack_filters(configuration).items() %}
+{{ key }}={{ value | tojson }}
+{% endfor %}
+
+[file]
+file="{{ logging_root }}/conntrack.log"
+sync=1

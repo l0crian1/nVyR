@@ -1,4 +1,4 @@
-# builder-version: 0.1.6
+# builder-version: 0.1.7
 FROM debian:trixie
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -32,6 +32,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY build_tools/kernel_packages.py /opt/nvyr-build/build_tools/kernel_packages.py
 COPY images/kernel-sources.lock images/Dockerfile /opt/nvyr-build/images/
 RUN python3 /opt/nvyr-build/build_tools/kernel_packages.py /opt/nvyr-kernel-packages
+
+# Keep this small collector build after the routing and kernel package layers.
+COPY build_tools/ulogd_packages.py /opt/nvyr-build/build_tools/ulogd_packages.py
+COPY images/ulogd-sources.lock /opt/nvyr-build/images/ulogd-sources.lock
+COPY vendor/ulogd/icmp-printflow.patch /opt/nvyr-build/vendor/ulogd/icmp-printflow.patch
+RUN python3 /opt/nvyr-build/build_tools/ulogd_packages.py /opt/nvyr-ulogd-packages
 
 WORKDIR /workspace
 

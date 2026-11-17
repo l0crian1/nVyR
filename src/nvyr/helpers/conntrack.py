@@ -136,8 +136,9 @@ def _protocol_number(name):
         raise OperationalError(f'Unknown IP protocol: {name}.') from None
 
 
-def read(*, family=None, protocol=None, state=None, source_address=None, destination_address=None):
-    """Narrow the kernel dump by family/protocol, then compare original addresses and state."""
+def read(*, family=None, protocol=None, state=None, source_address=None, destination_address=None,
+         offload=False, accounting=False):
+    """Narrow the kernel dump, then filter tuples, state, offload and accounting availability."""
     # Restrict the socket family to the two supported IP address families.
     if family not in (None, 'ipv4', 'ipv6'):
         raise OperationalError('Choose ipv4 or ipv6.')
@@ -181,6 +182,11 @@ def read(*, family=None, protocol=None, state=None, source_address=None, destina
                     if any(record['original'].get(field) != value for field, value in addresses.items()):
                         continue
                     if state is not None and record.get('state') != state:
+                        continue
+                    if offload and not any(flag in record['status'] for flag in ('offload', 'hw-offload')):
+                        continue
+                    if accounting and not any(record[direction].get('packets') is not None
+                                              for direction in ('original', 'reply')):
                         continue
                     records.append(record)
     except (OSError, NetlinkError) as error:

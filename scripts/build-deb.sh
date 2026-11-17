@@ -130,7 +130,7 @@ for entry in 'nvyr-kernel-settings nvyr.helpers.kernel_settings main' 'nvyr-netl
     chmod 0755 "$stage/usr/bin/$1"
 done
 
-for unit in nvyr-logging-prepare.service nvyr-nflog@.service nvyr-logrotate.service nvyr-logrotate.timer; do
+for unit in nvyr-logging-prepare.service nvyr-nflog@.service nvyr-conntrack-log.service nvyr-logrotate.service nvyr-logrotate.timer; do
     install -m 0644 "$repository/packaging/$unit" "$stage/usr/lib/systemd/system/$unit"
 done
 install -D -m 0644 "$repository/packaging/20-nvyr-rsyslog.conf" "$stage/usr/lib/systemd/system/rsyslog.service.d/20-nvyr.conf"

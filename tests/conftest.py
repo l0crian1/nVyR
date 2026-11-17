@@ -52,6 +52,7 @@ def isolated_network_profiles(tmp_path, monkeypatch):
     monkeypatch.setattr(logging_runtime, "install", lambda *args, **kwargs: None)
     monkeypatch.setattr(logging_runtime, "cleanup", lambda *args, **kwargs: None)
     monkeypatch.setattr(logging_runtime, "prepare_groups", lambda *args, **kwargs: None)
+    monkeypatch.setattr(logging_runtime, "apply_conntrack", lambda *args, **kwargs: None)
     from nvyr.helpers import interfaces, suggestors, nftables, ssh, accounts, system, frr_reload, kea, ntp
     from nvyr.config_scripts import container as containers
 
