@@ -9,6 +9,18 @@ import tempfile
 import time
 
 from nvyr.config_session import ConfigurationSession
+from nvyr.tree import changes
+
+
+def assert_configuration_restored(original, actual):
+    """Multi-leaf values are unordered; all other configuration must match."""
+    differences = []
+    for path, before, after in changes(original, actual):
+        if isinstance(before, list) and isinstance(after, list) and sorted(before) == sorted(after):
+            continue
+        differences.append(' '.join(path))
+    if differences:
+        raise AssertionError('Configuration differs from the original snapshot at: ' + ', '.join(differences))
 
 
 @contextmanager
@@ -62,8 +74,7 @@ def preserved_configuration(session, *, directory=None, report=print):
                 session.discard()
                 session.load(original, replace=True)
                 session.commit()
-                if session.get_config() != original:
-                    raise RuntimeError('Running configuration differs from the original snapshot')
+                assert_configuration_restored(original, session.get_config())
             except BaseException:
                 report(f'CONFIGURATION RESTORATION FAILED. Recovery snapshot retained: {snapshot}')
                 raise

@@ -1,0 +1,9 @@
+# Publicly known test keys. Two local peers exercise boot replay and inner VRF routing.
+set interfaces wireguard wg995 private-key AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE= listen-port 51995 mtu 1380 firewall-mark 0x4004
+set interfaces wireguard wg995 address 198.18.212.1/30 address 2001:db8:212::1/64 description "Boot WireGuard default VRF"
+set interfaces wireguard wg995 peer boot public-key zo060cy2M+x7cMF4FKXHbs0CloUFDTRHRboFhw5YfVk= preshared-key AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM= allowed-ips 198.18.212.2/32 allowed-ips 2001:db8:212::2/128
+set interfaces wireguard wg995 peer boot endpoint address 127.0.0.1 port 51996
+set interfaces wireguard wg996 private-key AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI= listen-port 51996 vrf BOOTLEFT mtu 1380
+set interfaces wireguard wg996 address 198.18.212.2/30 address 2001:db8:212::2/64
+set interfaces wireguard wg996 peer boot public-key pOCSkrZRwni5dyxWn1+puxPZBrRqtoyd+dwrRAn4ogk= preshared-key AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM= allowed-ips 198.18.212.1/32 allowed-ips 2001:db8:212::1/128 persistent-keepalive 25
+set interfaces wireguard wg996 peer boot endpoint address 127.0.0.1 port 51995

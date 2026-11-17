@@ -17,7 +17,8 @@ from nvyr.errors import OperationalError
 
 INTF_TYPES = {
     'ethernet': 'eth',
-    'dummy': 'dum'
+    'dummy': 'dum',
+    'wireguard': 'wg',
 }
 
 

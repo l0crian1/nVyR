@@ -1,5 +1,7 @@
 # Interface configuration
 
+For encrypted routed tunnels, see [WireGuard interfaces](wireguard.md).
+
 For implementation and testing, see the [developer guide](../dev/interfaces.md).
 
 Configure physical and virtual interfaces, their addresses, VLANs, VRF membership,

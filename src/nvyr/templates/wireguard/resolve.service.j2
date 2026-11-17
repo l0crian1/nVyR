@@ -1,0 +1,12 @@
+[Unit]
+Description=nVyR initial WireGuard endpoint resolution for {{ interface }}
+After=nvyr-configd.service
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/wireguard.nvyr.op refresh {{ interface }} --unresolved
+Restart=on-failure
+RestartSec=15s
+StandardOutput=append:{{ log }}
+StandardError=inherit

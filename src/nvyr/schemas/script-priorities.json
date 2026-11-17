@@ -79,6 +79,13 @@
     ]
   },
   {
+    "script": "wireguard",
+    "priority": 10,
+    "paths": [
+      "interfaces wireguard <name>"
+    ]
+  },
+  {
     "script": "bond",
     "priority": 11,
     "paths": [

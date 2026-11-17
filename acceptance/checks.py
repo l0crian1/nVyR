@@ -898,7 +898,26 @@ def check_mpls_ldp(options):
         assert_in('veth997', cmd(['mpls.nvyr.op', 'show', f'show mpls ldp {family} interface']))
 
 
+def check_wireguard(options):
+    """Replayed keys establish dual-stack tunnels with inner traffic in a VRF."""
+    from nvyr.helpers import wireguard
+
+    assert_link('wg995', kind='wireguard', mtu=1380, up=True)
+    assert_link('wg996', kind='wireguard', master='BOOTLEFT', mtu=1380, up=True)
+    for family, address in (('-4', '198.18.212.2'), ('-6', '2001:db8:212::2')):
+        cmd(['ping', family, '-n', '-c', '2', '-W', '3', address])
+    for name, port in (('wg995', 51995), ('wg996', 51996)):
+        native = wireguard.state(name)
+        assert_equal(native['listen-port'], port)
+        peer = next(iter(native['peers'].values()))
+        assert peer['handshake'] > 0 and peer['sent'] > 0 and peer['received'] > 0
+        assert peer['preshared']
+    assert_equal(wireguard.state('wg995')['firewall-mark'], '0x4004')
+    assert_operational_output('show wireguard wg995 peer boot detail', 'Allowed IPs', '198.18.212.2/32')
+
+
 CHECKS = (
+    check_wireguard,
     check_bgp_vpn,
     check_mpls_ldp,
     check_bgp_labeled_unicast,

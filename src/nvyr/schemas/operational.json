@@ -475,6 +475,82 @@
       "access": "net-admin",
       "description": "Update resources",
       "children": {
+        "wireguard": {
+          "kind": "tag_node",
+          "access": "net-admin",
+          "description": "Resolve configured hostname endpoints now",
+          "validators": {
+            "mode": "AND",
+            "checks": {
+              "regex": {
+                "name": "regex",
+                "args": {
+                  "pattern": "wg[0-9]+"
+                }
+              }
+            }
+          },
+          "suggestors": [
+            {
+              "name": "config-path",
+              "args": {
+                "path": "interfaces wireguard"
+              }
+            }
+          ],
+          "hints": {
+            "wgN": "WireGuard interface name"
+          },
+          "command": {
+            "argv": [
+              "wireguard.nvyr.op",
+              "refresh",
+              "@3"
+            ]
+          },
+          "unattended": true,
+          "children": {
+            "peer": {
+              "kind": "tag_node",
+              "description": "Refresh one peer endpoint",
+              "validators": {
+                "mode": "AND",
+                "checks": {
+                  "regex": {
+                    "name": "regex",
+                    "args": {
+                      "pattern": "[A-Za-z0-9][A-Za-z0-9_-]{0,62}"
+                    }
+                  }
+                }
+              },
+              "suggestors": [
+                {
+                  "name": "wireguard-peers"
+                }
+              ],
+              "hints": {
+                "name": "Configured peer name"
+              },
+              "children": {
+                "endpoint": {
+                  "kind": "node",
+                  "description": "Resolve the hostname even when a recent handshake exists",
+                  "command": {
+                    "argv": [
+                      "wireguard.nvyr.op",
+                      "refresh",
+                      "@3",
+                      "--peer",
+                      "@5"
+                    ]
+                  },
+                  "unattended": true
+                }
+              }
+            }
+          }
+        },
         "firewall": {
           "kind": "node",
           "description": "Firewall data sources",
@@ -1609,6 +1685,35 @@
       "description": "Generate diagnostic reports",
       "access": "net-admin",
       "children": {
+        "wireguard": {
+          "kind": "node",
+          "access": "net-admin",
+          "description": "Generate WireGuard keys without changing configuration",
+          "children": {
+            "key-pair": {
+              "kind": "node",
+              "description": "Generate a private and public key pair",
+              "command": {
+                "argv": [
+                  "wireguard.nvyr.op",
+                  "generate",
+                  "key-pair"
+                ]
+              }
+            },
+            "preshared-key": {
+              "kind": "node",
+              "description": "Generate an additional symmetric key",
+              "command": {
+                "argv": [
+                  "wireguard.nvyr.op",
+                  "generate",
+                  "preshared-key"
+                ]
+              }
+            }
+          }
+        },
         "system": {
           "kind": "node",
           "description": "System diagnostic reports",
@@ -12730,6 +12835,77 @@
                 ]
               }
             },
+            "wireguard": {
+              "kind": "tag_node",
+              "optional_value": true,
+              "description": "WireGuard interface addresses and kernel state",
+              "command": {
+                "argv": [
+                  "interfaces.nvyr.op",
+                  "show",
+                  "--intf_type",
+                  "wireguard",
+                  "--intf_name",
+                  "@4"
+                ]
+              },
+              "validators": {
+                "mode": "AND",
+                "checks": {
+                  "regex": {
+                    "name": "regex",
+                    "args": {
+                      "pattern": "wg[0-9]+"
+                    }
+                  }
+                }
+              },
+              "suggestors": [
+                {
+                  "name": "interfaces",
+                  "args": {
+                    "prefix": "wg"
+                  }
+                }
+              ],
+              "hints": {
+                "wgN": "WireGuard interface name"
+              },
+              "children": {
+                "detail": {
+                  "kind": "leaf_node",
+                  "valueless": true,
+                  "description": "Detailed kernel interface information",
+                  "command": {
+                    "argv": [
+                      "interfaces.nvyr.op",
+                      "show",
+                      "--intf_type",
+                      "wireguard",
+                      "--intf_name",
+                      "@4",
+                      "--detail"
+                    ]
+                  }
+                },
+                "statistics": {
+                  "kind": "leaf_node",
+                  "valueless": true,
+                  "description": "Interface packet and byte counters",
+                  "command": {
+                    "argv": [
+                      "interfaces.nvyr.op",
+                      "show",
+                      "--intf_type",
+                      "wireguard",
+                      "--intf_name",
+                      "@4",
+                      "--statistics"
+                    ]
+                  }
+                }
+              }
+            },
             "ethernet": {
               "kind": "tag_node",
               "optional_value": true,
@@ -12861,6 +13037,120 @@
                       "--intf_name",
                       "@4"
                     ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "wireguard": {
+          "kind": "node",
+          "description": "WireGuard peers, endpoints, handshakes and transfer counters",
+          "command": {
+            "argv": [
+              "wireguard.nvyr.op",
+              "show"
+            ]
+          },
+          "children": {
+            "interface": {
+              "kind": "tag_node",
+              "positional": true,
+              "description": "WireGuard interface",
+              "validators": {
+                "mode": "AND",
+                "checks": {
+                  "regex": {
+                    "name": "regex",
+                    "args": {
+                      "pattern": "wg[0-9]+"
+                    }
+                  }
+                }
+              },
+              "suggestors": [
+                {
+                  "name": "interfaces",
+                  "args": {
+                    "prefix": "wg"
+                  }
+                }
+              ],
+              "hints": {
+                "wgN": "WireGuard interface name"
+              },
+              "command": {
+                "argv": [
+                  "wireguard.nvyr.op",
+                  "show",
+                  "--interface",
+                  "@3"
+                ]
+              },
+              "children": {
+                "detail": {
+                  "kind": "leaf_node",
+                  "valueless": true,
+                  "description": "Public keys, allowed prefixes and keepalive settings",
+                  "command": {
+                    "argv": [
+                      "wireguard.nvyr.op",
+                      "show",
+                      "--interface",
+                      "@3",
+                      "--detail"
+                    ]
+                  }
+                },
+                "peer": {
+                  "kind": "tag_node",
+                  "description": "Named peer",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[A-Za-z0-9][A-Za-z0-9_-]{0,62}"
+                        }
+                      }
+                    }
+                  },
+                  "suggestors": [
+                    {
+                      "name": "wireguard-peers"
+                    }
+                  ],
+                  "hints": {
+                    "name": "Configured peer name"
+                  },
+                  "command": {
+                    "argv": [
+                      "wireguard.nvyr.op",
+                      "show",
+                      "--interface",
+                      "@3",
+                      "--peer",
+                      "@5"
+                    ]
+                  },
+                  "children": {
+                    "detail": {
+                      "kind": "leaf_node",
+                      "valueless": true,
+                      "description": "Peer public key, allowed prefixes and keepalive settings",
+                      "command": {
+                        "argv": [
+                          "wireguard.nvyr.op",
+                          "show",
+                          "--interface",
+                          "@3",
+                          "--peer",
+                          "@5",
+                          "--detail"
+                        ]
+                      }
+                    }
                   }
                 }
               }

@@ -25,7 +25,7 @@ behavior, connect the spare port to a test DHCP server and add `--ethernet-dhcp`
 sudo python3 -m pytest -v -s /usr/lib/nvyr/functionaltests/interfaces/test_ethernet.py --ethernet-interface eth1 --ethernet-dhcp
 ```
 
-Run the integrated BGP, static routing and firewall scenario:
+Run the integrated BGP, static routing, WireGuard and firewall scenario:
 
 ```bash
 sudo python3 -m pytest -v -s /usr/lib/nvyr/functionaltests/network/ --durations=20

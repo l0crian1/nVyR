@@ -14,6 +14,7 @@ import uuid
 
 from acceptance import baseline, snapshots
 from acceptance.checks import CheckSkipped
+from smoketests.support import assert_configuration_restored
 from nvyr.config_session import ConfigurationSession
 from nvyr.protocol import Client
 from nvyr.storage import atomic_json, read_saved, sync_directory
@@ -221,8 +222,7 @@ def restore(directory):
         config.request_lock()
         config.load(original['running'], replace=True)
         config.commit(comment='Restore before boot acceptance')
-        if config.get_config() != original['running']:
-            raise AssertionError('Original running configuration was not restored')
+        assert_configuration_restored(original['running'], config.get_config())
         restore_saved(original['saved_bytes'])
         actual = base64.b64encode(SAVED.read_bytes()).decode() if SAVED.exists() else None
         if actual != original['saved_bytes']:

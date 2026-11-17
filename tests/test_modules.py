@@ -5,7 +5,7 @@ from types import SimpleNamespace
 import pytest
 
 from nvyr.config_scripts import (
-    container, firewall, interface_ethernet, interface_dummy, interface_virtual_ethernet,
+    container, firewall, interface_ethernet, interface_dummy, interface_virtual_ethernet, interface_wireguard,
     interface_bridge, interface_bond, interface_loopback, protocols_static, protocols_bgp, policy, logging,
     service_ssh, service_dhcp, system_dns, system_login, system_hostname, system_configuration, system_ntp, system_cpu,
     system_static_hosts, system_task, system_timezone, vrf, vrf_conntrack,
@@ -32,6 +32,7 @@ def test_bundled_owners_use_scripts_directly_without_lifecycle_recording():
         'virtual-ethernet': interface_virtual_ethernet,
         'bridge': interface_bridge,
         'bond': interface_bond,
+        'wireguard': interface_wireguard,
         'vrf': vrf,
         'vrf_conntrack': vrf_conntrack,
         'static': protocols_static,

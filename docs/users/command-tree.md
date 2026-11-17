@@ -5903,25 +5903,150 @@ set
 │   ├── loopback <lo>
 │   │   ├── address <x.x.x.x/x|x:x:x:x:x:x/x>
 │   │   └── description <text>
-│   └── virtual-ethernet <vethN>
+│   ├── virtual-ethernet <vethN>
+│   │   ├── address <x.x.x.x/x|x:x:x:x:x:x/x>
+│   │   ├── description <text>
+│   │   ├── disable
+│   │   ├── ip
+│   │   │   ├── accept-local
+│   │   │   ├── arp-accept <disable|enable|same-subnet>
+│   │   │   ├── arp-announce <any|subnet|best-local>
+│   │   │   ├── arp-cache-timeout <duration>
+│   │   │   ├── arp-entry <x.x.x.x>
+│   │   │   │   ├── description <text>
+│   │   │   │   └── mac-address <xx:xx:xx:xx:xx:xx>
+│   │   │   ├── arp-filter <enable|disable>
+│   │   │   ├── arp-ignore <0|1|2|3|8>
+│   │   │   ├── arp-notify <enable|disable>
+│   │   │   ├── arp-proxy <enable|disable>
+│   │   │   ├── arp-proxy-pvlan <enable|disable>
+│   │   │   ├── arp-retransmit-interval <duration>
+│   │   │   ├── arp-stale-time <duration>
+│   │   │   ├── directed-broadcast <enable|disable>
+│   │   │   ├── disable-forwarding
+│   │   │   ├── log-martians <enable|disable>
+│   │   │   ├── promote-secondaries
+│   │   │   ├── receive-redirects <enable|disable>
+│   │   │   ├── route-localnet
+│   │   │   ├── send-redirects <enable|disable>
+│   │   │   └── source-route <enable|disable>
+│   │   ├── ipv6
+│   │   │   ├── accept-router-advertisements
+│   │   │   ├── address-generation <eui64|stable-privacy>
+│   │   │   ├── autoconf
+│   │   │   ├── disable
+│   │   │   ├── duplicate-address-detection
+│   │   │   │   ├── disable
+│   │   │   │   └── probes <number>
+│   │   │   ├── eui64 <address>
+│   │   │   ├── hop-limit <number>
+│   │   │   ├── interface-identifier <address>
+│   │   │   ├── link-local-address <address>
+│   │   │   ├── maximum-autoconf-addresses <number>
+│   │   │   ├── neighbor <h:h::h>
+│   │   │   │   ├── description <text>
+│   │   │   │   └── mac-address <xx:xx:xx:xx:xx:xx>
+│   │   │   ├── neighbor-reachable-time <duration>
+│   │   │   ├── neighbor-retransmit-interval <duration>
+│   │   │   ├── neighbor-stale-time <duration>
+│   │   │   ├── no-default-link-local
+│   │   │   ├── no-default-route
+│   │   │   ├── no-ra-mtu
+│   │   │   ├── proxy-ndp
+│   │   │   ├── receive-redirects <enable|disable>
+│   │   │   ├── source-route <disable|routing-header-2>
+│   │   │   └── temporary-addresses <disable|prefer-public|prefer-temporary>
+│   │   ├── link-group <0-4294967295>
+│   │   ├── mac <xx:xx:xx:xx:xx:xx>
+│   │   ├── mtu <1280-65535>
+│   │   ├── peer-name <vethN>
+│   │   ├── vif <1-4094>
+│   │   │   ├── address <dhcpv6|dhcp|x.x.x.x/x|x:x:x:x:x:x/x>
+│   │   │   ├── description <text>
+│   │   │   ├── dhcp-options
+│   │   │   │   ├── client-id
+│   │   │   │   │   ├── hex <hex>
+│   │   │   │   │   └── text <text>
+│   │   │   │   ├── default-route-distance <1-254>
+│   │   │   │   ├── host-name <hostname>
+│   │   │   │   ├── mtu
+│   │   │   │   ├── no-default-route
+│   │   │   │   ├── user-class <text>
+│   │   │   │   └── vendor-class-id <text>
+│   │   │   ├── dhcpv6-options
+│   │   │   │   ├── duid <hex>
+│   │   │   │   ├── no-release
+│   │   │   │   ├── no-request-dns
+│   │   │   │   ├── no-request-domain-search
+│   │   │   │   ├── parameters-only
+│   │   │   │   └── rapid-commit
+│   │   │   ├── dhcpv6-pd <iaid>
+│   │   │   │   ├── interface <interface>
+│   │   │   │   │   ├── address <number>
+│   │   │   │   │   └── subnet-id <number>
+│   │   │   │   └── length <1-64>
+│   │   │   ├── disable
+│   │   │   ├── ip
+│   │   │   │   ├── accept-local
+│   │   │   │   ├── arp-accept <disable|enable|same-subnet>
+│   │   │   │   ├── arp-announce <any|subnet|best-local>
+│   │   │   │   ├── arp-cache-timeout <duration>
+│   │   │   │   ├── arp-entry <x.x.x.x>
+│   │   │   │   │   ├── description <text>
+│   │   │   │   │   └── mac-address <xx:xx:xx:xx:xx:xx>
+│   │   │   │   ├── arp-filter <enable|disable>
+│   │   │   │   ├── arp-ignore <0|1|2|3|8>
+│   │   │   │   ├── arp-notify <enable|disable>
+│   │   │   │   ├── arp-proxy <enable|disable>
+│   │   │   │   ├── arp-proxy-pvlan <enable|disable>
+│   │   │   │   ├── arp-retransmit-interval <duration>
+│   │   │   │   ├── arp-stale-time <duration>
+│   │   │   │   ├── directed-broadcast <enable|disable>
+│   │   │   │   ├── disable-forwarding
+│   │   │   │   ├── log-martians <enable|disable>
+│   │   │   │   ├── promote-secondaries
+│   │   │   │   ├── receive-redirects <enable|disable>
+│   │   │   │   ├── route-localnet
+│   │   │   │   ├── send-redirects <enable|disable>
+│   │   │   │   └── source-route <enable|disable>
+│   │   │   ├── ipv6
+│   │   │   │   ├── accept-router-advertisements
+│   │   │   │   ├── address-generation <eui64|stable-privacy>
+│   │   │   │   ├── autoconf
+│   │   │   │   ├── disable
+│   │   │   │   ├── duplicate-address-detection
+│   │   │   │   │   ├── disable
+│   │   │   │   │   └── probes <number>
+│   │   │   │   ├── eui64 <address>
+│   │   │   │   ├── hop-limit <number>
+│   │   │   │   ├── interface-identifier <address>
+│   │   │   │   ├── link-local-address <address>
+│   │   │   │   ├── maximum-autoconf-addresses <number>
+│   │   │   │   ├── neighbor <h:h::h>
+│   │   │   │   │   ├── description <text>
+│   │   │   │   │   └── mac-address <xx:xx:xx:xx:xx:xx>
+│   │   │   │   ├── neighbor-reachable-time <duration>
+│   │   │   │   ├── neighbor-retransmit-interval <duration>
+│   │   │   │   ├── neighbor-stale-time <duration>
+│   │   │   │   ├── no-default-link-local
+│   │   │   │   ├── no-default-route
+│   │   │   │   ├── no-ra-mtu
+│   │   │   │   ├── proxy-ndp
+│   │   │   │   ├── receive-redirects <enable|disable>
+│   │   │   │   ├── source-route <disable|routing-header-2>
+│   │   │   │   └── temporary-addresses <disable|prefer-public|prefer-temporary>
+│   │   │   ├── link-group <0-4294967295>
+│   │   │   ├── mac <xx:xx:xx:xx:xx:xx>
+│   │   │   ├── mtu <1280-65535>
+│   │   │   └── vrf <name>
+│   │   └── vrf <name>
+│   └── wireguard <wgN>
 │       ├── address <x.x.x.x/x|x:x:x:x:x:x/x>
 │       ├── description <text>
 │       ├── disable
+│       ├── firewall-mark <mark>
 │       ├── ip
 │       │   ├── accept-local
-│       │   ├── arp-accept <disable|enable|same-subnet>
-│       │   ├── arp-announce <any|subnet|best-local>
-│       │   ├── arp-cache-timeout <duration>
-│       │   ├── arp-entry <x.x.x.x>
-│       │   │   ├── description <text>
-│       │   │   └── mac-address <xx:xx:xx:xx:xx:xx>
-│       │   ├── arp-filter <enable|disable>
-│       │   ├── arp-ignore <0|1|2|3|8>
-│       │   ├── arp-notify <enable|disable>
-│       │   ├── arp-proxy <enable|disable>
-│       │   ├── arp-proxy-pvlan <enable|disable>
-│       │   ├── arp-retransmit-interval <duration>
-│       │   ├── arp-stale-time <duration>
 │       │   ├── directed-broadcast <enable|disable>
 │       │   ├── disable-forwarding
 │       │   ├── log-martians <enable|disable>
@@ -5938,14 +6063,9 @@ set
 │       │   ├── duplicate-address-detection
 │       │   │   ├── disable
 │       │   │   └── probes <number>
-│       │   ├── eui64 <address>
 │       │   ├── hop-limit <number>
-│       │   ├── interface-identifier <address>
 │       │   ├── link-local-address <address>
 │       │   ├── maximum-autoconf-addresses <number>
-│       │   ├── neighbor <h:h::h>
-│       │   │   ├── description <text>
-│       │   │   └── mac-address <xx:xx:xx:xx:xx:xx>
 │       │   ├── neighbor-reachable-time <duration>
 │       │   ├── neighbor-retransmit-interval <duration>
 │       │   ├── neighbor-stale-time <duration>
@@ -5957,88 +6077,21 @@ set
 │       │   ├── source-route <disable|routing-header-2>
 │       │   └── temporary-addresses <disable|prefer-public|prefer-temporary>
 │       ├── link-group <0-4294967295>
-│       ├── mac <xx:xx:xx:xx:xx:xx>
+│       ├── listen-port <0-65535>
 │       ├── mtu <1280-65535>
-│       ├── peer-name <vethN>
-│       ├── vif <1-4094>
-│       │   ├── address <dhcpv6|dhcp|x.x.x.x/x|x:x:x:x:x:x/x>
+│       ├── peer <name>
+│       │   ├── allowed-ips <prefix>
 │       │   ├── description <text>
-│       │   ├── dhcp-options
-│       │   │   ├── client-id
-│       │   │   │   ├── hex <hex>
-│       │   │   │   └── text <text>
-│       │   │   ├── default-route-distance <1-254>
-│       │   │   ├── host-name <hostname>
-│       │   │   ├── mtu
-│       │   │   ├── no-default-route
-│       │   │   ├── user-class <text>
-│       │   │   └── vendor-class-id <text>
-│       │   ├── dhcpv6-options
-│       │   │   ├── duid <hex>
-│       │   │   ├── no-release
-│       │   │   ├── no-request-dns
-│       │   │   ├── no-request-domain-search
-│       │   │   ├── parameters-only
-│       │   │   └── rapid-commit
-│       │   ├── dhcpv6-pd <iaid>
-│       │   │   ├── interface <interface>
-│       │   │   │   ├── address <number>
-│       │   │   │   └── subnet-id <number>
-│       │   │   └── length <1-64>
 │       │   ├── disable
-│       │   ├── ip
-│       │   │   ├── accept-local
-│       │   │   ├── arp-accept <disable|enable|same-subnet>
-│       │   │   ├── arp-announce <any|subnet|best-local>
-│       │   │   ├── arp-cache-timeout <duration>
-│       │   │   ├── arp-entry <x.x.x.x>
-│       │   │   │   ├── description <text>
-│       │   │   │   └── mac-address <xx:xx:xx:xx:xx:xx>
-│       │   │   ├── arp-filter <enable|disable>
-│       │   │   ├── arp-ignore <0|1|2|3|8>
-│       │   │   ├── arp-notify <enable|disable>
-│       │   │   ├── arp-proxy <enable|disable>
-│       │   │   ├── arp-proxy-pvlan <enable|disable>
-│       │   │   ├── arp-retransmit-interval <duration>
-│       │   │   ├── arp-stale-time <duration>
-│       │   │   ├── directed-broadcast <enable|disable>
-│       │   │   ├── disable-forwarding
-│       │   │   ├── log-martians <enable|disable>
-│       │   │   ├── promote-secondaries
-│       │   │   ├── receive-redirects <enable|disable>
-│       │   │   ├── route-localnet
-│       │   │   ├── send-redirects <enable|disable>
-│       │   │   └── source-route <enable|disable>
-│       │   ├── ipv6
-│       │   │   ├── accept-router-advertisements
-│       │   │   ├── address-generation <eui64|stable-privacy>
-│       │   │   ├── autoconf
-│       │   │   ├── disable
-│       │   │   ├── duplicate-address-detection
-│       │   │   │   ├── disable
-│       │   │   │   └── probes <number>
-│       │   │   ├── eui64 <address>
-│       │   │   ├── hop-limit <number>
-│       │   │   ├── interface-identifier <address>
-│       │   │   ├── link-local-address <address>
-│       │   │   ├── maximum-autoconf-addresses <number>
-│       │   │   ├── neighbor <h:h::h>
-│       │   │   │   ├── description <text>
-│       │   │   │   └── mac-address <xx:xx:xx:xx:xx:xx>
-│       │   │   ├── neighbor-reachable-time <duration>
-│       │   │   ├── neighbor-retransmit-interval <duration>
-│       │   │   ├── neighbor-stale-time <duration>
-│       │   │   ├── no-default-link-local
-│       │   │   ├── no-default-route
-│       │   │   ├── no-ra-mtu
-│       │   │   ├── proxy-ndp
-│       │   │   ├── receive-redirects <enable|disable>
-│       │   │   ├── source-route <disable|routing-header-2>
-│       │   │   └── temporary-addresses <disable|prefer-public|prefer-temporary>
-│       │   ├── link-group <0-4294967295>
-│       │   ├── mac <xx:xx:xx:xx:xx:xx>
-│       │   ├── mtu <1280-65535>
-│       │   └── vrf <name>
+│       │   ├── endpoint
+│       │   │   ├── address <address>
+│       │   │   ├── address-family <auto|ipv4|ipv6>
+│       │   │   ├── port <1-65535>
+│       │   │   └── resolve-interval <duration>
+│       │   ├── persistent-keepalive <0-65535>
+│       │   ├── preshared-key <key>
+│       │   └── public-key <key>
+│       ├── private-key <key>
 │       └── vrf <name>
 ├── nat
 │   ├── cgnat
@@ -10507,8 +10560,11 @@ operational mode
 │       └── developer-access
 ├── exit
 ├── generate
-│   └── system
-│       └── diagnostics
+│   ├── system
+│   │   └── diagnostics
+│   └── wireguard
+│       ├── key-pair
+│       └── preshared-key
 ├── install
 │   └── image
 ├── lookup <name|address>
@@ -12496,7 +12552,10 @@ operational mode
 │   │   ├── offload
 │   │   ├── queues
 │   │   ├── statistics
-│   │   └── transceiver
+│   │   ├── transceiver
+│   │   └── wireguard [<wgN>]
+│   │       ├── detail
+│   │       └── statistics
 │   ├── ip
 │   │   ├── access-list
 │   │   │   └── <name>
@@ -13471,7 +13530,12 @@ operational mode
 │   ├── uptime
 │   ├── users
 │   ├── version
-│   └── vrf [<name>]
+│   ├── vrf [<name>]
+│   └── wireguard
+│       └── <wgN>
+│           ├── detail
+│           └── peer <name>
+│               └── detail
 ├── start
 │   └── system
 │       └── task <name>
@@ -13502,37 +13566,40 @@ operational mode
     │   └── image
     │       ├── container <name>
     │       └── name <image>
-    └── firewall
-        ├── domain-group
-        │   ├── ipv4 [<name>]
-        │   └── ipv6 [<name>]
-        ├── geoip
-        └── group
-            ├── address-group
-            │   ├── ipv4 <name>
-            │   │   └── from-list <name>
-            │   └── ipv6 <name>
-            │       └── from-list <name>
-            ├── interface-group <name>
-            │   └── from-list <name>
-            ├── mac-group <name>
-            │   └── from-list <name>
-            ├── map
-            │   ├── inet <name>
-            │   │   └── from-csv <name>
-            │   ├── ipv4 <name>
-            │   │   └── from-csv <name>
-            │   └── ipv6 <name>
-            │       └── from-csv <name>
-            ├── match-group
-            │   ├── inet <name>
-            │   │   └── from-csv <name>
-            │   ├── ipv4 <name>
-            │   │   └── from-csv <name>
-            │   └── ipv6 <name>
-            │       └── from-csv <name>
-            └── port-group <name>
-                └── from-list <name>
+    ├── firewall
+    │   ├── domain-group
+    │   │   ├── ipv4 [<name>]
+    │   │   └── ipv6 [<name>]
+    │   ├── geoip
+    │   └── group
+    │       ├── address-group
+    │       │   ├── ipv4 <name>
+    │       │   │   └── from-list <name>
+    │       │   └── ipv6 <name>
+    │       │       └── from-list <name>
+    │       ├── interface-group <name>
+    │       │   └── from-list <name>
+    │       ├── mac-group <name>
+    │       │   └── from-list <name>
+    │       ├── map
+    │       │   ├── inet <name>
+    │       │   │   └── from-csv <name>
+    │       │   ├── ipv4 <name>
+    │       │   │   └── from-csv <name>
+    │       │   └── ipv6 <name>
+    │       │       └── from-csv <name>
+    │       ├── match-group
+    │       │   ├── inet <name>
+    │       │   │   └── from-csv <name>
+    │       │   ├── ipv4 <name>
+    │       │   │   └── from-csv <name>
+    │       │   └── ipv6 <name>
+    │       │       └── from-csv <name>
+    │       └── port-group <name>
+    │           └── from-list <name>
+    └── wireguard <wgN>
+        └── peer <name>
+            └── endpoint
 ```
 
 ## Pipe modifiers

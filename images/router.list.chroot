@@ -28,6 +28,7 @@ dnsutils
 mtr-tiny
 curl
 iproute2
+wireguard-tools
 net-tools
 netcat-openbsd
 procps

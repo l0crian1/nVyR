@@ -8,6 +8,8 @@ import re
 import math
 import shlex
 import subprocess
+import base64
+import binascii
 
 
 TCP_FLAGS = {
@@ -194,6 +196,40 @@ def register(name, label, *, prepare=None):
         return function
 
     return decorate
+
+
+@register('wireguard-key', 'a canonical base64-encoded, nonzero 32-byte WireGuard key')
+def wireguard_key(value):
+    try:
+        key = base64.b64decode(value, validate=True)
+    except (ValueError, binascii.Error):
+        return False
+    return len(key) == 32 and any(key) and base64.b64encode(key).decode() == value
+
+
+@register('wireguard-endpoint', 'an IPv4 address, IPv6 address, or DNS hostname')
+def wireguard_endpoint(value):
+    try:
+        address = ipaddress.ip_address(value)
+    except ValueError:
+        return dns_name(value)
+    return '%' not in value and not address.is_unspecified and not address.is_multicast
+
+
+@register('ip-interface', 'an IPv4 or IPv6 address with a prefix length')
+def ip_interface(value):
+    try:
+        return '/' in value and '%' not in value and bool(ipaddress.ip_interface(value))
+    except ValueError:
+        return False
+
+
+@register('ip-prefix', 'an IPv4 or IPv6 network prefix without host bits')
+def ip_prefix(value):
+    try:
+        return '/' in value and '%' not in value and bool(ipaddress.ip_network(value))
+    except ValueError:
+        return False
 
 
 @register('ospf-area', 'an area ID from 0 through 4294967295, or in dotted decimal such as 0.0.0.1')

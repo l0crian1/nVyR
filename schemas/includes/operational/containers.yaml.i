@@ -4,6 +4,9 @@ update:
   description: Update resources
   children:
 
+    include_schema:
+    - file: operational/wireguard-update.yaml.i
+
     firewall:
       kind: node
       description: Firewall data sources

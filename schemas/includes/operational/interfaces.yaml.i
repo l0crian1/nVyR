@@ -24,6 +24,31 @@ interfaces:
         /hardware-statistics/command: ['interfaces.nvyr.op', 'hardware', 'hardware-statistics', '--intf_name', '@3']
         /transceiver/command: ['interfaces.nvyr.op', 'hardware', 'transceiver', '--intf_name', '@3']
 
+    wireguard:
+      kind: tag_node
+      optional_value: true
+      description: WireGuard interface addresses and kernel state
+      command: ['interfaces.nvyr.op', 'show', '--intf_type', 'wireguard', '--intf_name', '@4']
+      validators:
+        regex: {pattern: 'wg[0-9]+'}
+      suggestors:
+        interfaces: {prefix: wg}
+      hints:
+        wgN: WireGuard interface name
+      children:
+
+        detail:
+          kind: leaf_node
+          valueless: true
+          description: Detailed kernel interface information
+          command: ['interfaces.nvyr.op', 'show', '--intf_type', 'wireguard', '--intf_name', '@4', '--detail']
+
+        statistics:
+          kind: leaf_node
+          valueless: true
+          description: Interface packet and byte counters
+          command: ['interfaces.nvyr.op', 'show', '--intf_type', 'wireguard', '--intf_name', '@4', '--statistics']
+
     ethernet:
       kind: tag_node
       optional_value: true

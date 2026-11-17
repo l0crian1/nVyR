@@ -38,6 +38,7 @@ operational commands, use the [user documentation](../users/README.md).
 - [RIP and RIPng: ownership, native reload and tests](rip.md)
 - [Bridge interfaces: implementation and maintenance](bridges.md)
 - [Bond interfaces: kernel attributes and reconciliation](bonds.md)
+- [WireGuard: native synchronization and endpoint refresh](wireguard.md)
 - [Connection tracking operations: implementation and maintenance](conntrack-operations.md)
 - [Container operations: implementation and maintenance](container-operations.md)
 - [Containers: implementation and maintenance](containers.md)

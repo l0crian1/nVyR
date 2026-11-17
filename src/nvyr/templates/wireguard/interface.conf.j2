@@ -1,0 +1,17 @@
+[Interface]
+PrivateKey = {{ settings['private-key'] }}
+ListenPort = {{ settings['listen-port'] }}
+FwMark = {{ settings['firewall-mark'] }}
+{% for peer in peers.values() %}
+
+[Peer]
+PublicKey = {{ peer['public-key'] }}
+PresharedKey = {{ peer['preshared-key'] }}
+{% if peer['allowed-ips'] %}
+AllowedIPs = {{ peer['allowed-ips'] | join(', ') }}
+{% endif %}
+PersistentKeepalive = {{ peer['persistent-keepalive'] }}
+{% if peer.resolved %}
+Endpoint = {{ peer.resolved }}
+{% endif %}
+{% endfor %}

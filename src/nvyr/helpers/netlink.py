@@ -243,6 +243,29 @@ class Loopback(LinkType):
         kernel.state(name, True)
 
 
+class WireGuard(LinkType):
+    virtual = True
+    kernel_kind = 'wireguard'
+    keymap = {key: entry for key, entry in LINK_KEYMAP.items() if key != 'mac'} | {
+        'wireguard': NetlinkKey('', ('NVYR_WIREGUARD_SETTINGS',))}
+
+    def configure(self, kernel, spec, baseline):
+        from nvyr.helpers import wireguard
+
+        attributes = dict(spec['attributes'])
+        settings = attributes.pop('wireguard', None)
+        base = {key: value for key, value in baseline.items() if key != 'wireguard'}
+        if settings is not None:
+            wireguard.synchronize(spec['name'], settings, spec['disabled'])
+        return super().configure(kernel, dict(spec, attributes=attributes), base)
+
+    def remove(self, kernel, name):
+        from nvyr.helpers import wireguard
+
+        super().remove(kernel, name)
+        wireguard.forget(name)
+
+
 class Dummy(LinkType):
     virtual = True
     kernel_kind = 'dummy'
@@ -528,7 +551,8 @@ class Bridge(LinkType):
 
 
 TYPES = {'ethernet': LinkType(), 'dummy': Dummy(), 'loopback': Loopback(), 'vrf': VRF(),
-         'virtual-ethernet': VirtualEthernet(), 'vlan': VLAN(), 'bridge': Bridge(), 'bond': Bond()}
+         'virtual-ethernet': VirtualEthernet(), 'vlan': VLAN(), 'bridge': Bridge(), 'bond': Bond(),
+         'wireguard': WireGuard()}
 
 
 def register_type(name, driver):

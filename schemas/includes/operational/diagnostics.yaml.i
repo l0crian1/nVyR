@@ -4,6 +4,9 @@ generate:
   access: net-admin
   children:
 
+    include_schema:
+    - file: operational/wireguard-actions.yaml.i
+
     system:
       kind: node
       description: System diagnostic reports

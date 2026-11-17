@@ -73,6 +73,7 @@ children: # operational
 
       include_schema:
       - file: operational/interfaces.yaml.i
+      - file: operational/wireguard-show.yaml.i
       - file: operational/system.yaml.i
       - file: operational/logs.yaml.i
       - file: operational/ntp.yaml.i

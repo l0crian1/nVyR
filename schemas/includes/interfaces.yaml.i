@@ -10,3 +10,4 @@ interfaces:
     - file: interfaces/virtual-ethernet.yaml.i
     - file: interfaces/bridge.yaml.i
     - file: interfaces/bond.yaml.i
+    - file: interfaces/wireguard.yaml.i

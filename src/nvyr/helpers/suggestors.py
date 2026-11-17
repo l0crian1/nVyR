@@ -51,6 +51,14 @@ def geoip_countries(context):
     return [Suggestion(code, name) for code, name in sorted(COUNTRIES.items())]
 
 
+@register('wireguard-peers')
+def wireguard_peers(context):
+    # Both the positional show path and update path end in <interface>, peer.
+    name = context.path[-2] if len(context.path) > 1 else ''
+    peers = configuration_section(context, ('interfaces', 'wireguard', name, 'peer'))
+    return [Suggestion(peer, settings.get('description', 'WireGuard peer')) for peer, settings in peers.items()]
+
+
 @register('cpu-policy')
 def cpu_policy(context, setting):
     from nvyr.helpers import cpu_settings
