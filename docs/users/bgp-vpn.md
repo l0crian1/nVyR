@@ -14,6 +14,10 @@ this traffic when the nexthop is correctly encoded; this is not an inherent
 IPv4 MPLS transport limitation. Native tests confirmed bidirectional forwarding
 with manually corrected nexthops, but that correction is not yet implemented in
 nVyR. See the [verified upstream issue](../dev/upstream-issues.md#vpnv6-over-ipv4-mpls-transport-incorrect-nexthop-programming).
+The restriction concerns the resolved kernel nexthop, not the BGP session's TCP
+address family. A native test using IPv4 loopback VPN peers over interface-based
+IPv4 labeled-unicast with IPv6 link-local nexthops passed both VPN families;
+the issue record includes its setup requirements and scope.
 
 ## Provider peer and customer VRF
 

@@ -877,3 +877,38 @@ The experiment and evidence are retained under the ignored
 removed. No production startup flags, global nexthop settings, or native patches
 were changed. Keep the supported-path restriction until a proper fix passes
 route-installation, forwarding, withdrawal, and recovery tests.
+
+### IPv4 VPN peering over an IPv6 link-local underlay
+
+A follow-up on the same packaged FRR/kernel tested two directly connected PEs
+with separate ASNs. Interface BGP neighbors established over IPv6 link-local
+addresses and advertised IPv4 loopbacks. A second, IPv4 loopback-to-loopback
+eBGP session carried VPNv4 and VPNv6. The core link had no IPv4 or global IPv6
+addresses. Native kernel nexthop objects remained enabled and no manual routes
+or nexthops were installed.
+
+Plain IPv4 unicast on the interface session established loopback reachability
+and both VPN AFs, but the imported customer routes were invalid: the recursive
+loopback route supplied no transport label. Switching that interface session
+to IPv4 labeled-unicast supplied the required labeled reachability. FRR rejects
+activating both IPv4 unicast and IPv4 labeled-unicast on the same neighbor, so
+these were successive tests, not simultaneous AFs.
+
+With labeled-unicast, both VPN families installed and forwarded. The VPNv6 BGP
+next hop remained `::ffff:10.255.62.2`, while its resolved kernel gateway was the
+peer's `fe80::` address. IPv4 and IPv6 each passed 5/5 pings in both directions,
+then repeated those results after a link flap. Capture confirmed MPLS packets
+for both payload families. The adjacent PE advertised implicit-null for its
+loopback, so only the VPN service label was present on the wire. This verifies
+the recursive nexthop combination, not a multi-hop labeled core.
+
+The isolated Zebra processes used `--v6-with-v4-nexthops`, as in the prior
+reproduction, because the IPv4 update-source loopbacks had no usable IPv6
+address. This startup option was not added to nVyR's installed service. Evidence
+is in the ignored `experiments/bgp-vpn/verify-unnumbered-vpn.py`,
+`verify-unnumbered-vpn.log`, and `unnumbered-vpn-evidence.tgz`. The topology was
+removed after testing.
+
+The defect therefore concerns the **resolved kernel nexthop family**, not merely
+whether the VPN BGP session uses IPv4 TCP. An IPv4 session whose mapped VPNv6
+next hop resolves to IPv6 link-local forwarding worked in this test.
