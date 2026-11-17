@@ -59,10 +59,30 @@ def firewall(document):
 
 
 def routing(text):
-    """Compare routing policy, excluding banners and per-daemon startup hostnames."""
-    return [line.rstrip() for line in text.splitlines()
-            if line.strip() and not line.startswith(
-                ('!', 'Building configuration', 'Current configuration:', 'hostname '))]
+    """Ignore banners and BGP instance order, preserving each instance's commands."""
+    lines = [line.rstrip() for line in text.splitlines()
+             if line.strip() and not line.startswith(
+                 ('!', 'Building configuration', 'Current configuration:', 'hostname '))]
+    sections = []
+    instance = None
+    for line in lines:
+        if line.startswith('router bgp '):
+            instance = [line]
+            sections.append(instance)
+        elif instance is not None:
+            instance.append(line)
+            if line == 'exit':
+                instance = None
+        else:
+            sections.append([line])
+
+    # FRR lists instances by creation order, which can change after a cold boot.
+    instances = iter(sorted((section for section in sections if section[0].startswith('router bgp ')),
+                            key=lambda section: section[0]))
+    result = []
+    for section in sections:
+        result.extend(next(instances) if section[0].startswith('router bgp ') else section)
+    return result
 
 
 def vrf_conntrack(document, vrfs):

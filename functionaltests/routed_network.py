@@ -39,11 +39,12 @@ CONFIGURATIONS = (CONFIGURATION, CONFIGURATION.with_name('network-features.conf'
                   CONFIGURATION.with_name('network-isis.conf'),
                   CONFIGURATION.with_name('network-mpls.conf'),
                   CONFIGURATION.with_name('network-bgp-lu.conf'),
+                  CONFIGURATION.with_name('network-bgp-vpn.conf'),
                   CONFIGURATION.with_name('network-lists.conf'),
                   CONFIGURATION.with_name('network-cgnat.conf'))
 LINKS = ('veth42061', 'veth42062', 'veth42063', 'veth42064', 'veth42065', 'veth42066',
          'veth42067', 'veth42068', 'veth42071', 'veth42072', 'veth42073', 'veth42074',
-         'dum42061', 'dum42069', 'dum42071', 'dum977', 'dum980', 'dum997', 'dum998', 'dum999', 'veth994', 'veth995',
+         'dum42080', 'dum42081', 'dum42061', 'dum42069', 'dum42071', 'dum977', 'dum980', 'dum997', 'dum998', 'dum999', 'veth994', 'veth995',
          'veth41050', 'veth41051', 'veth41052', 'veth41053')
 NAMESPACES = ('nvyr-routed-left', 'nvyr-routed-right', 'nvyr-ft-source', 'nvyr-ft-destination')
 POLICIES = ('RNCOMM', 'RNLARGE', 'RNAS', 'RNCALL', 'RNIN4', 'RNIN6', 'RNOUT4', 'RNOUT6',
@@ -126,7 +127,7 @@ def preflight(config):
                   msg='The routed LU scenario requires an unused default BGP instance')
     running = cmd(['vtysh', '-c', 'show running-config no-header'])
     assert_not_in('router bgp', '\n'.join(bgp_adapter.select(running, ['default'])['default']))
-    assert_config_names_unused(original, *LINKS, *POLICIES, *owned_names(), 'NVYRLEFT', 'NVYRRIGHT',
+    assert_config_names_unused(original, *LINKS, *POLICIES, *owned_names(), 'RNVPNBLUE', 'RNVPNRED', 'NVYRLEFT', 'NVYRRIGHT',
                                'RNMAP', 'RNMATCH', 'RNINNER', 'RNOUTER',
                                'RNTTLWITHIN', 'RNTTLOUTSIDE', 'RNIN', 'RNPORT',
                                'RNHOST', 'RNHOSTS', 'RNDEST', 'RNLEARN', 'RNTUPLE', 'RNECHO', 'RNFAST', 'RNCATCH', 'RNDEFAULT')

@@ -56,6 +56,12 @@ vrf:
             - file: protocols/bgp.yaml.i
               remove:
               - /children/parameters/children/labeled-unicast
+              - /children/address-family/children/ipv4-vpn
+              - /children/neighbor/children/address-family/children/ipv4-vpn
+              - /children/peer-group/children/address-family/children/ipv4-vpn
+              - /children/address-family/children/ipv6-vpn
+              - /children/neighbor/children/address-family/children/ipv6-vpn
+              - /children/peer-group/children/address-family/children/ipv6-vpn
               - /children/address-family/children/ipv4-labeled-unicast
               - /children/address-family/children/ipv6-labeled-unicast
               - /children/neighbor/children/address-family/children/ipv4-labeled-unicast

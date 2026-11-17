@@ -1,5 +1,7 @@
 # BGP unicast and labeled-unicast
 
+For MPLS customer VPNs, see [VPNv4 and VPNv6](bgp-vpn.md).
+
 For implementation and testing, see the [developer guide](../dev/bgp.md).
 
 For native route displays, neighbor status and peer resets, see

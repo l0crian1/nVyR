@@ -185,3 +185,17 @@ def test_vrf_zone_reallocation_preserves_ownership_but_detects_wrong_membership(
     after['nftables'][1]['map']['elem'][1] = ['RED', 1]
     with pytest.raises(AssertionError, match='shared VRF'):
         snapshots.vrf_conntrack(after, ['BLUE', 'RED'])
+
+
+def test_bgp_instance_creation_order_does_not_hide_vpn_policy_changes():
+    default = 'router bgp 65000\n address-family ipv4 vpn\n exit-address-family\nexit\n'
+    blue = ('router bgp 65000 vrf BLUE\n address-family ipv4 unicast\n'
+            '  rt vpn import 65000:1\n  import vpn\n exit-address-family\nexit\n')
+    red = blue.replace('BLUE', 'RED').replace('65000:1', '65000:2')
+    before = default + blue + red
+    reordered = red + default + blue
+
+    assert snapshots.routing(before) == snapshots.routing(reordered)
+    assert snapshots.routing(before) != snapshots.routing(reordered.replace('65000:1', '65000:3'))
+    assert snapshots.routing(before) != snapshots.routing(reordered.replace('  import vpn\n', '', 1))
+    assert snapshots.routing(before) != snapshots.routing(default + blue)

@@ -857,6 +857,18 @@ def check_bgp_labeled_unicast(options):
     assert_not_in('neighbor 198.18.192.3 addpath-rx-paths-limit 0', native)
 
 
+def check_bgp_vpn(options):
+    native = cmd(['vtysh', '-c', 'show running-config no-header'])
+    for line in ('rd vpn export 65095:88', 'label vpn export auto',
+                 'route-map vpn export BOOTVPNOUT', 'route-map vpn import BOOTVPNIN',
+                 'rt vpn import 65097:88', 'match extcommunity BOOTRT', 'set extcommunity rt 65097:88'):
+        assert_in(line, native)
+    for family, prefix in (('ipv4', '198.18.208.0/24'), ('ipv6', '2001:db8:208::/64')):
+        assert_bgp_path('BOOTVPN', family, prefix)
+        assert_in(prefix, cmd(['bgp.nvyr.op', 'show', f'show bgp {family} vpn rd 65095:88']))
+        assert_in('198.18.192.3', cmd(['bgp.nvyr.op', 'show', f'show bgp {family} vpn summary']))
+
+
 def check_mpls_ldp(options):
     assert_equal(Path('/proc/sys/net/mpls/platform_labels').read_text().strip(), '1048575')
     assert_equal(Path('/proc/sys/net/mpls/default_ttl').read_text().strip(), '96')
@@ -887,6 +899,7 @@ def check_mpls_ldp(options):
 
 
 CHECKS = (
+    check_bgp_vpn,
     check_mpls_ldp,
     check_bgp_labeled_unicast,
     check_static_neighbors,

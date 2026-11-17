@@ -4,7 +4,7 @@ import ipaddress
 from collections.abc import Mapping
 
 from nvyr.errors import ValidationError
-from nvyr.helpers import bgp_parameters, bgp_peer, frr_bgp, frr_reload, interfaces
+from nvyr.helpers import bgp_formatters, bgp_parameters, bgp_peer, frr_bgp, frr_reload, interfaces
 from nvyr.helpers.interfaces import local_addresses
 from nvyr.helpers.template import render
 from nvyr.tree import lookup
@@ -302,6 +302,47 @@ def verify_peer(options, instance, policies, path, *, require_remote):
         verify_references(settings, policies, family.split('-')[0], f'{path} {family}')
 
 
+def verify_vpn(values, family, vrf, instances, path):
+    if family.endswith('-vpn'):
+        # FRR exchanges VPN SAFIs only in the default BGP instance.
+        if vrf != 'default':
+            raise ValidationError(f'{path}: VPN address families belong to the default BGP instance')
+        for prefix, network in lookup(values, ('network',), {}).items():
+            routes = lookup(network, ('route-distinguisher',), {})
+            # A VPN NLRI requires both the prefix and its RD identity.
+            if not routes:
+                raise ValidationError(f'{path} network {prefix}: route-distinguisher is required')
+            seen = set()
+            for rd, settings in routes.items():
+                canonical = bgp_formatters.rd_rt(rd)
+                # Alternate numeric spellings must not define the same VPN route twice.
+                if canonical in seen:
+                    raise ValidationError(f'{path} network {prefix}: duplicate route distinguisher {canonical}')
+                seen.add(canonical)
+                # Direct VPN origination must explicitly supply its advertised label.
+                if 'label' not in settings:
+                    raise ValidationError(f'{path} network {prefix} route-distinguisher {rd}: label is required')
+    vpn = lookup(values, ('vpn',), {})
+    # Active VRF exchange requires the global BGP VPN table to exist.
+    if ('import' in vpn or 'export' in vpn) and 'default' not in instances:
+        raise ValidationError(f'{path}: VPN import/export requires a default BGP instance')
+    targets = lookup(vpn, ('route-target',), {})
+    # Import selects routes by RT before applying the optional import map.
+    if 'import' in vpn and not (lookup(targets, ('import',), ()) or lookup(targets, ('both',), ())):
+        raise ValidationError(f'{path}: VPN import requires an import or both route-target')
+    if 'export' in vpn:
+        # FRR needs an RD and a label policy before it can advertise exported routes.
+        if 'route-distinguisher' not in vpn or 'label' not in vpn:
+            raise ValidationError(f'{path}: VPN export requires route-distinguisher and label')
+        # Export RTs may come from the export map instead of a fixed RT list.
+        if not (lookup(targets, ('export',), ()) or lookup(targets, ('both',), ())
+                or lookup(vpn, ('route-map', 'export'), None)):
+            raise ValidationError(f'{path}: VPN export requires an export route-target or export route-map')
+    # Per-next-hop allocation needs Zebra to allocate more than one label.
+    if lookup(vpn, ('allocation-mode',), 'per-vrf') == 'per-nexthop' and lookup(vpn, ('label',), 'auto') != 'auto':
+        raise ValidationError(f'{path}: per-nexthop allocation requires label auto')
+
+
 def verify(configuration, context):
     """Validate VRF instances, inherited peer settings and referenced policies.
 
@@ -398,6 +439,7 @@ def verify(configuration, context):
             verify_peer(options, instance, policies, f'{path} neighbor {address}', require_remote=True)
 
         for family, values in lookup(instance, ('address-family',), {}).items():
+            verify_vpn(values, family, vrf, instances, f'{path} {family}')
             for prefix, aggregate in lookup(values, ('aggregate-address',), {}).items():
                 # Summary-only suppresses everything and would make a selective suppress-map ineffective.
                 if 'summary-only' in aggregate and 'suppress-map' in aggregate:

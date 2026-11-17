@@ -291,6 +291,41 @@ route-map:
                   description: "Match any community permitted by the list"
                   valueless: true
 
+            extended-community-list:
+              kind: tag_node
+              description: Configured extended-community list
+              validators:
+                regex:
+                  pattern: '[A-Za-z_][A-Za-z0-9_.-]{0,127}'
+              hints:
+                name: Configured community-list
+              depends: policy-extended-community-list
+              suggestors:
+                policy-community-lists:
+                  extended: true
+              anchor: true
+              children:
+
+                exact-match:
+                  kind: leaf_node
+                  description: Require the complete community set to match
+                  valueless: true
+
+                any:
+                  kind: leaf_node
+                  description: Match any community permitted by the list
+                  valueless: true
+
+            extended-community-limit:
+              kind: leaf_node
+              description: Maximum extended-community count
+              hints:
+                0-65535: Maximum number of extended communities
+              validators:
+                integer-range:
+                  minimum: 0
+                  maximum: 65535
+
             large-community-list:
               kind: "tag_node"
               description: "Configured large-community-list"
@@ -593,6 +628,47 @@ route-map:
                 route-filter-v6: "IPv6 route-filter community"
                 additive: "Keep existing communities when adding these values"
                 none: "Remove all communities"
+
+            extended-community:
+              kind: node
+              description: Set or clear extended communities
+              anchor: true
+              children:
+
+                route-target:
+                  kind: leaf_node
+                  description: Route target to set
+                  hints:
+                    rt: ASN:number or IPv4:number
+                  multi: true
+                  validators:
+                    bgp-rd-rt: {}
+
+                site-of-origin:
+                  kind: leaf_node
+                  description: Site-of-origin community to set
+                  hints:
+                    soo: ASN:number or IPv4:number
+                  validators:
+                    bgp-rd-rt: {}
+
+                none:
+                  kind: leaf_node
+                  description: Remove all extended communities
+                  valueless: true
+
+            extended-community-delete:
+              kind: leaf_node
+              description: Delete communities permitted by this list
+              validators:
+                regex:
+                  pattern: '[A-Za-z_][A-Za-z0-9_.-]{0,127}'
+              hints:
+                name: Delete communities permitted by this list
+              depends: policy-extended-community-list
+              suggestors:
+                policy-community-lists:
+                  extended: true
 
             large-community:
               kind: "leaf_node"

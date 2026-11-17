@@ -16,7 +16,7 @@ def get_config(context):
 
 def _verify_bgp_lists(configuration):
     definitions = [('as-path-list', 'expanded', lookup(configuration, ('as-path-list',), {}))]
-    for kind in ('community-list', 'large-community-list'):
+    for kind in ('community-list', 'large-community-list', 'extended-community-list'):
         modes = lookup(configuration, (kind,), {})
         duplicates = set(lookup(modes, ('standard',), {})) & set(lookup(modes, ('expanded',), {}))
         # FRR has one name namespace for both representations of a community list.
@@ -37,13 +37,16 @@ def _verify_bgp_lists(configuration):
                     raise ValidationError(f'{entry}: action permit or deny is required')
                 field = 'regex' if mode == 'expanded' else 'community'
                 # Missing operands must never become broad permit statements.
-                if not lookup(rule, (field,), None):
+                if kind == 'extended-community-list' and mode == 'standard':
+                    if not (lookup(rule, ('route-target',), None) or lookup(rule, ('site-of-origin',), None)):
+                        raise ValidationError(f'{entry}: route-target or site-of-origin is required')
+                elif not lookup(rule, (field,), None):
                     raise ValidationError(f'{entry}: {field} is required')
 
 
 def _verify_reference(configuration, kind, name, path):
     definitions = lookup(configuration, (kind,), {})
-    if kind in ('community-list', 'large-community-list'):
+    if kind in ('community-list', 'large-community-list', 'extended-community-list'):
         definitions = set(lookup(definitions, ('standard',), {})) | set(lookup(definitions, ('expanded',), {}))
     # Dependency guards protect deletions; missing references must also fail before apply.
     if name not in definitions:
@@ -136,9 +139,9 @@ def _verify_nonempty_nodes(values, path):
         raise ValidationError(f'{path}: at least one setting is required')
 
     for key, value in values.items():
-        if key in ('community-list', 'large-community-list'):
+        if key in ('community-list', 'large-community-list', 'extended-community-list'):
             continue
-        if isinstance(value, Mapping) and key not in ('peer-address', 'unchanged', 'prefer-global', 'all', 'any'):
+        if isinstance(value, Mapping) and key not in ('peer-address', 'unchanged', 'prefer-global', 'all', 'any', 'none'):
             _verify_nonempty_nodes(value, f'{path} {key}')
 
 
@@ -154,7 +157,7 @@ def _verify_route_map(configuration, rule, path):
     matches = lookup(rule, ('match',), {})
     if 'as-path-list' in matches:
         _verify_reference(configuration, 'as-path-list', matches['as-path-list'], path)
-    for kind in ('community-list', 'large-community-list'):
+    for kind in ('community-list', 'large-community-list', 'extended-community-list'):
         if kind not in matches:
             continue
         # FRR has one match slot for each community family, not several independent lists.
@@ -192,6 +195,13 @@ def _verify_route_map(configuration, rule, path):
             # Clearing the entire attribute makes selective deletion redundant.
             if 'none' in values:
                 raise ValidationError(f'{path}: set {kind} none cannot be combined with selective deletion')
+
+    extended = lookup(settings, ('extended-community',), {})
+    # Clearing the whole attribute cannot also set or selectively delete communities.
+    if 'none' in extended and (len(extended) != 1 or 'extended-community-delete' in settings):
+        raise ValidationError(f'{path}: extended-community none cannot be combined with setting or deleting values')
+    if 'extended-community-delete' in settings:
+        _verify_reference(configuration, 'extended-community-list', settings['extended-community-delete'], path)
 
     as_path = lookup(settings, ('as-path',), {})
     # Explicit prepending and repeating the leftmost AS share one native setter.

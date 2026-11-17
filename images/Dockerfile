@@ -23,6 +23,7 @@ COPY vendor/frr/rip-vrf-routemap.patch /opt/nvyr-build/vendor/frr/rip-vrf-routem
 COPY vendor/frr/isis-reload.patch /opt/nvyr-build/vendor/frr/isis-reload.patch
 COPY vendor/frr/ldp-reload.patch /opt/nvyr-build/vendor/frr/ldp-reload.patch
 COPY vendor/frr/bgp-addpath.patch /opt/nvyr-build/vendor/frr/bgp-addpath.patch
+COPY vendor/frr/bgp-vpn-static.patch vendor/frr/bgp-vpn-revival.patch vendor/frr/bgp-vpn-reload.patch /opt/nvyr-build/vendor/frr/
 RUN python3 /opt/nvyr-build/build_tools/frr_packages.py /opt/nvyr-frr-packages
 
 # Build the reviewed LTS kernel once, rather than tracking Debian's kernel meta-package.

@@ -85,6 +85,7 @@ class TemplateRenderer:
                            'frr_static_prefix': frr_static.route_prefix,
                            'frr_static_path': frr_static.route_path,
                            'policy_community_values': policy_formatters.community_values,
+                           'policy_extended_values': policy_formatters.extended_values,
                            'policy_filter_operand': policy_formatters.filter_operand,
                            'policy_matches': policy_formatters.matches,
                            'policy_actions': policy_formatters.actions,

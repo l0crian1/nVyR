@@ -22,6 +22,9 @@ RIP_VRF_PATCH = ROOT / 'vendor/frr/rip-vrf-routemap.patch'
 ISIS_PATCH = ROOT / 'vendor/frr/isis-reload.patch'
 LDP_PATCH = ROOT / 'vendor/frr/ldp-reload.patch'
 BGP_ADDPATH_PATCH = ROOT / 'vendor/frr/bgp-addpath.patch'
+BGP_VPN_PATCH = ROOT / 'vendor/frr/bgp-vpn-static.patch'
+BGP_VPN_REVIVAL_PATCH = ROOT / 'vendor/frr/bgp-vpn-revival.patch'
+BGP_VPN_RELOAD_PATCH = ROOT / 'vendor/frr/bgp-vpn-reload.patch'
 MANIFEST = 'frr-packages.json'
 
 
@@ -33,7 +36,7 @@ def digest(path):
 def recipe_digest():
     """Changing any build input invalidates previously cached packages."""
     checksum = hashlib.sha256()
-    for path in (Path(__file__), LOCK, PATCH, KEYCHAIN_PATCH, OSPF_PATCH, RIP_PATCH, RIP_VRF_PATCH, ISIS_PATCH, LDP_PATCH, BGP_ADDPATH_PATCH):
+    for path in (Path(__file__), LOCK, PATCH, KEYCHAIN_PATCH, OSPF_PATCH, RIP_PATCH, RIP_VRF_PATCH, ISIS_PATCH, LDP_PATCH, BGP_ADDPATH_PATCH, BGP_VPN_PATCH, BGP_VPN_REVIVAL_PATCH, BGP_VPN_RELOAD_PATCH):
         checksum.update(path.read_text(encoding='utf-8').replace('\r\n', '\n').encode())
         checksum.update(b'\0')
     return checksum.hexdigest()
@@ -95,6 +98,9 @@ def prepare_source(work, lock):
     run(['patch', '--batch', '--forward', '--fuzz=0', '-p1', '-i', str(ISIS_PATCH)], cwd=source)
     run(['patch', '--batch', '--forward', '--fuzz=0', '-p1', '-i', str(LDP_PATCH)], cwd=source)
     run(['patch', '--batch', '--forward', '--fuzz=0', '-p1', '-i', str(BGP_ADDPATH_PATCH)], cwd=source)
+    run(['patch', '--batch', '--forward', '--fuzz=0', '-p1', '-i', str(BGP_VPN_PATCH)], cwd=source)
+    run(['patch', '--batch', '--forward', '--fuzz=0', '-p1', '-i', str(BGP_VPN_REVIVAL_PATCH)], cwd=source)
+    run(['patch', '--batch', '--forward', '--fuzz=0', '-p1', '-i', str(BGP_VPN_RELOAD_PATCH)], cwd=source)
 
     # Keep upstream's Debian options and package layout; change only our revision.
     date = format_datetime(datetime.fromtimestamp(lock['source_date_epoch'], timezone.utc))

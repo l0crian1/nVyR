@@ -27,6 +27,41 @@ bgp:
           command: ['bgp.nvyr.op', 'show', '@line']
     - file: operational/policy-as-path.yaml.i
 
+    extcommunity-list:
+      kind: node
+      description: Extended-community list definitions
+      command: ["bgp.nvyr.op", "show", "@line"]
+      children:
+
+        name:
+          kind: tag_node
+          description: Extended-community list name
+          positional: true
+          validators:
+            regex:
+              pattern: "[A-Za-z_][A-Za-z0-9_.-]{0,127}"
+          hints:
+            name: Extended-community list name
+          suggestors:
+            policy-community-lists: {extended: true}
+          children:
+
+            detail:
+              kind: node
+              description: Extended-community list definition
+              command: ["bgp.nvyr.op", "show", "@line"]
+
+    mplsvpn-nh-label-bind:
+      kind: node
+      description: VPN next-hop label bindings
+      command: ["bgp.nvyr.op", "show", "@line"]
+      children:
+
+        detail:
+          kind: node
+          description: Detailed VPN next-hop label bindings
+          command: ["bgp.nvyr.op", "show", "@line"]
+
     labelpool:
       kind: node
       description: BGP label allocation

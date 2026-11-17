@@ -14,6 +14,8 @@ def show(line: str, raw: bool = False):
         raise ParseError('longer-prefixes requires a destination prefix with a prefix length.')
     if raw and words[-1] == 'wide':
         raise ParseError('wide is a text display option and cannot be used with raw output.')
+    if raw and ('extcommunity-list' in words or 'mplsvpn-nh-label-bind' in words):
+        raise ParseError('FRR does not provide JSON for this display.')
     if (raw and words[:2] == ('show', 'bgp')
             and words[2:3] in {('community-list',), ('large-community-list',)}
             and (len(words) == 3 or len(words) == 5 and words[-1] == 'detail')):

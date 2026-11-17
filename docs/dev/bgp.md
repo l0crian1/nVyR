@@ -58,3 +58,23 @@ waits. Acceptance persists LU alongside unicast across reboot. Functional LU
 checks share the routed network's MPLS peer and link; dedicated destinations
 verify filtering, kernel label encapsulation and bidirectional packet delivery
 without static or IGP fallback routes.
+
+## VPNv4 and VPNv6
+
+VPN families use the existing BGP lifecycle and FRR transaction. Global VPN
+AFs are separate from the unicast `vpn` import/export subtree; named VRFs only
+expose the latter. Route targets remain individual multi-leaf values in the
+configuration and are joined for FRR rendering. The BGP readback adapter
+normalizes FRR's equivalent `rt vpn both` and separate import/export statements.
+
+Extended-community lists and route-map match/set/delete operations belong to
+the existing policy owner. Import and export maps therefore participate in
+normal policy reference verification and reload ordering. MPLS interface and
+kernel settings remain owned by `protocols mpls`.
+
+`tests/test_bgp_vpn_native.py` exercises native readback, removal, and recreation
+with `NVYR_VPN_NATIVE=1`. The default BGP smoketests validate translation without
+waiting for sessions. Acceptance persists VRF export/import and policy across
+reboot. Functional VPN tests share the routed suite's existing MPLS peer, with
+stable customer VRFs checking import filtering, RT isolation, label forwarding,
+and bidirectional IPv4/IPv6 delivery.

@@ -146,6 +146,19 @@ children:
           - file: protocols/bgp/peer-ipv4.yaml.i
             as: null
 
+      ipv4-vpn:
+        kind: node
+        description: Enable IPv4 VPN routes for this peer
+        anchor: true
+        children:
+
+          include_schema:
+          - file: protocols/bgp/peer-ipv4.yaml.i
+            as: null
+            remove: [/default-originate]
+          - file: protocols/bgp/peer-vpn.yaml.i
+            as: null
+
       ipv4-labeled-unicast:
         kind: node
         description: Enable IPv4 labeled-unicast for this peer
@@ -164,6 +177,19 @@ children:
 
           include_schema:
           - file: protocols/bgp/peer-ipv6.yaml.i
+            as: null
+
+      ipv6-vpn:
+        kind: node
+        description: Enable IPv6 VPN routes for this peer
+        anchor: true
+        children:
+
+          include_schema:
+          - file: protocols/bgp/peer-ipv6.yaml.i
+            as: null
+            remove: [/default-originate]
+          - file: protocols/bgp/peer-vpn.yaml.i
             as: null
 
       ipv6-labeled-unicast:

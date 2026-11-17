@@ -3,6 +3,7 @@
 from pathlib import Path
 import os
 import runpy
+from types import SimpleNamespace
 
 import pytest
 
@@ -113,3 +114,44 @@ def test_ospf_sync_zero_timer_removal_uses_valid_reset():
     functions = runpy.run_path('/usr/lib/frr/frr-reload.py')
     lines = functions['lines_to_config'](('interface eth1',), 'ip ospf mpls ldp-sync holddown 0', True)
     assert 'no ip ospf mpls ldp-sync holddown' in [line.strip() for line in lines]
+
+
+def test_default_bgp_settings_removed_before_instance_without_mutating_target():
+    functions = runpy.run_path('/usr/lib/frr/frr-reload.py')
+    context = functions['Context']
+    parent = ('router bgp 65000',)
+    family = (*parent, 'address-family ipv4 vpn')
+    running = SimpleNamespace(contexts={
+        parent: context(parent, ['timers bgp 10 30', 'bgp bestpath compare-routerid']),
+        family: context(family, ['network 192.0.2.0/24 rd 65000:1 label 16000']),
+    })
+    target = SimpleNamespace(contexts={})
+
+    additions, deletions = functions['compare_context_objects'](target, running)
+
+    assert target.contexts == {}
+    assert additions == []
+    assert deletions[-1] == (parent, None)
+    assert (parent, 'timers bgp 10 30') in deletions[:-1]
+    assert (parent, 'bgp bestpath compare-routerid') in deletions[:-1]
+    assert (family, 'network 192.0.2.0/24 rd 65000:1 label 16000') in deletions[:-1]
+
+
+def test_deleting_one_bgp_instance_does_not_skip_another_instances_af_removal():
+    functions = runpy.run_path('/usr/lib/frr/frr-reload.py')
+    context = functions['Context']
+    removed = ('router bgp 65000 vrf BLUE',)
+    retained = ('router bgp 65000 vrf RED',)
+    family = (*retained, 'address-family ipv6 unicast')
+    running = SimpleNamespace(contexts={
+        removed: context(removed, []), retained: context(retained, []),
+        family: context(family, ['redistribute connected']),
+    })
+    target = SimpleNamespace(contexts={retained: context(retained, [])})
+
+    additions, deletions = functions['compare_context_objects'](target, running)
+
+    assert additions == []
+    assert (removed, None) in deletions
+    assert (family, 'redistribute connected') in deletions
+    assert (retained, None) not in deletions

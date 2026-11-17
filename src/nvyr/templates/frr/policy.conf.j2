@@ -42,6 +42,14 @@ bgp {{ kind }} {{ mode }} {{ name }} seq {{ sequence | int }} {{ rule['action'] 
 {% endfor -%}
 {% endfor -%}
 
+{% for mode, lists in configuration.get('extended-community-list', {}).items() | sort(case_sensitive=true) -%}
+{% for name, values in lists.items() | sort(case_sensitive=true) -%}
+{% for sequence, rule in numeric_items(values['rule']) -%}
+bgp extcommunity-list {{ mode }} {{ name }} seq {{ sequence | int }} {{ rule['action'] }} {{ rule['regex'] if mode == 'expanded' else policy_extended_values(rule) }}
+{% endfor -%}
+{% endfor -%}
+{% endfor -%}
+
 {% for name, values in configuration.get('route-map', {}).items() | sort(case_sensitive=true) -%}
 {% for sequence, rule in numeric_items(values['rule']) -%}
 route-map {{ name }} {{ rule['action'] }} {{ sequence | int }}

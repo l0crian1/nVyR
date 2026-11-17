@@ -36,6 +36,14 @@ router bgp 65072
   network 2001:db8:72::3/128
   network 2001:db8:76::2/128
  exit-address-family
+ address-family ipv4 vpn
+  neighbor 198.18.73.1 activate
+  neighbor 198.18.73.1 attribute-unchanged next-hop
+ exit-address-family
+ address-family ipv6 vpn
+  neighbor 198.18.73.1 activate
+  neighbor 198.18.73.1 attribute-unchanged next-hop
+ exit-address-family
  address-family ipv4 labeled-unicast
   neighbor 198.18.71.1 activate
   neighbor 198.18.73.1 activate
@@ -46,6 +54,30 @@ router bgp 65072
   neighbor 198.18.73.1 activate
   neighbor 198.18.73.1 route-map RECURSIVE-IN in
   neighbor 198.18.73.1 route-map RECURSIVE6 out
+ exit-address-family
+exit
+router bgp 65072 vrf VPNPEER
+ bgp router-id 198.19.80.2
+ no bgp default ipv4-unicast
+ address-family ipv4 unicast
+  nexthop vpn export 198.19.77.2
+  network 198.19.80.2/32
+  network 198.19.80.3/32
+  rd vpn export 65072:80
+  label vpn export auto
+  rt vpn both 65071:80
+  import vpn
+  export vpn
+ exit-address-family
+ address-family ipv6 unicast
+  nexthop vpn export 2001:db8:77::2
+  network 2001:db8:80::2/128
+  network 2001:db8:80::3/128
+  rd vpn export 65072:80
+  label vpn export auto
+  rt vpn both 65071:80
+  import vpn
+  export vpn
  exit-address-family
 exit
 interface veth42072
@@ -120,6 +152,14 @@ def daemon(directory, namespace):
     cmd(['ip', '-n', namespace, '-6', 'address', 'add', '2001:db8:72::2/128', 'dev', 'lu0', 'nodad'])
     cmd(['ip', '-n', namespace, 'address', 'add', '198.19.76.2/32', 'dev', 'lu0'])
     cmd(['ip', '-n', namespace, '-6', 'address', 'add', '2001:db8:76::2/128', 'dev', 'lu0', 'nodad'])
+    cmd(['ip', '-n', namespace, 'link', 'add', 'VPNPEER', 'type', 'vrf', 'table', '42080'])
+    cmd(['ip', '-n', namespace, 'link', 'set', 'VPNPEER', 'up'])
+    cmd(['ip', '-n', namespace, 'link', 'add', 'vpn0', 'type', 'dummy'])
+    cmd(['ip', '-n', namespace, 'link', 'set', 'vpn0', 'master', 'VPNPEER'])
+    cmd(['ip', '-n', namespace, 'link', 'set', 'vpn0', 'up'])
+    for address in ('198.19.80.2/32', '198.19.80.3/32', '2001:db8:80::2/128', '2001:db8:80::3/128'):
+        cmd(['ip', '-n', namespace, 'address', 'add', address, 'dev', 'vpn0', *(['nodad'] if ':' in address else [])])
+    cmd(['ip', '-n', namespace, '-6', 'route', 'add', '2001:db8:81::1/128', 'via', '2001:db8:71::1'])
     static_forwarding(namespace)
     config = directory / 'frr.conf'
     config.write_text(CONFIGURATION)

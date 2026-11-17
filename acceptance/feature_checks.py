@@ -58,8 +58,9 @@ def check_interface_ip_options(options):
 
 def check_vrf_conntrack(options):
     """VRF maps include VLAN/container links and keep routing domains distinct."""
-    left = assert_vrf_conntrack_zone('BOOTLEFT', 'veth995', 'veth995.195', 'dum996', 'br995.195', absent=('eth0',))
-    right = assert_vrf_conntrack_zone('BOOTRIGHT', 'veth997.195', 'pd-BOOTVRF', options['ethernet'], absent=('eth0', 'veth997'))
+    # These fixture-owned links stay in the default VRF regardless of the chosen spare port.
+    left = assert_vrf_conntrack_zone('BOOTLEFT', 'veth995', 'veth995.195', 'dum996', 'br995.195', absent=('dum995', 'veth997'))
+    right = assert_vrf_conntrack_zone('BOOTRIGHT', 'veth997.195', 'pd-BOOTVRF', options['ethernet'], absent=('dum995', 'veth997'))
     assert left != right
     assert_in('unreachable', cmd(['ip', '-4', 'rule', 'show']))
     assert_in('unreachable', cmd(['ip', '-6', 'rule', 'show']))

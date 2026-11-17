@@ -102,6 +102,16 @@ children:
           - file: "operational/bgp-table.yaml.i"
             as: null
 
+      vpn:
+        kind: node
+        description: VPN BGP routing state
+        command: ["bgp.nvyr.op", "show", "@line"]
+        children:
+
+          include_schema:
+          - file: "operational/bgp-vpn-table.yaml.i"
+            as: null
+
       labeled-unicast:
         kind: "node"
         description: "Labeled-unicast BGP routing state"
@@ -138,6 +148,16 @@ children:
 
           include_schema:
           - file: "operational/bgp-table.yaml.i"
+            as: null
+
+      vpn:
+        kind: node
+        description: VPN BGP routing state
+        command: ["bgp.nvyr.op", "show", "@line"]
+        children:
+
+          include_schema:
+          - file: "operational/bgp-vpn-table.yaml.i"
             as: null
 
       labeled-unicast:

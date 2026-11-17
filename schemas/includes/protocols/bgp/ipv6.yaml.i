@@ -4,6 +4,9 @@ ipv6-unicast:
   anchor: true
   children:
 
+    include_schema:
+    - file: protocols/bgp/vpn-export.yaml.i
+
     network:
       kind: tag_node
       anchor: true

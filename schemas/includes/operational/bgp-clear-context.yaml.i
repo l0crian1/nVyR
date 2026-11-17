@@ -22,6 +22,15 @@ children:
           - file: "operational/bgp-clear-target.yaml.i"
             as: null
 
+      vpn:
+        kind: node
+        description: Reset VPN peers
+        children:
+
+          include_schema:
+          - file: "operational/bgp-clear-target.yaml.i"
+            as: null
+
       labeled-unicast:
         kind: "node"
         description: "Reset labeled-unicast peers"
@@ -43,6 +52,15 @@ children:
       unicast:
         kind: "node"
         description: "Reset unicast peers"
+        children:
+
+          include_schema:
+          - file: "operational/bgp-clear-target.yaml.i"
+            as: null
+
+      vpn:
+        kind: node
+        description: Reset VPN peers
         children:
 
           include_schema:

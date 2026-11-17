@@ -1161,6 +1161,24 @@ def bgp_address(value):
             and value != '255.255.255.255' and '%' not in value)
 
 
+@register('bgp-rd-rt', 'ASN:number or IPv4:number; a 16-bit ASN permits a 32-bit number, otherwise the number is 16-bit')
+def bgp_rd_rt(value):
+    parts = value.split(':')
+    if len(parts) != 2 or not nonnegative_integer(parts[1]):
+        return False
+    administrator, assigned = parts
+    if nonnegative_integer(administrator):
+        number = int(administrator)
+        if number > 4294967295:
+            return False
+        maximum = 4294967295 if number <= 65535 else 65535
+    else:
+        if not _ip_address(administrator, version=4):
+            return False
+        maximum = 65535
+    return int(assigned) <= maximum
+
+
 @register('bgp-router-id', 'a nonzero unicast IPv4 router identifier')
 def bgp_router_id(value):
     return ipv4_address(value) and bgp_address(value)

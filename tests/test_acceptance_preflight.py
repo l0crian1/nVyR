@@ -125,8 +125,9 @@ def test_preflight_refuses_ipv4_link_local_route(inventory):
         baseline.preflight({}, OPTIONS)
 
 
-def test_preflight_refuses_reserved_table_even_for_automatic_route(inventory):
-    inventory['routes6'] = [{'dst': 'fe80::/64', 'dev': 'eth1', 'table': 41995, 'protocol': 'kernel'}]
+@pytest.mark.parametrize('table', [41995, 41996, 40988])
+def test_preflight_refuses_reserved_table_even_for_automatic_route(inventory, table):
+    inventory['routes6'] = [{'dst': 'fe80::/64', 'dev': 'eth1', 'table': table, 'protocol': 'kernel'}]
 
     with pytest.raises(ValueError, match='VRF table already has routes'):
         baseline.preflight({}, OPTIONS)

@@ -1,0 +1,14 @@
+# VPN export/import maps and RTs persist alongside existing global and VRF BGP.
+set vrf name BOOTVPN table 40988
+set vrf name BOOTVPN protocols bgp local-as 65097 parameters router-id 198.18.192.8
+set policy extended-community-list standard BOOTRT rule 10 action permit route-target 65097:88
+set policy route-map BOOTVPNIN rule 10 action permit match extended-community-list BOOTRT
+set policy route-map BOOTVPNOUT rule 10 action permit set extended-community route-target 65097:88
+set protocols bgp peer-group BOOTLU address-family ipv4-vpn soft-reconfiguration inbound
+set vrf name BOOTLEFT protocols bgp address-family ipv4-unicast vpn export route-distinguisher 65095:88 label auto route-map export BOOTVPNOUT
+set vrf name BOOTVPN protocols bgp address-family ipv4-unicast vpn import route-target import 65097:88
+set vrf name BOOTVPN protocols bgp address-family ipv4-unicast vpn route-map import BOOTVPNIN
+set protocols bgp peer-group BOOTLU address-family ipv6-vpn soft-reconfiguration inbound
+set vrf name BOOTLEFT protocols bgp address-family ipv6-unicast vpn export route-distinguisher 65095:88 label auto route-map export BOOTVPNOUT
+set vrf name BOOTVPN protocols bgp address-family ipv6-unicast vpn import route-target import 65097:88
+set vrf name BOOTVPN protocols bgp address-family ipv6-unicast vpn route-map import BOOTVPNIN

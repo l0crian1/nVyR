@@ -222,9 +222,9 @@ def dhcp_pools(context, family=4):
 
 
 @register('policy-community-lists')
-def policy_community_lists(context, large=False):
+def policy_community_lists(context, large=False, extended=False):
     """Standard and expanded lists share one native name namespace."""
-    kind = 'large-community-list' if large else 'community-list'
+    kind = 'extended-community-list' if extended else 'large-community-list' if large else 'community-list'
     names = {}
     for mode in ('standard', 'expanded'):
         for suggestion in config_path(context, f'policy {kind} {mode}'):

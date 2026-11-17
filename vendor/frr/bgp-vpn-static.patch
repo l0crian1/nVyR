@@ -1,0 +1,67 @@
+From 7e88a5338dcab9a89e6c9bd212234416e8191631 Mon Sep 17 00:00:00 2001
+From: Louis Scalbert <louis.scalbert@6wind.com>
+Date: Fri, 30 Oct 2026 15:42:44 +0100
+Subject: [PATCH] bgpd: fix crash with vpn static table on delete
+
+The following makes bgpd crash:
+
+> r1(config)# router bgp 65000
+> r1(config-router)#  address-family ipv4 vpn
+> r1(config-router-af)#   network 10.0.0.0/24 rd 1:1 label 100
+> r1(config-router-af)# !
+> r1(config-router-af)# no router bgp 65000
+> r1(config)# router bgp 65000
+> r1(config-router)#  bgp network import-check
+> r1(config-router)# no router bgp 65000
+> vtysh: error reading from bgpd: Resource temporarily unavailable (11)Warning: closing connection to bgpd because of an I/O error!
+
+>   #0  __pthread_kill_implementation (no_tid=0, signo=11, threadid=<optimized out>) at ./nptl/pthread_kill.c:44
+>   #1  __pthread_kill_internal (signo=11, threadid=<optimized out>) at ./nptl/pthread_kill.c:78
+>   #2  __GI___pthread_kill (threadid=<optimized out>, signo=signo@entry=11) at ./nptl/pthread_kill.c:89
+>   #3  0x000078992144527e in __GI_raise (sig=11) at ../sysdeps/posix/raise.c:26
+>   #4  0x00007899219601e2 in ?? () from /lib/x86_64-linux-gnu/libfrr.so.0
+>   #5  <signal handler called>
+>   #6  0x0000789921972998 in route_top () from /lib/x86_64-linux-gnu/libfrr.so.0
+>   #7  0x0000622abc8b42f3 in bgp_table_top (table=0x622ae0f62fe0) at /build/make-pkg/output/_packages/cp-routing/src/bgpd/bgp_table.h:255
+>   #8  0x0000622abc8d72a0 in bgp_static_redo_import_check (bgp=0x622ae0fbbd30) at /build/make-pkg/output/_packages/cp-routing/src/bgpd/bgp_route.c:10188
+>   #9  0x0000622abc94da0e in bgp_network_import_check (self=0x622abcb37540 <bgp_network_import_check_cmd>, vty=0x622ae0f33940, argc=3, argv=0x622ae0fa5980)
+>       at /build/make-pkg/output/_packages/cp-routing/src/bgpd/bgp_vty.c:5076
+>   #10 0x000078992189c446 in ?? () from /lib/x86_64-linux-gnu/libfrr.so.0
+>   #11 0x000078992189c5bf in cmd_execute_command () from /lib/x86_64-linux-gnu/libfrr.so.0
+>   #12 0x000078992189cb6c in cmd_execute () from /lib/x86_64-linux-gnu/libfrr.so.0
+>   #13 0x0000789921985271 in ?? () from /lib/x86_64-linux-gnu/libfrr.so.0
+>   #14 0x00007899219891e9 in ?? () from /lib/x86_64-linux-gnu/libfrr.so.0
+>   #15 0x0000789921989503 in ?? () from /lib/x86_64-linux-gnu/libfrr.so.0
+>   #16 0x000078992197da5d in event_call () from /lib/x86_64-linux-gnu/libfrr.so.0
+>   #17 0x00007899218e4c1e in frr_run () from /lib/x86_64-linux-gnu/libfrr.so.0
+>   #18 0x0000622abc7c53ed in main (argc=9, argv=0x7ffdbc3dc778) at /build/make-pkg/output/_packages/cp-routing/src/bgpd/bgp_main.c:575
+
+bgp_static_delete() frees the per-RD second-level table of the
+MPLS-VPN/ENCAP/EVPN static routes but leaves the RD node of
+bgp->static_routes[afi][safi] pointing to it.
+
+Clear the RD node info and release its lock after freeing the table,
+as bgp_cleanup_routes() does for the RIB.
+
+Fixes: b2d8d9b37a24 ("bgpd: On shutdown free up table for static routes")
+Signed-off-by: Louis Scalbert <louis.scalbert@6wind.com>
+---
+ bgpd/bgp_route.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/bgpd/bgp_route.c b/bgpd/bgp_route.c
+index 1c51ee4e2981..04237973b303 100644
+--- a/bgpd/bgp_route.c
++++ b/bgpd/bgp_route.c
+@@ -9640,7 +9640,10 @@ void bgp_static_delete(struct bgp *bgp)
+ 					assert(rm);
+ 				}
+ 
+-				bgp_table_unlock(table);
++				bgp_table_finish(&table);
++				bgp_dest_set_bgp_table_info(dest, NULL);
++				dest = bgp_dest_unlock_node(dest);
++				assert(dest);
+ 			} else {
+ 				bgp_static = bgp_dest_get_bgp_static_info(dest);
+ 				bgp_static_withdraw(bgp,

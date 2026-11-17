@@ -5,9 +5,23 @@ them from nVyR defects, and the conditions for removing temporary restrictions.
 Last reviewed: 2026-11-17.
 
 These entries are local investigation records, not confirmation that an upstream
-report has been filed or a fix merged. No upstream report or verified fix is
-recorded for the issues below. Add report URLs, patch/commit IDs, affected versions,
+report has been filed or a fix merged unless the individual entry identifies it.
+Add report URLs, patch/commit IDs, affected versions,
 and retest results as they become available.
+
+## FRR VPN static-table deletion crash
+
+FRR 10.7.1 frees the second-level static VPN route table during BGP deletion but
+leaves the RD node pointing at freed memory. Recreating BGP and reading its
+configuration reproducibly crashes `bgpd` in `bgp_config_write_network` /
+`route_top`. This was reproduced in an isolated instance on the packaged build.
+
+`vendor/frr/bgp-vpn-static.patch` backports upstream commit
+[`7e88a5338dcab9a89e6c9bd212234416e8191631`](https://github.com/FRRouting/frr/commit/7e88a5338dcab9a89e6c9bd212234416e8191631),
+merged in [PR 24102](https://github.com/FRRouting/frr/pull/24102).
+It clears the freed table reference and releases the RD node lock; it does not
+change configuration semantics. Remove the patch when the pinned FRR contains
+that commit, retaining the VPN network deletion/recreation native tests.
 
 ## ULOGD-001: ICMP PRINTFLOW swaps type and code
 
@@ -792,3 +806,44 @@ group-limit removal, all four unicast/LU families, and live capability updates
 when upgrading FRR. Native round-trip tests are in `tests/test_bgp_lu_native.py`.
 Live changes and removal are covered in the shared routed suite's
 `functionaltests/network/test_bgp_lu.py`.
+
+### Retained default BGP instance loses EVPN containers on VPN deletion
+
+FRR 10.7.1 retains a deleted default instance while its VPN RIB is nonempty.
+Its deletion path frees EVPN containers, but hidden-instance revival skips their
+initialization. After the static-table fix above, the same delete/recreate
+sequence crashed in `bgp_config_write_evpn_info()` instead.
+
+`vendor/frr/bgp-vpn-revival.patch` recreates the released EVPN containers on
+revival, first releasing the surviving nexthop table to avoid leaking it. It also
+restores EVPN ownership following upstream commit
+[`ab390ba48bb9`](https://github.com/FRRouting/frr/commit/ab390ba48bb9f8c5d7650fe066a58945d0a61d14).
+That ownership-only upstream change does not itself fix the freed containers.
+The retained object also preserves configured timers, best-path options,
+distances, and LU settings. `vendor/frr/bgp-vpn-reload.patch` removes configured
+default-instance settings through the existing diff machinery before deleting
+the instance. This fixes nVyR reload deletion without attempting to rewrite
+FRR's native retained-object lifecycle. Direct native `no router bgp` remains
+subject to retained configuration.
+Native regression tests repeat direct VPN route removal and default-instance
+recreation with both the same and a different ASN, for both VPN families. They
+also verify that deleted timers, best-path settings, AF distances, and label
+policy do not reappear. `tests/test_frr_reload_ordering.py` checks parent-last
+deletion and independent AF cleanup in another BGP instance.
+Recheck these fixes when upgrading FRR; do not remove this patch based solely on
+the ownership commit being present.
+
+## VPNv6 over IPv4-only transport: kernel next-hop rejection
+
+With packaged FRR 10.7.1 and Linux 6.18.64, a VPNv6 route exported with an
+IPv4-mapped next hop resolved through OSPF/LDP, became best in the customer VRF,
+and was rejected during kernel installation. Zebra reported `IPv6 routes can not
+use an IPv4 nexthop` and marked the route `B>r`. IPv4 VPN traffic and VPNv6 using
+IPv6 transport next hops both passed bidirectional packet tests in the same
+shared topology. An ordinary IPv4 value in the VPNv6 export next-hop setting did
+not produce a usable imported route either.
+
+No native fix or global next-hop behavior change has been introduced for this
+case. Reproduce with the pinned packages and inspect the netlink request before
+claiming IPv4-only VPNv6 transport support. This record identifies the observed
+failure, not a confirmed attribution to either FRR or Linux.

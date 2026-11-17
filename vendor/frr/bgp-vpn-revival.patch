@@ -1,0 +1,31 @@
+Subject: bgpd: reinitialize EVPN state when reviving a hidden VPN instance
+
+The retained default instance skips fresh allocation. Its EVPN cleanup has
+already freed the containers; initialize those again and restore ownership.
+The nexthop table survives hidden teardown and must be released before init.
+Owner restoration follows upstream ab390ba48bb9f8c5d7650fe066a58945d0a61d14.
+
+--- a/bgpd/bgpd.c
++++ b/bgpd/bgpd.c
+@@ -3968,6 +3968,21 @@
+ 		bgp_ls_init(bgp);
+ 	}
+ 
++	/* A hidden default instance survives deletion for its VPN RIB, but
++	 * teardown released its EVPN containers. Recreate them before the
++	 * revived instance can be inspected or used for EVPN again.
++	 */
++	if (hidden && !bgp->vnihash) {
++		bgp_evpn_nh_finish(bgp);
++		bgp_evpn_init(bgp);
++	}
++
++	/* Restore the EVPN owner skipped by the hidden peer_init path.
++	 * Mirrors upstream ab390ba48bb9f8c5d7650fe066a58945d0a61d14.
++	 */
++	if (hidden && inst_type == BGP_INSTANCE_TYPE_DEFAULT && !bgp_get_evpn())
++		bgp_set_evpn(bgp);
++
+ 	/*initialize global GR FSM */
+ 	bgp_global_gr_init(bgp);
+ 

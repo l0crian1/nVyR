@@ -8,6 +8,12 @@ from nvyr.helpers import bgp_peer
 COMMUNITIES = ('standard', 'extended', 'large')
 
 
+def rd_rt(value):
+    administrator, assigned = value.split(':')
+    administrator = str(ipaddress.IPv4Address(administrator)) if '.' in administrator else str(int(administrator))
+    return f'{administrator}:{int(assigned)}'
+
+
 def timer_pair(options, defaults):
     return (int(options.get('keepalive', defaults.get('keepalive', 60))),
             int(options.get('holdtime', defaults.get('holdtime', 180))))
@@ -93,12 +99,23 @@ def peer_family_commands(name, options, inherited_options):
             elif community not in inherited_classes:
                 commands.append(f'{prefix} send-community {community}')
     commands.extend(bgp_peer.family_commands(name, options))
+    if 'site-of-origin' in options:
+        commands.append(f'{prefix} soo {rd_rt(options["site-of-origin"])}')
+    if 'accept-own' in options:
+        commands.append(f'{prefix} accept-own')
     return commands
 
 
-def family_commands(options):
+def family_commands(options, family='ipv4-unicast'):
     commands = []
     for prefix, values in options.get('network', {}).items():
+        if family.endswith('-vpn'):
+            for rd, settings in values['route-distinguisher'].items():
+                line = f'  network {ipaddress.ip_network(prefix)} rd {rd_rt(rd)} label {int(settings["label"])}'
+                if 'route-map' in settings:
+                    line += f' route-map {settings["route-map"]}'
+                commands.append(line)
+            continue
         line = f'  network {ipaddress.ip_network(prefix)}'
         if 'route-map' in values:
             line += f' route-map {values["route-map"]}'
@@ -137,4 +154,28 @@ def family_commands(options):
             commands.append('  distance bgp ' + ' '.join(str(value) for value in values))
     if 'prefer-global' in options.get('next-hop', {}):
         commands.append('  nexthop prefer-global')
+    if 'disable-retain-route-target-all' in options:
+        commands.append('  no bgp retain route-target all')
+    vpn = options.get('vpn', {})
+    for key, native in (('route-distinguisher', 'rd'), ('label', 'label'), ('next-hop', 'nexthop')):
+        if key in vpn:
+            value = vpn[key]
+            if key == 'route-distinguisher':
+                value = rd_rt(value)
+            elif key == 'next-hop':
+                value = str(ipaddress.ip_address(value))
+            elif key == 'label' and value != 'auto':
+                value = str(int(value))
+            commands.append(f'  {native} vpn export {value}')
+    if vpn.get('allocation-mode', 'per-vrf') != 'per-vrf':
+        commands.append(f'  label vpn export allocation-mode {vpn["allocation-mode"]}')
+    targets = vpn.get('route-target', {})
+    for direction in ('import', 'export'):
+        values = {rd_rt(value) for key in (direction, 'both') for value in targets.get(key, ())}
+        if values:
+            commands.append(f'  rt vpn {direction} ' + ' '.join(sorted(values)))
+        if direction in vpn.get('route-map', {}):
+            commands.append(f'  route-map vpn {direction} {vpn["route-map"][direction]}')
+        if direction in vpn:
+            commands.append(f'  {direction} vpn')
     return commands

@@ -1,0 +1,70 @@
+Subject: reload: clear default BGP settings before deleting a retained VPN instance
+
+--- a/tools/frr-reload.py
++++ b/tools/frr-reload.py
+@@ -14,6 +14,7 @@
+ 
+ from __future__ import print_function, unicode_literals
+ import argparse
++from copy import copy
+ import datetime
+ import logging
+ import os, os.path
+@@ -1876,6 +1877,19 @@
+     Create a context diff for the two specified contexts
+     """
+ 
++    # VPN routes can retain the default instance after deletion. Reset its
++    # configured settings through the normal diff before hiding the instance,
++    # otherwise those settings survive a later recreation (including new ASNs).
++    deleted_bgp = []
++    newconf = copy(newconf)
++    newconf.contexts = newconf.contexts.copy()
++    for keys in running.contexts:
++        if (len(keys) == 1 and keys[0].startswith("router bgp ")
++                and " vrf " not in keys[0] and " view " not in keys[0]
++                and keys not in newconf.contexts):
++            deleted_bgp.append((keys, None))
++            newconf.contexts[keys] = Context(keys, [])
++
+     # Compare the two Config objects to find the lines that we need to add/del
+     lines_to_add = []
+     lines_to_del = []
+@@ -1884,7 +1898,6 @@
+     pceconf_to_del = []
+     pcclist_to_del = []
+     candidates_to_add = []
+-    delete_bgpd = False
+     area_stub_no_sum = r"area (\S+) stub no-summary"
+     deleted_keychains = []
+ 
+@@ -1913,10 +1926,8 @@
+         if running_ctx_keys not in newconf.contexts:
+             # We check that the len is 1 here so that we only look at ('router bgp 10')
+             # and not ('router bgp 10', 'address-family ipv4 unicast'). The
+-            # latter could cause a false delete_bgpd positive if ipv4 unicast is in
+-            # running but not in newconf.
++            # latter is an AF removal, not a process removal.
+             if "router bgp" in running_ctx_keys[0] and len(running_ctx_keys) == 1:
+-                delete_bgpd = True
+                 lines_to_del.append((running_ctx_keys, None))
+ 
+             # Removing the LDP process also removes its children. Entering the
+@@ -1943,7 +1954,7 @@
+             elif (
+                 "router bgp" in running_ctx_keys[0]
+                 and len(running_ctx_keys) > 1
+-                and delete_bgpd
++                and (running_ctx_keys[0],) not in newconf.contexts
+             ):
+                 continue
+ 
+@@ -2187,6 +2198,8 @@
+         else:
+             other_deletions.append((ctx_keys, line))
+     lines_to_del = other_deletions + circuit_unbind + process_delete
++
++    lines_to_del.extend(deleted_bgp)
+ 
+     return (lines_to_add, lines_to_del)
+ 

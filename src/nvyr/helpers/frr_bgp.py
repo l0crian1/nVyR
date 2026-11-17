@@ -76,6 +76,21 @@ def normalize(header, sections):
                 lines.add(positive if default_active else negative)
 
     for lines in sections.values():
+        # FRR coalesces identical import/export RT lists into "both".
+        targets = {'import': set(), 'export': set()}
+        for line in tuple(lines):
+            if line.startswith('rt vpn '):
+                _, _, direction, *values = line.split()
+                for selected in targets if direction == 'both' else (direction,):
+                    targets[selected].update(values)
+                lines.remove(line)
+        if targets['import'] and targets['import'] == targets['export']:
+            lines.add('rt vpn both ' + ' '.join(sorted(targets['import'])))
+        else:
+            for direction, values in targets.items():
+                if values:
+                    lines.add(f'rt vpn {direction} ' + ' '.join(sorted(values)))
+
         for member, group in memberships.items():
             for line in tuple(lines):
                 # These defaults can leave existing members with explicit overrides.

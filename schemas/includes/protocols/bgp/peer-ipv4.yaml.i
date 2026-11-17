@@ -1,5 +1,13 @@
 children:
 
+  site-of-origin:
+    kind: leaf_node
+    description: Site-of-origin community used to prevent routes returning to their site
+    hints:
+      soo: ASN:number or IPv4:number
+    validators:
+      bgp-rd-rt: {}
+
   route-map:
     kind: node
     description: Routing policy in each direction

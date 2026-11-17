@@ -148,3 +148,22 @@ Kunihiro Ishiguro. No upstream acceptance of this patch is claimed.
 It also modifies `bgpd/bgp_packet.c` (copyright 1999 Kunihiro Ishiguro and
 2017 Cumulus Networks) and `bgpd/bgp_fsm.c`, under the same GPL-2.0-or-later
 license; their original notices remain in the source.
+
+`bgp-vpn-static.patch` backports upstream commit
+`7e88a5338dcab9a89e6c9bd212234416e8191631`, preserving its attribution. It
+finishes nested VPN static tables and clears their parent references when the
+BGP instance is deleted. `bgp-vpn-revival.patch` reinitializes EVPN containers
+freed during deletion of a default instance retained for its VPN RIB, and
+restores EVPN ownership following upstream `ab390ba48bb9f8c5d7650fe066a58945d0a61d14`.
+The container reinitialization is a local change, not claimed upstream.
+`bgp-vpn-reload.patch` clears configured default-instance settings before
+deletion, because the retained VPN object otherwise preserves them on revival.
+It uses the existing reload diff and negation handling and removes the parent
+last. The additional modified file, `tools/frr-reload.py`, retains its upstream
+GPL-2.0-or-later license and copyright notices.
+
+The patched files are `bgpd/bgp_route.c` and `bgpd/bgpd.c` from `frr-10.7.1`,
+GPL-2.0-or-later. Original copyright notices remain in the source and the
+upstream patch retains its author and sign-off. Native regressions in
+`tests/test_bgp_vpn_native.py` cover both families and repeated deletion/revival
+with unchanged and changed ASNs. Reevaluate these patches on an FRR upgrade.

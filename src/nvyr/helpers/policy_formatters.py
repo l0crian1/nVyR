@@ -2,6 +2,7 @@
 
 import ipaddress
 
+from nvyr.helpers.bgp_formatters import rd_rt
 from nvyr.helpers.validators import BGP_COMMUNITY_NAMES
 
 
@@ -48,6 +49,13 @@ def filter_operand(rule):
     return operand
 
 
+def extended_values(rule):
+    """Render each extended community with its native type discriminator."""
+    return ' '.join(f'{native} {value}'
+                    for key, native in (('route-target', 'rt'), ('site-of-origin', 'soo'))
+                    for value in sorted({rd_rt(value) for value in rule.get(key, ())}))
+
+
 def matches(values):
     commands = []
     for family, keyword in (('ipv4', 'ip'), ('ipv6', 'ipv6')):
@@ -76,10 +84,13 @@ def matches(values):
                 except ValueError:
                     pass
             commands.append(f'match {native} {value}')
-    for kind in ('community-list', 'large-community-list'):
+    for kind in ('community-list', 'large-community-list', 'extended-community-list'):
         for name, flags in values.get(kind, {}).items():
             suffix = ' exact-match' if 'exact-match' in flags else ' any' if 'any' in flags else ''
-            commands.append(f'match {kind.removesuffix("-list")} {name}{suffix}')
+            native = 'extcommunity' if kind == 'extended-community-list' else kind.removesuffix('-list')
+            commands.append(f'match {native} {name}{suffix}')
+    if 'extended-community-limit' in values:
+        commands.append(f'match extcommunity-limit {int(values["extended-community-limit"])}')
     return commands
 
 
@@ -158,4 +169,13 @@ def actions(values):
         if kind + '-delete' in values:
             native = 'comm-list' if kind == 'community' else 'large-comm-list'
             commands.append(f"set {native} {values[kind + '-delete']} delete")
+    extended = values.get('extended-community', {})
+    if 'none' in extended:
+        commands.append('set extcommunity none')
+    if 'route-target' in extended:
+        commands.append('set extcommunity rt ' + ' '.join(sorted({rd_rt(value) for value in extended['route-target']})))
+    if 'site-of-origin' in extended:
+        commands.append('set extcommunity soo ' + rd_rt(extended['site-of-origin']))
+    if 'extended-community-delete' in values:
+        commands.append(f'set extended-comm-list {values["extended-community-delete"]} delete')
     return commands

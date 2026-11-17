@@ -40,7 +40,7 @@ def test_combined_configuration(local_session, monkeypatch):
     running = local_session.get_config()
     assert running['protocols']['static']['route']['0.0.0.0/0'] == {'next-hop': {'10.0.101.1': {}}}
 
-    assert set(running['vrf']['name']) == {'NVYRLEFT', 'NVYRRIGHT', 'NVYRFWSMOKE', 'NVYRSMOKE', 'NTPTEST', 'NVYRDHCPSMOKE'}
+    assert set(running['vrf']['name']) == {'NVYRLEFT', 'NVYRRIGHT', 'NVYRFWSMOKE', 'NVYRSMOKE', 'NTPTEST', 'NVYRDHCPSMOKE', 'RNVPNBLUE', 'RNVPNRED'}
     assert 'bgp' in running['vrf']['name']['NVYRLEFT']['protocols']
     assert 'static' in running['vrf']['name']['NVYRLEFT']['protocols']
     assert 'RNMAP' in running['firewall']['group']['map']['inet']

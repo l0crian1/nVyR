@@ -13,4 +13,5 @@ policy:
     - file: policy/as-path-list.yaml.i
     - file: policy/community-list.yaml.i
     - file: policy/large-community-list.yaml.i
+    - file: policy/extended-community-list.yaml.i
     - file: policy/route-map.yaml.i

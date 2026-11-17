@@ -91,7 +91,9 @@ bgp:
         - file: protocols/bgp/ipv4.yaml.i
         - file: protocols/bgp/ipv6.yaml.i
         - file: protocols/bgp/ipv4-lu.yaml.i
+        - file: protocols/bgp/ipv4-vpn.yaml.i
         - file: protocols/bgp/ipv6-lu.yaml.i
+        - file: protocols/bgp/ipv6-vpn.yaml.i
     include_schema:
     - file: protocols/bgp/parameters.yaml.i
   script:

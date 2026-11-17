@@ -11,7 +11,7 @@ from nvyr.config_session import CommitError
 from nvyr.helpers.frr_bgp import adapter
 from nvyr.helpers.process import cmd
 from nvyr.tree import lookup
-from smoketests.assertions import assert_bgp_commands, assert_frr_policy_commands, assert_raises
+from smoketests.assertions import assert_bgp_commands, assert_config_names_unused, assert_frr_policy_commands, assert_raises
 from smoketests.support import configuration_case, prepared_test
 
 
@@ -22,7 +22,10 @@ def standup(config, resources):
     if lookup(config.get_config(), ('protocols', 'bgp'), None) is not None or any(existing.values()):
         pytest.skip('Default-VRF BGP or daemon-wide parameters are in use; default-only tests require unused settings.')
 
+    assert_config_names_unused(config.get_config(), 'NVYRVPN')
     resources['prepared'] = True
+    config.set('set vrf name NVYRVPN table 41049')
+    config.set('set vrf name NVYRVPN protocols bgp local-as 65000')
     config.set('set protocols bgp local-as 65000 parameters router-id 192.0.2.1')
     config.commit()
 
@@ -31,6 +34,9 @@ def cleanup(config, resources):
     """Remove only the instance reserved by this test, including after failed verification."""
     if resources['prepared']:
         config.discard()
+        if lookup(config.get_config(), ('vrf', 'name', 'NVYRVPN'), None) is not None:
+            config.delete('delete vrf name NVYRVPN')
+            config.commit()
         if lookup(config.get_config(), ('protocols', 'bgp'), None) is not None:
             config.delete('delete protocols bgp')
             config.commit()
@@ -65,6 +71,23 @@ def test_dampening_defaults(config):
     config.delete('delete protocols bgp parameters dampening')
     config.commit()
     assert_bgp_commands(vrf='default', absent=('bgp dampening',))
+
+
+@pytest.mark.parametrize('family', ['ipv4', 'ipv6'])
+def test_vpn_translation_and_withdrawal(config, family):
+    config.set('set protocols bgp neighbor 192.0.2.2 remote-as 65000 shutdown')
+    config.set(f'set protocols bgp neighbor 192.0.2.2 address-family {family}-vpn accept-own soft-reconfiguration inbound')
+    config.set(f'set protocols bgp address-family {family}-vpn disable-retain-route-target-all')
+    root = f'vrf name NVYRVPN protocols bgp address-family {family}-unicast vpn'
+    config.set('set ' + root + ' import export route-distinguisher 65000:1 label auto')
+    config.set('set ' + root + ' route-target both 65000:1 both 65000:2')
+    config.commit()
+    assert_bgp_commands('rd vpn export 65000:1', 'rt vpn both 65000:1 65000:2',
+                        'label vpn export auto', 'import vpn', 'export vpn', vrf='NVYRVPN')
+    assert_bgp_commands('neighbor 192.0.2.2 accept-own', 'no bgp retain route-target all', vrf='default')
+    config.delete('delete ' + root)
+    config.commit()
+    assert_bgp_commands(vrf='NVYRVPN', absent=('import vpn', 'export vpn', 'rd vpn export 65000:1'))
 
 
 @pytest.mark.parametrize('family', ['ipv4', 'ipv6'])
