@@ -912,3 +912,111 @@ removed after testing.
 The defect therefore concerns the **resolved kernel nexthop family**, not merely
 whether the VPN BGP session uses IPv4 TCP. An IPv4 session whose mapped VPNv6
 next hop resolves to IPv6 link-local forwarding worked in this test.
+
+### OSPFv3 interface host routes without an egress LDP binding
+
+The 0.4.0 coverage audit reproduced a separate limitation with FRR
+`10.7.1-0~deb13u1+nvyr8` and Linux `6.18.64-nvyr-amd64`. The shared PE–P–PE lab
+used OSPFv2/OSPFv3 and dual-stack LDP. VPNv4/VPNv6 and both LU families forwarded
+between their advertised customer/loopback prefixes. An IPv6 LU probe whose
+source was instead the automatically selected transit-interface address failed.
+
+Observed evidence:
+
+- OSPFv3 installed `2001:db8:84::1/128`, the first PE's interface address, on
+  the other routers. Its connected prefix on the owner was `/64`.
+- The owning PE's `show mpls ldp ipv6 binding 2001:db8:84::1/128 detail` showed
+  no local label. The P router allocated and advertised a label for the `/128`,
+  but received no corresponding binding from that owner and installed no LFIB
+  entry for its advertised label.
+- The remote PE installed a labeled return route to the `/128` using the
+  P router's unusable label. The automatically sourced probe received 0/2 replies.
+- Explicitly sourcing the same probe from the advertised IPv6 LU prefix passed
+  3/3 in each direction. The IS-IS and RIPng cases did not reproduce this
+  interface-address failure.
+
+The matrix now sources LU probes from LU-advertised prefixes so that both
+directions test that AF, rather than using an IGP interface route for replies.
+That test correction does **not** fix or waive the interface-address limitation.
+The native cause is in `ldpd/ldp_zebra.c`: `ZEBRA_ROUTE_CONNECT` receives the
+connected-FEC flag, but `ZEBRA_ROUTE_LOCAL` does not. The later interface-only
+nexthop check consequently skips local host routes. The isolated reproduction
+confirmed that Zebra had both the connected `/64` and local `/128`, while LDP
+only had a binding for the `/64`.
+
+`vendor/frr/ldp-local-routes.patch`, packaged in `+nvyr10`, adds the local route
+type to that same connected-FEC case. Existing allocation and withdrawal code
+then handles the host address, including implicit-null at the egress. No OSPF
+behavior or route selection is changed. This is a local fix; upstream master
+still omitted this case when checked, and no upstream acceptance is claimed.
+`tests/test_ldp_native.py` reproduces the missing binding for IPv4 and IPv6,
+then checks removal and recreation without restarting LDP. The shared OSPF
+matrix also checks delivery to the interface `/128` through the P router.
+
+Diagnostic output is retained in ignored `experiments/mpls_debug.py.log` and
+`experiments/ldp_local_check.py.log`. Recheck the native handler and these
+regressions before removing the patch during an FRR upgrade.
+
+### Static IPv6 MPLS next hops hidden by OSPFv3 host routes
+
+The same audit found that `zebra/zebra_mpls.c` checks only the most-specific
+route when deciding whether an IPv6 label next hop is connected. OSPFv3's
+adjacent-interface `/128` therefore hides its connected `/64`, and static
+incoming-label entries disappear from the kernel even though the neighbor
+remains directly connected. Static IPv6 swap and two-label pop tests reproduce
+this after OSPFv3 converges. Ordinary IP routes with label encapsulation use a
+different resolution path and continued working.
+
+`vendor/frr/zebra-static-nexthop.patch`, packaged in `+nvyr10`, walks covering
+prefixes until it finds a selected connected/local route. It preserves the
+directly-connected restriction. The regression also exposed a lost MPLS update
+when the last route at a RIB destination is garbage-collected: the pending
+update flag was freed before dataplane completion could process it. The patch
+processes that notification before freeing the destination.
+
+`tests/test_mpls_forwarding_native.py` checks a connected IPv6 next hop, adds a
+more-specific next-hop route, changes the outgoing label, removes the host
+route, and removes the connected subnet. The label must survive the host route
+and disappear with the connected subnet. Shared functional tests verify actual
+swap/pop and MTU-boundary forwarding with OSPFv3 present. Upstream master still
+had the most-specific-only lookup when checked; this is a local fix.
+
+### Secondary addresses in the same subnet can lack Zebra local host routes
+
+Adding `2001:db8:84:1::99/64` alongside `2001:db8:84:1::2/64` on a native test
+peer produced an OSPFv3 advertisement for the new `/128`, but no local host
+route in Zebra and therefore no LDP egress binding. In `zebra/connected.c`,
+`connected_up()` returns when it finds another active address with the same
+network/mask, before installing the new local host route. `connected_down()`
+has a similar early return before local-route removal.
+
+This is separate from LDP's handling of existing local routes and remains
+unfixed. The address-add/remove LDP regression uses a distinct connected prefix
+so that Zebra supplies the local route being tested; it does not claim coverage
+of secondary addresses within the same subnet. Evidence is retained in ignored
+`experiments/ldp_withdraw_debug.py.log`. Revisit the connected-route deduplication
+and local-host lifecycle together before claiming that case works.
+
+### Live LDP transport preference retains the previous address family
+
+The IPv4/IPv6 transport matrix exposed a separate FRR 10.7.1 lifecycle defect.
+Initial IPv6 LDP setup passed, but changing established IPv4 neighbors to IPv6
+left the native P-to-PE session down even after a 150-second convergence window.
+Hellos arrived with matching preferences and the transport addresses were
+reachable. Restarting from an initial IPv6 configuration worked.
+
+`ldpe_reset_ds_nbrs()` only shut down each session. The surviving neighbor kept
+its original `af`, local address and remote address, which are assigned by
+`nbr_new()`. Subsequent hellos found that existing neighbor and did not recreate
+it with the new family. [Upstream's reset function](https://github.com/FRRouting/frr/blob/master/ldpd/ldpe.c)
+still had the session-only behavior when checked.
+
+`vendor/frr/ldp-transport-preference.patch`, packaged in `+nvyr11`, shuts down
+and removes those dual-stack neighbors with safe tree iteration. The next
+matching hello recreates them using the current preference and existing
+discovery adjacencies. The same helper handles Cisco interop changes; ordinary
+clears and single-stack neighbors retain their existing behavior.
+`test_transport_preference_changes_live` switches IPv4 to IPv6 and back with
+unchanged addresses, checks both ends' session families, and verifies labeled
+IPv4/IPv6 delivery. The PE–P–PE matrix repeats transport changes across all
+three IGP profiles. No process restart or manual clear is used to make it pass.

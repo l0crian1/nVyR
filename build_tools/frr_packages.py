@@ -21,6 +21,9 @@ RIP_PATCH = ROOT / 'vendor/frr/rip-reload.patch'
 RIP_VRF_PATCH = ROOT / 'vendor/frr/rip-vrf-routemap.patch'
 ISIS_PATCH = ROOT / 'vendor/frr/isis-reload.patch'
 LDP_PATCH = ROOT / 'vendor/frr/ldp-reload.patch'
+LDP_LOCAL_PATCH = ROOT / 'vendor/frr/ldp-local-routes.patch'
+LDP_TRANSPORT_PATCH = ROOT / 'vendor/frr/ldp-transport-preference.patch'
+MPLS_NEXTHOP_PATCH = ROOT / 'vendor/frr/zebra-static-nexthop.patch'
 BGP_ADDPATH_PATCH = ROOT / 'vendor/frr/bgp-addpath.patch'
 BGP_VPN_PATCH = ROOT / 'vendor/frr/bgp-vpn-static.patch'
 BGP_VPN_REVIVAL_PATCH = ROOT / 'vendor/frr/bgp-vpn-revival.patch'
@@ -36,7 +39,12 @@ def digest(path):
 def recipe_digest():
     """Changing any build input invalidates previously cached packages."""
     checksum = hashlib.sha256()
-    for path in (Path(__file__), LOCK, PATCH, KEYCHAIN_PATCH, OSPF_PATCH, RIP_PATCH, RIP_VRF_PATCH, ISIS_PATCH, LDP_PATCH, BGP_ADDPATH_PATCH, BGP_VPN_PATCH, BGP_VPN_REVIVAL_PATCH, BGP_VPN_RELOAD_PATCH):
+    for path in (
+        Path(__file__), LOCK, PATCH, KEYCHAIN_PATCH, OSPF_PATCH, RIP_PATCH,
+        RIP_VRF_PATCH, ISIS_PATCH, LDP_PATCH, LDP_LOCAL_PATCH, LDP_TRANSPORT_PATCH,
+        MPLS_NEXTHOP_PATCH,
+        BGP_ADDPATH_PATCH, BGP_VPN_PATCH, BGP_VPN_REVIVAL_PATCH, BGP_VPN_RELOAD_PATCH,
+    ):
         checksum.update(path.read_text(encoding='utf-8').replace('\r\n', '\n').encode())
         checksum.update(b'\0')
     return checksum.hexdigest()
@@ -97,6 +105,9 @@ def prepare_source(work, lock):
 
     run(['patch', '--batch', '--forward', '--fuzz=0', '-p1', '-i', str(ISIS_PATCH)], cwd=source)
     run(['patch', '--batch', '--forward', '--fuzz=0', '-p1', '-i', str(LDP_PATCH)], cwd=source)
+    run(['patch', '--batch', '--forward', '--fuzz=0', '-p1', '-i', str(LDP_LOCAL_PATCH)], cwd=source)
+    run(['patch', '--batch', '--forward', '--fuzz=0', '-p1', '-i', str(LDP_TRANSPORT_PATCH)], cwd=source)
+    run(['patch', '--batch', '--forward', '--fuzz=0', '-p1', '-i', str(MPLS_NEXTHOP_PATCH)], cwd=source)
     run(['patch', '--batch', '--forward', '--fuzz=0', '-p1', '-i', str(BGP_ADDPATH_PATCH)], cwd=source)
     run(['patch', '--batch', '--forward', '--fuzz=0', '-p1', '-i', str(BGP_VPN_PATCH)], cwd=source)
     run(['patch', '--batch', '--forward', '--fuzz=0', '-p1', '-i', str(BGP_VPN_REVIVAL_PATCH)], cwd=source)

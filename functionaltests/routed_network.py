@@ -26,6 +26,7 @@ from smoketests.assertions import (
 from smoketests.support import assert_configuration_restored, defer_interrupt, wait_for
 from functionaltests.lldp_lab import daemon as lldp_peer
 from functionaltests.mpls_peer import daemon as mpls_peer
+from functionaltests.mpls_transit import daemon as mpls_transit
 from functionaltests.wireguard_peer import peers as wireguard_peers
 
 
@@ -48,8 +49,8 @@ LINKS = ('veth42061', 'veth42062', 'veth42063', 'veth42064', 'veth42065', 'veth4
          'veth42067', 'veth42068', 'veth42071', 'veth42072', 'veth42073', 'veth42074',
          'dum42080', 'dum42081', 'dum42061', 'dum42069', 'dum42071', 'dum977', 'dum980', 'dum997', 'dum998', 'dum999', 'veth994', 'veth995',
          'veth41050', 'veth41051', 'veth41052', 'veth41053',
-         'veth42075', 'veth42076', 'wg42075', 'wg42076')
-NAMESPACES = ('nvyr-routed-left', 'nvyr-routed-right', 'nvyr-ft-source', 'nvyr-ft-destination')
+         'veth42075', 'veth42076', 'wg42075', 'wg42076', 'veth42079', 'veth42080')
+NAMESPACES = ('nvyr-routed-left', 'nvyr-routed-right', 'nvyr-ft-source', 'nvyr-ft-destination', 'nvyr-routed-core')
 POLICIES = ('RNCOMM', 'RNLARGE', 'RNAS', 'RNCALL', 'RNIN4', 'RNIN6', 'RNOUT4', 'RNOUT6',
             'RN4ACL', 'RN6ACL', 'RN4PREFIX', 'RN6PREFIX', 'RN4LAN', 'RN6LAN',
             'RN4P1', 'RN4P2', 'RN4P3', 'RN4P4', 'RN4P5', 'RN4P6',
@@ -245,6 +246,7 @@ def scenario(config, stop):
                                      ('nvyr-routed-right', 'veth42066'),
                                      ('nvyr-routed-right', 'veth42072'),
                                      ('nvyr-routed-right', 'veth42076'),
+                                     ('nvyr-routed-core', 'veth42080'),
                                      ('nvyr-ft-source', 'veth41051'),
                                      ('nvyr-ft-destination', 'veth41053')):
             cmd(['ip', 'link', 'set', interface, 'netns', namespace])
@@ -267,6 +269,7 @@ def scenario(config, stop):
             directory = Path(temporary)
             directory.chmod(0o755)
             peers.enter_context(mpls_peer(directory / 'mpls', 'nvyr-routed-right'))
+            peers.enter_context(mpls_transit(directory / 'core'))
             peers.enter_context(wireguard_peers(directory / 'wireguard', 'nvyr-routed-right'))
             for side, interface in (('left', 'veth42064'), ('right', 'veth42066')):
                 peers.enter_context(lldp_peer(directory / side, 'nvyr-routed-' + side, {

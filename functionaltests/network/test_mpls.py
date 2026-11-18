@@ -55,6 +55,43 @@ def test_ospf_ldp_synchronization_completes():
              timeout=45, description='OSPF restores its metric after LDP synchronization')
 
 
+def test_operational_clear_restores_labeled_delivery():
+    cmd(['mpls.nvyr.op', 'clear', 'clear mpls ldp neighbor 198.18.71.2'])
+    wait_for(lambda: cmd(['mpls.nvyr.op', 'show', 'show mpls ldp neighbor']),
+             lambda output: '198.18.71.2' in output and 'OPERATIONAL' in output.upper(),
+             timeout=45, description='LDP session after operational clear')
+    for version, destination in [('-4', '198.19.62.2'), ('-6', '2001:db8:64::2')]:
+        wait_for(lambda: json.loads(cmd(['ip', version, '-j', 'route', 'show', destination])),
+                 lambda rows: any(row.get('encap', {}).get('encap_type') == 'mpls' for row in rows),
+                 timeout=45, description='restored labeled route after LDP clear')
+        cmd(['ping', version, '-n', '-c', '2', '-W', '2', destination])
+
+
+def test_transport_preference_changes_live(config, routed_peer):
+    """Switch both transport families without changing addresses or restarting LDP."""
+    peer = ['vtysh', '--vty_socket', str(routed_peer)]
+    preference = [*peer, '-c', 'configure terminal', '-c', 'mpls ldp', '-c']
+    try:
+        for family in ('ipv6', 'ipv4'):
+            config.set(f'set protocols ldp options dual-stack transport-preference {family}')
+            config.commit()
+            command = ('no ' if family == 'ipv6' else '') + 'dual-stack transport-connection prefer ipv4'
+            cmd([*preference, command])
+            for arguments, identity in ((['vtysh'], '198.18.71.2'), (peer, '198.18.71.1')):
+                wait_for(lambda: json.loads(cmd([*arguments, '-c', 'show mpls ldp neighbor json'])),
+                         lambda data: any(row['neighborId'] == identity and row['addressFamily'] == family
+                                          and row['state'].lower() == 'operational'
+                                          for row in data.get('neighbors', [])),
+                         timeout=150, description=family + ' LDP transport after preference edit')
+            for version, destination in (('-4', '198.19.62.2'), ('-6', '2001:db8:64::2')):
+                wait_for(lambda: json.loads(cmd(['ip', version, '-j', 'route', 'show', destination])),
+                         lambda rows: any(row.get('encap', {}).get('encap_type') == 'mpls' for row in rows),
+                         timeout=30, description='labels restored after transport change')
+                cmd(['ping', version, '-n', '-c', '2', '-W', '2', destination])
+    finally:
+        cmd([*preference, 'dual-stack transport-connection prefer ipv4'])
+
+
 def test_recreated_interface_regains_mpls_input():
     before = Path('/sys/class/net/dum42071/ifindex').read_text()
     cmd(['ip', 'link', 'delete', 'dum42071'])

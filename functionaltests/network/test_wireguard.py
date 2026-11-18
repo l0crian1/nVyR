@@ -11,6 +11,8 @@ import json
 
 from nvyr.helpers.process import cmd, rc_cmd
 from nvyr.helpers import wireguard
+from nvyr.tree import lookup
+from smoketests.support import wait_for
 
 OVERLAPPING_PEERS = (
     (4, '10.1.0.2', 'nvyr-routed-right', 'zo060cy2M+x7cMF4FKXHbs0CloUFDTRHRboFhw5YfVk='),
@@ -85,3 +87,33 @@ def test_peer_source_prefix_enforced(family, source, target):
     cmd([*command, target])
     status, output = rc_cmd([*command, '-I', source, target])
     assert status == 1 and '100% packet loss' in output
+
+
+@pytest.mark.parametrize('suffix,subnet,vrf,family,endpoint', [
+    (75, 78, None, 'ipv4', '198.18.79.2:52075'),
+    (76, 77, 'NVYRLEFT', 'ipv6', '[2001:db8:79::2]:52076'),
+])
+def test_hostname_endpoint_resolution_and_refresh(config, suffix, subnet, vrf, family, endpoint):
+    """Resolve real A/AAAA answers through the shared DNS service and pass traffic."""
+    if lookup(config.get_config(), ('system', 'name-server'), None):
+        config.delete('delete system name-server')
+    config.set('set system name-server 127.0.0.1')
+    config.set('set service dns forwarding port 53')
+    config.set('set system static-host-mapping wireguard.example.org address 198.18.79.2')
+    config.set('set system static-host-mapping wireguard.example.org address 2001:db8:79::2')
+    config.commit()
+
+    interface = f'wg420{suffix}'
+    config.set(f'set interfaces wireguard {interface} peer routed endpoint address wireguard.example.org address-family {family}')
+    config.commit()
+    key = 'zo060cy2M+x7cMF4FKXHbs0CloUFDTRHRboFhw5YfVk='
+    wait_for(lambda: wireguard.state(interface)['peers'][key]['endpoint'],
+             lambda current: current == endpoint, description=family + ' resolved WireGuard endpoint')
+    output = cmd(['wireguard.nvyr.op', 'refresh', interface, '--peer', 'routed'])
+    assert endpoint in output, output
+
+    for version, destination in [('-4', f'198.18.{subnet}.2'), ('-6', f'2001:db8:{subnet}::2')]:
+        arguments = ['ping', version, '-n', '-c', '2', '-W', '2']
+        if vrf:
+            arguments.extend(['-I', vrf])
+        cmd([*arguments, destination])

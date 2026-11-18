@@ -117,6 +117,35 @@ def test_delete_recreate(native):
     apply(native)
 
 
+@pytest.mark.parametrize('family,address,prefix', [
+    ('ipv4', '192.0.2.90/24', '192.0.2.90/32'),
+    ('ipv6', '2001:db8::90/64', '2001:db8::90/128'),
+])
+def test_local_host_binding_on_address_add_and_readd(native, family, address, prefix):
+    manager, _ = native
+    apply(native)
+
+    def binding():
+        deadline = time.monotonic() + 5
+        while True:
+            output = manager.run(['vtysh', '-c', f'show mpls ldp {family} binding'])
+            rows = [line.split() for line in output.splitlines() if prefix in line.split()]
+            if any('imp-null' in row for row in rows):
+                return
+            assert time.monotonic() < deadline, output
+            time.sleep(.1)
+
+    arguments = ['ip', 'address']
+    # Readding the address must restore its egress binding without restarting LDP.
+    # LDP retains unused local labels until GC; peer withdrawal is checked in the routed lab.
+    for _ in range(2):
+        manager.run([*arguments, 'add', address, 'dev', 'ldpnative0', *(['nodad'] if family == 'ipv6' else [])])
+        try:
+            binding()
+        finally:
+            manager.run([*arguments, 'del', address, 'dev', 'ldpnative0'])
+
+
 def test_explicit_native_timer_defaults_override_process(native):
     apply(native, extra={'discovery': {'hello': {'interval': '3', 'holdtime': '12'},
                                      'targeted-hello': {'interval': '7', 'holdtime': '30'}}},

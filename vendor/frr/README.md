@@ -167,3 +167,38 @@ GPL-2.0-or-later. Original copyright notices remain in the source and the
 upstream patch retains its author and sign-off. Native regressions in
 `tests/test_bgp_vpn_native.py` cover both families and repeated deletion/revival
 with unchanged and changed ASNs. Reevaluate these patches on an FRR upgrade.
+
+`ldp-local-routes.patch` classifies Zebra's local host routes as connected
+egress FECs. Otherwise LDP skips their interface-only nexthops, leaving no
+binding for interface /32s and /128s advertised by an IGP. It uses the existing
+connected-route allocation and withdrawal behavior, without changing OSPF.
+The modified `ldpd/ldp_zebra.c` is from `frr-10.7.1`, GPL-2.0-or-later,
+copyright (C) 2016 Open Source Routing. Its original notices are retained.
+This is a local fix, not an upstream backport.
+`tests/test_ldp_native.py` covers address addition/removal/readdition; the shared
+OSPFv3 PE–P–PE functional scenario checks actual delivery to an interface /128.
+Reevaluate on an FRR upgrade.
+
+`zebra-static-nexthop.patch` keeps a static IPv6 MPLS next hop usable when an
+OSPFv3 host route is more specific than its connected subnet. It searches
+covering prefixes for the existing selected connected/local route; it does
+not enable recursive static-label resolution. It also processes pending MPLS
+notifications before deleting a RIB destination, so removing the last connected
+address withdraws dependent labels. The modified `zebra/zebra_mpls.c` and
+`zebra/zebra_rib.c` are GPL-2.0-or-later, copyright Cumulus Networks (2013) and
+Kunihiro Ishiguro (1997, 1998, 1999, 2001), respectively. Original notices remain.
+This is a local fix. The native static-MPLS regression verifies next-hop
+shadowing, label edits, and connected-subnet withdrawal; the shared routed
+scenario verifies IPv6 swap/pop and full-size two-label packet delivery.
+
+`ldp-transport-preference.patch` removes dual-stack neighbor objects after the
+existing session shutdown when the transport preference or Cisco interop mode
+changes. A session-only reset retained the old transport family and addresses;
+new hellos could therefore never select the requested family. Discovery
+adjacencies remain available for normal neighbor recreation. Single-stack
+neighbors and ordinary operational clears are unchanged.
+The modified `ldpd/ldpe.c` is ISC-licensed, copyright Renato Westphal (2013,
+2016), Claudio Jeker (2005), Esben Norby (2004, 2008), and Henning Brauer
+(2003, 2004); original notices remain in the source. This is a local fix.
+The shared routed tests switch IPv4/IPv6 preferences in both directions and
+check established sessions and labeled delivery without restarting daemons.

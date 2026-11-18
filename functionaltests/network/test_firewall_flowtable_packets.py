@@ -7,6 +7,7 @@ required settings. Ordinary scoped offload coexists with the main network rules.
 """
 
 from contextlib import contextmanager
+import json
 import os
 import socket
 import struct
@@ -164,6 +165,21 @@ def test_offloaded_connection_events(config, family):
     assert_in('[OFFLOAD]', cmd(['conntrack', '-L', *selector]))
     assert_connection_accounting(family, source, destination, 6,
                                  source_port=source_port, destination_port=destination_port)
+    # Exercise the operational filters against a real offloaded flow, not only
+    # decoded netlink fixtures. Both directions must retain accelerated counts.
+    command = f'show conntrack {family} offload accounting source-address {source} sort-by source'
+    records = json.loads(cmd(['conntrack.nvyr.op', 'show', command, '--raw']))
+    ports = [record['original']['source-port'] for record in records]
+    assert ports == sorted(ports), records
+    record = next(record for record in records if record['original']['source-port'] == source_port
+                  and record['original']['destination-port'] == destination_port)
+    assert 'offload' in record['status'], record
+    for direction in ('original', 'reply'):
+        assert record[direction]['packets'] >= 6 and record[direction]['bytes'] > 0, record
+    summary = cmd(['conntrack.nvyr.op', 'show', command])
+    assert 'Packets' in summary and 'Bytes' in summary
+    assert 'Timeout' not in summary and 'State' not in summary
+
     cmd(['conntrack', '-D', *selector])
 
     identity = f'SRC={source} DST={destination} PROTO=UDP SPT={source_port} DPT={destination_port}'

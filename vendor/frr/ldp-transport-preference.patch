@@ -1,0 +1,29 @@
+Subject: [PATCH] ldpd: recreate dual-stack neighbors after transport changes
+
+Resetting a session retains nbr->af and its local/remote transport addresses.
+When the preferred transport family changes, subsequent hellos find that old
+neighbor and never select the new family. Remove the reset neighbor so the
+next hello recreates it using the current preference and existing adjacencies.
+
+--- a/ldpd/ldpe.c
++++ b/ldpd/ldpe.c
+@@ -833,11 +833,16 @@
+ void
+ ldpe_reset_ds_nbrs(void)
+ {
+-	struct nbr		*nbr;
++	struct nbr		*nbr, *safe;
+ 
+-	RB_FOREACH(nbr, nbr_id_head, &nbrs_by_id) {
+-		if (nbr->ds_tlv)
+-			session_shutdown(nbr, S_SHUTDOWN, 0, 0);
++	RB_FOREACH_SAFE(nbr, nbr_id_head, &nbrs_by_id, safe) {
++		if (!nbr->ds_tlv)
++			continue;
++		session_shutdown(nbr, S_SHUTDOWN, 0, 0);
++		/* Transport selection happens in nbr_new(), not session reset.
++		 * Keep discovery adjacencies for the next matching hello.
++		 */
++		nbr_del(nbr);
+ 	}
+ }

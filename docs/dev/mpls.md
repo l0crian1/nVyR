@@ -41,8 +41,12 @@ uses the default routing domain. Explicit OSPF override removal uses the patched
 native reset command rather than substituting a different configuration meaning.
 
 See [upstream issues](upstream-issues.md) for the FRR fixes and retest criteria.
-The FRR recipe digest covers the patches. The forwarding additions need no new
-FRR patch.
+The FRR recipe digest covers the patches, including local host-route LDP egress
+bindings and static IPv6 next-hop resolution exposed by the OSPFv3 forwarding
+tests. Pending label updates are also retained when the last connected route
+at a RIB destination is removed.
+The dual-stack neighbor reset also recreates transport-family state when the
+LDP transport preference changes.
 
 ## Verification
 
@@ -52,9 +56,21 @@ FRR patch.
   edit, remove and recreate, including timer inheritance and sync overrides.
 - Smoketests retain one interface pair and check configuration translation and
   sysctls without waiting for sessions or forwarding traffic.
-- The shared routed functional suite adds one default-VRF link to its existing
-  right-side simulated host. LDP and OSPF share that peer; explicit-null labels
+- The shared routed functional suite keeps a direct MPLS link to its existing
+  right-side simulated host. OSPFv2 and OSPFv3 provide loopback reachability;
+  IPv6 transport no longer falls back to static routes. Explicit-null labels
   permit IPv4/IPv6 packet capture to prove labeled delivery.
+- `network/test_mpls_igps.py` selects OSPFv2/OSPFv3, dual-stack IS-IS, or
+  RIP/RIPng on a second PE–P–PE path. The native P router has no BGP or static
+  routes. Each profile runs with IPv4 and IPv6 loopback BGP peering and LDP TCP
+  transport; operational LDP neighbors on both core links verify that selection.
+  Selected IGP routes on all three routers, LDP bindings, labeled kernel routes, and
+  two-label packet captures verify VPNv4, VPNv6, IPv4 LU and IPv6 LU in both
+  directions. OSPFv2 and IS-IS also require completed LDP synchronization.
+  OSPFv3 interface `/128` delivery and peer label withdrawal on address removal
+  cover the local-host FEC regression.
+  Interfaces, customer VRFs and native processes survive every case; only
+  the selected IGP and BGP/LDP transports change.
 - Acceptance retains MPLS membership, dual-stack LDP configuration and finite
   IGP hold-downs across reboot on its existing transit interface.
 - Static push/swap/pop, recursive LU, uniform/pipe TTL and two-label MTU boundaries

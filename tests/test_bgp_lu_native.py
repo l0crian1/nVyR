@@ -30,7 +30,8 @@ def run(*args):
 @pytest.fixture(scope='module')
 def native(tmp_path_factory):
     state = tmp_path_factory.mktemp('lu-native')
-    namespace = f'nvyr-lu-native-{os.getpid()}'
+    # Imported by several modules in one pytest process; each module owns its lab.
+    namespace = f'nvyr-lu-native-{os.getpid()}-{state.name}'
     directory = Path('/tmp') / namespace
     directory.mkdir()
     run('chown', 'frr:frr', str(directory))

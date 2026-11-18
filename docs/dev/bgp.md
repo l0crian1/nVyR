@@ -78,3 +78,12 @@ waiting for sessions. Acceptance persists VRF export/import and policy across
 reboot. Functional VPN tests share the routed suite's existing MPLS peer, with
 stable customer VRFs checking import filtering, RT isolation, label forwarding,
 and bidirectional IPv4/IPv6 delivery.
+Import/export policy edits also withdraw and restore customer routes without
+resetting BGP. The shared [MPLS matrix](mpls.md#verification) covers both VPN and
+LU families over OSPFv2/OSPFv3, IS-IS and RIP/RIPng, with both BGP transport
+families and an intervening LDP router.
+
+This is dual-stack transport coverage. It does not mark the documented
+[IPv4-only 6VPE nexthop defect](upstream-issues.md#vpnv6-over-ipv4-mpls-transport-incorrect-nexthop-programming)
+as fixed or replace the separate unnumbered-BGP experiment with a passing
+regression test. SR/SRv6 and hardware offload are outside this matrix.

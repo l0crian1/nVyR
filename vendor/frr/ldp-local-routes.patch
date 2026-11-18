@@ -1,0 +1,18 @@
+Subject: [PATCH] ldpd: terminate local host FECs like connected routes
+
+Zebra reports interface host addresses as ZEBRA_ROUTE_LOCAL. Without the
+connected flag their interface-only nexthops are skipped, so LDP never
+advertises an egress binding for the /32 or /128. OSPFv3 point-to-point
+host advertisements expose the missing binding along an otherwise working
+LSP. Use the existing connected-route label allocation and withdrawal path.
+
+--- a/ldpd/ldp_zebra.c
++++ b/ldpd/ldp_zebra.c
+@@ -521,6 +521,7 @@
+ 
+ 	switch (api.type) {
+ 	case ZEBRA_ROUTE_CONNECT:
++	case ZEBRA_ROUTE_LOCAL:
+ 		SET_FLAG(kr.flags, F_CONNECTED);
+ 		break;
+ 	case ZEBRA_ROUTE_BGP:

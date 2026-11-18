@@ -1,0 +1,70 @@
+Subject: [PATCH] zebra: retain connected IPv6 MPLS next hops below host routes
+
+OSPFv3 advertises adjacent interface /128s. Do not let that more-specific
+IGP route hide the connected subnet when evaluating a static IPv6 NHLFE.
+Walk covering prefixes for a selected connected/local route, retaining the
+existing directly-connected requirement and withdrawal on subnet removal.
+
+--- a/zebra/zebra_mpls.c
++++ b/zebra/zebra_mpls.c
+@@ -712,20 +712,25 @@
+ 
+ 	route_unlock_node(rn);
+ 
+-	/* Locate a valid connected route. */
+-	RNODE_FOREACH_RE (rn, match) {
+-		if (((match->type == ZEBRA_ROUTE_CONNECT ||
+-		      match->type == ZEBRA_ROUTE_LOCAL)) &&
+-		    !CHECK_FLAG(match->status, ROUTE_ENTRY_REMOVED) &&
+-		    CHECK_FLAG(match->flags, ZEBRA_FLAG_SELECTED))
+-			break;
+-	}
+-
+-	if (!match || !match->nhe->nhg.nexthop)
+-		return 0;
+-
+-	nexthop->ifindex = match->nhe->nhg.nexthop->ifindex;
+-	return 1;
++	/* A more-specific IGP host route can cover a connected subnet.
++	 * Static labels still use that directly connected nexthop; keep
++	 * looking for its connected route rather than resolving recursively.
++	 */
++	for (; rn; rn = rn->parent) {
++		RNODE_FOREACH_RE (rn, match) {
++			if ((match->type != ZEBRA_ROUTE_CONNECT &&
++			     match->type != ZEBRA_ROUTE_LOCAL) ||
++			    CHECK_FLAG(match->status, ROUTE_ENTRY_REMOVED) ||
++			    !CHECK_FLAG(match->flags, ZEBRA_FLAG_SELECTED) ||
++			    !match->nhe->nhg.nexthop)
++				continue;
++
++			nexthop->ifindex = match->nhe->nhg.nexthop->ifindex;
++			return 1;
++		}
++	}
++
++	return 0;
+ }
+ 
+ 
+--- a/zebra/zebra_rib.c
++++ b/zebra/zebra_rib.c
+@@ -960,6 +960,8 @@
+ 	}
+ }
+ 
++static void zebra_rib_evaluate_mpls(struct route_node *rn);
++
+ /*
+  * rib_gc_dest
+  *
+@@ -988,6 +990,9 @@
+ 
+ 	zebra_rib_evaluate_rn_nexthops(rn, zebra_router_get_next_sequence(),
+ 				       true);
++
++	/* Do not discard pending LSP updates with the last connected route. */
++	zebra_rib_evaluate_mpls(rn);
+ 
+ 	dest->rnode = NULL;
+ 	rnh_list_fini(&dest->nht);

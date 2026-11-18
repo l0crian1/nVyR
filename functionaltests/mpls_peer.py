@@ -1,4 +1,4 @@
-"""Native LDP/OSPF/BGP-LU peer in the routed suite's right-side host namespace."""
+"""Native IGP/LDP/MP-BGP peer in the routed suite's right-side host namespace."""
 
 from contextlib import contextmanager, ExitStack
 import subprocess
@@ -7,10 +7,46 @@ import time
 from nvyr.helpers.process import cmd
 
 
+OSPF_CONFIGURATION = '''
+interface veth42072
+ ip ospf area 0
+ ip ospf network point-to-point
+ ip ospf hello-interval 1
+ ip ospf dead-interval 4
+ ipv6 ospf6 network point-to-point
+ ipv6 ospf6 hello-interval 1
+ ipv6 ospf6 dead-interval 4
+ ipv6 ospf6 area 0
+exit
+interface lo
+ ip ospf area 0
+ ip ospf passive
+ ipv6 ospf6 passive
+ ipv6 ospf6 area 0
+exit
+router ospf
+ ospf router-id 198.18.71.2
+exit
+router ospf6
+ ospf6 router-id 198.18.71.2
+exit
+'''
+
+
 CONFIGURATION = '''
 access-list EXPLICIT4 permit host 198.19.62.2
 ipv6 access-list EXPLICIT6 permit 2001:db8:64::2/128
-route-map RECURSIVE-IN deny 10
+ip prefix-list DIRECT-LU4 permit 198.19.72.1/32
+ipv6 prefix-list DIRECT-LU6 permit 2001:db8:72::1/128
+ip prefix-list RECURSIVE-LU4 permit 198.19.76.1/32
+ipv6 prefix-list RECURSIVE-LU6 permit 2001:db8:76::1/128
+route-map RECURSIVE-IN permit 10
+ match ip address prefix-list RECURSIVE-LU4
+exit
+route-map RECURSIVE-IN permit 20
+ match ipv6 address prefix-list RECURSIVE-LU6
+exit
+route-map RECURSIVE-IN deny 30
 exit
 route-map RECURSIVE6 permit 10
  set ipv6 next-hop global 2001:db8:77::2
@@ -23,9 +59,13 @@ router bgp 65072
  bgp labeled-unicast explicit-null
  neighbor 198.18.71.1 remote-as 65071
  neighbor 198.18.71.1 capability dynamic
- neighbor 198.18.73.1 remote-as 65071
- neighbor 198.18.73.1 ebgp-multihop 2
- neighbor 198.18.73.1 update-source 198.19.77.2
+ neighbor 198.19.81.1 remote-as 65071
+ neighbor 198.19.81.1 ebgp-multihop 2
+ neighbor 198.19.81.1 update-source 198.19.77.2
+ neighbor 2001:db8:81::1 remote-as 65071
+ neighbor 2001:db8:81::1 ebgp-multihop 2
+ neighbor 2001:db8:81::1 update-source 2001:db8:77::2
+ neighbor 2001:db8:81::1 capability extended-nexthop
  address-family ipv4 unicast
   network 198.19.72.2/32
   network 198.19.72.3/32
@@ -37,23 +77,34 @@ router bgp 65072
   network 2001:db8:76::2/128
  exit-address-family
  address-family ipv4 vpn
-  neighbor 198.18.73.1 activate
-  neighbor 198.18.73.1 attribute-unchanged next-hop
+  neighbor 198.19.81.1 activate
+  neighbor 198.19.81.1 attribute-unchanged next-hop
+  neighbor 2001:db8:81::1 activate
+  neighbor 2001:db8:81::1 attribute-unchanged next-hop
  exit-address-family
  address-family ipv6 vpn
-  neighbor 198.18.73.1 activate
-  neighbor 198.18.73.1 attribute-unchanged next-hop
+  neighbor 198.19.81.1 activate
+  neighbor 198.19.81.1 attribute-unchanged next-hop
+  neighbor 2001:db8:81::1 activate
+  neighbor 2001:db8:81::1 attribute-unchanged next-hop
  exit-address-family
  address-family ipv4 labeled-unicast
   neighbor 198.18.71.1 activate
-  neighbor 198.18.73.1 activate
-  neighbor 198.18.73.1 route-map RECURSIVE-IN in
+  neighbor 198.18.71.1 prefix-list DIRECT-LU4 in
+  neighbor 198.19.81.1 activate
+  neighbor 198.19.81.1 route-map RECURSIVE-IN in
+  neighbor 2001:db8:81::1 activate
+  neighbor 2001:db8:81::1 route-map RECURSIVE-IN in
  exit-address-family
  address-family ipv6 labeled-unicast
   neighbor 198.18.71.1 activate
-  neighbor 198.18.73.1 activate
-  neighbor 198.18.73.1 route-map RECURSIVE-IN in
-  neighbor 198.18.73.1 route-map RECURSIVE6 out
+  neighbor 198.18.71.1 prefix-list DIRECT-LU6 in
+  neighbor 198.19.81.1 activate
+  neighbor 198.19.81.1 route-map RECURSIVE-IN in
+  neighbor 198.19.81.1 route-map RECURSIVE6 out
+  neighbor 2001:db8:81::1 activate
+  neighbor 2001:db8:81::1 route-map RECURSIVE-IN in
+  neighbor 2001:db8:81::1 route-map RECURSIVE6 out
  exit-address-family
 exit
 router bgp 65072 vrf VPNPEER
@@ -79,19 +130,6 @@ router bgp 65072 vrf VPNPEER
   import vpn
   export vpn
  exit-address-family
-exit
-interface veth42072
- ip ospf area 0
- ip ospf network point-to-point
- ip ospf hello-interval 1
- ip ospf dead-interval 4
-exit
-interface lo
- ip ospf area 0
- ip ospf passive
-exit
-router ospf
- ospf router-id 198.18.71.2
 exit
 mpls ldp
  router-id 198.18.71.2
@@ -136,9 +174,41 @@ def static_forwarding(namespace):
 
 
 @contextmanager
-def daemon(directory, namespace):
+def processes(directory, namespace, configuration, *, bgp=True):
+    """Keep native router processes alive for the shared topology's lifetime."""
     directory.mkdir(mode=0o755)
     cmd(['chown', 'frr:frr', str(directory)])
+    config = directory / 'frr.conf'
+    config.write_text(configuration)
+    config.chmod(0o644)
+    empty = directory / 'empty.conf'
+    empty.write_text('')
+    empty.chmod(0o644)
+    names = ('mgmtd', 'zebra', 'ldpd', 'ospfd', 'ospf6d', 'isisd', 'ripd', 'ripngd')
+    with ExitStack() as cleanup:
+        for name in names + (('bgpd',) if bgp else ()):
+            args = ['ip', 'netns', 'exec', namespace, '/usr/lib/frr/' + name,
+                    '-N', namespace, '-z', str(directory / 'zserv.api'),
+                    '--vty_socket', str(directory), '-i', str(directory / (name + '.pid')), '-P', '0']
+            if name not in {'mgmtd', 'ripd', 'ripngd'}:
+                args.extend(['-f', str(empty)])
+            log = cleanup.enter_context((directory / (name + '.log')).open('w+'))
+            process = subprocess.Popen(args, stdout=log, stderr=log)
+            cleanup.callback(process.wait, timeout=10)
+            cleanup.callback(process.terminate)
+            deadline = time.monotonic() + 10
+            while not (directory / (name + '.vty')).exists():
+                if process.poll() is not None or time.monotonic() >= deadline:
+                    log.seek(0)
+                    raise AssertionError(f'{name} peer did not start: ' + log.read())
+                time.sleep(.05)
+        # Integrated configuration is parsed by vtysh after all sockets exist.
+        cmd(['vtysh', '--vty_socket', str(directory), '-f', str(config)])
+        yield directory
+
+
+@contextmanager
+def daemon(directory, namespace):
     cmd(['ip', '-n', namespace, 'link', 'set', 'veth42072', 'up'])
     cmd(['ip', '-n', namespace, 'address', 'add', '198.18.71.2/30', 'dev', 'veth42072'])
     cmd(['ip', '-n', namespace, '-6', 'address', 'add', '2001:db8:71::2/64', 'dev', 'veth42072', 'nodad'])
@@ -159,31 +229,6 @@ def daemon(directory, namespace):
     cmd(['ip', '-n', namespace, 'link', 'set', 'vpn0', 'up'])
     for address in ('198.19.80.2/32', '198.19.80.3/32', '2001:db8:80::2/128', '2001:db8:80::3/128'):
         cmd(['ip', '-n', namespace, 'address', 'add', address, 'dev', 'vpn0', *(['nodad'] if ':' in address else [])])
-    cmd(['ip', '-n', namespace, '-6', 'route', 'add', '2001:db8:81::1/128', 'via', '2001:db8:71::1'])
     static_forwarding(namespace)
-    config = directory / 'frr.conf'
-    config.write_text(CONFIGURATION)
-    config.chmod(0o644)
-    empty = directory / 'empty.conf'
-    empty.write_text('')
-    empty.chmod(0o644)
-    with ExitStack() as cleanup:
-        for name in ('mgmtd', 'zebra', 'ldpd', 'ospfd', 'bgpd'):
-            args = ['ip', 'netns', 'exec', namespace, '/usr/lib/frr/' + name,
-                    '-N', 'nvyr-routed-mpls', '-z', str(directory / 'zserv.api'),
-                    '--vty_socket', str(directory), '-i', str(directory / (name + '.pid')), '-P', '0']
-            if name != 'mgmtd':
-                args.extend(['-f', str(empty)])
-            log = cleanup.enter_context((directory / (name + '.log')).open('w+'))
-            process = subprocess.Popen(args, stdout=log, stderr=log)
-            cleanup.callback(process.wait, timeout=10)
-            cleanup.callback(process.terminate)
-            deadline = time.monotonic() + 10
-            while not (directory / (name + '.vty')).exists():
-                if process.poll() is not None or time.monotonic() >= deadline:
-                    log.seek(0)
-                    raise AssertionError(f'{name} peer did not start: ' + log.read())
-                time.sleep(.05)
-        # Integrated configuration is parsed by vtysh after all daemon sockets exist.
-        cmd(['vtysh', '--vty_socket', str(directory), '-f', str(config)])
+    with processes(directory, namespace, CONFIGURATION + OSPF_CONFIGURATION):
         yield directory

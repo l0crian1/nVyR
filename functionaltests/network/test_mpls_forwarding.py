@@ -14,8 +14,9 @@ from nvyr.helpers.process import cmd, rc_cmd
 from smoketests.support import wait_for
 
 
-def capture_ping(arguments, interface='veth42071'):
-    capture = subprocess.Popen(['tcpdump', '-l', '-nn', '-v', '-i', interface, '-c', '1', 'mpls'],
+def capture_ping(arguments, interface='veth42071', *, namespace=None, packet_filter='mpls'):
+    prefix = ['ip', 'netns', 'exec', namespace] if namespace else []
+    capture = subprocess.Popen([*prefix, 'tcpdump', '-l', '-nn', '-v', '-i', interface, '-c', '1', packet_filter],
                                text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     try:
         assert 'listening on' in capture.stderr.readline()
