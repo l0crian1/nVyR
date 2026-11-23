@@ -1,4 +1,4 @@
-# builder-version: 0.1.7
+# builder-version: 0.1.8
 FROM debian:trixie
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
