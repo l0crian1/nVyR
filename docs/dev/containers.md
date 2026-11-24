@@ -20,7 +20,7 @@ For configuration and command usage, see the [user guide](../users/containers.md
 Supporting functions sit above the stage that uses them. The Quadlet templates
 contain their native sections and directives; small formatters handle argument
 quoting, network attachments and other compound values. Shared filesystem helpers
-provide safe directory traversal, file reading and bind mounts beneath an explicit
+provide safe directory traversal, file reading and volume metadata preparation beneath an explicit
 root directory.
 
 Generation runs directly in the configuration script and validates temporary files
@@ -75,21 +75,20 @@ preloaded BusyBox-compatible image; neither suite downloads images. See the
 `test_container_pods.py` covers shared pod networking, IPv4/IPv6, attachment names,
 independent member changes, pod disable/restart, and reference/conflict validation.
 
-## Bind-mount isolation
+## Container volumes
 
-The worker pins each opened source file or directory as a private bind mount before
-Podman receives it. Descriptor-based traversal rejects symlinks and parent traversal.
-Relative sources resolve below `/config/containers/`; absolute sources remain host
-paths. Only missing directories below `/config/containers/` are created. External
-sources are checked in the host namespace before stopping workloads, then reopened
-and pinned during apply. Staging targets and cleanup support both files and directories.
+Quadlet volume entries use absolute host paths. Relative sources resolve below
+`/config/containers/`. The worker checks sources in the host namespace before
+stopping workloads. During apply it opens sources without following symlinks and
+creates missing directories only under `/config/containers/`. Podman binds the
+source path directly at each container start.
 
 Generation resolves named volume owners from the pinned image's account files via
 a read-only inspection operation in the host worker. Podman mounts the image, the
 worker reads its account databases, and the image is unmounted in a finally block.
 No image entrypoint executes. Numeric IDs, source resolution, recursion and mode are
 captured in the prepared mount records. Apply performs the requested ownership and
-permission changes before binding the sources. These persistent metadata changes,
+permission changes before starting the workloads. These persistent metadata changes,
 like application writes to a volume, are not a transactional filesystem snapshot;
 compensation restores runtime definitions, not arbitrary previous volume metadata.
 

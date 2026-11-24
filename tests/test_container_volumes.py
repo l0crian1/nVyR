@@ -2,8 +2,6 @@
 
 import json
 import os
-from pathlib import Path
-from types import SimpleNamespace
 
 import pytest
 
@@ -137,36 +135,17 @@ def test_named_owner_failure_does_not_block_boot_recovery(tmp_path, monkeypatch)
     assert 'Container unavailable: APP: Image account unavailable' in messages
 
 
-def test_unmount_removes_file_and_directory_staging_targets(tmp_path, monkeypatch):
-    monkeypatch.setattr(container.config, 'MOUNT_ROOT', str(tmp_path))
-    root = tmp_path / 'APP'.encode().hex()
-    root.mkdir()
-    (root / 'file').touch()
-    (root / 'directory').mkdir()
-    container.unmount('APP')
-    assert not root.exists()
-
-
-def test_file_mount_preserves_contents_and_sets_only_requested_metadata(tmp_path, monkeypatch):
+def test_prepare_preserves_file_contents_and_applies_mode(tmp_path, monkeypatch):
     source = tmp_path / 'hosts'
     source.write_text('127.0.0.1 example\n')
-    target = tmp_path / 'mount/hosts'
-    calls = []
+    source.chmod(0o600)
+    section = {'volume': {'HOSTS': {'source': str(source), 'destination': '/etc/hosts', 'mode': '0640'}}}
+    monkeypatch.setattr(container, 'QUADLETS', tmp_path)
 
-    def mount(argv, **options):
-        fd = options['pass_fds'][0]
-        assert os.fstat(fd).st_ino == source.stat().st_ino
-        calls.append(argv)
-        return SimpleNamespace(returncode=0, stderr='')
+    container.prepare('APP', {'mounts': container.volume_mounts('APP', section), 'environment': None, 'text': ''})
 
-    monkeypatch.setattr(filesystem.subprocess, 'run', mount)
-    monkeypatch.setattr(filesystem, 'cmd', lambda argv: calls.append(argv))
-    filesystem.bind_path(tmp_path, 'hosts', target, mode=0o640)
-
-    assert target.is_file()
     assert source.read_text() == '127.0.0.1 example\n'
     assert source.stat().st_mode & 0o777 == 0o640
-    assert calls[-1] == ['mount', '--make-private', str(target)]
 
 
 def test_recursive_owner_does_not_follow_symlinks_or_chmod_children(tmp_path, monkeypatch):

@@ -56,7 +56,7 @@ Tmpfs={{ destination }}:{{ container_tmpfs_options(settings) }}
 Environment={{ container_quoted(variable + '=' + settings['value'].replace('$', '$$')) }}
 {% endfor -%}
 {% for volume, settings in configuration.get('volume', {}).items() | sort -%}
-Volume={{ container_mount_path(name, volume) }}:{{ settings['destination'] }}:{{ 'ro' if 'read-only' in settings else 'rw' }}
+Volume={{ container_volume_source(settings['source']) }}:{{ settings['destination'] }}:{{ 'ro' if 'read-only' in settings else 'rw' }}
 {% endfor -%}
 {% set command = container_arguments(configuration) -%}
 {% if command -%}

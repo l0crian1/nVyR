@@ -337,7 +337,7 @@ def test_unit_quoting_limits_and_network_settings():
     assert 'DefaultDependencies=false' in text
     assert 'NoNewPrivileges=' not in text and 'DropCapability=' not in text
     assert '--image-volume=ignore' in text and '--memory=536870912' in text
-    assert ':ro\n' in text and 'PidsLimit=256' in text
+    assert 'Volume=/config/containers/APP/data:/data:ro\n' in text and 'PidsLimit=256' in text
 
     network = {'subnet': {'172.29.210.0/24': {}, 'fd00:210::/64': {}}, 'internal': True, 'disable-dns': True}
     argv = network_unit('LAN', network)
@@ -387,9 +387,6 @@ class FakeRuntime(ContainerHarness):
         return kind == 'network' and name in self.networks
 
     def validate_units(self, prepared):
-        pass
-
-    def unmount(self, name):
         pass
 
 

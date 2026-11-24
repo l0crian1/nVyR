@@ -5,7 +5,6 @@ from pathlib import Path
 
 RUNTIME = Path('/run/nvyr-containers')
 VOLUME_ROOT = '/config/containers'
-MOUNT_ROOT = '/run/nvyr-containers/mounts'
 
 
 def bridge_name(network):
@@ -45,8 +44,8 @@ def enabled(container, configuration):
     return 'disable' not in container and 'disable' not in pod
 
 
-def mount_path(name, volume):
-    return f'{MOUNT_ROOT}/{name.encode().hex()}/{volume.encode().hex()}'
+def volume_source(source):
+    return Path(VOLUME_ROOT) / source
 
 
 def environment_path(name):

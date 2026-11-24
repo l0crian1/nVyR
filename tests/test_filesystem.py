@@ -1,7 +1,6 @@
 """Shared path confinement and descriptor lifetime, independent of containers."""
 
 import os
-from types import SimpleNamespace
 
 import pytest
 
@@ -47,39 +46,3 @@ def test_text_file_uses_utf8_and_rejects_fifo_without_blocking(tmp_path):
     os.mkfifo(tmp_path / 'fifo')
     with pytest.raises(RouterError, match='regular file'):
         filesystem.read_text(tmp_path, 'fifo')
-
-
-def test_bind_uses_pinned_descriptor_and_private_propagation(tmp_path, monkeypatch):
-    calls = []
-    descriptors = []
-
-    def mount(argv, **options):
-        descriptor = options['pass_fds'][0]
-        descriptors.append(descriptor)
-        assert argv[2] == f'/proc/self/fd/{descriptor}'
-        assert os.fstat(descriptor).st_ino == (tmp_path / 'root/data').stat().st_ino
-        calls.append(argv)
-        return SimpleNamespace(returncode=0, stderr='')
-
-    monkeypatch.setattr(filesystem.subprocess, 'run', mount)
-    monkeypatch.setattr(filesystem, 'cmd', lambda argv: calls.append(argv))
-    target = tmp_path / 'mount'
-    filesystem.bind_path(tmp_path / 'root', 'data', target, create=True)
-
-    assert calls[-1] == ['mount', '--make-private', str(target)]
-    with pytest.raises(OSError):
-        os.fstat(descriptors[0])
-
-
-def test_failed_bind_closes_source_descriptor(tmp_path, monkeypatch):
-    descriptors = []
-
-    def mount(argv, **options):
-        descriptors.extend(options['pass_fds'])
-        return SimpleNamespace(returncode=1, stderr='mount denied')
-
-    monkeypatch.setattr(filesystem.subprocess, 'run', mount)
-    with pytest.raises(RouterError, match='mount denied'):
-        filesystem.bind_path(tmp_path / 'root', 'data', tmp_path / 'mount', create=True)
-    with pytest.raises(OSError):
-        os.fstat(descriptors[0])

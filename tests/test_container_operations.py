@@ -174,6 +174,22 @@ def runtime(tmp_path, monkeypatch):
     return data
 
 
+def test_image_display_uses_configured_reference_and_preserves_runtime_id(runtime):
+    image_id = 'a' * 64
+    runtime.native[0]['ImageName'] = image_id
+    runtime.configuration['name']['DNS']['image'] = 'ntop/ntopng:latest'
+
+    output = views.show(runtime, 'containers')
+    rows = {row.split()[0]: row.split()[1] for row in output.splitlines()[2:]}
+    assert rows['DNS'] == 'ntop/ntopng:latest'
+    assert rows['STOPPED'] == 'alpine:latest'
+    assert rows['FAILED'] == 'alpine'
+
+    detail = views.show(runtime, 'containers', name='DNS', detail=True)
+    assert 'ntop/ntopng:latest' in detail
+    assert 'sha256:' + image_id in detail
+
+
 def test_summary_keeps_exited_disabled_and_precreation_failures(runtime):
     records = {item['name']: item for item in views.container_records(runtime)}
     assert records['STOPPED']['state'] == 'Exited'

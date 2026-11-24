@@ -130,8 +130,17 @@ def test_persistent_volume_survives_recreation(config, container_scenario):
 
 
 def test_absolute_file_mount(container_scenario):
-    """The shared scenario mounts a host file read-only without a separate workload."""
-    assert_equal(cmd(['podman', 'exec', 'CTVOLUME', 'cat', '/host-name']), container_scenario['hostfile'].read_text())
+    """Restart resolves an atomically replaced host file and keeps it read-only."""
+    source = container_scenario['hostfile']
+    read_file = ['podman', 'exec', 'CTVOLUME', 'cat', '/host-name']
+    assert_equal(cmd(read_file), source.read_text())
+
+    replacement = source.with_suffix('.new')
+    replacement.write_text('replacement host file\n')
+    replacement.replace(source)
+    container_commands.restart('CTVOLUME')
+
+    assert_equal(cmd(read_file), source.read_text())
     status, output = rc_cmd(['podman', 'exec', 'CTVOLUME', 'sh', '-c', 'echo changed >/host-name'])
     assert_not_equal(status, 0, msg=output)
 

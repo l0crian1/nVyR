@@ -80,7 +80,7 @@ class TemplateRenderer:
                            'container_memory_bytes': container_memory_bytes,
                            'container_unit_name': container_config.unit_name,
                            'container_pod_unit_name': container_config.pod_unit_name,
-                           'container_mount_path': container_config.mount_path,
+                           'container_volume_source': container_config.volume_source,
                            'container_environment_path': container_config.environment_path,
                            'frr_static_prefix': frr_static.route_prefix,
                            'frr_static_path': frr_static.route_path,

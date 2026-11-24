@@ -195,7 +195,9 @@ set container name DNS volume HOSTS read-only
 ```
 
 Only `/config/containers/` data participates in its existing image-upgrade transfer.
-Mounting an external path does not add it to that transfer.
+Mounting an external path does not add it to that transfer. If a host file is
+replaced by rename, the running container retains the old file. Restart the
+container to mount the current file at that path.
 
 Set ownership and permissions explicitly when the image's services need them:
 

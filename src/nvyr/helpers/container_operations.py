@@ -162,7 +162,7 @@ def container_records(runtime, name=None):
                   for mount in item.get('Mounts', [])]
         records.append({
             'name': value, 'managed': managed, 'id': item.get('Id'),
-            'image': item.get('ImageName') or section.get('image'), 'image_id': item.get('Image'),
+            'image': section.get('image') or item.get('ImageName'), 'image_id': item.get('Image'),
             'state': status, 'service_state': service['state'] if service else None,
             'reason': reason, 'created': item.get('Created'), 'started': started,
             'finished': state.get('FinishedAt') if exited else None,

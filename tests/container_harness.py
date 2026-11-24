@@ -49,7 +49,7 @@ class ContainerHarness:
                 patches.enter_context(patch.object(operations, 'configured_state',
                                                    lambda: {'configuration': self.configuration,
                                                             'images': container.read_state()['images']}))
-                for key in ('image_id', 'owned', 'validate_units', 'unmount'):
+                for key in ('image_id', 'owned', 'validate_units'):
                     if key in self.__dict__ or key in type(self).__dict__:
                         patches.enter_context(patch.object(container, key, getattr(self, key)))
                 if name == 'generate':

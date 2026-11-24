@@ -312,11 +312,8 @@ def volume_mounts(name, section, image=None):
     mounts = []
     accounts = None
     for volume, settings in sorted(lookup(section, ('volume',), {}).items()):
-        source = Path(settings['source'])
-        if not source.is_absolute():
-            source = Path(config.VOLUME_ROOT) / source
-        internal = source.is_relative_to(config.VOLUME_ROOT)
-        mount = {'source': str(source), 'target': config.mount_path(name, volume), 'create': internal}
+        source = config.volume_source(settings['source'])
+        mount = {'source': str(source), 'create': source.is_relative_to(config.VOLUME_ROOT)}
         owner = lookup(settings, ('owner',), {})
         for kind, key in (('user', 'uid'), ('group', 'gid')):
             value = lookup(owner, (kind,), None)
@@ -541,23 +538,6 @@ def configure_registry(text):
     write(REGISTRIES, text)
 
 
-def unmount(name):
-    directory = Path(config.MOUNT_ROOT) / name.encode().hex()
-    if directory.exists():
-        for path in directory.iterdir():
-            # A bind mount can have the same device as its staging directory.
-            status, message = rc_cmd(['mountpoint', '--', str(path)])
-            if status == 0:
-                cmd(['umount', str(path)])
-            elif status != 32:
-                raise RouterError(f'Cannot check container mount {path}: {message}')
-            if path.is_dir():
-                path.rmdir()
-            else:
-                path.unlink()
-        directory.rmdir()
-
-
 def remove_quadlets(changed, *, recovery=False):
     """Stop known units in systemd dependency order, then remove their definitions."""
     definitions = []
@@ -584,20 +564,22 @@ def remove_quadlets(changed, *, recovery=False):
                 if owned(native_kind, name):
                     cmd(['podman', native_kind, 'rm', '--force', name], timeout=45)
     for name in changed['name']:
-        unmount(name)
         Path(config.environment_path(name)).unlink(missing_ok=True)
 
 
 def prepare(name, prepared):
-    """Install a generated unit and its captured environment and volume bindings."""
+    """Install a generated unit and its captured environment and prepare volume sources."""
     if prepared['environment'] is not None:
         path = Path(config.environment_path(name))
         filesystem.protected_directory(path.parent)
         write(path, prepared['environment'])
     for mount in prepared['mounts']:
-        filesystem.bind_path('/', mount['source'].lstrip('/'), mount['target'],
-                             create=mount['create'], uid=lookup(mount, ('uid',), -1), gid=lookup(mount, ('gid',), -1),
-                             mode=lookup(mount, ('mode',), None), recursive=mount['recursive'])
+        descriptor = filesystem.open_source('/', mount['source'].lstrip('/'), create=mount['create'])
+        try:
+            filesystem.source_permissions(descriptor, uid=mount.get('uid', -1), gid=mount.get('gid', -1),
+                                          mode=mount.get('mode'), recursive=mount['recursive'])
+        finally:
+            os.close(descriptor)
     write(QUADLETS / (config.unit_name(name) + '.container'), prepared['text'])
 
 

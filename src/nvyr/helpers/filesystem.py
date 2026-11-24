@@ -3,10 +3,8 @@
 import os
 from pathlib import Path
 import stat
-import subprocess
 
 from nvyr.errors import RouterError
-from nvyr.helpers.process import cmd
 
 
 def protected_directory(path, *, create=True):
@@ -88,26 +86,6 @@ def source_permissions(descriptor, *, uid=-1, gid=-1, mode=None, recursive=False
     # Apply permissions after chown, which can clear set-ID bits. Never chmod children.
     if mode is not None:
         os.fchmod(descriptor, mode)
-
-
-def bind_path(root, relative, target, *, create=False, uid=-1, gid=-1, mode=None, recursive=False):
-    """Bind a pinned file/directory after preparing its requested persistent metadata."""
-    descriptor = open_source(root, relative, create=create)
-    try:
-        source_permissions(descriptor, uid=uid, gid=gid, mode=mode, recursive=recursive)
-        target = Path(target)
-        target.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-        if stat.S_ISDIR(os.fstat(descriptor).st_mode):
-            target.mkdir(exist_ok=True, mode=0o700)
-        else:
-            target.touch(mode=0o600, exist_ok=True)
-        result = subprocess.run(['mount', '--bind', f'/proc/self/fd/{descriptor}', str(target)],
-                                pass_fds=(descriptor,), capture_output=True, text=True, check=False)
-        if result.returncode:
-            raise RouterError(result.stderr.strip() or f'Cannot bind source {relative}')
-        cmd(['mount', '--make-private', str(target)])
-    finally:
-        os.close(descriptor)
 
 
 def read_text(root, relative):
