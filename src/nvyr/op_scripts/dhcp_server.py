@@ -8,6 +8,7 @@ import time
 from tabulate import tabulate
 
 from nvyr import opmode
+from nvyr.helpers.strip_private import mask_fields, strip_ip, strip_mac, strip_text, strip_value
 from nvyr.errors import OperationalError, RouterError
 from nvyr.helpers import kea
 from nvyr.helpers.kea_leases import current_leases, pool_bounds
@@ -177,7 +178,7 @@ def display(records, view, family):
 
 @opmode.command
 def show(family: int, view: str, vrf: str | None = None, shared_network: str | None = None,
-         raw: bool = False):
+         raw: bool = False, strip_private: str = None):
     if family not in (4, 6) or view not in ('leases', 'pools', 'listeners'):
         raise OperationalError('Select DHCP family 4 or 6 and leases, pools or listeners.')
     selected = selected_servers(services.running_configuration(), family, vrf, shared_network)
@@ -202,6 +203,10 @@ def show(family: int, view: str, vrf: str | None = None, shared_network: str | N
                 records.extend(pool_rows(name, leases, subnets))
         except (OSError, RouterError, ValueError, KeyError) as error:
             raise OperationalError(f'DHCPv{family} server {name}: {error}') from error
+    records = mask_fields(records, strip_private, {
+        'subnet': strip_ip, 'address': strip_ip, 'range': strip_text, 'mac': strip_mac,
+        'hostname': strip_value, 'duid': strip_value, 'detail': strip_text,
+    })
     if raw:
         return json.dumps({'records': records, 'disabled_servers': disabled})
     output = display(records, view, family)

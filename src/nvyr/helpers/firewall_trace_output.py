@@ -23,7 +23,7 @@ def endpoint(packet, side):
     port = packet.get(side + '-port')
     if port is None:
         return address
-    if ':' in address:
+    if ':' in address or address == '<ipv6>':
         address = '[' + address + ']'
     return f'{address}:{port}'
 

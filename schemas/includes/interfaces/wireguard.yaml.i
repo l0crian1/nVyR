@@ -77,6 +77,7 @@ wireguard:
 
           public-key:
             kind: leaf_node
+            strip_kind: private
             description: Remote peer public key
             validators:
               wireguard-key: {}

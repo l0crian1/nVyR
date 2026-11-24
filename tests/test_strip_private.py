@@ -12,7 +12,7 @@ from nvyr import opmode
 from nvyr.errors import ParseError, ValidationError
 from nvyr.helpers.strip_private import (
     ConfigurationMasker, strip_ip, strip_ipv4, strip_ipv6, strip_mac,
-    strip_password, strip_value,
+    strip_password, strip_text, strip_value,
 )
 from nvyr.pipeline import Output, Pipelines
 from nvyr.schema import Schema
@@ -38,6 +38,7 @@ def test_reusable_masks(function, value, masked):
 
 @pytest.mark.parametrize('function,value,mode,expected', [
     (strip_ip, '10.5.12.34/24', 'partial', 'xxx.xxx.12.34/24'),
+    (strip_ip, '::ffff:192.0.2.1/128', 'partial', 'x:x:x:x:x:x:x:201/128'),
     (strip_ip, '2001:db8::1234/64', 'partial', 'x:x:x:x:x:x:0:1234/64'),
     (strip_ip, '2001:db8:abcd:1234:5678:9abc:def0:0012/56', 'partial', 'x:x:x:x:x:x:def0:12/56'),
     (strip_ip, 'fe80::1234%eth0', 'partial', 'x:x:x:x:x:x:0:1234'),
@@ -296,7 +297,7 @@ opmode.run()
     monkeypatch.setenv('PATH', str(executable) + os.pathsep + str(Path(sys.executable).parent) + os.pathsep + os.environ['PATH'])
     monkeypatch.setenv('PYTHONPATH', str(Path('src').resolve()))
     controller.operational = Schema({'kind': 'node', 'children': {'report': {
-        'kind': 'leaf_node', 'command': {'argv': ['example.nvyr.op', 'show', '@line']}}}})
+        'kind': 'leaf_node', 'command': {'argv': ['example.nvyr.op', 'show', '@line'], 'strip_private': True}}}})
     line = 'report "value with spaces"'
 
     assert json.loads(controller.execute(line)['text']) == [None, '192.0.2.1', line]
@@ -306,13 +307,61 @@ opmode.run()
     assert json.loads(controller.execute(line + ' | strip-private public')['text']) == ['public', '192.0.2.1', line]
 
 
-def test_direct_executable_cannot_silently_ignore_masking(controller, monkeypatch):
+def test_direct_executable_masks_before_match_and_export(controller, monkeypatch):
     controller.operational = Schema({'kind': 'node', 'children': {'show': {
         'kind': 'node', 'command': {'argv': ['ip', 'address', 'show']}}}})
-    monkeypatch.setattr('nvyr.controller.cmd', lambda *a, **kw: pytest.fail('must not execute'))
+    monkeypatch.setattr('nvyr.controller.cmd', lambda *a, **kw: 'via 10.5.12.3\n')
+    result = controller.execute('show | match xx | strip-private partial | export routes.txt')
+    assert (result['text'], result['export']) == ('via xx.x.12.3\n', 'routes.txt')
 
-    with pytest.raises(ParseError, match='supports masking'):
-        controller.execute('show | strip-private')
+
+@pytest.mark.parametrize('mode,text,expected', [
+    ('partial', '10.5.1.7/24 via 1.1.1.1', 'xx.x.1.7/24 via x.x.1.1'),
+    ('partial', '*>i10.5.1.0/24    192.0.2.1', '*>ixx.x.1.0/24    xxx.x.2.1'),
+    ('partial', 'SRC=[2001:db8::ab:12]:443', 'SRC=[xxxx:xxx::ab:12]:443'),
+    ('partial', 'fe80::1%eth0/64', 'xxxx::1%eth0/64'),
+    ('partial', '00:11:22:33:44:55', 'xx:xx:xx:xx:44:55'),
+    ('public', '10.1.2.3:5000 -> 8.8.8.8:53', '10.1.2.3:5000 -> x.x.x.x:53'),
+    ('all', '2026-11-23 11:12:13 AS64512 999.2.3.4', '2026-11-23 11:12:13 AS64512 999.2.3.4'),
+    ('all', '[::ffff:192.0.2.1]', '[::xxxx:xxx.x.x.x]'),
+    ('partial', '[::ffff:192.0.2.1]', '[::xxxx:xxx.x.2.1]'),
+    ('partial', '[::ffff:c000:201]', '[::xxxx:xxxx:201]'),
+    ('all', 'peer 2001:db8::1: error', 'peer xxxx:xxx::x: error'),
+    ('partial', 'MAC=00:11:22:33:44:55:aa:bb:cc:dd:ee:ff:08:00',
+                'MAC=xx:xx:xx:xx:44:55:xx:xx:xx:xx:ee:ff:08:00'),
+    ('partial', '0011.2233.4455 00-11-22-33-44-55', 'xxxx.xxxx.4455 xx-xx-xx-xx-44-55'),
+])
+def test_native_text_preserves_width(mode, text, expected):
+    assert strip_text(text, mode) == expected
+    assert len(expected) == len(text)
+
+
+@pytest.mark.parametrize('prefix', ['', 'run '])
+@pytest.mark.parametrize('line,mode,native,expected', [
+    ('show ip route', 'partial', 'O>* 10.5.12.0/24 [110/20] via 172.16.0.2, eth1',
+     'O>* xx.x.12.0/24 [110/20] via xxx.xx.0.2, eth1'),
+    ('show log', 'public', 'SRC=10.5.12.34 DST=8.8.8.8 PROTO=UDP DPT=53',
+     'SRC=10.5.12.34 DST=x.x.x.x PROTO=UDP DPT=53'),
+])
+def test_captured_show_dispatch(controller, session, monkeypatch, prefix, line, mode, native, expected):
+    monkeypatch.setattr('nvyr.controller.cmd', lambda *args, **kwargs: native + '\n')
+    command = prefix + line + ' | strip-private ' + mode
+    assert controller.execute(command, session if prefix else None)['text'] == expected + '\n'
+
+
+def test_generic_masking_does_not_run_key_generation(controller, monkeypatch):
+    monkeypatch.setattr('nvyr.controller.cmd', lambda *args, **kwargs: pytest.fail('must not execute'))
+    with pytest.raises(ParseError, match='captured show'):
+        controller.execute('generate macsec preshared-key | strip-private')
+
+
+@pytest.mark.parametrize('mode', ['all', 'partial', 'public'])
+def test_secret_metadata_alone_masks_macsec_cak(controller, session, mode):
+    secret = 'a5' * 16
+    controller.execute('set interfaces macsec macsec2 mka preshared-key cak ' + secret, session)
+    for display in ('show', 'compare'):
+        text = controller.execute(f'{display} | strip-private {mode} | commands', session)['text']
+        assert secret not in text and '<password-' in text
 
 
 @pytest.mark.parametrize('kind', ['typo', [], None, True])

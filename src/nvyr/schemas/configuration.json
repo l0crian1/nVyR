@@ -12523,6 +12523,7 @@
                 },
                 "public-key": {
                   "kind": "leaf_node",
+                  "strip_kind": "private",
                   "description": "Remote peer public key",
                   "validators": {
                     "mode": "AND",
@@ -13650,6 +13651,7 @@
                     },
                     "ckn": {
                       "kind": "leaf_node",
+                      "strip_kind": "private",
                       "description": "Connectivity association key name",
                       "validators": {
                         "mode": "AND",

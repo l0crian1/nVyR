@@ -7,17 +7,22 @@ import time
 from tabulate import tabulate
 
 from nvyr import opmode
+from nvyr.helpers.strip_private import mask_fields, strip_ip, strip_text, strip_value
 from nvyr.errors import OperationalError
 from nvyr.helpers.interfaces import manager
 
 
 @opmode.command
-def show(interface: str | None = None, detail: bool = False, raw: bool = False):
+def show(interface: str | None = None, detail: bool = False, raw: bool = False, strip_private: str = None):
     records = manager.request('dhcp6-status')
     if interface:
         if interface not in records:
             raise OperationalError(f'{interface}: DHCPv6 is not configured')
         records = {interface: records[interface]}
+    records = mask_fields(records, strip_private, {
+        'prefix': strip_ip, 'address': strip_ip, 'duid': strip_value, 'server': strip_value,
+        'search': strip_value, 'dns': strip_ip, 'errors': strip_text,
+    })
     if raw:
         return json.dumps(records)
     if not records:

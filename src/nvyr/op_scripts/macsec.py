@@ -9,6 +9,7 @@ from tabulate import tabulate
 from nvyr import opmode
 from nvyr.errors import OperationalError
 from nvyr.helpers import macsec
+from nvyr.helpers.strip_private import strip_mac, strip_value
 from nvyr.helpers.process import cmd, rc_cmd
 
 
@@ -28,22 +29,22 @@ def agreement(name, parent):
     return dict(line.split('=', 1) for line in output.splitlines() if '=' in line) if code == 0 else {}
 
 
-def display_sci(value):
+def display_sci(value, mode=None):
     sci = int(value, 16).to_bytes(8, 'big')
-    return f"{sci[:6].hex(':')}@{int.from_bytes(sci[6:], 'big')}"
+    return f"{strip_mac(sci[:6].hex(':'), mode)}@{int.from_bytes(sci[6:], 'big')}"
 
 
-def counters_table(channel):
+def counters_table(channel, mode=None):
     name = channel['ifname']
     rows = []
-    for scope, record in [(name, channel), *((display_sci(peer['sci']), peer) for peer in channel.get('rx_sc', []))]:
+    for scope, record in [(name, channel), *((display_sci(peer['sci'], mode), peer) for peer in channel.get('rx_sc', []))]:
         rows.extend((scope, key, value) for key, value in record.items()
                     if key.startswith(('OutPkts', 'InPkts', 'OutOctets', 'InOctets')))
     return tabulate(rows, headers=('Channel', 'Counter', 'Value'))
 
 
 @opmode.command
-def show(interface: str = None, detail: bool = False, counters: bool = False):
+def show(interface: str = None, detail: bool = False, counters: bool = False, strip_private: str = None):
     links = json.loads(cmd(['ip', '-j', 'link', 'show', 'type', 'macsec']))
     parents = {link['ifname']: link.get('link', '') for link in links}
     if interface and interface not in parents:
@@ -52,18 +53,21 @@ def show(interface: str = None, detail: bool = False, counters: bool = False):
     rows = []
     for channel in channels:
         if counters:
-            return counters_table(channel)
+            return counters_table(channel, strip_private)
         name = channel['ifname']
         parent = parents.get(name, '')
         status = agreement(name, parent)
-        peers = ', '.join(display_sci(peer['sci']) for peer in channel.get('rx_sc', []) if peer['active'])
+        peers = ', '.join(display_sci(peer['sci'], strip_private) for peer in channel.get('rx_sc', []) if peer['active'])
         secured = status.get('Secured', 'Unavailable')
         server = status.get('key_server_sci', '-') if status.get('is_elected') == 'Yes' else '-'
+        if '@' in server:
+            mac, port = server.split('@', 1)
+            server = f'{strip_mac(mac, strip_private)}@{port}'
         if detail:
             return tabulate([
                 ('Interface', name), ('Source interface', parent), ('Secured', secured),
-                ('Local SCI', display_sci(channel['sci'])), ('Peer SCI', peers or '-'), ('Key server SCI', server),
-                ('Local key server', status.get('is_key_server', '-')), ('CKN', status.get('ckn', '-')),
+                ('Local SCI', display_sci(channel['sci'], strip_private)), ('Peer SCI', peers or '-'), ('Key server SCI', server),
+                ('Local key server', status.get('is_key_server', '-')), ('CKN', strip_value(status['ckn'], strip_private) if status.get('ckn') else '-'),
                 ('Cipher', channel['cipher_suite']), ('Transmit mode', 'encrypt' if channel['encrypt'] else 'integrity-only'),
                 ('Encoding SA', channel['encoding_sa']), ('Replay protection', 'on' if channel['replay'] else 'off'),
                 ('Replay window', channel.get('window', '-')),

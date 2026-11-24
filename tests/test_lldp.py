@@ -81,6 +81,11 @@ def test_output_preserves_multiple_neighbors_on_one_port(monkeypatch):
     assert 'switch-a' in text and 'switch-b' in text
     assert text.count('eth1') == 2
     assert json.loads(operational.show('neighbors', raw=True)) == document
+    for options in ({}, {'raw': True}, {'detail': True}):
+        masked = operational.show('neighbors', strip_private='partial', **options)
+        assert 'eth1' in masked and '<private>' in masked
+        assert all(identity not in masked for identity in ('switch-a', 'switch-b', 'Core', 'uplink'))
+    assert 'switch-a' in operational.show('neighbors', strip_private='public')
 
 
 def test_details_and_empty_output(monkeypatch):

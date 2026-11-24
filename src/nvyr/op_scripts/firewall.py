@@ -392,7 +392,7 @@ def _installed_object(table, category, name):
     return value
 
 
-def _limit_records(table, chain, rule):
+def _limit_records(table, chain, rule, private):
     """Resolve private sets and shared groups using installed rule expressions."""
     for kind in ('limit', 'connection-limit'):
         if kind not in rule:
@@ -416,6 +416,13 @@ def _limit_records(table, chain, rule):
             fields = options['per']
             if any('unsupported' in entry or len(entry['key']) != len(fields) for entry in entries):
                 raise OperationalError('Cannot interpret installed limit keys.')
+            if private:
+                masked = []
+                for entry in entries:
+                    key = [_value(value, field, private) if isinstance(value, str) else value
+                           for field, value in zip(fields, entry['key'], strict=True)]
+                    masked.append({**entry, 'key': key})
+                entries = masked
             record.update({'fields': fields, 'entries': entries, 'active-keys': len(entries),
                            'capacity': state.get('size')})
             if 'timeout' in state.get('flags', []) or 'timeout' in state:
@@ -423,7 +430,7 @@ def _limit_records(table, chain, rule):
         yield record
 
 
-def _show_limit(record, title, private):
+def _show_limit(record, title):
     """Show parameters separately from observed keys; never infer bucket occupancy."""
     label = 'connection limit' if record['kind'] == 'connection-limit' else 'rate limit'
     _section_heading(f'{title} — Rule {record["rule"]} {label}')
@@ -461,7 +468,7 @@ def _show_limit(record, title, private):
 
     rows = []
     for entry in record['entries']:
-        row = [_value(value, field, private) for field, value in zip(fields, entry['key'], strict=True)]
+        row = [_value(value, field, False) for field, value in zip(fields, entry['key'], strict=True)]
         if 'timeout' in record:
             row.append(f'{entry["expires"]:g}s' if 'expires' in entry else MISSING)
         rows.append(row)
@@ -495,7 +502,7 @@ def runtime(kind: str, family: str | None = None, hook: str | None = None, stage
         incomplete = any(entry.get('unsupported') for entry in rules)
         for entry in rules:
             if kind == 'limit':
-                records.extend(_limit_records(table, chain, entry))
+                records.extend(_limit_records(table, chain, entry, strip_private))
             elif 'quota' in entry:
                 quota = entry['quota']
                 group = quota.get('group')
@@ -521,7 +528,7 @@ def runtime(kind: str, family: str | None = None, hook: str | None = None, stage
         records = section['records']
         if kind == 'limit' and records:
             for record in records:
-                _show_limit(record, title, strip_private)
+                _show_limit(record, title)
         else:
             suffix = f' — Rule {rule} {kind}' if rule is not None else f' — {kind}s'
             _section_heading(title + suffix)

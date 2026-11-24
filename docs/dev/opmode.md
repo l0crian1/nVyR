@@ -91,9 +91,10 @@ nVyR CLI still uses the invoking account's privileges.
 
 ## Private output
 
-`| strip-private` requests masking before formatting. For an operational script,
-configd supplies `--strip-private MODE` to the selected function through the existing
-signature-based argument parser. Add `strip_private: str | None = None` to functions
+`| strip-private` uses the capability recorded by the schema builder from each
+operational function's signature. For captured show commands without that capability,
+configd masks address literals in the returned text before match, count or export.
+For a field-aware formatter it supplies `--strip-private MODE`. Add `strip_private: str | None = None` to functions
 that support it, and mask values before building tables or other output:
 
 ```python
@@ -119,11 +120,9 @@ Pass the selected mode through to each helper. IP helpers retain
 non-address choices such as `dhcp` and interface names, and support prefixes
 and address ranges. `all` and `partial` mask public as well as private addresses.
 
-The framework never rewrites operational text. `interfaces.py` masks a copy of
-its kernel data before table layout, including detail and raw displays. Functions
-without the parameter report an unsupported argument; direct system-command
-mappings reject the modifier. Add explicit masking support to each new script.
-Like other pipe modifiers, this requires a captured command; streaming commands
+For example, `interfaces.py` masks a copy of its kernel data before table layout,
+including detail and raw displays. Captured FRR commands use the text fallback,
+which preserves address width and leaves arbitrary prose intact. Streaming commands
 reject pipes. `@line` contains only the command before the first unquoted pipe.
 
 ## Schema mapping

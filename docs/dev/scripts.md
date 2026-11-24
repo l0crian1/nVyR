@@ -114,8 +114,9 @@ See [architecture](architecture.md) for concurrency and partial-commit semantics
 - [pipeline.py](../../src/nvyr/pipeline.py): parses and runs `commands`, `match`,
   `except`, `count`, `export`, `more` and `no-more` modifiers. `Output` retains structured configuration
   references where appropriate. Extend through `Pipelines.register()`; final export
-  file writing happens in the CLI process. The controller handles `strip-private`
-  before rendering or dispatching scripts.
+  file writing happens in the CLI process. The controller masks configuration and
+  passes the selected mode to scripts with a `strip_private` parameter. For other
+  captured show commands it masks address literals before applying text filters.
 - [strip_private.py](../../src/nvyr/helpers/strip_private.py): reusable IP, MAC,
   password and sensitive-text masks; schema-directed configuration copies with
   per-display aliases. Operational scripts call the helpers before formatting.

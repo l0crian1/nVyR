@@ -7,6 +7,7 @@ import json
 from tabulate import tabulate
 
 from nvyr import opmode
+from nvyr.helpers.strip_private import mask_fields, strip_ip
 from nvyr.errors import OperationalError
 from nvyr.helpers import conntrack as tracking
 from nvyr.helpers.output import detailed_output
@@ -49,7 +50,7 @@ def _endpoint(record, direction):
     port = record.get(direction + '-port')
     if port is None:
         return address
-    if ':' in address:
+    if ':' in address or address == '<ipv6>':
         return f'[{address}]:{port}'
     return f'{address}:{port}'
 
@@ -129,7 +130,7 @@ def _detail(record):
 
 
 @opmode.command
-def show(line: str, raw: bool = False):
+def show(line: str, raw: bool = False, strip_private: str = None):
     """Show connections or translations with the same original-tuple filters."""
     path, options = _options(line)
     if options.pop('statistics', False):
@@ -150,6 +151,7 @@ def show(line: str, raw: bool = False):
         records = [record for record in records if record['nat'] and (required is None or required in record['nat'])]
     if sort_by:
         records = _sort(records, sort_by, reverse)
+    records = mask_fields(records, strip_private, {'source-address': strip_ip, 'destination-address': strip_ip})
     if raw:
         return json.dumps(records)
     if not records:

@@ -7,6 +7,7 @@ import json
 from tabulate import tabulate
 
 from nvyr import opmode
+from nvyr.helpers.strip_private import strip_ip, strip_value
 from nvyr.errors import OperationalError
 from nvyr.helpers import cgnat
 from nvyr.op_scripts.services import running_configuration
@@ -20,7 +21,7 @@ def configuration():
 
 
 @opmode.command
-def pools(*, name: str = None, raw: bool = False):
+def pools(*, name: str = None, raw: bool = False, strip_private: str = None):
     config = configuration()
     definitions = lookup(config, (*cgnat.PATH, 'pool'), {})
     if name is not None and name not in definitions:
@@ -30,8 +31,8 @@ def pools(*, name: str = None, raw: bool = False):
         if name is not None and name != pool_name:
             continue
         rules = [number for number, rule in cgnat.enabled(config) if rule['pool'] == pool_name]
-        rows.append([pool_name, ', '.join(pool['public-address']), pool['port-range'], pool['block-size'],
-                     cgnat.capacity(pool), ', '.join(rules) or '-', lookup(pool, ('description',), '')])
+        rows.append([pool_name, ', '.join(strip_ip(ip, strip_private) for ip in pool['public-address']), pool['port-range'], pool['block-size'],
+                     cgnat.capacity(pool), ', '.join(rules) or '-', strip_value(pool['description'], strip_private) if 'description' in pool else ''])
     if raw:
         return json.dumps(rows)
     print(tabulate(rows, headers=['Pool', 'Public addresses', 'Ports', 'Block size', 'Capacity', 'Rules', 'Description'],
@@ -39,7 +40,7 @@ def pools(*, name: str = None, raw: bool = False):
 
 
 @opmode.command
-def rules(*, number: str = None, raw: bool = False):
+def rules(*, number: str = None, raw: bool = False, strip_private: str = None):
     config = configuration()
     table = firewall._load_table(read_configuration=False)
     installed = {rule['number']: rule for rule in lookup(table, ('chains', cgnat.CHAIN, 'rules'), ()) if 'number' in rule}
@@ -59,7 +60,7 @@ def rules(*, number: str = None, raw: bool = False):
         counters = lookup(installed, (rule_number, 'counter'), {})
         rows.append([rule_number, lookup(rule, ('vrf',), 'default'), lookup(rule, ('pool',), '-'),
                      rule['allocation-offset'], status, lookup(counters, ('packets',), '-'),
-                     lookup(counters, ('bytes',), '-'), lookup(rule, ('description',), '')])
+                     lookup(counters, ('bytes',), '-'), strip_value(rule['description'], strip_private) if 'description' in rule else ''])
     if raw:
         return json.dumps(rows)
     print(tabulate(rows, headers=['Rule', 'VRF', 'Pool', 'Offset', 'State', 'Packets', 'Bytes', 'Description'],
@@ -90,10 +91,13 @@ def allocation_rows(config, *, subscriber=None, public=None, port=None, vrf=None
 
 
 @opmode.command
-def allocation(*, subscriber: str = None, public: str = None, port: int = None, vrf: str = None, raw: bool = False):
+def allocation(*, subscriber: str = None, public: str = None, port: int = None, vrf: str = None, raw: bool = False, strip_private: str = None):
     if subscriber is None and (public is None or port is None):
         raise OperationalError('Specify a subscriber address or a public address and port')
     rows = allocation_rows(configuration(), subscriber=subscriber, public=public, port=port, vrf=vrf)
+    if strip_private:
+        for row in rows:
+            row[3:5] = [strip_ip(address, strip_private) for address in row[3:5]]
     if raw:
         return json.dumps(rows)
     print(tabulate(rows, headers=['Rule', 'VRF', 'Pool', 'Subscriber', 'Public address', 'Ports / ICMP IDs'],

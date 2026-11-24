@@ -1,6 +1,7 @@
 """Display-only masking shared by configuration and operational commands."""
 
-from ipaddress import ip_interface
+from ipaddress import ip_address, ip_interface
+import re
 
 
 def strip_ip(value, strip_private=False):
@@ -37,7 +38,9 @@ def strip_ip(value, strip_private=False):
             packed = address.ip.packed
             high = int.from_bytes(packed[-4:-2], 'big')
             low = int.from_bytes(packed[-2:], 'big')
-            masked = f'x:x:x:x:x:x:{high:x}:{low:x}'
+            # The last 32 bits of a mapped address contain the entire IPv4 address.
+            suffix = 'x' if address.ip.ipv4_mapped else f'{high:x}'
+            masked = f'x:x:x:x:x:x:{suffix}:{low:x}'
 
         if '/' in value:
             masked += f'/{address.network.prefixlen}'
@@ -74,6 +77,99 @@ def strip_value(value, strip_private=False):
     return '<private>' if strip_private and strip_private != 'public' else value
 
 
+# Match candidates, then validate them. Keep endpoint ports, CIDR lengths and
+# interface scopes outside the replacement so native column offsets stay intact.
+_ADDRESS = re.compile(
+    # An FRR BGP row can put its three status flags directly against the prefix.
+    r'(?:(?<![\w.])|(?<=^[* ][> =]i))(?:'
+    r'(?:[0-9a-fA-F]{2}-){5}[0-9a-fA-F]{2}'
+    r'|(?:[0-9a-fA-F]{4}\.){2}[0-9a-fA-F]{4}'
+    r'|(?:[0-9]{1,3}\.){3}[0-9]{1,3}'
+    r'|[0-9a-fA-F]{0,4}:[0-9a-fA-F:]+(?:\.[0-9]{1,3}){0,3}'
+    r')(?!\w|\.\w)', re.MULTILINE
+)
+_MAC = re.compile(r'(?:[0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}')
+_DOTTED_MAC = re.compile(r'(?:[0-9a-fA-F]{4}\.){2}[0-9a-fA-F]{4}')
+_HEX = re.compile('[0-9a-fA-F]')
+_ETH_HEADER = re.compile(r'(\bMAC=)((?:[0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}):'
+                         r'((?:[0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2})(?=:[0-9a-fA-F]{2}:)')
+
+
+def _mask_literal(token, mode):
+    if _MAC.fullmatch(token.replace('-', ':')) or _DOTTED_MAC.fullmatch(token):
+        if mode == 'public':
+            return token
+        keep = token.rfind('.') if '.' in token else 11
+        if mode != 'partial':
+            keep = len(token)
+        return _HEX.sub('x', token[:keep]) + token[keep:]
+
+    try:
+        address = ip_address(token)
+    except ValueError:
+        return token
+    if mode == 'public' and (not address.is_global or address.is_multicast):
+        return token
+    if mode != 'partial':
+        return _HEX.sub('x', token) if token != '::' else 'xx'
+    if address.version == 4:
+        first, second, rest = token.split('.', 2)
+        return 'x' * len(first) + '.' + 'x' * len(second) + '.' + rest
+
+    # The last two logical hextets may be dotted, explicit or compressed.
+    parts = token.split(':')
+    tail = 1 if address.ipv4_mapped or '.' in parts[-1] else 2
+    if address.ipv4_mapped and '.' in parts[-1]:
+        parts[-1] = _mask_literal(parts[-1], mode)
+    explicit = len(token.partition('::')[2].split(':')) if '::' in token else 8
+    visible = min(tail, explicit) if not token.endswith('::') else 0
+    return ':'.join(_HEX.sub('x', part) if i < len(parts) - visible else part
+                    for i, part in enumerate(parts))
+
+
+def strip_text(text, mode):
+    """Mask address literals in opaque text, retaining their original width."""
+    if not mode:
+        return text
+
+    def replace(match):
+        token = match[0]
+        if token.endswith(':') and not token.endswith('::'):
+            return _mask_literal(token[:-1], mode) + ':'
+        return _mask_literal(token, mode)
+
+    if mode != 'public' and 'MAC=' in text:
+        # Kernel packet logs can print the whole Ethernet header after MAC=.
+        text = _ETH_HEADER.sub(lambda m: m[1] + _mask_literal(m[2], mode) + ':' + _mask_literal(m[3], mode), text)
+    return _ADDRESS.sub(replace, text)
+
+
+def mask_fields(data, mode, fields, *, fallback=None, mask_keys=False):
+    """Copy structured display data, applying a formatter to named fields."""
+    def visit(value, formatter):
+        if isinstance(value, dict):
+            result = {}
+            next_suffix = {}
+            for key, item in value.items():
+                label = strip_text(key, mode) if mask_keys else key
+                if label != key and (label in result or label in value):
+                    base = label
+                    index = next_suffix.get(base, 1)
+                    while label in result or label in value:
+                        label = f'{base} <{index}>'
+                        index += 1
+                    next_suffix[base] = index
+                result[label] = visit(item, fields.get(key, formatter))
+            return result
+        if isinstance(value, list):
+            return [visit(item, formatter) for item in value]
+        if formatter and isinstance(value, str) and value:
+            return formatter(value, mode)
+        return value
+
+    return visit(data, fallback) if mode else data
+
+
 KINDS = {'ipv4': strip_ipv4, 'ipv6': strip_ipv6, 'ip': strip_ip,
          'mac': strip_mac, 'password': strip_password, 'private': strip_value}
 
@@ -92,7 +188,7 @@ class ConfigurationMasker:
         self.aliases = {}
 
     def value(self, node, value):
-        kind = node.get('strip_kind')
+        kind = 'password' if node.get('secret') else node.get('strip_kind')
         if kind is None:
             return value
 

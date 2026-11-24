@@ -354,6 +354,12 @@ def test_unscoped_leases_keep_vrf_identity_without_crossing_family(isolated_serv
     records = json.loads(dhcp_server.show(family, 'leases', shared_network='LAN', raw=True))['records']
     assert {item['address'] for item in records} == addresses
     assert {item['vrf'] for item in records} == {'default', 'BLUE'}
+    masked = json.loads(dhcp_server.show(family, 'leases', raw=True, strip_private='all'))['records']
+    assert all(row['address'] == f'<ipv{family}>' for row in masked)
+    for row in masked:
+        assert row['hostname'] in (None, '<private>')
+        assert row['duid'] in (None, '<private>')
+        assert row['mac'] in (None, '<mac>')
 
 
 def test_failed_other_vrf_does_not_break_scoped_query(isolated_servers, monkeypatch):

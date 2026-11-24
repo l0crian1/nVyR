@@ -12,7 +12,7 @@ from nvyr.helpers.suggestors import Context, registry as suggestor_registry
 from nvyr.helpers.process import cmd, operational_argv
 from nvyr.helpers import build_metadata, access, passwords
 from nvyr.helpers import config_feedback
-from nvyr.helpers.strip_private import ConfigurationMasker
+from nvyr.helpers.strip_private import ConfigurationMasker, strip_text
 from nvyr.tree import MISSING, Mutation, lookup, projected_value
 
 
@@ -113,14 +113,15 @@ class Controller:
             if isinstance(command, dict) and command.get('stream') and stages[1:]:
                 raise ParseError('Output modifiers are not supported on streaming commands. Run this command without pipes.')
 
-            if strip_private and isinstance(command, dict):
-                if not command['argv'][0].endswith('.nvyr.op'):
-                    raise ParseError('strip-private requires an operational script that supports masking')
-
-                # Prepend the function option before user values (including --).
-                # The script signature, not an output text filter, owns masking.
+            if strip_private and isinstance(command, dict) and command.get('strip_private'):
                 command = dict(command)
                 command['argv'] = command['argv'][:2] + ['--strip-private', strip_private] + command['argv'][2:]
+            elif strip_private and cursor.path[0] == 'show':
+                result = self._operational_output(command, cursor, tokens=op_tokens, line=text)
+                result.text = strip_text(result.text, strip_private)
+                return result
+            elif strip_private:
+                raise ParseError('strip-private requires a captured show command')
 
             if isinstance(command, dict) and command.get('stream'):
                 event = {'event': 'command',

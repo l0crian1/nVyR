@@ -255,6 +255,13 @@ def test_ipv6_table_and_detailed_metadata(monkeypatch, capsys):
     assert ' | ' in output and '0, 127' in output and 'Original zone' in output
     assert 'Reply packets' not in output
 
+    conntrack.show('show conntrack ipv6', strip_private='all')
+    masked = capsys.readouterr().out
+    assert '[<ipv6>]:12345' in masked and '2001:db8:' not in masked
+    hidden = json.loads(conntrack.show('show conntrack ipv6 detail', raw=True, strip_private='all'))[0]
+    assert hidden['original']['source-address'] == hidden['reply']['destination-address'] == '<ipv6>'
+    assert record['original']['source-address'] == '2001:db8::10'
+
 
 def test_empty_tables_and_statistics_display(monkeypatch, capsys, kernel):
     monkeypatch.setattr(tracking, 'read', lambda **kwargs: [])

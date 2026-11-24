@@ -7,6 +7,7 @@ import time
 from tabulate import tabulate
 
 from nvyr import opmode
+from nvyr.helpers.strip_private import mask_fields, strip_ip, strip_value
 from nvyr.errors import OperationalError
 from nvyr.helpers import dhcp, kea
 from nvyr.helpers.interfaces import manager
@@ -85,11 +86,14 @@ def client_records(interface=None):
 
 
 @opmode.command
-def show(interface: str | None = None, detail: bool = False, raw: bool = False):
+def show(interface: str | None = None, detail: bool = False, raw: bool = False, strip_private: str = None):
     try:
         records = client_records(interface)
     except (OSError, ValueError, KeyError) as error:
         raise OperationalError(f'Cannot read DHCP client state: {error}. Retry the command.') from error
+    records = mask_fields(records, strip_private, {
+        'address': strip_ip, 'server': strip_ip, 'gateway': strip_ip, 'name_servers': strip_ip, 'domain': strip_value,
+    })
     if raw:
         return json.dumps(records)
     if not records:

@@ -373,11 +373,12 @@ class Schema:
                     or not isinstance(timeout, (int, float)) or not math.isfinite(timeout) or timeout <= 0):
                 raise ValueError(f"Invalid system-command definition at {path}")
 
-            if set(command) - {'argv', 'timeout', 'stream'}:
+            if set(command) - {'argv', 'timeout', 'stream', 'strip_private'}:
                 raise ValueError(f'Unknown system-command property at {path}')
 
-            if 'stream' in command and type(command['stream']) is not bool:
-                raise ValueError(f'Operational stream must be boolean at {path}')
+            for option in ('stream', 'strip_private'):
+                if option in command and type(command[option]) is not bool:
+                    raise ValueError(f'Operational {option} must be boolean at {path}')
 
             if not argv[0] or argv[0].startswith('@') and not argv[0].startswith('@@'):
                 raise ValueError(f'Operational executable/function must be fixed at {path}')

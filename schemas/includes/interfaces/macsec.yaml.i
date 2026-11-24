@@ -94,6 +94,7 @@ macsec:
 
               ckn:
                 kind: leaf_node
+                strip_kind: private
                 description: Connectivity association key name
                 validators:
                   regex: {pattern: '(?:[a-fA-F0-9]{2}){1,32}'}

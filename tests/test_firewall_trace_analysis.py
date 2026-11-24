@@ -37,6 +37,16 @@ def test_ipv6_headers_are_not_confused_with_inet_table_family():
     assert report['traces'][0]['hooks'] == ['input']
 
 
+def test_saved_trace_masks_decoded_packet_and_native_evidence(monkeypatch):
+    packet = 'trace id abc inet nvyr_filter ipv4_forward packet: ip saddr 10.5.7.8 ip daddr 8.8.8.8'
+    rule = 'trace id abc inet nvyr_filter ipv4_forward rule accept comment "10|customer-link" # handle 7 (verdict accept)'
+    report = analysis.analyze(capture(packet, rule), detail=True)
+    monkeypatch.setattr(analysis, 'read', lambda *args, **kwargs: report)
+    masked = commands.show('show firewall trace /config/traces/test.jsonl', raw=True, strip_private='partial')
+    assert all(value not in masked for value in ('10.5.7.8', '8.8.8.8', 'customer-link'))
+    assert 'xxx.xxx.7.8' in masked and 'accept' in masked
+
+
 def test_nat_ports_and_address_changes_are_observations_not_rule_literals():
     """A NAT rule alone proves evaluation, while later packet headers prove rewrites."""
     lines = [

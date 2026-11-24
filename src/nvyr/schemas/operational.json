@@ -12646,7 +12646,8 @@
               "show",
               "--intf_name",
               "@3"
-            ]
+            ],
+            "strip_private": true
           },
           "suggestors": [
             {
@@ -13021,7 +13022,8 @@
                   "--intf_name",
                   "@3",
                   "--detail"
-                ]
+                ],
+                "strip_private": true
               }
             },
             "statistics": {
@@ -13035,7 +13037,8 @@
                   "--intf_name",
                   "@3",
                   "--statistics"
-                ]
+                ],
+                "strip_private": true
               }
             },
             "offload": {
@@ -13049,7 +13052,8 @@
                   "offload",
                   "--intf_name",
                   "@3"
-                ]
+                ],
+                "strip_private": true
               }
             },
             "queues": {
@@ -13063,7 +13067,8 @@
                   "queues",
                   "--intf_name",
                   "@3"
-                ]
+                ],
+                "strip_private": true
               }
             },
             "hardware-statistics": {
@@ -13077,7 +13082,8 @@
                   "hardware-statistics",
                   "--intf_name",
                   "@3"
-                ]
+                ],
+                "strip_private": true
               }
             },
             "transceiver": {
@@ -13091,7 +13097,8 @@
                   "transceiver",
                   "--intf_name",
                   "@3"
-                ]
+                ],
+                "strip_private": true
               }
             },
             "wireguard": {
@@ -13106,7 +13113,8 @@
                   "wireguard",
                   "--intf_name",
                   "@4"
-                ]
+                ],
+                "strip_private": true
               },
               "validators": {
                 "mode": "AND",
@@ -13144,7 +13152,8 @@
                       "--intf_name",
                       "@4",
                       "--detail"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 },
                 "statistics": {
@@ -13160,7 +13169,8 @@
                       "--intf_name",
                       "@4",
                       "--statistics"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 }
               }
@@ -13177,7 +13187,8 @@
                   "macsec",
                   "--intf_name",
                   "@4"
-                ]
+                ],
+                "strip_private": true
               },
               "validators": {
                 "mode": "AND",
@@ -13215,7 +13226,8 @@
                       "--intf_name",
                       "@4",
                       "--detail"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 },
                 "statistics": {
@@ -13231,7 +13243,8 @@
                       "--intf_name",
                       "@4",
                       "--statistics"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 }
               }
@@ -13248,7 +13261,8 @@
                   "ethernet",
                   "--intf_name",
                   "@4"
-                ]
+                ],
+                "strip_private": true
               },
               "suggestors": [
                 {
@@ -13286,7 +13300,8 @@
                       "--intf_name",
                       "@4",
                       "--detail"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 },
                 "statistics": {
@@ -13302,7 +13317,8 @@
                       "--intf_name",
                       "@4",
                       "--statistics"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 },
                 "offload": {
@@ -13318,7 +13334,8 @@
                       "ethernet",
                       "--intf_name",
                       "@4"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 },
                 "queues": {
@@ -13334,7 +13351,8 @@
                       "ethernet",
                       "--intf_name",
                       "@4"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 },
                 "hardware-statistics": {
@@ -13350,7 +13368,8 @@
                       "ethernet",
                       "--intf_name",
                       "@4"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 },
                 "transceiver": {
@@ -13366,7 +13385,8 @@
                       "ethernet",
                       "--intf_name",
                       "@4"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 }
               }
@@ -13380,7 +13400,8 @@
             "argv": [
               "wireguard.nvyr.op",
               "show"
-            ]
+            ],
+            "strip_private": true
           },
           "children": {
             "interface": {
@@ -13415,7 +13436,8 @@
                   "show",
                   "--interface",
                   "@3"
-                ]
+                ],
+                "strip_private": true
               },
               "children": {
                 "detail": {
@@ -13429,7 +13451,8 @@
                       "--interface",
                       "@3",
                       "--detail"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 },
                 "peer": {
@@ -13462,7 +13485,8 @@
                       "@3",
                       "--peer",
                       "@5"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "children": {
                     "detail": {
@@ -13478,7 +13502,8 @@
                           "--peer",
                           "@5",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     }
                   }
@@ -13494,7 +13519,8 @@
             "argv": [
               "macsec.nvyr.op",
               "show"
-            ]
+            ],
+            "strip_private": true
           },
           "children": {
             "interface": {
@@ -13529,7 +13555,8 @@
                   "show",
                   "--interface",
                   "@3"
-                ]
+                ],
+                "strip_private": true
               },
               "children": {
                 "detail": {
@@ -13542,7 +13569,8 @@
                       "--interface",
                       "@3",
                       "--detail"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 },
                 "counters": {
@@ -13555,7 +13583,8 @@
                       "--interface",
                       "@3",
                       "--counters"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 }
               }
@@ -21143,7 +21172,8 @@
                   "lldp.nvyr.op",
                   "show",
                   "neighbors"
-                ]
+                ],
+                "strip_private": true
               },
               "children": {
                 "detail": {
@@ -21155,7 +21185,8 @@
                       "show",
                       "neighbors",
                       "--detail"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 },
                 "interface": {
@@ -21187,7 +21218,8 @@
                       "neighbors",
                       "--interface",
                       "@5"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "children": {
                     "detail": {
@@ -21201,7 +21233,8 @@
                           "--interface",
                           "@5",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     }
                   }
@@ -21238,7 +21271,8 @@
                   "interfaces",
                   "--interface",
                   "@4"
-                ]
+                ],
+                "strip_private": true
               },
               "children": {
                 "detail": {
@@ -21252,7 +21286,8 @@
                       "--interface",
                       "@4",
                       "--detail"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 }
               }
@@ -21265,7 +21300,8 @@
                   "lldp.nvyr.op",
                   "show",
                   "statistics"
-                ]
+                ],
+                "strip_private": true
               },
               "children": {
                 "interface": {
@@ -21297,7 +21333,8 @@
                       "statistics",
                       "--interface",
                       "@5"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 }
               }
@@ -21310,7 +21347,8 @@
                   "lldp.nvyr.op",
                   "show",
                   "local"
-                ]
+                ],
+                "strip_private": true
               }
             }
           }
@@ -21328,7 +21366,8 @@
                   "show",
                   "4",
                   "leases"
-                ]
+                ],
+                "strip_private": true
               }
             },
             "pools": {
@@ -21340,7 +21379,8 @@
                   "show",
                   "4",
                   "pools"
-                ]
+                ],
+                "strip_private": true
               }
             },
             "listeners": {
@@ -21352,7 +21392,8 @@
                   "show",
                   "4",
                   "listeners"
-                ]
+                ],
+                "strip_private": true
               }
             },
             "shared-network": {
@@ -21392,7 +21433,8 @@
                       "leases",
                       "--shared-network",
                       "@4"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 },
                 "pools": {
@@ -21406,7 +21448,8 @@
                       "pools",
                       "--shared-network",
                       "@4"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 },
                 "listeners": {
@@ -21420,7 +21463,8 @@
                       "listeners",
                       "--shared-network",
                       "@4"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 }
               }
@@ -21465,7 +21509,8 @@
                       "leases",
                       "--vrf",
                       "@4"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 },
                 "pools": {
@@ -21479,7 +21524,8 @@
                       "pools",
                       "--vrf",
                       "@4"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 },
                 "listeners": {
@@ -21493,7 +21539,8 @@
                       "listeners",
                       "--vrf",
                       "@4"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 },
                 "shared-network": {
@@ -21535,7 +21582,8 @@
                           "@4",
                           "--shared-network",
                           "@6"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     },
                     "pools": {
@@ -21551,7 +21599,8 @@
                           "@4",
                           "--shared-network",
                           "@6"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     },
                     "listeners": {
@@ -21567,7 +21616,8 @@
                           "@4",
                           "--shared-network",
                           "@6"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     }
                   }
@@ -21589,7 +21639,8 @@
                   "show",
                   "6",
                   "leases"
-                ]
+                ],
+                "strip_private": true
               }
             },
             "pools": {
@@ -21601,7 +21652,8 @@
                   "show",
                   "6",
                   "pools"
-                ]
+                ],
+                "strip_private": true
               }
             },
             "listeners": {
@@ -21613,7 +21665,8 @@
                   "show",
                   "6",
                   "listeners"
-                ]
+                ],
+                "strip_private": true
               }
             },
             "shared-network": {
@@ -21653,7 +21706,8 @@
                       "leases",
                       "--shared-network",
                       "@4"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 },
                 "pools": {
@@ -21667,7 +21721,8 @@
                       "pools",
                       "--shared-network",
                       "@4"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 },
                 "listeners": {
@@ -21681,7 +21736,8 @@
                       "listeners",
                       "--shared-network",
                       "@4"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 }
               }
@@ -21726,7 +21782,8 @@
                       "leases",
                       "--vrf",
                       "@4"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 },
                 "pools": {
@@ -21740,7 +21797,8 @@
                       "pools",
                       "--vrf",
                       "@4"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 },
                 "listeners": {
@@ -21754,7 +21812,8 @@
                       "listeners",
                       "--vrf",
                       "@4"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 },
                 "shared-network": {
@@ -21796,7 +21855,8 @@
                           "@4",
                           "--shared-network",
                           "@6"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     },
                     "pools": {
@@ -21812,7 +21872,8 @@
                           "@4",
                           "--shared-network",
                           "@6"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     },
                     "listeners": {
@@ -21828,7 +21889,8 @@
                           "@4",
                           "--shared-network",
                           "@6"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     }
                   }
@@ -21844,7 +21906,8 @@
             "argv": [
               "dhcp.nvyr.op",
               "show"
-            ]
+            ],
+            "strip_private": true
           },
           "children": {
             "detail": {
@@ -21855,7 +21918,8 @@
                   "dhcp.nvyr.op",
                   "show",
                   "--detail"
-                ]
+                ],
+                "strip_private": true
               }
             },
             "interface": {
@@ -21886,7 +21950,8 @@
                   "show",
                   "--interface",
                   "@4"
-                ]
+                ],
+                "strip_private": true
               },
               "children": {
                 "detail": {
@@ -21899,7 +21964,8 @@
                       "--interface",
                       "@4",
                       "--detail"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 }
               }
@@ -21913,7 +21979,8 @@
             "argv": [
               "dhcp6.nvyr.op",
               "show"
-            ]
+            ],
+            "strip_private": true
           },
           "children": {
             "detail": {
@@ -21924,7 +21991,8 @@
                   "dhcp6.nvyr.op",
                   "show",
                   "--detail"
-                ]
+                ],
+                "strip_private": true
               }
             },
             "interface": {
@@ -21955,7 +22023,8 @@
                   "show",
                   "--interface",
                   "@4"
-                ]
+                ],
+                "strip_private": true
               },
               "children": {
                 "detail": {
@@ -21968,7 +22037,8 @@
                       "--interface",
                       "@4",
                       "--detail"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 }
               }
@@ -22017,7 +22087,8 @@
             "argv": [
               "firewall.nvyr.op",
               "show"
-            ]
+            ],
+            "strip_private": true
           },
           "children": {
             "domain-group": {
@@ -22128,6 +22199,7 @@
                   "show",
                   "@line"
                 ],
+                "strip_private": true,
                 "timeout": 120
               },
               "validators": {
@@ -22307,7 +22379,8 @@
                   "firewall.nvyr.op",
                   "show",
                   "--detail"
-                ]
+                ],
+                "strip_private": true
               }
             },
             "ipv4": {
@@ -22319,7 +22392,8 @@
                   "show",
                   "--family",
                   "ipv4"
-                ]
+                ],
+                "strip_private": true
               },
               "children": {
                 "detail": {
@@ -22333,7 +22407,8 @@
                       "--family",
                       "ipv4",
                       "--detail"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 },
                 "input": {
@@ -22347,7 +22422,8 @@
                       "ipv4",
                       "--hook",
                       "input"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "children": {
                     "detail": {
@@ -22363,7 +22439,8 @@
                           "--hook",
                           "input",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     },
                     "filter": {
@@ -22379,7 +22456,8 @@
                           "input",
                           "--stage",
                           "filter"
-                        ]
+                        ],
+                        "strip_private": true
                       },
                       "children": {
                         "limits": {
@@ -22396,7 +22474,8 @@
                               "input",
                               "--stage",
                               "filter"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "quotas": {
@@ -22413,7 +22492,8 @@
                               "input",
                               "--stage",
                               "filter"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "detail": {
@@ -22431,7 +22511,8 @@
                               "--stage",
                               "filter",
                               "--detail"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "rule": {
@@ -22469,7 +22550,8 @@
                                   "filter",
                                   "--rule",
                                   "@7"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             },
                             "quota": {
@@ -22488,7 +22570,8 @@
                                   "filter",
                                   "--rule",
                                   "@7"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             },
                             "detail": {
@@ -22508,7 +22591,8 @@
                                   "--rule",
                                   "@7",
                                   "--detail"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             }
                           },
@@ -22524,7 +22608,8 @@
                               "filter",
                               "--rule",
                               "@7"
-                            ]
+                            ],
+                            "strip_private": true
                           },
                           "suggestors": [
                             {
@@ -22550,7 +22635,8 @@
                       "ipv4",
                       "--hook",
                       "forward"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "children": {
                     "detail": {
@@ -22566,7 +22652,8 @@
                           "--hook",
                           "forward",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     },
                     "filter": {
@@ -22582,7 +22669,8 @@
                           "forward",
                           "--stage",
                           "filter"
-                        ]
+                        ],
+                        "strip_private": true
                       },
                       "children": {
                         "limits": {
@@ -22599,7 +22687,8 @@
                               "forward",
                               "--stage",
                               "filter"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "quotas": {
@@ -22616,7 +22705,8 @@
                               "forward",
                               "--stage",
                               "filter"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "detail": {
@@ -22634,7 +22724,8 @@
                               "--stage",
                               "filter",
                               "--detail"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "rule": {
@@ -22672,7 +22763,8 @@
                                   "filter",
                                   "--rule",
                                   "@7"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             },
                             "quota": {
@@ -22691,7 +22783,8 @@
                                   "filter",
                                   "--rule",
                                   "@7"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             },
                             "detail": {
@@ -22711,7 +22804,8 @@
                                   "--rule",
                                   "@7",
                                   "--detail"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             }
                           },
@@ -22727,7 +22821,8 @@
                               "filter",
                               "--rule",
                               "@7"
-                            ]
+                            ],
+                            "strip_private": true
                           },
                           "suggestors": [
                             {
@@ -22753,7 +22848,8 @@
                       "ipv4",
                       "--hook",
                       "output"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "children": {
                     "detail": {
@@ -22769,7 +22865,8 @@
                           "--hook",
                           "output",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     },
                     "filter": {
@@ -22785,7 +22882,8 @@
                           "output",
                           "--stage",
                           "filter"
-                        ]
+                        ],
+                        "strip_private": true
                       },
                       "children": {
                         "limits": {
@@ -22802,7 +22900,8 @@
                               "output",
                               "--stage",
                               "filter"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "quotas": {
@@ -22819,7 +22918,8 @@
                               "output",
                               "--stage",
                               "filter"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "detail": {
@@ -22837,7 +22937,8 @@
                               "--stage",
                               "filter",
                               "--detail"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "rule": {
@@ -22875,7 +22976,8 @@
                                   "filter",
                                   "--rule",
                                   "@7"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             },
                             "quota": {
@@ -22894,7 +22996,8 @@
                                   "filter",
                                   "--rule",
                                   "@7"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             },
                             "detail": {
@@ -22914,7 +23017,8 @@
                                   "--rule",
                                   "@7",
                                   "--detail"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             }
                           },
@@ -22930,7 +23034,8 @@
                               "filter",
                               "--rule",
                               "@7"
-                            ]
+                            ],
+                            "strip_private": true
                           },
                           "suggestors": [
                             {
@@ -22956,7 +23061,8 @@
                           "output",
                           "--stage",
                           "raw"
-                        ]
+                        ],
+                        "strip_private": true
                       },
                       "children": {
                         "limits": {
@@ -22973,7 +23079,8 @@
                               "output",
                               "--stage",
                               "raw"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "quotas": {
@@ -22990,7 +23097,8 @@
                               "output",
                               "--stage",
                               "raw"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "detail": {
@@ -23008,7 +23116,8 @@
                               "--stage",
                               "raw",
                               "--detail"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "rule": {
@@ -23046,7 +23155,8 @@
                                   "raw",
                                   "--rule",
                                   "@7"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             },
                             "quota": {
@@ -23065,7 +23175,8 @@
                                   "raw",
                                   "--rule",
                                   "@7"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             },
                             "detail": {
@@ -23085,7 +23196,8 @@
                                   "--rule",
                                   "@7",
                                   "--detail"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             }
                           },
@@ -23101,7 +23213,8 @@
                               "raw",
                               "--rule",
                               "@7"
-                            ]
+                            ],
+                            "strip_private": true
                           },
                           "suggestors": [
                             {
@@ -23127,7 +23240,8 @@
                       "ipv4",
                       "--hook",
                       "prerouting"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "children": {
                     "detail": {
@@ -23143,7 +23257,8 @@
                           "--hook",
                           "prerouting",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     },
                     "raw": {
@@ -23159,7 +23274,8 @@
                           "prerouting",
                           "--stage",
                           "raw"
-                        ]
+                        ],
+                        "strip_private": true
                       },
                       "children": {
                         "limits": {
@@ -23176,7 +23292,8 @@
                               "prerouting",
                               "--stage",
                               "raw"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "quotas": {
@@ -23193,7 +23310,8 @@
                               "prerouting",
                               "--stage",
                               "raw"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "detail": {
@@ -23211,7 +23329,8 @@
                               "--stage",
                               "raw",
                               "--detail"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "rule": {
@@ -23249,7 +23368,8 @@
                                   "raw",
                                   "--rule",
                                   "@7"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             },
                             "quota": {
@@ -23268,7 +23388,8 @@
                                   "raw",
                                   "--rule",
                                   "@7"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             },
                             "detail": {
@@ -23288,7 +23409,8 @@
                                   "--rule",
                                   "@7",
                                   "--detail"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             }
                           },
@@ -23304,7 +23426,8 @@
                               "raw",
                               "--rule",
                               "@7"
-                            ]
+                            ],
+                            "strip_private": true
                           },
                           "suggestors": [
                             {
@@ -23332,7 +23455,8 @@
                       "--named",
                       "--chain_name",
                       "@5"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "validators": {
                     "mode": "AND",
@@ -23370,7 +23494,8 @@
                           "--named",
                           "--chain_name",
                           "@5"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     },
                     "quotas": {
@@ -23386,7 +23511,8 @@
                           "--named",
                           "--chain_name",
                           "@5"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     },
                     "detail": {
@@ -23403,7 +23529,8 @@
                           "--chain_name",
                           "@5",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     },
                     "rule": {
@@ -23440,7 +23567,8 @@
                               "@5",
                               "--rule",
                               "@7"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "quota": {
@@ -23458,7 +23586,8 @@
                               "@5",
                               "--rule",
                               "@7"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "detail": {
@@ -23477,7 +23606,8 @@
                               "--rule",
                               "@7",
                               "--detail"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         }
                       },
@@ -23492,7 +23622,8 @@
                           "@5",
                           "--rule",
                           "@7"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     }
                   }
@@ -23508,7 +23639,8 @@
                       "ipv4",
                       "--hook",
                       "ingress"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "children": {
                     "detail": {
@@ -23524,7 +23656,8 @@
                           "--hook",
                           "ingress",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     },
                     "filter": {
@@ -23540,7 +23673,8 @@
                           "ingress",
                           "--stage",
                           "filter"
-                        ]
+                        ],
+                        "strip_private": true
                       },
                       "children": {
                         "limits": {
@@ -23557,7 +23691,8 @@
                               "ingress",
                               "--stage",
                               "filter"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "quotas": {
@@ -23574,7 +23709,8 @@
                               "ingress",
                               "--stage",
                               "filter"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "detail": {
@@ -23592,7 +23728,8 @@
                               "--stage",
                               "filter",
                               "--detail"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "rule": {
@@ -23630,7 +23767,8 @@
                                   "filter",
                                   "--rule",
                                   "@7"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             },
                             "quota": {
@@ -23649,7 +23787,8 @@
                                   "filter",
                                   "--rule",
                                   "@7"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             },
                             "detail": {
@@ -23669,7 +23808,8 @@
                                   "--rule",
                                   "@7",
                                   "--detail"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             }
                           },
@@ -23685,7 +23825,8 @@
                               "filter",
                               "--rule",
                               "@7"
-                            ]
+                            ],
+                            "strip_private": true
                           },
                           "suggestors": [
                             {
@@ -23711,7 +23852,8 @@
                   "show",
                   "--family",
                   "ipv6"
-                ]
+                ],
+                "strip_private": true
               },
               "children": {
                 "detail": {
@@ -23725,7 +23867,8 @@
                       "--family",
                       "ipv6",
                       "--detail"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 },
                 "input": {
@@ -23739,7 +23882,8 @@
                       "ipv6",
                       "--hook",
                       "input"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "children": {
                     "detail": {
@@ -23755,7 +23899,8 @@
                           "--hook",
                           "input",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     },
                     "filter": {
@@ -23771,7 +23916,8 @@
                           "input",
                           "--stage",
                           "filter"
-                        ]
+                        ],
+                        "strip_private": true
                       },
                       "children": {
                         "limits": {
@@ -23788,7 +23934,8 @@
                               "input",
                               "--stage",
                               "filter"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "quotas": {
@@ -23805,7 +23952,8 @@
                               "input",
                               "--stage",
                               "filter"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "detail": {
@@ -23823,7 +23971,8 @@
                               "--stage",
                               "filter",
                               "--detail"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "rule": {
@@ -23861,7 +24010,8 @@
                                   "filter",
                                   "--rule",
                                   "@7"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             },
                             "quota": {
@@ -23880,7 +24030,8 @@
                                   "filter",
                                   "--rule",
                                   "@7"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             },
                             "detail": {
@@ -23900,7 +24051,8 @@
                                   "--rule",
                                   "@7",
                                   "--detail"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             }
                           },
@@ -23916,7 +24068,8 @@
                               "filter",
                               "--rule",
                               "@7"
-                            ]
+                            ],
+                            "strip_private": true
                           },
                           "suggestors": [
                             {
@@ -23942,7 +24095,8 @@
                       "ipv6",
                       "--hook",
                       "forward"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "children": {
                     "detail": {
@@ -23958,7 +24112,8 @@
                           "--hook",
                           "forward",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     },
                     "filter": {
@@ -23974,7 +24129,8 @@
                           "forward",
                           "--stage",
                           "filter"
-                        ]
+                        ],
+                        "strip_private": true
                       },
                       "children": {
                         "limits": {
@@ -23991,7 +24147,8 @@
                               "forward",
                               "--stage",
                               "filter"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "quotas": {
@@ -24008,7 +24165,8 @@
                               "forward",
                               "--stage",
                               "filter"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "detail": {
@@ -24026,7 +24184,8 @@
                               "--stage",
                               "filter",
                               "--detail"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "rule": {
@@ -24064,7 +24223,8 @@
                                   "filter",
                                   "--rule",
                                   "@7"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             },
                             "quota": {
@@ -24083,7 +24243,8 @@
                                   "filter",
                                   "--rule",
                                   "@7"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             },
                             "detail": {
@@ -24103,7 +24264,8 @@
                                   "--rule",
                                   "@7",
                                   "--detail"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             }
                           },
@@ -24119,7 +24281,8 @@
                               "filter",
                               "--rule",
                               "@7"
-                            ]
+                            ],
+                            "strip_private": true
                           },
                           "suggestors": [
                             {
@@ -24145,7 +24308,8 @@
                       "ipv6",
                       "--hook",
                       "output"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "children": {
                     "detail": {
@@ -24161,7 +24325,8 @@
                           "--hook",
                           "output",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     },
                     "filter": {
@@ -24177,7 +24342,8 @@
                           "output",
                           "--stage",
                           "filter"
-                        ]
+                        ],
+                        "strip_private": true
                       },
                       "children": {
                         "limits": {
@@ -24194,7 +24360,8 @@
                               "output",
                               "--stage",
                               "filter"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "quotas": {
@@ -24211,7 +24378,8 @@
                               "output",
                               "--stage",
                               "filter"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "detail": {
@@ -24229,7 +24397,8 @@
                               "--stage",
                               "filter",
                               "--detail"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "rule": {
@@ -24267,7 +24436,8 @@
                                   "filter",
                                   "--rule",
                                   "@7"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             },
                             "quota": {
@@ -24286,7 +24456,8 @@
                                   "filter",
                                   "--rule",
                                   "@7"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             },
                             "detail": {
@@ -24306,7 +24477,8 @@
                                   "--rule",
                                   "@7",
                                   "--detail"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             }
                           },
@@ -24322,7 +24494,8 @@
                               "filter",
                               "--rule",
                               "@7"
-                            ]
+                            ],
+                            "strip_private": true
                           },
                           "suggestors": [
                             {
@@ -24348,7 +24521,8 @@
                           "output",
                           "--stage",
                           "raw"
-                        ]
+                        ],
+                        "strip_private": true
                       },
                       "children": {
                         "limits": {
@@ -24365,7 +24539,8 @@
                               "output",
                               "--stage",
                               "raw"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "quotas": {
@@ -24382,7 +24557,8 @@
                               "output",
                               "--stage",
                               "raw"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "detail": {
@@ -24400,7 +24576,8 @@
                               "--stage",
                               "raw",
                               "--detail"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "rule": {
@@ -24438,7 +24615,8 @@
                                   "raw",
                                   "--rule",
                                   "@7"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             },
                             "quota": {
@@ -24457,7 +24635,8 @@
                                   "raw",
                                   "--rule",
                                   "@7"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             },
                             "detail": {
@@ -24477,7 +24656,8 @@
                                   "--rule",
                                   "@7",
                                   "--detail"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             }
                           },
@@ -24493,7 +24673,8 @@
                               "raw",
                               "--rule",
                               "@7"
-                            ]
+                            ],
+                            "strip_private": true
                           },
                           "suggestors": [
                             {
@@ -24519,7 +24700,8 @@
                       "ipv6",
                       "--hook",
                       "prerouting"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "children": {
                     "detail": {
@@ -24535,7 +24717,8 @@
                           "--hook",
                           "prerouting",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     },
                     "raw": {
@@ -24551,7 +24734,8 @@
                           "prerouting",
                           "--stage",
                           "raw"
-                        ]
+                        ],
+                        "strip_private": true
                       },
                       "children": {
                         "limits": {
@@ -24568,7 +24752,8 @@
                               "prerouting",
                               "--stage",
                               "raw"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "quotas": {
@@ -24585,7 +24770,8 @@
                               "prerouting",
                               "--stage",
                               "raw"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "detail": {
@@ -24603,7 +24789,8 @@
                               "--stage",
                               "raw",
                               "--detail"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "rule": {
@@ -24641,7 +24828,8 @@
                                   "raw",
                                   "--rule",
                                   "@7"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             },
                             "quota": {
@@ -24660,7 +24848,8 @@
                                   "raw",
                                   "--rule",
                                   "@7"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             },
                             "detail": {
@@ -24680,7 +24869,8 @@
                                   "--rule",
                                   "@7",
                                   "--detail"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             }
                           },
@@ -24696,7 +24886,8 @@
                               "raw",
                               "--rule",
                               "@7"
-                            ]
+                            ],
+                            "strip_private": true
                           },
                           "suggestors": [
                             {
@@ -24724,7 +24915,8 @@
                       "--named",
                       "--chain_name",
                       "@5"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "validators": {
                     "mode": "AND",
@@ -24762,7 +24954,8 @@
                           "--named",
                           "--chain_name",
                           "@5"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     },
                     "quotas": {
@@ -24778,7 +24971,8 @@
                           "--named",
                           "--chain_name",
                           "@5"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     },
                     "detail": {
@@ -24795,7 +24989,8 @@
                           "--chain_name",
                           "@5",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     },
                     "rule": {
@@ -24832,7 +25027,8 @@
                               "@5",
                               "--rule",
                               "@7"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "quota": {
@@ -24850,7 +25046,8 @@
                               "@5",
                               "--rule",
                               "@7"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "detail": {
@@ -24869,7 +25066,8 @@
                               "--rule",
                               "@7",
                               "--detail"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         }
                       },
@@ -24884,7 +25082,8 @@
                           "@5",
                           "--rule",
                           "@7"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     }
                   }
@@ -24900,7 +25099,8 @@
                       "ipv6",
                       "--hook",
                       "ingress"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "children": {
                     "detail": {
@@ -24916,7 +25116,8 @@
                           "--hook",
                           "ingress",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     },
                     "filter": {
@@ -24932,7 +25133,8 @@
                           "ingress",
                           "--stage",
                           "filter"
-                        ]
+                        ],
+                        "strip_private": true
                       },
                       "children": {
                         "limits": {
@@ -24949,7 +25151,8 @@
                               "ingress",
                               "--stage",
                               "filter"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "quotas": {
@@ -24966,7 +25169,8 @@
                               "ingress",
                               "--stage",
                               "filter"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "detail": {
@@ -24984,7 +25188,8 @@
                               "--stage",
                               "filter",
                               "--detail"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "rule": {
@@ -25022,7 +25227,8 @@
                                   "filter",
                                   "--rule",
                                   "@7"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             },
                             "quota": {
@@ -25041,7 +25247,8 @@
                                   "filter",
                                   "--rule",
                                   "@7"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             },
                             "detail": {
@@ -25061,7 +25268,8 @@
                                   "--rule",
                                   "@7",
                                   "--detail"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             }
                           },
@@ -25077,7 +25285,8 @@
                               "filter",
                               "--rule",
                               "@7"
-                            ]
+                            ],
+                            "strip_private": true
                           },
                           "suggestors": [
                             {
@@ -25103,7 +25312,8 @@
                   "show",
                   "--family",
                   "inet"
-                ]
+                ],
+                "strip_private": true
               },
               "children": {
                 "detail": {
@@ -25117,7 +25327,8 @@
                       "--family",
                       "inet",
                       "--detail"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 },
                 "input": {
@@ -25131,7 +25342,8 @@
                       "inet",
                       "--hook",
                       "input"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "children": {
                     "detail": {
@@ -25147,7 +25359,8 @@
                           "--hook",
                           "input",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     },
                     "filter": {
@@ -25163,7 +25376,8 @@
                           "input",
                           "--stage",
                           "filter"
-                        ]
+                        ],
+                        "strip_private": true
                       },
                       "children": {
                         "limits": {
@@ -25180,7 +25394,8 @@
                               "input",
                               "--stage",
                               "filter"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "quotas": {
@@ -25197,7 +25412,8 @@
                               "input",
                               "--stage",
                               "filter"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "detail": {
@@ -25215,7 +25431,8 @@
                               "--stage",
                               "filter",
                               "--detail"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "rule": {
@@ -25253,7 +25470,8 @@
                                   "filter",
                                   "--rule",
                                   "@7"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             },
                             "quota": {
@@ -25272,7 +25490,8 @@
                                   "filter",
                                   "--rule",
                                   "@7"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             },
                             "detail": {
@@ -25292,7 +25511,8 @@
                                   "--rule",
                                   "@7",
                                   "--detail"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             }
                           },
@@ -25308,7 +25528,8 @@
                               "filter",
                               "--rule",
                               "@7"
-                            ]
+                            ],
+                            "strip_private": true
                           },
                           "suggestors": [
                             {
@@ -25334,7 +25555,8 @@
                       "inet",
                       "--hook",
                       "forward"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "children": {
                     "detail": {
@@ -25350,7 +25572,8 @@
                           "--hook",
                           "forward",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     },
                     "filter": {
@@ -25366,7 +25589,8 @@
                           "forward",
                           "--stage",
                           "filter"
-                        ]
+                        ],
+                        "strip_private": true
                       },
                       "children": {
                         "limits": {
@@ -25383,7 +25607,8 @@
                               "forward",
                               "--stage",
                               "filter"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "quotas": {
@@ -25400,7 +25625,8 @@
                               "forward",
                               "--stage",
                               "filter"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "detail": {
@@ -25418,7 +25644,8 @@
                               "--stage",
                               "filter",
                               "--detail"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "rule": {
@@ -25456,7 +25683,8 @@
                                   "filter",
                                   "--rule",
                                   "@7"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             },
                             "quota": {
@@ -25475,7 +25703,8 @@
                                   "filter",
                                   "--rule",
                                   "@7"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             },
                             "detail": {
@@ -25495,7 +25724,8 @@
                                   "--rule",
                                   "@7",
                                   "--detail"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             }
                           },
@@ -25511,7 +25741,8 @@
                               "filter",
                               "--rule",
                               "@7"
-                            ]
+                            ],
+                            "strip_private": true
                           },
                           "suggestors": [
                             {
@@ -25537,7 +25768,8 @@
                       "inet",
                       "--hook",
                       "output"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "children": {
                     "detail": {
@@ -25553,7 +25785,8 @@
                           "--hook",
                           "output",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     },
                     "filter": {
@@ -25569,7 +25802,8 @@
                           "output",
                           "--stage",
                           "filter"
-                        ]
+                        ],
+                        "strip_private": true
                       },
                       "children": {
                         "limits": {
@@ -25586,7 +25820,8 @@
                               "output",
                               "--stage",
                               "filter"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "quotas": {
@@ -25603,7 +25838,8 @@
                               "output",
                               "--stage",
                               "filter"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "detail": {
@@ -25621,7 +25857,8 @@
                               "--stage",
                               "filter",
                               "--detail"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "rule": {
@@ -25659,7 +25896,8 @@
                                   "filter",
                                   "--rule",
                                   "@7"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             },
                             "quota": {
@@ -25678,7 +25916,8 @@
                                   "filter",
                                   "--rule",
                                   "@7"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             },
                             "detail": {
@@ -25698,7 +25937,8 @@
                                   "--rule",
                                   "@7",
                                   "--detail"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             }
                           },
@@ -25714,7 +25954,8 @@
                               "filter",
                               "--rule",
                               "@7"
-                            ]
+                            ],
+                            "strip_private": true
                           },
                           "suggestors": [
                             {
@@ -25740,7 +25981,8 @@
                           "output",
                           "--stage",
                           "raw"
-                        ]
+                        ],
+                        "strip_private": true
                       },
                       "children": {
                         "limits": {
@@ -25757,7 +25999,8 @@
                               "output",
                               "--stage",
                               "raw"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "quotas": {
@@ -25774,7 +26017,8 @@
                               "output",
                               "--stage",
                               "raw"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "detail": {
@@ -25792,7 +26036,8 @@
                               "--stage",
                               "raw",
                               "--detail"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "rule": {
@@ -25830,7 +26075,8 @@
                                   "raw",
                                   "--rule",
                                   "@7"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             },
                             "quota": {
@@ -25849,7 +26095,8 @@
                                   "raw",
                                   "--rule",
                                   "@7"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             },
                             "detail": {
@@ -25869,7 +26116,8 @@
                                   "--rule",
                                   "@7",
                                   "--detail"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             }
                           },
@@ -25885,7 +26133,8 @@
                               "raw",
                               "--rule",
                               "@7"
-                            ]
+                            ],
+                            "strip_private": true
                           },
                           "suggestors": [
                             {
@@ -25911,7 +26160,8 @@
                       "inet",
                       "--hook",
                       "prerouting"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "children": {
                     "detail": {
@@ -25927,7 +26177,8 @@
                           "--hook",
                           "prerouting",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     },
                     "raw": {
@@ -25943,7 +26194,8 @@
                           "prerouting",
                           "--stage",
                           "raw"
-                        ]
+                        ],
+                        "strip_private": true
                       },
                       "children": {
                         "limits": {
@@ -25960,7 +26212,8 @@
                               "prerouting",
                               "--stage",
                               "raw"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "quotas": {
@@ -25977,7 +26230,8 @@
                               "prerouting",
                               "--stage",
                               "raw"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "detail": {
@@ -25995,7 +26249,8 @@
                               "--stage",
                               "raw",
                               "--detail"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "rule": {
@@ -26033,7 +26288,8 @@
                                   "raw",
                                   "--rule",
                                   "@7"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             },
                             "quota": {
@@ -26052,7 +26308,8 @@
                                   "raw",
                                   "--rule",
                                   "@7"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             },
                             "detail": {
@@ -26072,7 +26329,8 @@
                                   "--rule",
                                   "@7",
                                   "--detail"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             }
                           },
@@ -26088,7 +26346,8 @@
                               "raw",
                               "--rule",
                               "@7"
-                            ]
+                            ],
+                            "strip_private": true
                           },
                           "suggestors": [
                             {
@@ -26116,7 +26375,8 @@
                       "--named",
                       "--chain_name",
                       "@5"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "validators": {
                     "mode": "AND",
@@ -26154,7 +26414,8 @@
                           "--named",
                           "--chain_name",
                           "@5"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     },
                     "quotas": {
@@ -26170,7 +26431,8 @@
                           "--named",
                           "--chain_name",
                           "@5"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     },
                     "detail": {
@@ -26187,7 +26449,8 @@
                           "--chain_name",
                           "@5",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     },
                     "rule": {
@@ -26224,7 +26487,8 @@
                               "@5",
                               "--rule",
                               "@7"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "quota": {
@@ -26242,7 +26506,8 @@
                               "@5",
                               "--rule",
                               "@7"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "detail": {
@@ -26261,7 +26526,8 @@
                               "--rule",
                               "@7",
                               "--detail"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         }
                       },
@@ -26276,7 +26542,8 @@
                           "@5",
                           "--rule",
                           "@7"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     }
                   }
@@ -26292,7 +26559,8 @@
                       "inet",
                       "--hook",
                       "ingress"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "children": {
                     "detail": {
@@ -26308,7 +26576,8 @@
                           "--hook",
                           "ingress",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     },
                     "filter": {
@@ -26324,7 +26593,8 @@
                           "ingress",
                           "--stage",
                           "filter"
-                        ]
+                        ],
+                        "strip_private": true
                       },
                       "children": {
                         "limits": {
@@ -26341,7 +26611,8 @@
                               "ingress",
                               "--stage",
                               "filter"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "quotas": {
@@ -26358,7 +26629,8 @@
                               "ingress",
                               "--stage",
                               "filter"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "detail": {
@@ -26376,7 +26648,8 @@
                               "--stage",
                               "filter",
                               "--detail"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         },
                         "rule": {
@@ -26414,7 +26687,8 @@
                                   "filter",
                                   "--rule",
                                   "@7"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             },
                             "quota": {
@@ -26433,7 +26707,8 @@
                                   "filter",
                                   "--rule",
                                   "@7"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             },
                             "detail": {
@@ -26453,7 +26728,8 @@
                                   "--rule",
                                   "@7",
                                   "--detail"
-                                ]
+                                ],
+                                "strip_private": true
                               }
                             }
                           },
@@ -26469,7 +26745,8 @@
                               "filter",
                               "--rule",
                               "@7"
-                            ]
+                            ],
+                            "strip_private": true
                           },
                           "suggestors": [
                             {
@@ -26495,7 +26772,8 @@
                   "show",
                   "--section",
                   "group"
-                ]
+                ],
+                "strip_private": true
               },
               "children": {
                 "quota-group": {
@@ -26512,7 +26790,8 @@
                       "quota-group",
                       "--group_name",
                       "@5"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "validators": {
                     "mode": "AND",
@@ -26552,7 +26831,8 @@
                           "--group_name",
                           "@5",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     }
                   }
@@ -26568,7 +26848,8 @@
                       "--section",
                       "group",
                       "--detail"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 },
                 "map": {
@@ -26582,7 +26863,8 @@
                       "group",
                       "--group_kind",
                       "map"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "children": {
                     "detail": {
@@ -26598,7 +26880,8 @@
                           "--group_kind",
                           "map",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     },
                     "ipv4": {
@@ -26617,7 +26900,8 @@
                           "ipv4",
                           "--group_name",
                           "@6"
-                        ]
+                        ],
+                        "strip_private": true
                       },
                       "validators": {
                         "mode": "AND",
@@ -26659,7 +26943,8 @@
                               "--group_name",
                               "@6",
                               "--detail"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         }
                       }
@@ -26680,7 +26965,8 @@
                           "inet",
                           "--group_name",
                           "@6"
-                        ]
+                        ],
+                        "strip_private": true
                       },
                       "validators": {
                         "mode": "AND",
@@ -26722,7 +27008,8 @@
                               "--group_name",
                               "@6",
                               "--detail"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         }
                       }
@@ -26743,7 +27030,8 @@
                           "ipv6",
                           "--group_name",
                           "@6"
-                        ]
+                        ],
+                        "strip_private": true
                       },
                       "validators": {
                         "mode": "AND",
@@ -26785,7 +27073,8 @@
                               "--group_name",
                               "@6",
                               "--detail"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         }
                       }
@@ -26803,7 +27092,8 @@
                       "group",
                       "--group_kind",
                       "match-group"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "children": {
                     "detail": {
@@ -26819,7 +27109,8 @@
                           "--group_kind",
                           "match-group",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     },
                     "ipv4": {
@@ -26838,7 +27129,8 @@
                           "ipv4",
                           "--group_name",
                           "@6"
-                        ]
+                        ],
+                        "strip_private": true
                       },
                       "validators": {
                         "mode": "AND",
@@ -26880,7 +27172,8 @@
                               "--group_name",
                               "@6",
                               "--detail"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         }
                       }
@@ -26901,7 +27194,8 @@
                           "inet",
                           "--group_name",
                           "@6"
-                        ]
+                        ],
+                        "strip_private": true
                       },
                       "validators": {
                         "mode": "AND",
@@ -26943,7 +27237,8 @@
                               "--group_name",
                               "@6",
                               "--detail"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         }
                       }
@@ -26964,7 +27259,8 @@
                           "ipv6",
                           "--group_name",
                           "@6"
-                        ]
+                        ],
+                        "strip_private": true
                       },
                       "validators": {
                         "mode": "AND",
@@ -27006,7 +27302,8 @@
                               "--group_name",
                               "@6",
                               "--detail"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         }
                       }
@@ -27024,7 +27321,8 @@
                       "group",
                       "--group_kind",
                       "address-group"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "children": {
                     "detail": {
@@ -27040,7 +27338,8 @@
                           "--group_kind",
                           "address-group",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     },
                     "ipv4": {
@@ -27059,7 +27358,8 @@
                           "ipv4",
                           "--group_name",
                           "@6"
-                        ]
+                        ],
+                        "strip_private": true
                       },
                       "validators": {
                         "mode": "AND",
@@ -27101,7 +27401,8 @@
                               "--group_name",
                               "@6",
                               "--detail"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         }
                       }
@@ -27122,7 +27423,8 @@
                           "ipv6",
                           "--group_name",
                           "@6"
-                        ]
+                        ],
+                        "strip_private": true
                       },
                       "validators": {
                         "mode": "AND",
@@ -27164,7 +27466,8 @@
                               "--group_name",
                               "@6",
                               "--detail"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         }
                       }
@@ -27182,7 +27485,8 @@
                       "group",
                       "--group_kind",
                       "icmp-group"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "children": {
                     "detail": {
@@ -27198,7 +27502,8 @@
                           "--group_kind",
                           "icmp-group",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     },
                     "ipv4": {
@@ -27217,7 +27522,8 @@
                           "ipv4",
                           "--group_name",
                           "@6"
-                        ]
+                        ],
+                        "strip_private": true
                       },
                       "validators": {
                         "mode": "AND",
@@ -27259,7 +27565,8 @@
                               "--group_name",
                               "@6",
                               "--detail"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         }
                       }
@@ -27280,7 +27587,8 @@
                           "ipv6",
                           "--group_name",
                           "@6"
-                        ]
+                        ],
+                        "strip_private": true
                       },
                       "validators": {
                         "mode": "AND",
@@ -27322,7 +27630,8 @@
                               "--group_name",
                               "@6",
                               "--detail"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         }
                       }
@@ -27340,7 +27649,8 @@
                       "group",
                       "--group_kind",
                       "domain-group"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "children": {
                     "detail": {
@@ -27356,7 +27666,8 @@
                           "--group_kind",
                           "domain-group",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     },
                     "ipv4": {
@@ -27375,7 +27686,8 @@
                           "ipv4",
                           "--group_name",
                           "@6"
-                        ]
+                        ],
+                        "strip_private": true
                       },
                       "validators": {
                         "mode": "AND",
@@ -27417,7 +27729,8 @@
                               "--group_name",
                               "@6",
                               "--detail"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         }
                       }
@@ -27438,7 +27751,8 @@
                           "ipv6",
                           "--group_name",
                           "@6"
-                        ]
+                        ],
+                        "strip_private": true
                       },
                       "validators": {
                         "mode": "AND",
@@ -27480,7 +27794,8 @@
                               "--group_name",
                               "@6",
                               "--detail"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         }
                       }
@@ -27501,7 +27816,8 @@
                       "interface-group",
                       "--group_name",
                       "@5"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "validators": {
                     "mode": "AND",
@@ -27541,7 +27857,8 @@
                           "--group_name",
                           "@5",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     }
                   }
@@ -27560,7 +27877,8 @@
                       "mac-group",
                       "--group_name",
                       "@5"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "validators": {
                     "mode": "AND",
@@ -27600,7 +27918,8 @@
                           "--group_name",
                           "@5",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     }
                   }
@@ -27619,7 +27938,8 @@
                       "port-group",
                       "--group_name",
                       "@5"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "validators": {
                     "mode": "AND",
@@ -27659,7 +27979,8 @@
                           "--group_name",
                           "@5",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     }
                   }
@@ -27675,7 +27996,8 @@
                       "group",
                       "--group_kind",
                       "timeout-group"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "children": {
                     "detail": {
@@ -27691,7 +28013,8 @@
                           "--group_kind",
                           "timeout-group",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     },
                     "ipv4": {
@@ -27710,7 +28033,8 @@
                           "ipv4",
                           "--group_name",
                           "@6"
-                        ]
+                        ],
+                        "strip_private": true
                       },
                       "validators": {
                         "mode": "AND",
@@ -27752,7 +28076,8 @@
                               "--group_name",
                               "@6",
                               "--detail"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         }
                       }
@@ -27773,7 +28098,8 @@
                           "inet",
                           "--group_name",
                           "@6"
-                        ]
+                        ],
+                        "strip_private": true
                       },
                       "validators": {
                         "mode": "AND",
@@ -27815,7 +28141,8 @@
                               "--group_name",
                               "@6",
                               "--detail"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         }
                       }
@@ -27836,7 +28163,8 @@
                           "ipv6",
                           "--group_name",
                           "@6"
-                        ]
+                        ],
+                        "strip_private": true
                       },
                       "validators": {
                         "mode": "AND",
@@ -27878,7 +28206,8 @@
                               "--group_name",
                               "@6",
                               "--detail"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         }
                       }
@@ -27896,7 +28225,8 @@
                       "group",
                       "--group_kind",
                       "limit-group"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "children": {
                     "detail": {
@@ -27912,7 +28242,8 @@
                           "--group_kind",
                           "limit-group",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     },
                     "ipv4": {
@@ -27931,7 +28262,8 @@
                           "ipv4",
                           "--group_name",
                           "@6"
-                        ]
+                        ],
+                        "strip_private": true
                       },
                       "validators": {
                         "mode": "AND",
@@ -27973,7 +28305,8 @@
                               "--group_name",
                               "@6",
                               "--detail"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         }
                       }
@@ -27994,7 +28327,8 @@
                           "inet",
                           "--group_name",
                           "@6"
-                        ]
+                        ],
+                        "strip_private": true
                       },
                       "validators": {
                         "mode": "AND",
@@ -28036,7 +28370,8 @@
                               "--group_name",
                               "@6",
                               "--detail"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         }
                       }
@@ -28057,7 +28392,8 @@
                           "ipv6",
                           "--group_name",
                           "@6"
-                        ]
+                        ],
+                        "strip_private": true
                       },
                       "validators": {
                         "mode": "AND",
@@ -28099,7 +28435,8 @@
                               "--group_name",
                               "@6",
                               "--detail"
-                            ]
+                            ],
+                            "strip_private": true
                           }
                         }
                       }
@@ -28120,7 +28457,8 @@
                       "counter-group",
                       "--group_name",
                       "@5"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "validators": {
                     "mode": "AND",
@@ -28160,7 +28498,8 @@
                           "--group_name",
                           "@5",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     }
                   }
@@ -28176,7 +28515,8 @@
                   "show",
                   "--section",
                   "state-policy"
-                ]
+                ],
+                "strip_private": true
               },
               "children": {
                 "detail": {
@@ -28190,7 +28530,8 @@
                       "--section",
                       "state-policy",
                       "--detail"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 },
                 "input": {
@@ -28204,7 +28545,8 @@
                       "state-policy",
                       "--hook",
                       "input"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "children": {
                     "detail": {
@@ -28220,7 +28562,8 @@
                           "--hook",
                           "input",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     }
                   }
@@ -28236,7 +28579,8 @@
                       "state-policy",
                       "--hook",
                       "forward"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "children": {
                     "detail": {
@@ -28252,7 +28596,8 @@
                           "--hook",
                           "forward",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     }
                   }
@@ -28268,7 +28613,8 @@
                       "state-policy",
                       "--hook",
                       "output"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "children": {
                     "detail": {
@@ -28284,7 +28630,8 @@
                           "--hook",
                           "output",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     }
                   }
@@ -28300,7 +28647,8 @@
                   "show",
                   "--section",
                   "zone"
-                ]
+                ],
+                "strip_private": true
               },
               "children": {
                 "detail": {
@@ -28314,7 +28662,8 @@
                       "--section",
                       "zone",
                       "--detail"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 },
                 "ipv4": {
@@ -28331,7 +28680,8 @@
                       "ipv4",
                       "--zone_name",
                       "@5"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "validators": {
                     "mode": "AND",
@@ -28371,7 +28721,8 @@
                           "--zone_name",
                           "@5",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     }
                   }
@@ -28390,7 +28741,8 @@
                       "ipv6",
                       "--zone_name",
                       "@5"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "validators": {
                     "mode": "AND",
@@ -28430,7 +28782,8 @@
                           "--zone_name",
                           "@5",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     }
                   }
@@ -28449,7 +28802,8 @@
                   "flowtable",
                   "--group_name",
                   "@4"
-                ]
+                ],
+                "strip_private": true
               },
               "validators": {
                 "mode": "AND",
@@ -28487,7 +28841,8 @@
                       "--group_name",
                       "@4",
                       "--detail"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 }
               }
@@ -28505,7 +28860,8 @@
                 "argv": [
                   "cgnat.nvyr.op",
                   "pools"
-                ]
+                ],
+                "strip_private": true
               },
               "children": {
                 "pool": {
@@ -28539,7 +28895,8 @@
                       "pools",
                       "--name",
                       "@5"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 },
                 "rule": {
@@ -28574,7 +28931,8 @@
                       "rules",
                       "--number",
                       "@5"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 },
                 "rules": {
@@ -28584,7 +28942,8 @@
                     "argv": [
                       "cgnat.nvyr.op",
                       "rules"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 },
                 "subscriber": {
@@ -28607,7 +28966,8 @@
                       "allocation",
                       "--subscriber",
                       "@5"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "children": {
                     "vrf": {
@@ -28643,7 +29003,8 @@
                           "@5",
                           "--vrf",
                           "@7"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     }
                   }
@@ -28689,7 +29050,8 @@
                           "@5",
                           "--port",
                           "@7"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     }
                   }
@@ -28705,7 +29067,8 @@
                   "conntrack.nvyr.op",
                   "show",
                   "@line"
-                ]
+                ],
+                "strip_private": true
               },
               "children": {
                 "ipv4": {
@@ -28923,7 +29286,8 @@
                   "@2",
                   "--direction",
                   "source"
-                ]
+                ],
+                "strip_private": true
               },
               "children": {
                 "detail": {
@@ -28938,7 +29302,8 @@
                       "--direction",
                       "source",
                       "--detail"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 },
                 "rule": {
@@ -28977,7 +29342,8 @@
                       "source",
                       "--rule",
                       "@5"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "children": {
                     "detail": {
@@ -28994,7 +29360,8 @@
                           "--rule",
                           "@5",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     }
                   }
@@ -29008,7 +29375,8 @@
                       "conntrack.nvyr.op",
                       "show",
                       "@line"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "children": {
                     "ipv4": {
@@ -29228,7 +29596,8 @@
                   "@2",
                   "--direction",
                   "destination"
-                ]
+                ],
+                "strip_private": true
               },
               "children": {
                 "detail": {
@@ -29243,7 +29612,8 @@
                       "--direction",
                       "destination",
                       "--detail"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 },
                 "rule": {
@@ -29282,7 +29652,8 @@
                       "destination",
                       "--rule",
                       "@5"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "children": {
                     "detail": {
@@ -29299,7 +29670,8 @@
                           "--rule",
                           "@5",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     }
                   }
@@ -29313,7 +29685,8 @@
                       "conntrack.nvyr.op",
                       "show",
                       "@line"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "children": {
                     "ipv4": {
@@ -29539,7 +29912,8 @@
                   "@2",
                   "--direction",
                   "source"
-                ]
+                ],
+                "strip_private": true
               },
               "children": {
                 "detail": {
@@ -29554,7 +29928,8 @@
                       "--direction",
                       "source",
                       "--detail"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 },
                 "rule": {
@@ -29593,7 +29968,8 @@
                       "source",
                       "--rule",
                       "@5"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "children": {
                     "detail": {
@@ -29610,7 +29986,8 @@
                           "--rule",
                           "@5",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     }
                   }
@@ -29628,7 +30005,8 @@
                   "@2",
                   "--direction",
                   "destination"
-                ]
+                ],
+                "strip_private": true
               },
               "children": {
                 "detail": {
@@ -29643,7 +30021,8 @@
                       "--direction",
                       "destination",
                       "--detail"
-                    ]
+                    ],
+                    "strip_private": true
                   }
                 },
                 "rule": {
@@ -29682,7 +30061,8 @@
                       "destination",
                       "--rule",
                       "@5"
-                    ]
+                    ],
+                    "strip_private": true
                   },
                   "children": {
                     "detail": {
@@ -29699,7 +30079,8 @@
                           "--rule",
                           "@5",
                           "--detail"
-                        ]
+                        ],
+                        "strip_private": true
                       }
                     }
                   }
@@ -29717,7 +30098,8 @@
               "conntrack.nvyr.op",
               "show",
               "@line"
-            ]
+            ],
+            "strip_private": true
           },
           "children": {
             "ipv4": {

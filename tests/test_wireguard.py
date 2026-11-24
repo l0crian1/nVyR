@@ -12,6 +12,7 @@ from nvyr.errors import OperationalError, ValidationError
 from nvyr.helpers import validators, wireguard
 from nvyr.lexer import lex
 from nvyr.helpers.process import operational_argv
+from nvyr.op_scripts import wireguard as operations
 
 KEY = 'AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE='
 OTHER = 'AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI='
@@ -179,6 +180,17 @@ def test_missing_resolver_configuration_is_an_endpoint_failure(monkeypatch):
     monkeypatch.setattr(wireguard.dns.resolver, 'Resolver', unavailable)
     with pytest.raises(OperationalError, match='DNS resolver unavailable'):
         wireguard.resolve({'address': 'remote.example', 'port': '51820'})
+
+
+def test_masked_peer_detail_filters_by_original_name(monkeypatch):
+    native = {'public-key': KEY, 'listen-port': 51820, 'firewall-mark': 0, 'peers': {OTHER: {
+        'endpoint': '[2001:db8::10]:51820', 'allowed-ips': ['10.20.30.0/24'], 'handshake': 0,
+        'received': 12, 'sent': 34, 'keepalive': 25, 'preshared': True}}}
+    monkeypatch.setattr(wireguard, 'state', lambda name: native)
+    monkeypatch.setattr(wireguard, 'manifest', lambda name: {'peers': {'branch': {'public-key': OTHER}}})
+    output = operations.show(interface='wg0', peer='branch', detail=True, strip_private='partial')
+    assert all(value not in output for value in (KEY, OTHER, 'branch', '2001:db8', '10.20'))
+    assert '[x:x:x:x:x:x:0:10]:51820' in output and 'xxx.xxx.30.0/24' in output
 
 
 def test_peer_completion_and_operational_binding(controller, engine, session):

@@ -2,6 +2,7 @@
 """Monitor selected firewall packets, optionally saving timed JSON Lines captures."""
 
 import json
+import re
 
 from tabulate import tabulate
 
@@ -9,7 +10,23 @@ from nvyr import opmode
 from nvyr.helpers import firewall_trace
 from nvyr.helpers import firewall_trace_analysis, firewall_trace_output
 from nvyr.helpers.validators import duration_seconds
+from nvyr.helpers.strip_private import mask_fields, strip_ip, strip_mac, strip_text, strip_value
 from nvyr.errors import OperationalError
+
+
+def mask_comment(value, mode):
+    label, separator, description = value.partition('|')
+    if separator:
+        return label + separator + strip_value(description, mode)
+    return strip_value(value, mode)
+
+
+def mask_evidence(value, mode):
+    value = strip_text(value, mode)
+    if mode == 'public':
+        return value
+    value = firewall_trace.COMMENT.sub(r'comment "<private>"', value)
+    return re.sub(r'\blog prefix "(?:[^"\\]|\\.)*"', 'log prefix "<private>"', value)
 
 
 @opmode.command
@@ -30,7 +47,7 @@ def monitor(line: str):
 
 
 @opmode.command
-def show(line: str, raw: bool = False):
+def show(line: str, raw: bool = False, strip_private: str = None):
     """List persistent captures or explain selected packet journeys without current-rule guesses."""
     options = {}
 
@@ -74,6 +91,12 @@ def show(line: str, raw: bool = False):
     identifier = options.pop('id', None)
     detail = options.pop('detail', False)
     report = firewall_trace_analysis.read(path[3], identifier=identifier, detail=detail or raw, filters=options)
+    # Native evidence can repeat rule comments and other arbitrary text verbatim.
+    report = mask_fields(report, strip_private, {
+        'source-address': strip_ip, 'destination-address': strip_ip,
+        'source-mac': strip_mac, 'destination-mac': strip_mac, 'comment': mask_comment,
+        'raw': mask_evidence, 'detail': mask_evidence, 'expression': mask_evidence,
+    }, fallback=strip_text)
     if raw:
         return json.dumps(report)
     print(firewall_trace_output.render(report, stories=identifier is not None, detail=detail))

@@ -3,7 +3,7 @@
   "children": {
     "strip-private": {
       "kind": "leaf_node",
-      "description": "Mask schema-marked configuration values or request script masking",
+      "description": "Mask designated fields or address literals in captured show output",
       "optional_value": true,
       "choices": {
         "all": "Fully mask all designated private values (default)",

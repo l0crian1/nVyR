@@ -36,6 +36,10 @@ def test_rule_detail_shows_match_fields_and_translation(installed, capsys):
     assert 'Rule 2' in output and 'Rule 3' not in output
     assert ' | ' in output and 'Translation' in output and '10.0.0.1-10.0.0.10' in output
 
+    nat.show(direction='destination', rule='2', detail=True, strip_private='partial')
+    output = capsys.readouterr().out
+    assert 'xxx.xxx.0.1-xxx.xxx.0.10' in output and '10.0.0.1' not in output
+
 
 def test_missing_nat_chain_and_rule(installed, capsys):
     nat.show(direction='source')
@@ -52,3 +56,12 @@ def test_counter_absence_and_unsupported_expression(installed, capsys):
     output = capsys.readouterr().out
     assert '[incomplete]' in output and 'Warning:' in output
     assert json.loads(nat.show(direction='destination', rule='1', raw=True))[0]['counter']['packets'] == 0
+
+
+def test_raw_address_keys_survive_mask_collisions(installed):
+    rule = installed['chains']['ipv4_nat_prerouting']['rules'][0]
+    keys = {'10.0.0.1': {}, '10.0.0.2': {}, '10.0.0.3': {}}
+    rule['source-address'] = keys.copy()
+    masked = json.loads(nat.show(direction='destination', rule='1', strip_private='all', raw=True))
+    assert set(masked[0]['source-address']) == {'xx.x.x.x', 'xx.x.x.x <1>', 'xx.x.x.x <2>'}
+    assert rule['source-address'] == keys

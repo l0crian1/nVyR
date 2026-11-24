@@ -539,6 +539,8 @@ def _check_script_command(arguments, directory, cache):
     except ValueError as error:
         raise ValueError(f'{executable} {function}: {error}') from error
 
+    return 'strip_private' in cache[name][function].parameters
+
 
 def _normalize_commands(node, path=(), *, scripts, cache):
     """Keep operational YAML as argv lists; preserve the existing runtime dispatch."""
@@ -567,11 +569,13 @@ def _normalize_commands(node, path=(), *, scripts, cache):
             node['command'] = arguments[0]
         else:
             try:
-                _check_script_command(arguments, scripts, cache)
+                masks_fields = _check_script_command(arguments, scripts, cache)
             except (ValueError, TypeError, OSError, SyntaxError, argparse.ArgumentError) as error:
                 raise SchemaBuildError(f'{location}: {error}') from error
 
             command = {'argv': arguments}
+            if masks_fields:
+                command['strip_private'] = True
 
             for option in ('timeout', 'stream'):
                 if option in node:

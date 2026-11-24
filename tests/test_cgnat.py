@@ -164,6 +164,8 @@ def test_operational_views(configuration, monkeypatch, capsys):
     operations.allocation(subscriber='100.64.0.1')
     output = capsys.readouterr().out
     assert '1024-2047' in output and 'Configured allocations' in output
+    masked = operations.allocation(subscriber='100.64.0.1', strip_private='partial', raw=True)
+    assert '100.64.0.1' not in masked and 'xxx.xxx.0.1' in masked and '1024-2047' in masked
     with pytest.raises(RouterError, match='not configured'):
         operations.rules(number='99')
 

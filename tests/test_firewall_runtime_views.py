@@ -80,6 +80,8 @@ def test_raw_state_and_private_masking(installed, capsys):
     assert rate['entries'][0]['expires'] == 52
     assert rate['active-keys'] == 1 and rate['capacity'] == 65536
     assert 'timeout' not in connection
+    masked = json.loads(firewall.runtime('limit', 'ipv4', hook='input', rule='10', raw=True, strip_private='partial'))
+    assert masked[0]['records'][0]['entries'][0]['key'] == ['xxx.xxx.2.10', 22]
 
     firewall.runtime('limit', 'ipv4', hook='input', rule='10', strip_private=True)
     text = capsys.readouterr().out

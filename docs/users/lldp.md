@@ -91,6 +91,8 @@ show log lldp
 Summary displays use tables; `detail` retains the complete native information,
 including additional TLVs advertised by neighbors. `monitor` runs until interrupted.
 Finite show commands support normal output filters such as `| match`.
+With `| strip-private`, the detail and local views display the masked LLDP TLVs
+as indented JSON. Summary views keep their table format.
 
 See the [command tree](command-tree.md) for all choices and ranges, and the
 [implementation guide](../dev/lldp.md) for lifecycle and test details.

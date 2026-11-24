@@ -435,6 +435,7 @@ inheritance for dispatch and completion. See [operational permissions](opmode.md
 
 ## Privacy metadata
 
+Fields with `secret: true` automatically use password masking in every mode.
 Use `strip_kind` on a valued leaf or tag node to mask it in configuration displays
 requested with `| strip-private`:
 
