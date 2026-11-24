@@ -13674,6 +13674,1226 @@
             }
           }
         },
+        "macvlan": {
+          "kind": "tag_node",
+          "dependency": "interface",
+          "anchor": true,
+          "description": "MAC-based virtual Ethernet interface",
+          "validators": {
+            "mode": "AND",
+            "checks": {
+              "regex": {
+                "name": "regex",
+                "args": {
+                  "pattern": "macvlan[0-9]{1,8}"
+                }
+              }
+            }
+          },
+          "suggestors": [
+            {
+              "name": "interfaces",
+              "args": {
+                "prefix": "macvlan"
+              }
+            }
+          ],
+          "hints": {
+            "macvlanN": "MACVLAN interface name"
+          },
+          "script": {
+            "name": "bridge",
+            "priority": 12
+          },
+          "children": {
+            "ip": {
+              "kind": "node",
+              "anchor": true,
+              "description": "IPv4 settings for this interface",
+              "children": {
+                "receive-redirects": {
+                  "kind": "leaf_node",
+                  "description": "Accept ICMP redirects; inherits firewall global setting",
+                  "choices": {
+                    "enable": "Enable this behavior",
+                    "disable": "Disable this behavior"
+                  },
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "list": {
+                        "name": "list",
+                        "args": {
+                          "values": "enable disable"
+                        }
+                      }
+                    }
+                  }
+                },
+                "send-redirects": {
+                  "kind": "leaf_node",
+                  "description": "Send ICMP redirects; inherits firewall global setting",
+                  "choices": {
+                    "enable": "Enable this behavior",
+                    "disable": "Disable this behavior"
+                  },
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "list": {
+                        "name": "list",
+                        "args": {
+                          "values": "enable disable"
+                        }
+                      }
+                    }
+                  }
+                },
+                "source-route": {
+                  "kind": "leaf_node",
+                  "description": "Accept IPv4 source-route options; inherits firewall global setting",
+                  "choices": {
+                    "enable": "Enable this behavior",
+                    "disable": "Disable this behavior"
+                  },
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "list": {
+                        "name": "list",
+                        "args": {
+                          "values": "enable disable"
+                        }
+                      }
+                    }
+                  }
+                },
+                "directed-broadcast": {
+                  "kind": "leaf_node",
+                  "description": "Forward IPv4 directed broadcasts; inherits firewall global setting",
+                  "choices": {
+                    "enable": "Enable this behavior",
+                    "disable": "Disable this behavior"
+                  },
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "list": {
+                        "name": "list",
+                        "args": {
+                          "values": "enable disable"
+                        }
+                      }
+                    }
+                  }
+                },
+                "log-martians": {
+                  "kind": "leaf_node",
+                  "description": "Log packets with invalid addresses; inherits firewall global setting",
+                  "choices": {
+                    "enable": "Enable this behavior",
+                    "disable": "Disable this behavior"
+                  },
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "list": {
+                        "name": "list",
+                        "args": {
+                          "values": "enable disable"
+                        }
+                      }
+                    }
+                  }
+                },
+                "arp-cache-timeout": {
+                  "kind": "leaf_node",
+                  "description": "Base ARP reachable time; actual reachable time is randomized; inherits firewall global setting",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "kernel-duration": {
+                        "name": "kernel-duration",
+                        "args": {
+                          "milliseconds": true,
+                          "minimum": 1,
+                          "maximum": 2147483647
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "duration": "Duration in ms, s, m, h or d; default 30s"
+                  }
+                },
+                "arp-filter": {
+                  "kind": "leaf_node",
+                  "description": "Use routing decisions when answering ARP requests; inherits firewall global setting",
+                  "choices": {
+                    "enable": "Enable this behavior",
+                    "disable": "Disable this behavior"
+                  },
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "list": {
+                        "name": "list",
+                        "args": {
+                          "values": "enable disable"
+                        }
+                      }
+                    }
+                  }
+                },
+                "arp-announce": {
+                  "kind": "leaf_node",
+                  "description": "Select source addresses for outgoing ARP requests; inherits firewall global setting",
+                  "choices": {
+                    "any": "Allow any local source address (mode 0)",
+                    "subnet": "Prefer a source in the destination subnet (mode 1)",
+                    "best-local": "Use the best local address for the target (mode 2)"
+                  },
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "list": {
+                        "name": "list",
+                        "args": {
+                          "values": "any subnet best-local"
+                        }
+                      }
+                    }
+                  }
+                },
+                "arp-ignore": {
+                  "kind": "leaf_node",
+                  "description": "Restrict responses to incoming ARP requests; inherits firewall global setting",
+                  "choices": {
+                    "0": "Reply for any local target address, even on another interface",
+                    "1": "Reply only if the target address belongs to the receiving interface",
+                    "2": "Require a target on the receiving interface and a sender in that subnet",
+                    "3": "Do not reply for host-scope addresses; allow global and link scope",
+                    "8": "Never reply to ARP requests for local addresses"
+                  },
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "list": {
+                        "name": "list",
+                        "args": {
+                          "values": "0 1 2 3 8"
+                        }
+                      }
+                    }
+                  }
+                },
+                "arp-accept": {
+                  "kind": "leaf_node",
+                  "description": "Create new neighbor entries from gratuitous ARP; inherits firewall global setting",
+                  "choices": {
+                    "disable": "Disable this behavior",
+                    "enable": "Enable this behavior",
+                    "same-subnet": "Accept new gratuitous ARP entries only from the same subnet"
+                  },
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "list": {
+                        "name": "list",
+                        "args": {
+                          "values": "disable enable same-subnet"
+                        }
+                      }
+                    }
+                  }
+                },
+                "arp-notify": {
+                  "kind": "leaf_node",
+                  "description": "Send gratuitous ARP when a device comes up or changes MAC; inherits firewall global setting",
+                  "choices": {
+                    "enable": "Enable this behavior",
+                    "disable": "Disable this behavior"
+                  },
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "list": {
+                        "name": "list",
+                        "args": {
+                          "values": "enable disable"
+                        }
+                      }
+                    }
+                  }
+                },
+                "arp-proxy": {
+                  "kind": "leaf_node",
+                  "description": "Answer ARP requests on behalf of routed destinations; inherits firewall global setting",
+                  "choices": {
+                    "enable": "Enable this behavior",
+                    "disable": "Disable this behavior"
+                  },
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "list": {
+                        "name": "list",
+                        "args": {
+                          "values": "enable disable"
+                        }
+                      }
+                    }
+                  }
+                },
+                "arp-proxy-pvlan": {
+                  "kind": "leaf_node",
+                  "description": "Proxy ARP back through the receiving interface for private VLANs; inherits firewall global setting",
+                  "choices": {
+                    "enable": "Enable this behavior",
+                    "disable": "Disable this behavior"
+                  },
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "list": {
+                        "name": "list",
+                        "args": {
+                          "values": "enable disable"
+                        }
+                      }
+                    }
+                  }
+                },
+                "disable-forwarding": {
+                  "kind": "leaf_node",
+                  "description": "Disable IPv4 forwarding on this interface",
+                  "valueless": true
+                },
+                "accept-local": {
+                  "kind": "leaf_node",
+                  "description": "Accept incoming packets with a local IPv4 source address",
+                  "valueless": true
+                },
+                "route-localnet": {
+                  "kind": "leaf_node",
+                  "description": "Allow routing 127.0.0.0/8 through this interface",
+                  "valueless": true
+                },
+                "promote-secondaries": {
+                  "kind": "leaf_node",
+                  "description": "Retain secondary IPv4 addresses when their primary is removed",
+                  "valueless": true
+                },
+                "arp-retransmit-interval": {
+                  "kind": "leaf_node",
+                  "description": "Interval between ARP probes",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "kernel-duration": {
+                        "name": "kernel-duration",
+                        "args": {
+                          "milliseconds": true,
+                          "minimum": 1,
+                          "maximum": 2147483647
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "duration": "Duration in ms, s, m, h or d; default 1s"
+                  }
+                },
+                "arp-stale-time": {
+                  "kind": "leaf_node",
+                  "description": "Interval for checking stale ARP neighbors",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "kernel-duration": {
+                        "name": "kernel-duration",
+                        "args": {
+                          "milliseconds": false,
+                          "minimum": 1,
+                          "maximum": 2147483
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "duration": "Duration in s, m, h or d; default 60s"
+                  }
+                },
+                "arp-entry": {
+                  "kind": "tag_node",
+                  "anchor": true,
+                  "description": "Permanent IPv4 ARP entry",
+                  "strip_kind": "ipv4",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "ipv4-address": {
+                        "name": "ipv4-address"
+                      }
+                    }
+                  },
+                  "hints": {
+                    "x.x.x.x": "Neighbor IPv4 address without a prefix"
+                  },
+                  "children": {
+                    "mac-address": {
+                      "kind": "leaf_node",
+                      "description": "Permanent destination Ethernet address",
+                      "strip_kind": "mac",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "mac": {
+                            "name": "mac"
+                          }
+                        }
+                      },
+                      "hints": {
+                        "xx:xx:xx:xx:xx:xx": "Nonzero unicast Ethernet MAC address"
+                      }
+                    },
+                    "description": {
+                      "kind": "leaf_node",
+                      "strip_kind": "private",
+                      "description": "Description of this static neighbor",
+                      "hints": {
+                        "text": "Description; quote spaces"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "ipv6": {
+              "kind": "node",
+              "anchor": true,
+              "description": "IPv6 kernel settings",
+              "children": {
+                "receive-redirects": {
+                  "kind": "leaf_node",
+                  "description": "Accept IPv6 redirects; inherits firewall global setting",
+                  "choices": {
+                    "enable": "Enable this behavior",
+                    "disable": "Disable this behavior"
+                  },
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "list": {
+                        "name": "list",
+                        "args": {
+                          "values": "enable disable"
+                        }
+                      }
+                    }
+                  }
+                },
+                "source-route": {
+                  "kind": "leaf_node",
+                  "description": "Accept only routing header type 2, or reject routing headers; inherits firewall global setting",
+                  "choices": {
+                    "disable": "Disable this behavior",
+                    "routing-header-2": "Accept only IPv6 routing header type 2"
+                  },
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "list": {
+                        "name": "list",
+                        "args": {
+                          "values": "disable routing-header-2"
+                        }
+                      }
+                    }
+                  }
+                },
+                "disable": {
+                  "kind": "leaf_node",
+                  "description": "Disable IPv6 and remove its addresses and routes",
+                  "valueless": true
+                },
+                "proxy-ndp": {
+                  "kind": "leaf_node",
+                  "description": "Enable proxy neighbor discovery; proxy entries are still required",
+                  "valueless": true
+                },
+                "hop-limit": {
+                  "kind": "leaf_node",
+                  "description": "Default IPv6 hop limit",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "integer-range": {
+                        "name": "integer-range",
+                        "args": {
+                          "minimum": 1,
+                          "maximum": 255
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "number": "1–255; default 64"
+                  }
+                },
+                "autoconf": {
+                  "kind": "leaf_node",
+                  "description": "Acquire SLAAC addresses and accept router advertisements while routing",
+                  "valueless": true
+                },
+                "accept-router-advertisements": {
+                  "kind": "leaf_node",
+                  "description": "Accept router advertisements while routing, without enabling SLAAC",
+                  "valueless": true
+                },
+                "no-default-route": {
+                  "kind": "leaf_node",
+                  "description": "Do not learn a default route from router advertisements",
+                  "valueless": true
+                },
+                "no-ra-mtu": {
+                  "kind": "leaf_node",
+                  "description": "Ignore MTU advertised by IPv6 routers",
+                  "valueless": true
+                },
+                "address-generation": {
+                  "kind": "leaf_node",
+                  "description": "Algorithm for automatically generated IPv6 addresses",
+                  "choices": {
+                    "eui64": "Generate addresses from the interface MAC using modified EUI-64",
+                    "stable-privacy": "Generate stable addresses with a persistent private secret"
+                  },
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "list": {
+                        "name": "list",
+                        "args": {
+                          "values": "eui64 stable-privacy"
+                        }
+                      }
+                    }
+                  }
+                },
+                "temporary-addresses": {
+                  "kind": "leaf_node",
+                  "description": "Generate temporary SLAAC addresses and select source-address preference",
+                  "choices": {
+                    "disable": "Disable this behavior",
+                    "prefer-public": "Generate temporary addresses but prefer public source addresses",
+                    "prefer-temporary": "Generate and prefer temporary source addresses"
+                  },
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "list": {
+                        "name": "list",
+                        "args": {
+                          "values": "disable prefer-public prefer-temporary"
+                        }
+                      }
+                    }
+                  }
+                },
+                "maximum-autoconf-addresses": {
+                  "kind": "leaf_node",
+                  "description": "Maximum automatically configured IPv6 addresses",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "integer-range": {
+                        "name": "integer-range",
+                        "args": {
+                          "minimum": 1,
+                          "maximum": 65535
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "number": "1–65535; default 16"
+                  }
+                },
+                "duplicate-address-detection": {
+                  "kind": "node",
+                  "anchor": true,
+                  "description": "IPv6 duplicate address detection",
+                  "children": {
+                    "disable": {
+                      "kind": "leaf_node",
+                      "description": "Disable IPv6 duplicate address detection",
+                      "valueless": true
+                    },
+                    "probes": {
+                      "kind": "leaf_node",
+                      "description": "Neighbor solicitations sent during duplicate address detection",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "integer-range": {
+                            "name": "integer-range",
+                            "args": {
+                              "minimum": 1,
+                              "maximum": 100
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "number": "1–100; default 1"
+                      }
+                    }
+                  }
+                },
+                "neighbor-reachable-time": {
+                  "kind": "leaf_node",
+                  "description": "Base IPv6 neighbor reachable time; actual time is randomized",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "kernel-duration": {
+                        "name": "kernel-duration",
+                        "args": {
+                          "milliseconds": true,
+                          "minimum": 1,
+                          "maximum": 2147483647
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "duration": "Duration in ms, s, m, h or d; default 30s"
+                  }
+                },
+                "neighbor-retransmit-interval": {
+                  "kind": "leaf_node",
+                  "description": "Interval between IPv6 neighbor solicitations",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "kernel-duration": {
+                        "name": "kernel-duration",
+                        "args": {
+                          "milliseconds": true,
+                          "minimum": 1,
+                          "maximum": 2147483647
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "duration": "Duration in ms, s, m, h or d; default 1s"
+                  }
+                },
+                "neighbor-stale-time": {
+                  "kind": "leaf_node",
+                  "description": "Interval for checking stale IPv6 neighbors",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "kernel-duration": {
+                        "name": "kernel-duration",
+                        "args": {
+                          "milliseconds": false,
+                          "minimum": 1,
+                          "maximum": 2147483
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "duration": "Duration in s, m, h or d; default 60s"
+                  }
+                },
+                "eui64": {
+                  "kind": "leaf_node",
+                  "description": "Configure an IPv6 address derived from a /64 prefix and this interface MAC",
+                  "hints": {
+                    "address": "IPv6 /64 network without host bits"
+                  },
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "interface-ipv6-value": {
+                        "name": "interface-ipv6-value",
+                        "args": {
+                          "kind": "eui64"
+                        }
+                      }
+                    }
+                  },
+                  "multi": true
+                },
+                "interface-identifier": {
+                  "kind": "leaf_node",
+                  "description": "Fixed lower 64 bits for SLAAC addresses; requires autoconf",
+                  "hints": {
+                    "address": "Nonzero IPv6 interface identifier, for example ::1234"
+                  },
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "interface-ipv6-value": {
+                        "name": "interface-ipv6-value",
+                        "args": {
+                          "kind": "interface-identifier"
+                        }
+                      }
+                    }
+                  }
+                },
+                "link-local-address": {
+                  "kind": "leaf_node",
+                  "description": "Use this IPv6 link-local address instead of an automatically generated one",
+                  "hints": {
+                    "address": "IPv6 link-local address without a prefix, for example fe80::1"
+                  },
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "interface-ipv6-value": {
+                        "name": "interface-ipv6-value",
+                        "args": {
+                          "kind": "link-local-address"
+                        }
+                      }
+                    }
+                  }
+                },
+                "no-default-link-local": {
+                  "kind": "leaf_node",
+                  "valueless": true,
+                  "description": "Suppress automatically generated IPv6 link-local addresses"
+                },
+                "neighbor": {
+                  "kind": "tag_node",
+                  "anchor": true,
+                  "description": "Permanent IPv6 neighbor entry",
+                  "strip_kind": "ipv6",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "ipv6-address": {
+                        "name": "ipv6-address"
+                      }
+                    }
+                  },
+                  "hints": {
+                    "h:h::h": "Neighbor IPv6 address without a prefix"
+                  },
+                  "children": {
+                    "mac-address": {
+                      "kind": "leaf_node",
+                      "description": "Permanent destination Ethernet address",
+                      "strip_kind": "mac",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "mac": {
+                            "name": "mac"
+                          }
+                        }
+                      },
+                      "hints": {
+                        "xx:xx:xx:xx:xx:xx": "Nonzero unicast Ethernet MAC address"
+                      }
+                    },
+                    "description": {
+                      "kind": "leaf_node",
+                      "strip_kind": "private",
+                      "description": "Description of this static neighbor",
+                      "hints": {
+                        "text": "Description; quote spaces"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "address": {
+              "kind": "leaf_node",
+              "strip_kind": "ip",
+              "description": "IPv4/IPv6 address with optional prefix length, or a DHCP client mode",
+              "multi": true,
+              "validators": {
+                "mode": "OR",
+                "checks": {
+                  "address": {
+                    "name": "address"
+                  },
+                  "list": {
+                    "name": "list",
+                    "args": {
+                      "values": "dhcp dhcpv6"
+                    }
+                  }
+                }
+              },
+              "hints": {
+                "x.x.x.x/x": "IPv4 address with mask",
+                "x:x:x:x:x:x/x": "IPv6 address with mask"
+              },
+              "choices": {
+                "dhcpv6": "Request an IPv6 address using DHCPv6",
+                "dhcp": "Acquire an IPv4 address using DHCP"
+              }
+            },
+            "disable": {
+              "kind": "leaf_node",
+              "description": "Administratively disable this interface",
+              "valueless": true
+            },
+            "mac": {
+              "kind": "leaf_node",
+              "strip_kind": "mac",
+              "description": "Interface MAC address",
+              "validators": {
+                "mode": "AND",
+                "checks": {
+                  "mac": {
+                    "name": "mac"
+                  }
+                }
+              },
+              "hints": {
+                "xx:xx:xx:xx:xx:xx": "Unicast Ethernet MAC address"
+              }
+            },
+            "mtu": {
+              "kind": "leaf_node",
+              "description": "Maximum transmission unit in bytes",
+              "validators": {
+                "mode": "AND",
+                "checks": {
+                  "mtu": {
+                    "name": "mtu"
+                  }
+                }
+              },
+              "hints": {
+                "1280-65535": "MTU in bytes (subject to device limits)"
+              }
+            },
+            "description": {
+              "kind": "leaf_node",
+              "strip_kind": "private",
+              "description": "Linux interface alias",
+              "hints": {
+                "text": "Interface description; quote spaces"
+              },
+              "validators": {
+                "mode": "AND",
+                "checks": {
+                  "interface-description": {
+                    "name": "interface-description"
+                  }
+                }
+              }
+            },
+            "vrf": {
+              "kind": "leaf_node",
+              "description": "Assign this interface to a configured VRF",
+              "depends": "vrf",
+              "validators": {
+                "mode": "AND",
+                "checks": {
+                  "regex": {
+                    "name": "regex",
+                    "args": {
+                      "pattern": "[a-zA-Z][a-zA-Z0-9_.-]{0,14}"
+                    }
+                  }
+                }
+              },
+              "suggestors": [
+                {
+                  "name": "config-path",
+                  "args": {
+                    "path": "vrf name"
+                  }
+                }
+              ],
+              "hints": {
+                "name": "Configured VRF name"
+              }
+            },
+            "link-group": {
+              "kind": "leaf_node",
+              "description": "Linux interface group number (0 is the default group)",
+              "validators": {
+                "mode": "AND",
+                "checks": {
+                  "integer-range": {
+                    "name": "integer-range",
+                    "args": {
+                      "minimum": 0,
+                      "maximum": 4294967295
+                    }
+                  }
+                }
+              },
+              "hints": {
+                "0-4294967295": "Linux link group number"
+              }
+            },
+            "source-interface": {
+              "kind": "leaf_node",
+              "description": "Parent Ethernet interface or VLAN interface",
+              "depends": "interface",
+              "validators": {
+                "mode": "AND",
+                "checks": {
+                  "regex": {
+                    "name": "regex",
+                    "args": {
+                      "pattern": "[a-zA-Z][a-zA-Z0-9_.-]{0,14}"
+                    }
+                  }
+                }
+              },
+              "suggestors": [
+                {
+                  "name": "interfaces"
+                }
+              ],
+              "hints": {
+                "interface": "Parent interface"
+              }
+            },
+            "mode": {
+              "kind": "leaf_node",
+              "description": "Delivery between MACVLAN interfaces on the same parent (default: vepa)",
+              "choices": {
+                "vepa": "Send traffic between siblings through an external switch",
+                "private": "Isolate siblings even when the external switch reflects traffic"
+              },
+              "validators": {
+                "mode": "AND",
+                "checks": {
+                  "list": {
+                    "name": "list",
+                    "args": {
+                      "values": "vepa private"
+                    }
+                  }
+                }
+              },
+              "default": {
+                "mode": "direct",
+                "value": "vepa"
+              }
+            },
+            "dhcp-options": {
+              "kind": "node",
+              "anchor": true,
+              "description": "DHCPv4 client identity and lease handling",
+              "children": {
+                "client-id": {
+                  "kind": "node",
+                  "description": "Override the MAC-based DHCP client identifier",
+                  "children": {
+                    "text": {
+                      "kind": "leaf_node",
+                      "description": "Text identifier, sent with the non-hardware type byte",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "byte-length": {
+                            "name": "byte-length",
+                            "args": {
+                              "minimum": 1,
+                              "maximum": 254
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "text": "Client identifier; quote spaces"
+                      }
+                    },
+                    "hex": {
+                      "kind": "leaf_node",
+                      "description": "Complete client identifier including its type byte",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "dhcp-identifier": {
+                            "name": "dhcp-identifier",
+                            "args": {
+                              "minimum": 2,
+                              "maximum": 255
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "hex": "Colon-separated bytes, for example 01:02:00:00:00:00:01"
+                      }
+                    }
+                  }
+                },
+                "default-route-distance": {
+                  "kind": "leaf_node",
+                  "description": "Administrative distance for DHCP default routes (default: 210)",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "integer-range": {
+                        "name": "integer-range",
+                        "args": {
+                          "minimum": 1,
+                          "maximum": 254
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "1-254": "Administrative distance; lower is preferred"
+                  },
+                  "default": {
+                    "mode": "direct",
+                    "value": "210"
+                  }
+                },
+                "host-name": {
+                  "kind": "leaf_node",
+                  "description": "Hostname sent to the DHCP server; defaults to the system hostname",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "dhcp-domain": {
+                        "name": "dhcp-domain"
+                      }
+                    }
+                  },
+                  "hints": {
+                    "hostname": "Hostname or fully qualified hostname"
+                  }
+                },
+                "mtu": {
+                  "kind": "leaf_node",
+                  "valueless": true,
+                  "description": "Use the server MTU while leased; otherwise use the interface MTU"
+                },
+                "no-default-route": {
+                  "kind": "leaf_node",
+                  "valueless": true,
+                  "description": "Ignore DHCP default routes, retaining other advertised routes"
+                },
+                "user-class": {
+                  "kind": "leaf_node",
+                  "description": "User class sent as DHCP option 77",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "byte-length": {
+                        "name": "byte-length",
+                        "args": {
+                          "minimum": 1,
+                          "maximum": 254
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "text": "User class; quote spaces"
+                  }
+                },
+                "vendor-class-id": {
+                  "kind": "leaf_node",
+                  "description": "Vendor class sent as DHCP option 60",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "byte-length": {
+                        "name": "byte-length",
+                        "args": {
+                          "minimum": 1,
+                          "maximum": 255
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "text": "Vendor class identifier; quote spaces"
+                  }
+                }
+              }
+            },
+            "dhcpv6-options": {
+              "kind": "node",
+              "anchor": true,
+              "description": "DHCPv6 client identity and requested options",
+              "children": {
+                "duid": {
+                  "kind": "leaf_node",
+                  "description": "Override the persistent DHCPv6 client identifier",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "dhcp-identifier": {
+                        "name": "dhcp-identifier",
+                        "args": {
+                          "minimum": 3,
+                          "maximum": 130
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "hex": "Complete DUID in colon-separated hexadecimal bytes"
+                  }
+                },
+                "rapid-commit": {
+                  "kind": "leaf_node",
+                  "valueless": true,
+                  "description": "Accept a lease in a two-message exchange when offered"
+                },
+                "no-release": {
+                  "kind": "leaf_node",
+                  "valueless": true,
+                  "description": "Keep the lease on the server when the client exits"
+                },
+                "no-request-dns": {
+                  "kind": "leaf_node",
+                  "valueless": true,
+                  "description": "Omit recursive DNS servers from the DHCPv6 option request"
+                },
+                "no-request-domain-search": {
+                  "kind": "leaf_node",
+                  "valueless": true,
+                  "description": "Omit the domain search list from the DHCPv6 option request"
+                },
+                "parameters-only": {
+                  "kind": "leaf_node",
+                  "valueless": true,
+                  "description": "Request configuration information without an address or prefix"
+                }
+              }
+            },
+            "dhcpv6-pd": {
+              "kind": "tag_node",
+              "anchor": true,
+              "description": "Request a delegated IPv6 prefix using this IAID",
+              "validators": {
+                "mode": "AND",
+                "checks": {
+                  "integer-range": {
+                    "name": "integer-range",
+                    "args": {
+                      "minimum": 0,
+                      "maximum": 4294967295
+                    }
+                  },
+                  "regex": {
+                    "name": "regex",
+                    "args": {
+                      "pattern": "0|[1-9][0-9]*"
+                    }
+                  }
+                }
+              },
+              "hints": {
+                "iaid": "Decimal delegation request ID"
+              },
+              "children": {
+                "length": {
+                  "kind": "leaf_node",
+                  "description": "Preferred delegated prefix length sent to the ISP",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "integer-range": {
+                        "name": "integer-range",
+                        "args": {
+                          "minimum": 1,
+                          "maximum": 64
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "1-64": "Requested prefix length"
+                  }
+                },
+                "interface": {
+                  "kind": "tag_node",
+                  "anchor": true,
+                  "description": "Assign and advertise a delegated /64 on this LAN",
+                  "depends": "interface",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[a-zA-Z][a-zA-Z0-9_.-]{0,14}"
+                        }
+                      }
+                    }
+                  },
+                  "suggestors": [
+                    {
+                      "name": "interfaces"
+                    }
+                  ],
+                  "hints": {
+                    "interface": "Configured downstream interface or VIF"
+                  },
+                  "children": {
+                    "subnet-id": {
+                      "kind": "leaf_node",
+                      "description": "Decimal index of the LAN /64 within the delegation",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "integer-range": {
+                            "name": "integer-range",
+                            "args": {
+                              "minimum": 0,
+                              "maximum": 18446744073709551615
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "number": "Zero-based subnet number"
+                      }
+                    },
+                    "address": {
+                      "kind": "leaf_node",
+                      "description": "Decimal host number assigned to the router inside the /64 (default: 1)",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "integer-range": {
+                            "name": "integer-range",
+                            "args": {
+                              "minimum": 1,
+                              "maximum": 18446744073709551615
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "number": "Router host number, for example 254 for ::fe"
+                      },
+                      "default": {
+                        "mode": "direct",
+                        "value": "1"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "vxlan": {
           "kind": "tag_node",
           "dependency": "interface",

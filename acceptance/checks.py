@@ -861,6 +861,11 @@ def check_evpn(options):
     """Both VNIs must return on the external device after configuration replay."""
     from nvyr.helpers import vxlan
 
+    child = assert_link('macvlan992', kind='macvlan', master='BOOTVPN', mac='02:00:00:00:10:92', up=True)
+    assert_equal(child['link'], 'br992.10')
+    assert_equal(child['linkinfo']['info_data']['mode'], 'private')
+    assert_link_addresses('macvlan992', '198.18.213.2/32')
+
     assert_equal(vxlan.mappings('vxlan992'), {10: 10010, 4000: 50000})
     for vni, kind in [(10010, 'L2'), (50000, 'L3')]:
         def read_vni():

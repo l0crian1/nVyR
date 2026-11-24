@@ -104,6 +104,7 @@
     "priority": 12,
     "paths": [
       "interfaces bridge <name>",
+      "interfaces macvlan <name>",
       "interfaces vxlan <name>"
     ]
   },

@@ -5969,6 +5969,87 @@ set
 │   │   ├── source-interface <interface>
 │   │   ├── transmit-mode <encrypt|integrity-only>
 │   │   └── vrf <name>
+│   ├── macvlan <macvlanN>
+│   │   ├── address <dhcpv6|dhcp|x.x.x.x/x|x:x:x:x:x:x/x>
+│   │   ├── description <text>
+│   │   ├── dhcp-options
+│   │   │   ├── client-id
+│   │   │   │   ├── hex <hex>
+│   │   │   │   └── text <text>
+│   │   │   ├── default-route-distance <1-254>
+│   │   │   ├── host-name <hostname>
+│   │   │   ├── mtu
+│   │   │   ├── no-default-route
+│   │   │   ├── user-class <text>
+│   │   │   └── vendor-class-id <text>
+│   │   ├── dhcpv6-options
+│   │   │   ├── duid <hex>
+│   │   │   ├── no-release
+│   │   │   ├── no-request-dns
+│   │   │   ├── no-request-domain-search
+│   │   │   ├── parameters-only
+│   │   │   └── rapid-commit
+│   │   ├── dhcpv6-pd <iaid>
+│   │   │   ├── interface <interface>
+│   │   │   │   ├── address <number>
+│   │   │   │   └── subnet-id <number>
+│   │   │   └── length <1-64>
+│   │   ├── disable
+│   │   ├── ip
+│   │   │   ├── accept-local
+│   │   │   ├── arp-accept <disable|enable|same-subnet>
+│   │   │   ├── arp-announce <any|subnet|best-local>
+│   │   │   ├── arp-cache-timeout <duration>
+│   │   │   ├── arp-entry <x.x.x.x>
+│   │   │   │   ├── description <text>
+│   │   │   │   └── mac-address <xx:xx:xx:xx:xx:xx>
+│   │   │   ├── arp-filter <enable|disable>
+│   │   │   ├── arp-ignore <0|1|2|3|8>
+│   │   │   ├── arp-notify <enable|disable>
+│   │   │   ├── arp-proxy <enable|disable>
+│   │   │   ├── arp-proxy-pvlan <enable|disable>
+│   │   │   ├── arp-retransmit-interval <duration>
+│   │   │   ├── arp-stale-time <duration>
+│   │   │   ├── directed-broadcast <enable|disable>
+│   │   │   ├── disable-forwarding
+│   │   │   ├── log-martians <enable|disable>
+│   │   │   ├── promote-secondaries
+│   │   │   ├── receive-redirects <enable|disable>
+│   │   │   ├── route-localnet
+│   │   │   ├── send-redirects <enable|disable>
+│   │   │   └── source-route <enable|disable>
+│   │   ├── ipv6
+│   │   │   ├── accept-router-advertisements
+│   │   │   ├── address-generation <eui64|stable-privacy>
+│   │   │   ├── autoconf
+│   │   │   ├── disable
+│   │   │   ├── duplicate-address-detection
+│   │   │   │   ├── disable
+│   │   │   │   └── probes <number>
+│   │   │   ├── eui64 <address>
+│   │   │   ├── hop-limit <number>
+│   │   │   ├── interface-identifier <address>
+│   │   │   ├── link-local-address <address>
+│   │   │   ├── maximum-autoconf-addresses <number>
+│   │   │   ├── neighbor <h:h::h>
+│   │   │   │   ├── description <text>
+│   │   │   │   └── mac-address <xx:xx:xx:xx:xx:xx>
+│   │   │   ├── neighbor-reachable-time <duration>
+│   │   │   ├── neighbor-retransmit-interval <duration>
+│   │   │   ├── neighbor-stale-time <duration>
+│   │   │   ├── no-default-link-local
+│   │   │   ├── no-default-route
+│   │   │   ├── no-ra-mtu
+│   │   │   ├── proxy-ndp
+│   │   │   ├── receive-redirects <enable|disable>
+│   │   │   ├── source-route <disable|routing-header-2>
+│   │   │   └── temporary-addresses <disable|prefer-public|prefer-temporary>
+│   │   ├── link-group <0-4294967295>
+│   │   ├── mac <xx:xx:xx:xx:xx:xx>
+│   │   ├── mode <vepa|private>
+│   │   ├── mtu <1280-65535>
+│   │   ├── source-interface <interface>
+│   │   └── vrf <name>
 │   ├── virtual-ethernet <vethN>
 │   │   ├── address <x.x.x.x/x|x:x:x:x:x:x/x>
 │   │   ├── description <text>
@@ -12814,6 +12895,9 @@ operational mode
 │   │   │   └── transceiver
 │   │   ├── hardware-statistics
 │   │   ├── macsec [<macsecN>]
+│   │   │   ├── detail
+│   │   │   └── statistics
+│   │   ├── macvlan [<macvlanN>]
 │   │   │   ├── detail
 │   │   │   └── statistics
 │   │   ├── offload

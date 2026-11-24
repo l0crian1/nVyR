@@ -6,6 +6,8 @@ set interfaces vxlan vxlan992 external vlan 10 vni 10010
 set interfaces vxlan vxlan992 external vlan 4000 vni 50000
 set interfaces bridge br992 vlan 10 local
 set interfaces bridge br992 vif 10 vrf BOOTVPN address 198.18.213.1/24
+set interfaces macvlan macvlan992 source-interface br992.10 mode private vrf BOOTVPN
+set interfaces macvlan macvlan992 mac 02:00:00:00:10:92 address 198.18.213.2/32
 set interfaces bridge br992 vlan 4000 local
 set interfaces bridge br992 vif 4000 vrf BOOTVPN mac 02:00:00:00:50:01
 set interfaces bridge br992 vif 4000 ipv6 no-default-link-local

@@ -97,3 +97,30 @@ clear evpn dup-addr vni 10010 mac 02:00:00:00:10:0a
 clear evpn dup-addr vni 10010 ip 10.10.10.10
 clear bgp l2vpn evpn 192.0.2.2 soft out
 ```
+
+## Anycast gateway on a MACVLAN
+
+When each leaf needs its own reachable SVI address, give the SVI a leaf-specific
+MAC and host address. Put the shared gateway IPs and MAC on a MACVLAN in the
+tenant VRF. The following example assumes `br0.10` already carries VLAN 10 in
+`BLUE`. Configure the gateway addresses only on the child.
+
+```text
+set interfaces macvlan macvlan10 source-interface br0.10 mode private vrf BLUE
+set interfaces macvlan macvlan10 mac 02:00:00:00:10:01 address 10.10.10.1/24
+set interfaces macvlan macvlan10 address 2001:db8:10::1/64
+set interfaces macvlan macvlan10 ipv6 duplicate-address-detection disable
+```
+
+Use the same child configuration on each participating leaf. After the bridge
+and VLAN are present, install the VLAN-local FDB entry from the Linux shell
+on each leaf. This terminates frames for the shared MAC locally.
+
+```sh
+sudo bridge fdb replace 02:00:00:00:10:01 dev br0 self local vlan 10
+bridge fdb show br br0 vlan 10
+```
+
+The native entry lasts for the lifetime of the bridge and VLAN. Reapply it after
+reboot or recreation. Look for the gateway MAC on `br0` in VLAN 10 with state
+`permanent`. [FRR anycast gateway configuration](https://docs.frrouting.org/en/latest/evpn.html#anycast-gateways-with-single-vxlan-device)

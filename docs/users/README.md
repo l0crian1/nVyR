@@ -19,6 +19,7 @@ Configure and operate nVyR. For implementation and maintenance, use the
 - [Bond interfaces and LACP](bonds.md)
 - [WireGuard interfaces](wireguard.md)
 - [MACsec interfaces and key agreement](macsec.md)
+- [MACVLAN interfaces](interfaces.md#macvlan-interfaces)
 - [Persistent Ethernet names](interface-naming.md)
 - [Interface diagnostics](interface-operations.md)
 - [Static routing](static.md)

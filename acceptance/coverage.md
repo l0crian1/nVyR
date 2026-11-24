@@ -25,7 +25,8 @@ disable, and integrity-only transmission.
 
 The saved configuration carries VLANs 10 and 4000 on one external VXLAN device.
 Each boot check reads the kernel VLAN-to-VNI mappings and Zebra's L2VNI and
-L3VNI state for BOOTVPN. The functional fabric tests exercise host mobility,
+L3VNI state for BOOTVPN. It also verifies the private MACVLAN on the tenant
+SVI, including its parent, VRF, address, and MAC. The functional fabric tests exercise host mobility,
 route reflection, and bridged and routed tenant traffic over IPv4 and IPv6 VTEPs.
 
 ### 0.3.0 coverage audit

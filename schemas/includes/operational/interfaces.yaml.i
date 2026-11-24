@@ -75,6 +75,31 @@ interfaces:
           description: Interface packet and byte counters
           command: ['interfaces.nvyr.op', 'show', '--intf_type', 'macsec', '--intf_name', '@4', '--statistics']
 
+    macvlan:
+      kind: tag_node
+      optional_value: true
+      description: MACVLAN interface addresses and kernel state
+      command: ['interfaces.nvyr.op', 'show', '--intf_type', 'macvlan', '--intf_name', '@4']
+      validators:
+        regex: {pattern: 'macvlan[0-9]{1,8}'}
+      suggestors:
+        interfaces: {prefix: macvlan}
+      hints:
+        macvlanN: MACVLAN interface name
+      children:
+
+        detail:
+          kind: leaf_node
+          valueless: true
+          description: Detailed kernel interface information
+          command: ['interfaces.nvyr.op', 'show', '--intf_type', 'macvlan', '--intf_name', '@4', '--detail']
+
+        statistics:
+          kind: leaf_node
+          valueless: true
+          description: Interface packet and byte counters
+          command: ['interfaces.nvyr.op', 'show', '--intf_type', 'macvlan', '--intf_name', '@4', '--statistics']
+
     ethernet:
       kind: tag_node
       optional_value: true

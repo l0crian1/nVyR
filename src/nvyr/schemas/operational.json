@@ -13249,6 +13249,80 @@
                 }
               }
             },
+            "macvlan": {
+              "kind": "tag_node",
+              "optional_value": true,
+              "description": "MACVLAN interface addresses and kernel state",
+              "command": {
+                "argv": [
+                  "interfaces.nvyr.op",
+                  "show",
+                  "--intf_type",
+                  "macvlan",
+                  "--intf_name",
+                  "@4"
+                ],
+                "strip_private": true
+              },
+              "validators": {
+                "mode": "AND",
+                "checks": {
+                  "regex": {
+                    "name": "regex",
+                    "args": {
+                      "pattern": "macvlan[0-9]{1,8}"
+                    }
+                  }
+                }
+              },
+              "suggestors": [
+                {
+                  "name": "interfaces",
+                  "args": {
+                    "prefix": "macvlan"
+                  }
+                }
+              ],
+              "hints": {
+                "macvlanN": "MACVLAN interface name"
+              },
+              "children": {
+                "detail": {
+                  "kind": "leaf_node",
+                  "valueless": true,
+                  "description": "Detailed kernel interface information",
+                  "command": {
+                    "argv": [
+                      "interfaces.nvyr.op",
+                      "show",
+                      "--intf_type",
+                      "macvlan",
+                      "--intf_name",
+                      "@4",
+                      "--detail"
+                    ],
+                    "strip_private": true
+                  }
+                },
+                "statistics": {
+                  "kind": "leaf_node",
+                  "valueless": true,
+                  "description": "Interface packet and byte counters",
+                  "command": {
+                    "argv": [
+                      "interfaces.nvyr.op",
+                      "show",
+                      "--intf_type",
+                      "macvlan",
+                      "--intf_name",
+                      "@4",
+                      "--statistics"
+                    ],
+                    "strip_private": true
+                  }
+                }
+              }
+            },
             "ethernet": {
               "kind": "tag_node",
               "optional_value": true,

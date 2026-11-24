@@ -30,7 +30,7 @@ def underlay_vrf(ns, side):
     return local
 
 
-def setup_leaf(ns, side, *, local=None):
+def setup_leaf(ns, side, *, local=None, shared_svi=True):
     if local is None:
         local = underlay_vrf(ns, side)
     else:
@@ -48,9 +48,13 @@ def setup_leaf(ns, side, *, local=None):
     run(ns, 'bridge', 'vlan', 'add', 'dev', 'br0', 'vid', '10', 'self')
     ip(ns, 'link', 'add', 'link', 'br0', 'name', 'gateway', 'type', 'vlan', 'id', '10')
     ip(ns, 'link', 'set', 'gateway', 'master', 'BLUE')
-    ip(ns, 'link', 'set', 'gateway', 'address', '02:00:00:00:10:01', 'up')
-    ip(ns, 'addr', 'add', '10.10.10.1/24', 'dev', 'gateway')
-    ip(ns, 'addr', 'add', '2001:db8:10::1/64', 'dev', 'gateway', 'nodad')
+    if shared_svi:
+        ip(ns, 'link', 'set', 'gateway', 'address', '02:00:00:00:10:01', 'up')
+        ip(ns, 'addr', 'add', '10.10.10.1/24', 'dev', 'gateway')
+        ip(ns, 'addr', 'add', '2001:db8:10::1/64', 'dev', 'gateway', 'nodad')
+    else:
+        ip(ns, 'link', 'set', 'gateway', 'address', f'02:00:00:01:10:0{side}', 'up')
+        ip(ns, 'addr', 'add', f'10.10.10.{100+side}/32', 'dev', 'gateway')
     run(ns, 'bridge', 'vlan', 'add', 'dev', 'br0', 'vid', '4000', 'self')
     ip(ns, 'link', 'add', 'link', 'br0', 'name', 'l3svi', 'type', 'vlan', 'id', '4000')
     ip(ns, 'link', 'set', 'l3svi', 'master', 'BLUE')

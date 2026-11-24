@@ -371,18 +371,36 @@ class VirtualEthernet(LinkType):
                 self.remove(kernel, name)
 
 
-class VLAN(LinkType):
-    """802.1Q child of any Ethernet-compatible parent driver."""
-
+class ParentLink(LinkType):
     virtual = True
-    kernel_kind = 'vlan'
-    keymap = LINK_KEYMAP | {
-        'parent': NetlinkKey('link', ('IFLA_LINK',)),
-        'vlan': NetlinkKey('vlan_id', ('IFLA_LINKINFO', 'IFLA_INFO_DATA', 'IFLA_VLAN_ID')),
-    }
+    keymap = LINK_KEYMAP | {'parent': NetlinkKey('link', ('IFLA_LINK',))}
 
     def dependencies(self, spec):
         return (*super().dependencies(spec), spec['attributes']['parent'])
+
+    def snapshot(self, kernel, spec, device):
+        return read_attributes(device['message'], LINK_KEYMAP)
+
+    def configure(self, kernel, spec, baseline):
+        attributes = {key: value for key, value in spec['attributes'].items() if key in LINK_KEYMAP}
+        parent = kernel.device(spec['attributes']['parent'])
+        parent_mtu = parent['attributes']['mtu']
+        attributes.setdefault('mtu', parent_mtu)
+
+        # A child cannot carry packets larger than its parent's payload MTU.
+        if attributes['mtu'] > parent_mtu:
+            raise ValidationError(f"{spec['name']}: MTU cannot exceed parent MTU {parent_mtu}")
+
+        return super().configure(kernel, dict(spec, attributes=attributes), baseline)
+
+
+class VLAN(ParentLink):
+    """802.1Q child of any Ethernet-compatible parent driver."""
+
+    kernel_kind = 'vlan'
+    keymap = ParentLink.keymap | {
+        'vlan': NetlinkKey('vlan_id', ('IFLA_LINKINFO', 'IFLA_INFO_DATA', 'IFLA_VLAN_ID')),
+    }
 
     def validate(self, spec, links, previous=None):
         attributes = spec['attributes']
@@ -412,20 +430,39 @@ class VLAN(LinkType):
         kernel.ipr.link('add', ifname=spec['name'], kind='vlan', link=parent['index'],
                         vlan_id=spec['attributes']['vlan'])
 
-    def snapshot(self, kernel, spec, device):
-        return read_attributes(device['message'], LINK_KEYMAP)
+
+class Macvlan(ParentLink):
+    kernel_kind = 'macvlan'
+    keymap = ParentLink.keymap | {
+        'mode': NetlinkKey('macvlan_mode', ('IFLA_LINKINFO', 'IFLA_INFO_DATA', 'IFLA_MACVLAN_MODE')),
+    }
+
+    def validate(self, spec, links, previous=None):
+        attrs = spec['attributes']
+        # The lower device is fixed at link creation.
+        interface_name(attrs.get('parent'))
+        if previous and previous['attributes']['parent'] != attrs['parent']:
+            raise ValidationError(f"{spec['name']}: delete and commit before changing source-interface")
+        # Only the two supported native delivery modes may cross the daemon boundary.
+        if attrs.get('mode') not in ('private', 'vepa'):
+            raise ValidationError(f"{spec['name']}: mode must be private or vepa")
+
+    def create(self, kernel, spec):
+        attrs = spec['attributes']
+        parent = kernel.device(attrs['parent'])
+        kernel.ipr.link('add', ifname=spec['name'], kind='macvlan', link=parent['index'],
+                        macvlan_mode=attrs['mode'])
 
     def configure(self, kernel, spec, baseline):
-        attributes = {key: value for key, value in spec['attributes'].items() if key not in ('parent', 'vlan')}
-        parent = kernel.device(spec['attributes']['parent'])
-        parent_mtu = parent['attributes']['mtu']
-        attributes.setdefault('mtu', parent_mtu)
+        device = kernel.device(spec['name'])
+        current = read_attributes(device['message'], self.keymap)
+        mode = spec['attributes']['mode']
+        changed = current['mode'] != mode
+        if changed:
+            kernel.ipr.link('set', index=device['index'], kind='macvlan', macvlan_mode=mode)
+            kernel.refresh(spec['name'])
 
-        # A child cannot carry packets larger than its parent's payload MTU.
-        if attributes['mtu'] > parent_mtu:
-            raise ValidationError(f"{spec['name']}: MTU cannot exceed parent MTU {parent_mtu}")
-
-        return super().configure(kernel, dict(spec, attributes=attributes), baseline)
+        return super().configure(kernel, spec, baseline) or changed
 
 
 class VXLAN(LinkType):
@@ -624,7 +661,7 @@ class Bridge(LinkType):
 
 TYPES = {'ethernet': LinkType(), 'dummy': Dummy(), 'loopback': Loopback(), 'vrf': VRF(),
          'virtual-ethernet': VirtualEthernet(), 'vlan': VLAN(), 'bridge': Bridge(), 'bond': Bond(),
-         'wireguard': WireGuard(), 'macsec': Macsec(), 'vxlan': VXLAN()}
+         'wireguard': WireGuard(), 'macsec': Macsec(), 'macvlan': Macvlan(), 'vxlan': VXLAN()}
 
 
 def register_type(name, driver):
@@ -686,8 +723,8 @@ def normalize(links, types=None):
                 'dhcp-options': dhcp_options.normalize(spec.get('dhcp-options', {})),
                 'ip-options': interface_ip.normalize(spec.get('ip-options', {}), addresses=addresses, kind=kind)}
         if spec.get('dhcp6'):
-            if kind not in {'ethernet', 'bridge', 'bond', 'vlan'}:
-                raise ValidationError(f'{name}: DHCPv6 requires Ethernet, a bond, a bridge or a VIF')
+            if kind not in {'ethernet', 'bridge', 'bond', 'vlan', 'macvlan'}:
+                raise ValidationError(f'{name}: DHCPv6 requires Ethernet, a bond, a bridge, a MACVLAN or a VIF')
             dhcp6.verify(name, spec['dhcp6'], item['ip-options'].get('ipv6', {}))
             item['dhcp6'] = spec['dhcp6']
         result[name] = item

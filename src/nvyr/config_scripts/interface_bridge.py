@@ -23,6 +23,7 @@ def get_config(context):
     return {
         'bridges': bridges,
         'tunnels': tunnels,
+        'macvlans': lookup(context.effective, ('interfaces', 'macvlan'), {}),
         'inventory': dict(interfaces.configured(context.effective)),
         'bond-members': interfaces.bond_members(context.effective),
         'vrfs': lookup(context.effective, ('vrf', 'name'), {}),
@@ -50,7 +51,12 @@ def link_definitions(configuration):
     tunnels = interfaces.NetlinkManager.definitions('vxlan', interfaces.settings(profiles))
     for name, values in profiles.items():
         tunnels[name]['attributes']['vxlan'] = vxlan.settings(values)
-    return links | interfaces.vlan_definitions(bridges) | tunnels
+    profiles = configuration['macvlans']
+    children = interfaces.NetlinkManager.definitions('macvlan', interfaces.settings(profiles))
+    for name, values in profiles.items():
+        children[name]['attributes'].update(parent=values['source-interface'], mode=values['mode'])
+
+    return links | interfaces.vlan_definitions(bridges) | tunnels | children
 
 
 def verify_vlans(configuration, path, *, local=False):
@@ -100,6 +106,18 @@ def verify(configuration, context):
                 for port in lookup(bridge, ('member', 'interface'), {})}
     for name, profile in configuration['tunnels'].items():
         vxlan_config.verify_interface(name, profile, inventory, filtered)
+
+    # Routed MACVLANs use the same VRF and switched-port constraints as other links.
+    interfaces.verify_membership(configuration['macvlans'], vrfs=configuration['vrfs'], bridge_members=members,
+                                 bond_members=configuration['bond-members'])
+    for name, profile in configuration['macvlans'].items():
+        parent = profile.get('source-interface')
+        # Creation needs a real lower device, including a VIF created in this commit.
+        if not parent or parent == name or parent not in inventory:
+            raise ValidationError(f'{name}: source-interface must name a different configured interface')
+        # Linux flattens stacked MACVLANs onto the original lower device.
+        if parent in configuration['macvlans']:
+            raise ValidationError(f'{name}: select the underlying link of {parent} as the source-interface')
 
     # Child VLAN names and MTUs must fit their parent and kernel limits.
     interfaces.verify_vifs(bridges)

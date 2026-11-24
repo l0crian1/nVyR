@@ -9,6 +9,31 @@ and link groups. Use [interface diagnostics](interface-operations.md) to inspect
 
 ## Current commands
 
+### MACVLAN interfaces
+
+Use a MACVLAN when a routed interface needs its own Ethernet identity on an existing
+link. `source-interface` selects the configured parent, including an Ethernet VIF
+such as `eth0.100` or a bridge SVI such as `br0.10`. Set `mac` for a fixed identity
+across recreation. The interface inherits the parent MTU unless you set a smaller
+or equal value. For multiple MACVLANs on one uplink, select that uplink as the
+parent of each sibling.
+
+```text
+set interfaces macvlan macvlan0 source-interface eth0 mac 02:00:00:00:00:02
+set interfaces macvlan macvlan0 address dhcp
+commit
+run show interfaces macvlan macvlan0 detail
+```
+
+The default `vepa` mode sends traffic between siblings out the parent. A switch
+must reflect those frames to permit direct sibling communication. In `private`
+mode the siblings remain isolated even with switch reflection. Mode can change
+in place. To move the interface to another parent, delete it, commit, and recreate it.
+
+Static addresses, DHCPv4, DHCPv6, prefix delegation, and VRF membership use the
+same syntax as Ethernet. See the [EVPN anycast gateway example](evpn.md#anycast-gateway-on-a-macvlan)
+for a shared gateway on multiple leaves.
+
 ### Static ARP and IPv6 neighbors
 
 Configure permanent address-to-MAC bindings on the interface that reaches the

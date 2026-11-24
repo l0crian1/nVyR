@@ -20,6 +20,7 @@ INTF_TYPES = {
     'dummy': 'dum',
     'wireguard': 'wg',
     'macsec': 'macsec',
+    'macvlan': 'macvlan',
     'vxlan': 'vxlan',
 }
 
@@ -37,6 +38,9 @@ def _get_kernel_data(raw, ifname = None, intf_type = None, detail = False,
         # Raw queries retain their native scoped response.
         if raw:
             address_show_cmd += ['dev', ifname]
+
+    if intf_type == 'macvlan':
+        address_show_cmd += ['type', 'macvlan']
 
     kernel_interface = json.loads(cmd(address_show_cmd))
 
@@ -242,6 +246,9 @@ def _detail_fields(interface, data):
         fields.extend([('Parent', _link_reference(interface, data)),
                        ('VLAN ID', vlan.get('id', 'Unknown')),
                        ('VLAN protocol', vlan.get('protocol', 'Unknown'))])
+    elif kind == 'macvlan':
+        fields.extend([('Parent', _link_reference(interface, data)),
+                       ('Mode', info.get('info_data', {}).get('mode', 'Unknown'))])
     elif kind == 'veth':
         fields.append(('Peer', _link_reference(interface, data)))
 
