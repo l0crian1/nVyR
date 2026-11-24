@@ -4,15 +4,25 @@ import ipaddress
 from collections.abc import Mapping
 
 from nvyr.errors import ValidationError
-from nvyr.helpers import bridge_config, interfaces, netlink
+from nvyr.helpers import bridge_config, interfaces, netlink, vxlan, vxlan_config
 from nvyr.tree import lookup
 
 ROOT = ('interfaces', 'bridge')
 
 
 def get_config(context):
+    bridges = _transport_value(lookup(context.effective, ROOT, {}))
+    tunnels = lookup(context.effective, ('interfaces', 'vxlan'), {})
+    for bridge in bridges.values():
+        for port, member in lookup(bridge, ('member', 'interface'), {}).items():
+            if port in tunnels and 'external' in tunnels[port]:
+                vlans = tunnels[port]['external'].get('vlan', {})
+                member['vxlan-mappings'] = {vid: row['vni'] for vid, row in vlans.items() if 'vni' in row}
+                for vid in vlans:
+                    member.setdefault('vlan', {}).setdefault(vid, {})
     return {
-        'bridges': lookup(context.effective, ROOT, {}),
+        'bridges': bridges,
+        'tunnels': tunnels,
         'inventory': dict(interfaces.configured(context.effective)),
         'bond-members': interfaces.bond_members(context.effective),
         'vrfs': lookup(context.effective, ('vrf', 'name'), {}),
@@ -30,10 +40,17 @@ def _transport_value(value):
 
 def link_definitions(configuration):
     """Build the daemon payload for read-only preflight and the generate stage."""
-    links = interfaces.NetlinkManager.definitions('bridge', interfaces.settings(configuration))
-    for name, values in configuration.items():
-        links[name]['attributes']['bridge'] = _transport_value(values)
-    return links | interfaces.vlan_definitions(configuration)
+    bridges = configuration['bridges']
+    links = interfaces.NetlinkManager.definitions('bridge', interfaces.settings(bridges))
+    for name, values in bridges.items():
+        links[name]['attributes']['bridge'] = values
+
+    # A bridge may be the underlay or the overlay master. Netlinkd orders all three links.
+    profiles = configuration['tunnels']
+    tunnels = interfaces.NetlinkManager.definitions('vxlan', interfaces.settings(profiles))
+    for name, values in profiles.items():
+        tunnels[name]['attributes']['vxlan'] = vxlan.settings(values)
+    return links | interfaces.vlan_definitions(bridges) | tunnels
 
 
 def verify_vlans(configuration, path, *, local=False):
@@ -75,6 +92,14 @@ def verify(configuration, context):
     if overlap:
         raise ValidationError(f'{min(overlap)}: interface cannot be both a bridge and a bond member')
     interfaces.verify_pd(inventory, members | configuration['bond-members'])
+
+    # VXLAN endpoints may use L3 settings directly or join a bridge as switched ports.
+    interfaces.verify_membership(configuration['tunnels'], vrfs=configuration['vrfs'], bridge_members=members,
+                                 bond_members=configuration['bond-members'])
+    filtered = {port for bridge in bridges.values() if 'vlan-filtering' in bridge
+                for port in lookup(bridge, ('member', 'interface'), {})}
+    for name, profile in configuration['tunnels'].items():
+        vxlan_config.verify_interface(name, profile, inventory, filtered)
 
     # Child VLAN names and MTUs must fit their parent and kernel limits.
     interfaces.verify_vifs(bridges)
@@ -222,13 +247,13 @@ def verify(configuration, context):
                 keys.add(key)
 
     # Preflight the same link definitions used by apply, including native ownership checks.
-    links = link_definitions(bridges)
+    links = link_definitions(configuration)
     netlink.normalize(links)
     interfaces.manager.request('validate', owner='bridge', links=links, recovery=context.recovery)
 
 
 def generate(configuration, context):
-    return link_definitions(configuration['bridges'])
+    return link_definitions(configuration)
 
 
 def apply(links, context):

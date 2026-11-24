@@ -96,7 +96,8 @@
     "script": "bridge",
     "priority": 12,
     "paths": [
-      "interfaces bridge <name>"
+      "interfaces bridge <name>",
+      "interfaces vxlan <name>"
     ]
   },
   {

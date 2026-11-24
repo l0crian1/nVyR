@@ -6040,6 +6040,96 @@ set
 │   │   │   ├── mtu <1280-65535>
 │   │   │   └── vrf <name>
 │   │   └── vrf <name>
+│   ├── vxlan <vxlanN>
+│   │   ├── address <x.x.x.x/x|x:x:x:x:x:x/x>
+│   │   ├── checksum
+│   │   │   ├── ipv4 <enable|disable>
+│   │   │   ├── ipv6-zero-receive
+│   │   │   └── ipv6-zero-transmit
+│   │   ├── description <text>
+│   │   ├── destination-port <1-65535>
+│   │   ├── disable
+│   │   ├── dont-fragment <unset|set|inherit>
+│   │   ├── external
+│   │   │   ├── vlan <1-4094>
+│   │   │   │   └── vni <0-16777215>
+│   │   │   └── vni-filter
+│   │   ├── flood-vtep <address>
+│   │   ├── flow-label <0-1048575>
+│   │   ├── ip
+│   │   │   ├── accept-local
+│   │   │   ├── arp-accept <disable|enable|same-subnet>
+│   │   │   ├── arp-announce <any|subnet|best-local>
+│   │   │   ├── arp-cache-timeout <duration>
+│   │   │   ├── arp-entry <x.x.x.x>
+│   │   │   │   ├── description <text>
+│   │   │   │   └── mac-address <xx:xx:xx:xx:xx:xx>
+│   │   │   ├── arp-filter <enable|disable>
+│   │   │   ├── arp-ignore <0|1|2|3|8>
+│   │   │   ├── arp-notify <enable|disable>
+│   │   │   ├── arp-proxy <enable|disable>
+│   │   │   ├── arp-proxy-pvlan <enable|disable>
+│   │   │   ├── arp-retransmit-interval <duration>
+│   │   │   ├── arp-stale-time <duration>
+│   │   │   ├── directed-broadcast <enable|disable>
+│   │   │   ├── disable-forwarding
+│   │   │   ├── log-martians <enable|disable>
+│   │   │   ├── promote-secondaries
+│   │   │   ├── receive-redirects <enable|disable>
+│   │   │   ├── route-localnet
+│   │   │   ├── send-redirects <enable|disable>
+│   │   │   └── source-route <enable|disable>
+│   │   ├── ipv6
+│   │   │   ├── accept-router-advertisements
+│   │   │   ├── address-generation <eui64|stable-privacy>
+│   │   │   ├── autoconf
+│   │   │   ├── disable
+│   │   │   ├── duplicate-address-detection
+│   │   │   │   ├── disable
+│   │   │   │   └── probes <number>
+│   │   │   ├── eui64 <address>
+│   │   │   ├── hop-limit <number>
+│   │   │   ├── interface-identifier <address>
+│   │   │   ├── link-local-address <address>
+│   │   │   ├── maximum-autoconf-addresses <number>
+│   │   │   ├── neighbor <h:h::h>
+│   │   │   │   ├── description <text>
+│   │   │   │   └── mac-address <xx:xx:xx:xx:xx:xx>
+│   │   │   ├── neighbor-reachable-time <duration>
+│   │   │   ├── neighbor-retransmit-interval <duration>
+│   │   │   ├── neighbor-stale-time <duration>
+│   │   │   ├── no-default-link-local
+│   │   │   ├── no-default-route
+│   │   │   ├── no-ra-mtu
+│   │   │   ├── proxy-ndp
+│   │   │   ├── receive-redirects <enable|disable>
+│   │   │   ├── source-route <disable|routing-header-2>
+│   │   │   └── temporary-addresses <disable|prefer-public|prefer-temporary>
+│   │   ├── learning
+│   │   │   ├── ageing-time <duration>
+│   │   │   ├── disable
+│   │   │   └── maximum-entries <0-4294967295>
+│   │   ├── link-group <0-4294967295>
+│   │   ├── mac <xx:xx:xx:xx:xx:xx>
+│   │   ├── miss-notification
+│   │   │   ├── l2
+│   │   │   └── l3
+│   │   ├── mtu <1280-65535>
+│   │   ├── multicast-group <address>
+│   │   ├── proxy
+│   │   ├── remote <address>
+│   │   ├── route-short-circuit
+│   │   ├── source-address <address>
+│   │   ├── source-interface <interface>
+│   │   ├── source-port
+│   │   │   ├── maximum <0-65535>
+│   │   │   └── minimum <0-65535>
+│   │   ├── static-mac <mac-address>
+│   │   │   └── remote <address>
+│   │   ├── tos <inherit|0-255>
+│   │   ├── ttl <auto|inherit|1-255>
+│   │   ├── vni <0-16777215>
+│   │   └── vrf <name>
 │   └── wireguard <wgN>
 │       ├── address <x.x.x.x/x|x:x:x:x:x:x/x>
 │       ├── description <text>
@@ -12553,6 +12643,9 @@ operational mode
 │   │   ├── queues
 │   │   ├── statistics
 │   │   ├── transceiver
+│   │   ├── vxlan [<vxlanN>]
+│   │   │   ├── fdb
+│   │   │   └── vni
 │   │   └── wireguard [<wgN>]
 │   │       ├── detail
 │   │       └── statistics

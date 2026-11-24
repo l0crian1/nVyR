@@ -15,6 +15,7 @@ Configure and operate nVyR. For implementation and maintenance, use the
 
 - [Interface configuration](interfaces.md)
 - [Bridge interfaces](bridges.md)
+- [VXLAN interfaces and VLAN-to-VNI mappings](vxlan.md)
 - [Bond interfaces and LACP](bonds.md)
 - [WireGuard interfaces](wireguard.md)
 - [Persistent Ethernet names](interface-naming.md)

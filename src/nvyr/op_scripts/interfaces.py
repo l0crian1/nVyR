@@ -19,6 +19,7 @@ INTF_TYPES = {
     'ethernet': 'eth',
     'dummy': 'dum',
     'wireguard': 'wg',
+    'vxlan': 'vxlan',
 }
 
 

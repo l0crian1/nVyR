@@ -21,7 +21,7 @@ from nvyr.errors import RecoveryError, RouterError, ValidationError
 from nvyr.storage import atomic_json, sync_directory
 from nvyr.helpers.netlink import TYPES, interface_name, normalize, read_attributes
 from nvyr.helpers.dhcp_options import lease_routes, lease_spec
-from nvyr.helpers import interface_ip, ipv6_ra, kernel_settings, mpls
+from nvyr.helpers import interface_ip, ipv6_ra, kernel_settings, mpls, vxlan
 from nvyr.helpers.kernel_settings_map import SETTINGS
 
 log = logging.getLogger(__name__)
@@ -584,6 +584,9 @@ class Manager:
         configured_spec = lease_spec(spec, previous_lease)
         if driver.configure(self.kernel, configured_spec, record['baseline']):
             self.kernel.refresh(name)
+
+        if spec['kind'] == 'vxlan':
+            vxlan.reconcile_tables(name, spec['attributes']['vxlan'], record, self.save_record)
 
         if spec['kind'] in interface_ip.KINDS:
             self.kernel.ip_policy(name, spec['ip-options'], self.state.get('kernel-settings', {}))

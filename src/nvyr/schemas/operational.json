@@ -12751,6 +12751,73 @@
                 }
               }
             },
+            "vxlan": {
+              "kind": "tag_node",
+              "optional_value": true,
+              "description": "VXLAN interfaces and effective tunnel settings",
+              "command": {
+                "argv": [
+                  "vxlan.nvyr.op",
+                  "show",
+                  "--interface",
+                  "@4"
+                ]
+              },
+              "validators": {
+                "mode": "AND",
+                "checks": {
+                  "regex": {
+                    "name": "regex",
+                    "args": {
+                      "pattern": "vxlan[0-9]+"
+                    }
+                  }
+                }
+              },
+              "suggestors": [
+                {
+                  "name": "interfaces",
+                  "args": {
+                    "prefix": "vxlan"
+                  }
+                }
+              ],
+              "hints": {
+                "vxlanN": "VXLAN interface name"
+              },
+              "children": {
+                "fdb": {
+                  "kind": "leaf_node",
+                  "valueless": true,
+                  "description": "Tunnel forwarding database and remote VTEPs",
+                  "command": {
+                    "argv": [
+                      "vxlan.nvyr.op",
+                      "show",
+                      "--interface",
+                      "@4",
+                      "--section",
+                      "fdb"
+                    ]
+                  }
+                },
+                "vni": {
+                  "kind": "leaf_node",
+                  "valueless": true,
+                  "description": "VLAN to VNI mappings and receive filter",
+                  "command": {
+                    "argv": [
+                      "vxlan.nvyr.op",
+                      "show",
+                      "--interface",
+                      "@4",
+                      "--section",
+                      "vni"
+                    ]
+                  }
+                }
+              }
+            },
             "detail": {
               "kind": "leaf_node",
               "description": "Detailed interface information",

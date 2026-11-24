@@ -7,6 +7,7 @@ from tabulate import tabulate
 
 from nvyr import opmode
 from nvyr.errors import OperationalError
+from nvyr.helpers import vxlan
 from nvyr.helpers.netlink import interface_name
 from nvyr.helpers.process import cmd
 
@@ -36,8 +37,22 @@ def native(bridge, section, member=None):
         # Include the bridge's local port and every enslaved port.
         ports = native(bridge, 'member')
         names = {bridge, *(port['ifname'] for port in ports)}
-        return [entry for entry in json.loads(cmd(['bridge', '-j', 'vlan', 'show']))
-                if entry['ifname'] in names]
+        entries = [entry for entry in json.loads(cmd(['bridge', '-j', 'vlan', 'show']))
+                   if entry['ifname'] in names]
+        tunnel_ports = {port['ifname'] for port in ports if port.get('vlan_tunnel')}
+        for entry in entries:
+            if entry['ifname'] in tunnel_ports:
+                mappings = vxlan.mappings(entry['ifname'])
+                rows = []
+                for vlan in entry.get('vlans', []):
+                    for vid in range(vlan['vlan'], vlan.get('vlanEnd', vlan['vlan']) + 1):
+                        row = dict(vlan, vlan=vid)
+                        row.pop('vlanEnd', None)
+                        if vid in mappings:
+                            row['vni'] = mappings[vid]
+                        rows.append(row)
+                entry['vlans'] = rows
+        return entries
     else:
         raise OperationalError(f'Unknown bridge view {section}')
     records = json.loads(cmd(arguments))
@@ -96,7 +111,7 @@ def show(bridge: str = None, section: str = None, member: str = None, raw: bool 
         for device in data:
             for entry in device.get('vlans', []):
                 rows.append(dict(entry, ifname=device['ifname'], flags=', '.join(entry.get('flags', []))))
-        print(table(rows, [('ifname', 'Interface'), ('vlan', 'VLAN'), ('flags', 'Flags')]))
+        print(table(rows, [('ifname', 'Interface'), ('vlan', 'VLAN'), ('vni', 'VNI'), ('flags', 'Flags')]))
     elif section == 'multicast':
         rows = [entry for device in data for entry in device.get('mdb', [])]
         print(table(rows, [('grp', 'Group'), ('src', 'Source'), ('port', 'Interface'),

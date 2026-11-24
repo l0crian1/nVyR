@@ -17,7 +17,7 @@ import socket
 import time
 
 from nvyr.errors import RouterError, ValidationError
-from nvyr.helpers import dhcp6, dhcp_options, vrf_rules, interface_ip
+from nvyr.helpers import dhcp6, dhcp_options, vrf_rules, interface_ip, vxlan
 
 log = logging.getLogger(__name__)
 
@@ -392,6 +392,40 @@ class VLAN(LinkType):
         return super().configure(kernel, dict(spec, attributes=attributes), baseline)
 
 
+class VXLAN(LinkType):
+    virtual = True
+    kernel_kind = 'vxlan'
+    keymap = LINK_KEYMAP | {'vxlan': NetlinkKey('', ('NVYR_VXLAN_SETTINGS',))}
+
+    def dependencies(self, spec):
+        underlay = spec['attributes']['vxlan']['options'].get('dev')
+        return super().dependencies(spec) + ((underlay,) if underlay else ())
+
+    def validate(self, spec, links, previous=None):
+        settings = spec['attributes'].get('vxlan', {})
+        if not isinstance(settings, dict) or not isinstance(settings.get('options'), dict) or not (
+                isinstance(settings.get('vnis'), list) and isinstance(settings.get('fdb'), list)):
+            raise ValidationError(f"{spec['name']}: incomplete VXLAN settings")
+        if previous:
+            changed = vxlan.immutable_change(previous['attributes']['vxlan'], settings)
+            if changed:
+                raise ValidationError(f"{spec['name']}: {changed} cannot change in place; delete and commit "
+                                      "the interface before recreating it")
+
+    def create(self, kernel, spec):
+        vxlan.create(spec['name'], spec['attributes']['vxlan'])
+
+    def snapshot(self, kernel, spec, device):
+        return read_attributes(device['message'], LINK_KEYMAP)
+
+    def configure(self, kernel, spec, baseline):
+        attrs = dict(spec['attributes'])
+        changed = vxlan.reconcile_options(spec['name'], attrs.pop('vxlan'))
+        if changed:
+            kernel.refresh(spec['name'])
+        return super().configure(kernel, dict(spec, attributes=attrs), baseline) or changed
+
+
 class VRF(LinkType):
     virtual = True
     kernel_kind = 'vrf'
@@ -542,6 +576,8 @@ class Bridge(LinkType):
         for member, settings in members.items():
             reconcile_port(kernel, member, settings)
             reconcile_vlans(member, config.vlan_memberships(settings, bridge=values))
+            if 'vxlan-mappings' in settings:
+                vxlan.reconcile_mappings(member, settings['vxlan-mappings'])
         reconcile_vlans(name, config.vlan_memberships(values, local=True), local=True)
         reconcile_vlan_options(name, values, members)
         reconcile_fdb(kernel, name, values)
@@ -552,7 +588,7 @@ class Bridge(LinkType):
 
 TYPES = {'ethernet': LinkType(), 'dummy': Dummy(), 'loopback': Loopback(), 'vrf': VRF(),
          'virtual-ethernet': VirtualEthernet(), 'vlan': VLAN(), 'bridge': Bridge(), 'bond': Bond(),
-         'wireguard': WireGuard()}
+         'wireguard': WireGuard(), 'vxlan': VXLAN()}
 
 
 def register_type(name, driver):

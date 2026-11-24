@@ -23,7 +23,7 @@ from nvyr.tree import lookup
 
 
 SPECIAL = {'eui64', 'interface-identifier', 'link-local-address', 'no-default-link-local'}
-KINDS = {'ethernet', 'dummy', 'virtual-ethernet', 'bridge', 'bond', 'vlan', 'wireguard'}
+KINDS = {'ethernet', 'dummy', 'virtual-ethernet', 'bridge', 'bond', 'vlan', 'wireguard', 'vxlan'}
 NEIGHBORS = {'ip': 'arp-entry', 'ipv6': 'neighbor'}
 
 
