@@ -30,8 +30,12 @@ def underlay_vrf(ns, side):
     return local
 
 
-def setup_leaf(ns, side):
-    local = underlay_vrf(ns, side)
+def setup_leaf(ns, side, *, local=None):
+    if local is None:
+        local = underlay_vrf(ns, side)
+    else:
+        ip(ns, 'link', 'add', 'BLUE', 'type', 'vrf', 'table', '501')
+        ip(ns, 'link', 'set', 'BLUE', 'up')
     ip(ns, 'link', 'add', 'br0', 'type', 'bridge', 'vlan_filtering', '1', 'vlan_default_pvid', '0')
     ip(ns, 'link', 'set', 'br0', 'up')
     ip(ns, 'link', 'add', 'vx0', 'type', 'vxlan', 'external', 'local', local, 'dstport', '4789', 'nolearning')
@@ -77,16 +81,17 @@ def attach_host(leaf, host, side, *, routed):
     ip(host, '-6', 'route', 'add', 'default', 'via', f'2001:db8:{subnet}::1')
 
 
-def configuration(side):
+def configuration(side, *, peers=None):
     af = 'l2vpn-evpn'
-    peer = f'192.0.2.{3 - side}'
+    if peers is None:
+        peers = {f'192.0.2.{3 - side}': {'remote-as': '65000', 'address-family': {af: {}}}}
     segment = {'route-distinguisher': f'192.0.2.{side}:10', 'route-target': {'both': ['65000:10']}}
     overlay = {'advertise-all-vni': {}, 'vni': {'10010': segment}}
     tenant = {'route-target': {'both': ['65000:500']},
               'advertise': {'ipv4-unicast': {'route-map': 'EXPORT4'}, 'ipv6-unicast': {}}}
     instances = {
         'default': {'local-as': '65000', 'parameters': {'router-id': f'192.0.2.{side}'},
-                    'neighbor': {peer: {'remote-as': '65000', 'address-family': {af: {}}}},
+                    'neighbor': peers,
                     'address-family': {af: overlay}},
         'BLUE': {'local-as': '65000', 'address-family': {af: tenant,
                  'ipv4-unicast': {'network': {f'10.10.{side}.0/24': {}}},

@@ -857,6 +857,22 @@ def check_bgp_labeled_unicast(options):
     assert_not_in('neighbor 198.18.192.3 addpath-rx-paths-limit 0', native)
 
 
+def check_evpn(options):
+    """Both VNIs must return on the external device after configuration replay."""
+    from nvyr.helpers import vxlan
+
+    assert_equal(vxlan.mappings('vxlan992'), {10: 10010, 4000: 50000})
+    for vni, kind in [(10010, 'L2'), (50000, 'L3')]:
+        def read_vni():
+            return json.loads(cmd(['vtysh', '-c', f'show evpn vni {vni} json']))
+
+        state = wait_for(read_vni, lambda row: row.get('type') == kind,
+                         description=f'Zebra {kind}VNI {vni}')
+        field = 'vxlanInterface' if kind == 'L2' else 'vxlanIntf'
+        assert_equal(state[field], 'vxlan992')
+        assert_equal(state['tenantVrf'], 'BOOTVPN')
+
+
 def check_bgp_vpn(options):
     native = cmd(['vtysh', '-c', 'show running-config no-header'])
     for line in ('rd vpn export 65095:88', 'label vpn export auto',
@@ -917,6 +933,7 @@ def check_wireguard(options):
 
 
 CHECKS = (
+    check_evpn,
     check_wireguard,
     check_bgp_vpn,
     check_mpls_ldp,

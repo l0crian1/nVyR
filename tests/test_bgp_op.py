@@ -12,6 +12,10 @@ from nvyr.op_scripts import bgp
     'show bgp l2vpn evpn', 'show bgp l2vpn evpn summary', 'show bgp l2vpn evpn route', 'show bgp l2vpn evpn route type 2',
     'show bgp l2vpn evpn vni', 'show bgp l2vpn evpn vni 10010', 'show evpn vni',
     'show evpn vni 50000', 'show evpn mac vni 10010', 'show evpn arp-cache vni 10010',
+    'show bgp l2vpn evpn route vni 10010',
+    'show bgp l2vpn evpn route vni 10010 mac 02:00:00:00:00:01 ip 2001:db8::1',
+    'show evpn mac vni 10010 duplicate', 'show evpn arp-cache vni 10010 duplicate',
+    'show evpn rmac vni 50000', 'show evpn next-hops vni 50000',
     'show bgp', 'show bgp summary', 'show bgp summary failed',
     'show bgp summary established neighbor 192.0.2.2 terse wide',
     'show bgp summary remote-as external', 'show bgp summary remote-as 65001 terse',
@@ -59,6 +63,9 @@ def test_display_preserves_native_word_order(monkeypatch, line):
 
 
 @pytest.mark.parametrize('line', [
+    'clear evpn dup-addr vni 10010', 'clear evpn dup-addr vni 10010 mac 02:00:00:00:00:01',
+    'clear evpn dup-addr vni 10010 ip 2001:db8::1', 'clear bgp l2vpn evpn 192.0.2.1 soft in',
+    'clear bgp l2vpn evpn 2001:db8::2 soft out',
     'clear bgp *', 'clear bgp 192.0.2.2', 'clear bgp 2001:db8::2',
     'clear bgp 65001 soft', 'clear bgp external out', 'clear bgp peer-group PEERS soft in',
     'clear bgp ipv4 unicast * soft out', 'clear bgp ipv6 unicast 2001:db8::2 in',
@@ -74,6 +81,13 @@ def test_reset_preserves_native_word_order(monkeypatch, line):
     monkeypatch.setattr(bgp.vtysh, 'clear', lambda words: calls.append(words) or '')
     assert bgp.clear(line) == ''
     assert calls == [tuple(line.split())]
+
+
+def test_mac_only_lookup_uses_the_native_mac_table(monkeypatch):
+    calls = []
+    monkeypatch.setattr(bgp.vtysh, 'cmd', lambda argv: calls.append(argv) or '{}')
+    bgp.show('show bgp l2vpn evpn route vni 10010 mac 02:00:00:00:00:01', raw=True)
+    assert calls == [['vtysh', '-c', 'show bgp vni 10010 type 2 mac 02:00:00:00:00:01 json']]
 
 
 def test_abbreviation_run_and_pipe_are_resolved_without_reordering(monkeypatch):
@@ -100,6 +114,8 @@ def test_invalid_displays_do_not_execute(monkeypatch, line):
 
 @pytest.mark.parametrize('line', [
     'clear bgp', 'clear bgp vrf BLUE', 'clear bgp ipv4 unicast',
+    'clear evpn dup-addr vni 0', 'clear evpn dup-addr vni 10010 ip foo',
+    'clear evpn dup-addr vni 10010 mac invalid', 'clear bgp l2vpn evpn 192.0.2.1',
     'clear bgp 0', 'clear bgp 4294967296', 'clear bgp 192.0.2.2 hard',
     'clear bgp 192.0.2.2 soft in out', 'show bgp summary',
     'clear bgp "*\nconfigure terminal"',
@@ -129,6 +145,8 @@ def test_operator_can_display_but_cannot_clear(controller, monkeypatch):
         assert controller.execute('show bgp summary')['text'] == 'output\n'
         with pytest.raises(RouterError, match='net-admin'):
             controller.execute('clear bgp *')
+        with pytest.raises(RouterError, match='net-admin'):
+            controller.execute('clear evpn dup-addr vni 10010')
         assert 'bgp' not in dict(controller.completion('clear ', explicit=True)['candidates'])
     finally:
         access.role.reset(token)

@@ -10236,6 +10236,12 @@ operational mode
 │   │   │           └── soft
 │   │   │               ├── in
 │   │   │               └── out
+│   │   ├── l2vpn
+│   │   │   └── evpn
+│   │   │       └── <address>
+│   │   │           └── soft
+│   │   │               ├── in
+│   │   │               └── out
 │   │   ├── peer-group <name>
 │   │   │   ├── capabilities
 │   │   │   ├── in
@@ -10439,6 +10445,11 @@ operational mode
 │   │           │   ├── domain <domain>
 │   │           │   └── name <domain>
 │   │           └── statistics
+│   ├── evpn
+│   │   └── dup-addr
+│   │       └── vni <1-16777215>
+│   │           ├── ip <address>
+│   │           └── mac <mac>
 │   ├── firewall
 │   │   ├── counter <name>
 │   │   ├── group
@@ -11488,7 +11499,10 @@ operational mode
 │   │   ├── l2vpn
 │   │   │   └── evpn
 │   │   │       ├── route
-│   │   │       │   └── type <1|2|3|4|5>
+│   │   │       │   ├── type <1|2|3|4|5>
+│   │   │       │   └── vni <1-16777215>
+│   │   │       │       └── mac <mac>
+│   │   │       │           └── ip <address>
 │   │   │       ├── summary
 │   │   │       └── vni [<1-16777215>]
 │   │   ├── labelpool
@@ -12397,7 +12411,13 @@ operational mode
 │   ├── evpn
 │   │   ├── arp-cache
 │   │   │   └── vni <1-16777215>
+│   │   │       └── duplicate
 │   │   ├── mac
+│   │   │   └── vni <1-16777215>
+│   │   │       └── duplicate
+│   │   ├── next-hops
+│   │   │   └── vni <1-16777215>
+│   │   ├── rmac
 │   │   │   └── vni <1-16777215>
 │   │   └── vni [<1-16777215>]
 │   ├── firewall

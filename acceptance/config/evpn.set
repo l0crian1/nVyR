@@ -1,0 +1,13 @@
+# One external VXLAN carries the tenant segment and its routed transit VNI.
+set interfaces bridge br992 vlan-filtering
+set interfaces bridge br992 member interface vxlan992 learning disable
+set interfaces vxlan vxlan992 source-address 198.18.207.1 destination-port 4789 learning disable
+set interfaces vxlan vxlan992 external vlan 10 vni 10010
+set interfaces vxlan vxlan992 external vlan 4000 vni 50000
+set interfaces bridge br992 vlan 10 local
+set interfaces bridge br992 vif 10 vrf BOOTVPN address 198.18.213.1/24
+set interfaces bridge br992 vlan 4000 local
+set interfaces bridge br992 vif 4000 vrf BOOTVPN mac 02:00:00:00:50:01
+set interfaces bridge br992 vif 4000 ipv6 no-default-link-local
+set vrf name BOOTVPN vni 50000
+set protocols bgp address-family l2vpn-evpn advertise-all-vni

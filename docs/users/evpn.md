@@ -77,3 +77,23 @@ show evpn mac vni 10010
 show evpn arp-cache vni 10010
 show interfaces vxlan vxlan0 fdb
 ```
+
+To trace a host move, look up its Type 2 route by MAC and check the selected VTEP against the VXLAN FDB. Supplying an IP selects the MAC/IP advertisement. For routed traffic, use the tenant L3VNI to inspect the remote router MAC and overlay next hop.
+
+```text
+show bgp l2vpn evpn route vni 10010
+show bgp l2vpn evpn route vni 10010 mac 02:00:00:00:10:0a
+show bgp l2vpn evpn route vni 10010 mac 02:00:00:00:10:0a ip 10.10.10.10
+show evpn rmac vni 50000
+show evpn next-hops vni 50000
+```
+
+After correcting a duplicate address, clear the affected MAC or IP. Omitting both clears duplicate state for the entire VNI. A soft BGP refresh reprocesses incoming EVPN routes or readvertises outgoing routes to one peer.
+
+```text
+show evpn mac vni 10010 duplicate
+show evpn arp-cache vni 10010 duplicate
+clear evpn dup-addr vni 10010 mac 02:00:00:00:10:0a
+clear evpn dup-addr vni 10010 ip 10.10.10.10
+clear bgp l2vpn evpn 192.0.2.2 soft out
+```

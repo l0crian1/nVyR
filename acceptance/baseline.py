@@ -13,10 +13,10 @@ from acceptance.checks import CHECKS
 
 
 CONFIG = Path(__file__).parent / 'config'
-CONFIG_FILES = ('interfaces.set', 'wireguard.set', 'routing.set', 'ospf.set', 'rip.set', 'isis.set', 'mpls.set', 'vpn.set', 'services.set', 'firewall.set')
+CONFIG_FILES = ('interfaces.set', 'wireguard.set', 'routing.set', 'ospf.set', 'rip.set', 'isis.set', 'mpls.set', 'vpn.set', 'evpn.set', 'services.set', 'firewall.set')
 LINKS = ('BOOTLEFT', 'BOOTRIGHT', 'BOOTVPN', 'dum992', 'dum995', 'dum996', 'dum997', 'dum998',
          'dum999', 'veth993', 'veth994', 'veth995', 'veth997', 'br994', 'br995', 'bond995', 'dum994',
-         'br993', 'veth981', 'veth982', 'veth983', 'veth984', 'wg995', 'wg996',
+         'br992', 'br992.10', 'br992.4000', 'vxlan992', 'br993', 'veth981', 'veth982', 'veth983', 'veth984', 'wg995', 'wg996',
          'pd-BOOTNET', 'pd-BOOTVRF', 'pd-BOOTBOX-0', 'pd-BOOTBOX-1', 'pd-BOOTPOD-0')
 TABLES = (41995, 41996, 40988)
 PREFIXES = ('198.18.192.0/19', '2001:db8:610::/48') + tuple(

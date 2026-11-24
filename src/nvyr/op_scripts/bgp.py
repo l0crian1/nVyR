@@ -10,6 +10,10 @@ from nvyr.helpers import vtysh
 def show(line: str, raw: bool = False):
     """Preserve native text, or return unmodified FRR JSON for internal callers."""
     words = vtysh.command_words(line, 'bgp.nvyr.op', 'show')
+    # FRR 10.7.1's combined lookup inspects the IP table even when only a MAC is supplied.
+    if len(words) == 9 and words[:6] == ('show', 'bgp', 'l2vpn', 'evpn', 'route', 'vni') and words[7] == 'mac':
+        words = ('show', 'bgp', 'vni', words[6], 'type', '2', 'mac', words[8])
+
     if 'longer-prefixes' in words and '/' not in words[words.index('longer-prefixes') - 1]:
         raise ParseError('longer-prefixes requires a destination prefix with a prefix length.')
     if raw and words[-1] == 'wide':
