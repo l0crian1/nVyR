@@ -48,6 +48,18 @@ def test_configuration_anchors_and_scope(controller, engine, session):
         controller.execute('set interfaces bridge br0 member interface dum0 vlan 30 vni 123', session)
 
 
+def test_unrelated_routed_tunnel_edit_leaves_bridge_ports_alone(local_session):
+    local_session.set('set interfaces dummy dum0')
+    local_session.set('set interfaces bridge br0 member interface dum0')
+    local_session.set('set interfaces vxlan vxlan1 vni 101')
+    local_session.commit()
+
+    local_session.set('set interfaces vxlan vxlan1 ttl 64')
+    results = local_session.commit()['results']
+    assert 'vxlan' in results
+    assert 'bridge' not in results and 'bridge-ports' not in results
+
+
 def test_kernel_creation_only_changes():
     before = vxlan.settings({'vni': '0', 'ttl': '64'})
     for profile, reason in [({'vni': '1'}, 'id'), ({'vni': '0', 'ttl': 'inherit'}, 'ttl inherit'),

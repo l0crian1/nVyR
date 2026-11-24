@@ -5336,10 +5336,7 @@
           },
           "script": {
             "name": "bridge",
-            "priority": 12,
-            "watch": [
-              "interfaces"
-            ]
+            "priority": 12
           },
           "children": {
             "ip": {
@@ -6489,6 +6486,16 @@
               "kind": "node",
               "anchor": true,
               "description": "Bridge membership",
+              "script": {
+                "name": "bridge-ports",
+                "priority": 14,
+                "watch": [
+                  "interfaces bridge",
+                  "interfaces ethernet * mtu",
+                  "interfaces bond * mtu",
+                  "interfaces virtual-ethernet * mtu"
+                ]
+              },
               "children": {
                 "interface": {
                   "kind": "tag_node",
@@ -6835,6 +6842,17 @@
                     }
                   },
                   "depends": "interface",
+                  "reapply-on-change": [
+                    "address",
+                    "dhcpv6-options",
+                    "dhcpv6-pd",
+                    "external",
+                    "mtu",
+                    "source-interface",
+                    "vif",
+                    "vni",
+                    "vrf"
+                  ],
                   "suggestors": [
                     {
                       "name": "interfaces"
@@ -13702,8 +13720,8 @@
             "macvlanN": "MACVLAN interface name"
           },
           "script": {
-            "name": "bridge",
-            "priority": 12
+            "name": "macvlan",
+            "priority": 13
           },
           "children": {
             "ip": {
@@ -14922,8 +14940,8 @@
             }
           ],
           "script": {
-            "name": "bridge",
-            "priority": 12
+            "name": "vxlan",
+            "priority": 13
           },
           "children": {
             "ip": {

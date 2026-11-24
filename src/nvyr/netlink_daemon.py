@@ -132,6 +132,9 @@ def dispatch(manager, request):
     if operation == 'replace-kernel-settings':
         return manager.replace_kernel_settings(request.get('values'))
 
+    if operation == 'replace-bridge-ports':
+        return manager.replace_bridge_ports(request['bridges'])
+
     if operation == 'replace-mpls':
         return manager.replace_mpls(request.get('values'))
 

@@ -92,7 +92,7 @@ def registry(schema):
     """Bind every schema owner to its trusted configuration script."""
     from nvyr.config_scripts import (
         container, firewall, logging, interface_ethernet, interface_dummy, interface_virtual_ethernet, interface_wireguard,
-        interface_bridge, interface_bond, interface_loopback, interface_macsec, protocols_static, protocols_bgp, protocols_ospf, protocols_ospfv3, protocols_rip, protocols_isis, policy,
+        interface_bridge, interface_bridge_ports, interface_vxlan, interface_bond, interface_loopback, interface_macsec, interface_macvlan, protocols_static, protocols_bgp, protocols_ospf, protocols_ospfv3, protocols_rip, protocols_isis, policy,
         service_ssh, service_dhcp, service_dns_forwarding, service_lldp, system_dns, system_login, system_hostname, system_configuration, system_ntp, system_cpu,
         system_static_hosts, system_task, system_timezone, vrf, evpn_vni, vrf_conntrack, protocols_mpls, protocols_ldp,
     )
@@ -110,9 +110,12 @@ def registry(schema):
         'loopback': interface_loopback,
         'virtual-ethernet': interface_virtual_ethernet,
         'bridge': interface_bridge,
+        'bridge-ports': interface_bridge_ports,
+        'vxlan': interface_vxlan,
         'bond': interface_bond,
         'wireguard': interface_wireguard,
         'macsec': interface_macsec,
+        'macvlan': interface_macvlan,
         'vrf': vrf,
         'evpn-vni': evpn_vni,
         'vrf_conntrack': vrf_conntrack,

@@ -156,6 +156,22 @@ def settings(configuration):
     return result
 
 
+def verify_macvlan_vxlan_order(macvlans, tunnels):
+    def first_child(profiles, parents):
+        for name, profile in profiles.items():
+            parent = profile.get('source-interface')
+            if parent in parents:
+                return f'{name} uses {parent}'
+        return None
+
+    # Each interface script runs once. Both stacking directions would require it to run twice.
+    macvlan_on_tunnel = first_child(macvlans, tunnels)
+    tunnel_on_macvlan = first_child(tunnels, macvlans)
+    if macvlan_on_tunnel and tunnel_on_macvlan:
+        raise ValidationError(f'{macvlan_on_tunnel} and {tunnel_on_macvlan}: '
+                              'choose one MACVLAN/VXLAN stacking direction per router')
+
+
 def bridge_members(configuration):
     """Collect switched ports from the proposed interface configuration."""
     return {
@@ -277,7 +293,7 @@ class NetlinkManager:
                 if response.get('version') != 1 or ('error' not in response and not isinstance(response.get('result'), dict)):
                     raise ValueError('Invalid or unsupported netlinkd response')
         except (OSError, EOFError, ValueError, RouterError) as error:
-            exception = RecoveryError if sent and operation in ('replace', 'replace-dns', 'replace-kernel-settings', 'replace-mpls') else RouterError
+            exception = RecoveryError if sent and operation in ('replace', 'replace-dns', 'replace-kernel-settings', 'replace-mpls', 'replace-bridge-ports') else RouterError
             raise exception(f'Cannot communicate with nvyr-netlinkd: {error}. Check nvyr-netlinkd.service; '
                             'a lost apply reply requires configd recovery.') from error
 

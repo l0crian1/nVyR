@@ -31,10 +31,8 @@ Use an addressless transit SVI for the L3VNI. Give this SVI a router MAC unique 
 set vrf name BLUE table 501
 set vrf name BLUE vni 50000
 set interfaces vxlan vxlan0 external vlan 4000 vni 50000
-set interfaces bridge br0 vlan 4000 local
 set interfaces bridge br0 vif 4000 vrf BLUE mac 02:00:00:00:50:01
 set interfaces bridge br0 vif 4000 ipv6 no-default-link-local
-set interfaces bridge br0 vlan 10 local
 set interfaces bridge br0 vif 10 vrf BLUE mac 02:00:00:00:10:01
 set interfaces bridge br0 vif 10 address 10.10.10.1/24
 set interfaces bridge br0 vif 10 address 2001:db8:10::1/64

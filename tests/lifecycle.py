@@ -41,6 +41,7 @@ class RecordingModule(LifecycleStub):
     def __init__(self, implementation):
         super().__init__()
         self.implementation = implementation
+        self.apply_after = getattr(implementation, "apply_after", None)
 
     def get_config(self, context):
         self._stage("get_config", context)

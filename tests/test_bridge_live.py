@@ -6,7 +6,7 @@ import os
 
 import pytest
 
-from nvyr.config_scripts.interface_bridge import generate
+from nvyr.config_scripts import interface_bridge, interface_bridge_ports
 from nvyr.errors import RouterError
 from nvyr.helpers.link_manager import Manager
 from nvyr.helpers.netlink import Kernel
@@ -18,6 +18,12 @@ pytestmark = pytest.mark.skipif(os.environ.get('NVYR_NETLINK_TEST') != '1',
                                 reason='requires isolated privileged Netlink container')
 
 
+def apply_bridge(manager, values):
+    configuration = {'bridges': values}
+    manager.replace('bridge', interface_bridge.generate(configuration, None))
+    manager.replace_bridge_ports(interface_bridge_ports.generate(configuration, None))
+
+
 @pytest.fixture
 def topology(tmp_path, isolated):
     kernel = Kernel()
@@ -26,7 +32,7 @@ def topology(tmp_path, isolated):
     manager.replace('dummy', ports)
     values = {'br90': {'member': {'interface': {'dum90': {}, 'dum91': {}}}}}
     try:
-        manager.replace('bridge', generate({'bridges': values}, None))
+        apply_bridge(manager, values)
         yield manager, kernel, values
     finally:
         manager.replace('bridge', {}, recovery=True)
@@ -43,7 +49,7 @@ def test_creation_update_audit_and_delete(topology):
     assert not manager.failures
     assert kernel.device('dum90')['attributes']['vrf'] == index
     values['br90']['description'] = 'Native bridge test'
-    manager.replace('bridge', generate({'bridges': values}, None))
+    apply_bridge(manager, values)
     assert kernel.device('br90')['index'] == index
     assert kernel.device('br90')['attributes']['description'] == 'Native bridge test'
 
@@ -73,12 +79,12 @@ def test_bridge_dhcp_client_intent(topology):
     """The common lease manager starts and stops DHCP on the bridge, never its ports."""
     manager, kernel, values = topology
     values['br90']['address'] = ['dhcp']
-    manager.replace('bridge', generate({'bridges': values}, None))
+    apply_bridge(manager, values)
     assert set(manager.dhcp.clients) == {'br90'}
     assert manager.dhcp.clients['br90'][0] == kernel.device('br90')['index']
 
     del values['br90']['address']
-    manager.replace('bridge', generate({'bridges': values}, None))
+    apply_bridge(manager, values)
     assert not manager.dhcp.clients
 
 
@@ -89,12 +95,12 @@ def test_vlan_zero_access_trunk_and_removal(topology):
     bridge.update({'vlan-filtering': {}, 'default-pvid': '0'})
     bridge['member']['interface']['dum90']['vlan'] = {'10': {'pvid': {}, 'untagged': {}}}
     bridge['member']['interface']['dum91']['vlan'] = {'10': {}, '20': {}}
-    manager.replace('bridge', generate({'bridges': values}, None))
+    apply_bridge(manager, values)
     assert vlan_inventory('br90') == {}
     assert vlan_inventory('dum90') == {10: (True, True)}
     assert vlan_inventory('dum91') == {10: (False, False), 20: (False, False)}
     del bridge['member']['interface']['dum91']['vlan']['20']
-    manager.replace('bridge', generate({'bridges': values}, None))
+    apply_bridge(manager, values)
     assert vlan_inventory('dum91') == {10: (False, False)}
 
 
@@ -103,13 +109,13 @@ def test_static_forwarding_and_multicast(topology):
     manager, kernel, values = topology
     values['br90']['static-mac'] = {'02:00:00:00:90:01': {'interface': 'dum90'}}
     values['br90']['multicast'] = {'static-group': {'TV': {'address': '239.90.0.1', 'interface': ['dum90']}}}
-    manager.replace('bridge', generate({'bridges': values}, None))
+    apply_bridge(manager, values)
     entries = json.loads(run('bridge', '-j', 'fdb', 'show', 'br', 'br90'))
     assert any(entry['mac'] == '02:00:00:00:90:01' and entry['state'] == 'static' for entry in entries)
     assert '239.90.0.1' in run('bridge', '-j', 'mdb', 'show', 'dev', 'br90')
     del values['br90']['static-mac']
     del values['br90']['multicast']
-    manager.replace('bridge', generate({'bridges': values}, None))
+    apply_bridge(manager, values)
     assert '02:00:00:00:90:01' not in run('bridge', '-j', 'fdb', 'show', 'br', 'br90')
     assert '239.90.0.1' not in run('bridge', '-j', 'mdb', 'show', 'dev', 'br90')
 
@@ -121,14 +127,14 @@ def test_stp_port_settings_and_reset(topology):
     values['br90']['member']['interface']['dum90'] = {
         'spanning-tree': {'cost': '500', 'bpdu-guard': {}, 'root-guard': {}},
         'hairpin': {}, 'isolated': {}, 'flood': {'unknown-unicast': {'disable': {}}}}
-    manager.replace('bridge', generate({'bridges': values}, None))
+    apply_bridge(manager, values)
     assert bridge_data('br90')['stp_state'] == 1
     port = json.loads(run('bridge', '-d', '-j', 'link', 'show', 'dev', 'dum90'))[0]
     assert port['cost'] == 500 and port['guard'] and port['root_block'] and port['hairpin']
     assert port['isolated'] and not port['flood']
     del values['br90']['spanning-tree']
     values['br90']['member']['interface']['dum90'] = {}
-    manager.replace('bridge', generate({'bridges': values}, None))
+    apply_bridge(manager, values)
     port = json.loads(run('bridge', '-d', '-j', 'link', 'show', 'dev', 'dum90'))[0]
     assert not port['guard'] and not port['isolated'] and port['flood']
 
@@ -140,6 +146,20 @@ def test_failed_apply_rolls_back(topology):
     broken['br90']['description'] = 'must roll back'
     broken['br90']['mtu'] = '1'
     with pytest.raises(RouterError, match='previous configuration restored'):
-        manager.replace('bridge', generate({'bridges': broken}, None))
+        apply_bridge(manager, broken)
     assert kernel.device('br90')['attributes']['description'] == ''
     assert kernel.device('dum90')['attributes']['vrf'] == kernel.device('br90')['index']
+
+
+def test_failed_port_attachment_restores_detached_port(topology):
+    manager, kernel, values = topology
+    # This candidate detaches dum90 before finding its replacement port is missing.
+    broken = deepcopy(values)
+    members = broken['br90']['member']['interface']
+    del members['dum90']
+    members['dum92'] = {}
+    with pytest.raises(RouterError, match='missing bridge member dum92'):
+        manager.replace_bridge_ports(interface_bridge_ports.generate({'bridges': broken}, None))
+
+    assert kernel.device('dum90')['attributes']['vrf'] == kernel.device('br90')['index']
+    assert manager.state['bridge-ports']['br90']['member'] == values['br90']['member']

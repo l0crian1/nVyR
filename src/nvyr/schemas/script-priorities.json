@@ -103,9 +103,14 @@
     "script": "bridge",
     "priority": 12,
     "paths": [
-      "interfaces bridge <name>",
-      "interfaces macvlan <name>",
-      "interfaces vxlan <name>"
+      "interfaces bridge <name>"
+    ]
+  },
+  {
+    "script": "macvlan",
+    "priority": 13,
+    "paths": [
+      "interfaces macvlan <name>"
     ]
   },
   {
@@ -113,6 +118,20 @@
     "priority": 13,
     "paths": [
       "system static-host-mapping <name>"
+    ]
+  },
+  {
+    "script": "vxlan",
+    "priority": 13,
+    "paths": [
+      "interfaces vxlan <name>"
+    ]
+  },
+  {
+    "script": "bridge-ports",
+    "priority": 14,
+    "paths": [
+      "interfaces bridge <name> member"
     ]
   },
   {

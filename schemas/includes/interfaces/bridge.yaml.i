@@ -14,8 +14,6 @@ bridge:
   script:
     name: bridge
     priority: 12
-    watch:
-    - interfaces
 
   include_schema:
   - file: interfaces/common.yaml.i
@@ -44,6 +42,15 @@ bridge:
         kind: node
         anchor: true
         description: Bridge membership
+        script:
+          name: bridge-ports
+          priority: 14
+          watch:
+          - interfaces bridge
+          # A member VIF inherits its lower interface's MTU when it has no override.
+          - interfaces ethernet * mtu
+          - interfaces bond * mtu
+          - interfaces virtual-ethernet * mtu
         children:
 
           interface:
@@ -285,6 +292,16 @@ bridge:
                     valueless: true
                     description: Suppress ARP and ND in this VLAN
             depends: interface
+            reapply-on-change:
+            - address
+            - dhcpv6-options
+            - dhcpv6-pd
+            - external
+            - mtu
+            - source-interface
+            - vif
+            - vni
+            - vrf
             suggestors:
               interfaces: {}
 

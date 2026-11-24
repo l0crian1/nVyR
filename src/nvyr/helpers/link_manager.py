@@ -21,7 +21,7 @@ from nvyr.errors import RecoveryError, RouterError, ValidationError
 from nvyr.storage import atomic_json, sync_directory
 from nvyr.helpers.netlink import TYPES, interface_name, normalize, read_attributes
 from nvyr.helpers.dhcp_options import lease_routes, lease_spec
-from nvyr.helpers import interface_ip, ipv6_ra, kernel_settings, macsec, mpls, vxlan
+from nvyr.helpers import bridge_netlink, interface_ip, ipv6_ra, kernel_settings, macsec, mpls, vxlan
 from nvyr.helpers.kernel_settings_map import SETTINGS
 
 log = logging.getLogger(__name__)
@@ -118,6 +118,56 @@ class Manager:
                 raise
         return {'previous': previous}
 
+    def _apply_bridge_ports(self, bridges, names):
+        for name in sorted(names):
+            record = self.state['records'].get(name)
+            device = self.kernel.device(name)
+            if not record or record['owner'] != 'bridge' or not device:
+                if name in bridges:
+                    raise ValidationError(f'{name}: bridge must exist before attaching ports')
+                continue
+            if record['index'] != device['index'] or device['kind'] != 'bridge':
+                raise ValidationError(f'{name}: refusing to configure a replacement bridge')
+
+            bridge_netlink.apply_ports(self.kernel, name, bridges.get(name, {}))
+
+    def replace_bridge_ports(self, bridges):
+        previous = self.state.get('bridge-ports', {})
+        if not isinstance(bridges, dict):
+            raise ValidationError('Bridge port configuration must be an object')
+        members = set()
+        for name, values in bridges.items():
+            interface_name(name)
+            for member in values.get('member', {}).get('interface', {}):
+                interface_name(member)
+                if member == name:
+                    raise ValidationError('A bridge cannot be its own member')
+                if member in members:
+                    raise ValidationError(f'{member}: multiple configured bridge masters')
+                members.add(member)
+
+        # Include empty owned bridges so replay clears partially installed memberships.
+        names = {name for name, record in self.state['records'].items() if record['kind'] == 'bridge'}
+        names.update(previous.keys() | bridges.keys())
+        with self.kernel.snapshot():
+            try:
+                self._attachments(bridge_ports=bridges)
+                self._apply_bridge_ports(bridges, names)
+                self.state['bridge-ports'] = bridges
+                self.save()
+            except Exception as error:
+                self.state['bridge-ports'] = previous
+                try:
+                    self._attachments(bridge_ports=previous)
+                    self._apply_bridge_ports(previous, names)
+                    self.save()
+                except Exception as restore_error:
+                    raise RecoveryError(f'Bridge ports failed ({error}); restoration failed ({restore_error})') from restore_error
+                raise
+            finally:
+                self._index()
+        return {}
+
     def replace_mpls(self, values):
         mpls.validate(values)
         self.reconcile_mpls()
@@ -188,6 +238,10 @@ class Manager:
                 for dependency in (*driver.dependencies(definition), *driver.optional_dependencies(definition),
                                    *driver.companions(definition)):
                     self.dependents.setdefault(dependency, set()).add(name)
+
+        for bridge, values in self.state.get('bridge-ports', {}).items():
+            for member in values.get('member', {}).get('interface', {}):
+                self.dependents.setdefault(member, set()).add(bridge)
 
     def fingerprint(self, name, device):
         if device is None:
@@ -808,6 +862,16 @@ class Manager:
         except Exception as error:
             self.failures.update({name: str(error) for name in checked})
 
+        # Reattach recreated ports after all selected devices and lower links exist.
+        bridges = self.state.get('bridge-ports', {})
+        for name in checked:
+            if target[name]['kind'] != 'bridge':
+                continue
+            try:
+                self._apply_bridge_ports(bridges, (name,))
+            except Exception as error:
+                self.failures[name] = f'{name}: {error}'
+
         for name in checked:
             try:
                 if self.kernel.device(name) is not None:
@@ -831,12 +895,15 @@ class Manager:
 
         self.reconcile_dns()
 
-    def _attachments(self, owner=None, links=None):
+    def _attachments(self, owner=None, links=None, *, bridge_ports=None):
         """Resolve cross-owner master relationships for apply, rollback and audits."""
         owners = dict(self.state['owners'])
         if owner is not None:
             owners[owner] = links
-        attachments = {}
+        if bridge_ports is None:
+            bridge_ports = self.state.get('bridge-ports', {})
+        attachments = {member: bridge for bridge, values in bridge_ports.items()
+                       for member in values.get('member', {}).get('interface', {})}
         for definitions in owners.values():
             for name, spec in definitions.items():
                 driver = self.types[spec['kind']]
@@ -848,7 +915,7 @@ class Manager:
         self.kernel.attachments = attachments
         self.kernel.owned_master_indices = {
             record['index'] for record in self.state['records'].values()
-            if self.types[record['kind']].attachments(dict(record['definition'], name='owned'))}
+            if record['kind'] == 'bridge' or self.types[record['kind']].attachments(dict(record['definition'], name='owned'))}
 
     def reconcile_dns(self):
         if self.resolver is not None:

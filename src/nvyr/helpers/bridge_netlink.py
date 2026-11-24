@@ -7,6 +7,7 @@ Learned FDB/MDB entries are not flushed during ordinary reconciliation.
 
 import json
 
+from nvyr.errors import ValidationError
 from nvyr.helpers import bridge_config as config
 from nvyr.helpers.process import cmd
 
@@ -205,3 +206,38 @@ def reconcile_mdb(name, values):
         for address, port, identifier, source in sorted(entries):
             extra = (['vid', identifier] if identifier else []) + (['src', source] if source else [])
             write('bridge', 'mdb', operation, 'dev', name, 'port', port, 'grp', address, 'permanent', *extra)
+
+
+def apply_ports(kernel, name, values):
+    from nvyr.helpers import vxlan
+
+    members = values.get('member', {}).get('interface', {})
+    for port in query('bridge', '-j', 'link', 'show', 'master', name):
+        if port['ifname'] not in members:
+            kernel.ipr.link('set', index=port['ifindex'], master=0)
+            kernel.refresh(port['ifname'])
+
+    master = kernel.device(name)['index']
+    for member in members:
+        device = kernel.device(member)
+        if device is None:
+            raise ValidationError(f'{name}: missing bridge member {member}')
+        current = device['attributes']['vrf']
+        # Never steal an interface from a foreign bridge, bond or VRF.
+        if current and current != master and current not in getattr(kernel, 'owned_master_indices', set()):
+            raise ValidationError(f'{member}: already attached to an unmanaged master')
+        if current != master:
+            if current:
+                kernel.ipr.link('set', index=device['index'], master=0)
+            kernel.ipr.link('set', index=device['index'], master=master)
+            kernel.refresh(member)
+
+    for member, settings in members.items():
+        reconcile_port(kernel, member, settings)
+        reconcile_vlans(member, config.vlan_memberships(settings, bridge=values))
+        if 'vxlan-mappings' in settings:
+            vxlan.reconcile_mappings(member, settings['vxlan-mappings'])
+    reconcile_vlan_options(name, values, members)
+    reconcile_fdb(kernel, name, values)
+    if 'disable' not in values:
+        reconcile_mdb(name, values)

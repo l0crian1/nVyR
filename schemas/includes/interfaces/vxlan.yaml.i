@@ -10,8 +10,8 @@ vxlan:
   suggestors:
     interfaces: {prefix: vxlan}
   script:
-    name: bridge
-    priority: 12
+    name: vxlan
+    priority: 13
   include_schema:
   - file: interfaces/common.yaml.i
     remove:

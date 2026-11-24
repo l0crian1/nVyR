@@ -575,23 +575,11 @@ class Bridge(LinkType):
     kernel_kind = 'bridge'
     keymap = LINK_KEYMAP | {'bridge': NetlinkKey('', ('NVYR_BRIDGE_SETTINGS',), missing=None)}
 
-    def attachments(self, spec):
-        return {name: spec['name'] for name in spec['attributes']['bridge'].get('member', {}).get('interface', {})}
-
-    def dependencies(self, spec):
-        return (*super().dependencies(spec), *self.attachments(spec))
-
     def validate(self, spec, links, previous=None):
         values = spec['attributes'].get('bridge')
-        # Structured bridge intent is required; an absent payload cannot reset port policy.
+        # Link-level bridge settings must be a mapping before the kernel driver uses them.
         if not isinstance(values, dict):
             raise ValidationError(f"{spec['name']}: bridge settings must be an object")
-        for name in self.attachments(spec):
-            # Member identities must be safe kernel interface names at the RPC boundary.
-            interface_name(name)
-            # Self-membership would create a dependency cycle rather than a usable port.
-            if name == spec['name']:
-                raise ValidationError('A bridge cannot be its own member')
 
     def create(self, kernel, spec):
         values = spec['attributes']['bridge']
@@ -604,14 +592,12 @@ class Bridge(LinkType):
 
     def configure(self, kernel, spec, baseline):
         from nvyr.helpers.bridge_netlink import (
-            bridge_data, set_bridge_options, query, reconcile_vlans, reconcile_port,
-            reconcile_vlan_options, reconcile_fdb, reconcile_mdb,
+            bridge_data, set_bridge_options, query, reconcile_vlans, reconcile_vlan_options,
         )
         from nvyr.helpers import bridge_config as config
 
         name = spec['name']
         values = spec['attributes']['bridge']
-        members = values.get('member', {}).get('interface', {})
         attributes = {key: value for key, value in spec['attributes'].items() if key != 'bridge'}
         changed = super().configure(kernel, dict(spec, attributes=attributes), baseline)
         desired = config.bridge_options(values)
@@ -628,34 +614,8 @@ class Bridge(LinkType):
         if not spec['disabled']:
             kernel.state(name, True)
 
-        for port in query('bridge', '-j', 'link', 'show', 'master', name):
-            if port['ifname'] not in members:
-                kernel.ipr.link('set', index=port['ifindex'], master=0)
-                kernel.refresh(port['ifname'])
-
-        master = kernel.device(name)['index']
-        for member in members:
-            device = kernel.device(member)
-            current = device['attributes']['vrf']
-            # Never steal an interface from a foreign bridge, bond or VRF.
-            if current and current != master and current not in getattr(kernel, 'owned_master_indices', set()):
-                raise ValidationError(f'{member}: already attached to an unmanaged master')
-            if current != master:
-                if current:
-                    kernel.ipr.link('set', index=device['index'], master=0)
-                kernel.ipr.link('set', index=device['index'], master=master)
-                kernel.refresh(member)
-
-        for member, settings in members.items():
-            reconcile_port(kernel, member, settings)
-            reconcile_vlans(member, config.vlan_memberships(settings, bridge=values))
-            if 'vxlan-mappings' in settings:
-                vxlan.reconcile_mappings(member, settings['vxlan-mappings'])
         reconcile_vlans(name, config.vlan_memberships(values, local=True), local=True)
-        reconcile_vlan_options(name, values, members)
-        reconcile_fdb(kernel, name, values)
-        if not spec['disabled']:
-            reconcile_mdb(name, values)
+        reconcile_vlan_options(name, values, {})
         return changed
 
 

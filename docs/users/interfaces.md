@@ -18,6 +18,10 @@ across recreation. The interface inherits the parent MTU unless you set a smalle
 or equal value. For multiple MACVLANs on one uplink, select that uplink as the
 parent of each sibling.
 
+A router can use a VXLAN as a MACVLAN parent, or a MACVLAN as a VXLAN underlay.
+Choose one stacking direction per router. Both types can use ordinary interfaces
+and bridge SVIs as parents in the same configuration.
+
 ```text
 set interfaces macvlan macvlan0 source-interface eth0 mac 02:00:00:00:00:02
 set interfaces macvlan macvlan0 address dhcp

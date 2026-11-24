@@ -10,6 +10,7 @@ import pytest
 from nvyr.errors import ValidationError
 from nvyr.helpers import bridge_config
 from nvyr.config_scripts import interface_bridge
+from nvyr.config_session import CommitError
 from nvyr.tree import ReadOnlyTree
 
 
@@ -93,6 +94,19 @@ def test_bridge_vifs_are_native_children():
     assert links['br0']['kind'] == 'bridge'
     assert links['br0.10']['attributes']['parent'] == 'br0'
     assert bridge_config.vlan_memberships(links['br0']['attributes']['bridge'], local=True)[10] == (False, False)
+
+
+def test_bridge_rechecks_inherited_member_vif_mtu(local_session):
+    local_session.set('set interfaces virtual-ethernet veth0 peer-name veth1')
+    local_session.set('set interfaces virtual-ethernet veth1 peer-name veth0')
+    local_session.set('set interfaces virtual-ethernet veth0 vif 10')
+    local_session.set('set interfaces bridge br0 member interface veth0.10')
+    local_session.commit()
+
+    local_session.set('set interfaces virtual-ethernet veth0 mtu 1400')
+    with pytest.raises(CommitError, match='member MTU must be at least the bridge MTU'):
+        local_session.commit()
+    assert 'mtu' not in local_session.get_config()['interfaces']['virtual-ethernet']['veth0']
 
 
 def test_ruleless_bridge_is_valid():

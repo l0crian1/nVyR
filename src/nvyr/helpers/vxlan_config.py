@@ -5,6 +5,17 @@ import ipaddress
 from nvyr.errors import ValidationError
 
 
+def filtered_ports(bridges):
+    return {port for bridge in bridges.values() if 'vlan-filtering' in bridge
+            for port in bridge.get('member', {}).get('interface', {})}
+
+
+def verify_mapping_port(name, values, filtered):
+    # Linux applies external VLAN mappings to a port of a VLAN-filtering bridge.
+    if values.get('external', {}).get('vlan') and name not in filtered:
+        raise ValidationError(f'{name}: external VLAN mappings require membership in a VLAN-filtering bridge')
+
+
 def verify_interface(name, values, inventory, filtered):
     # Every link selects exactly one kernel VXLAN mode.
     if ('vni' in values) == ('external' in values):
@@ -62,8 +73,7 @@ def verify_interface(name, values, inventory, filtered):
     if len({mac.lower() for mac in macs}) != len(macs):
         raise ValidationError(f'{name}: duplicate static MAC address')
     # Mappings operate on the tunnel port of a VLAN-filtering bridge.
-    if vlans and name not in filtered:
-        raise ValidationError(f'{name}: external VLAN mappings require membership in a VLAN-filtering bridge')
+    verify_mapping_port(name, values, filtered)
 
     used = set()
     for vid, mapping in vlans.items():

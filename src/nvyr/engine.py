@@ -118,7 +118,7 @@ class Engine:
         effective = self.schema.defaults(applicable)
         snapshots = (self.schema.ownership.snapshot(effective),
                      self.schema.ownership.snapshot(self.schema.defaults(prior)))
-        reapplies = reapply.plan(self.dependencies, snapshots[1].configuration, effective)
+        reapplies = self._reapply_plan(snapshots[1].configuration, effective)
         ordered = reapplies.order(set(self.schema.owners), self.schema)
         for owner in ordered:
             self._activity_owner(owner)
@@ -659,6 +659,15 @@ class Engine:
 
             self.store.write("boot.json", self.running, metadata={'dependencies': self.dependencies.document(self.running)})
 
+    def _reapply_plan(self, previous, effective):
+        plan = reapply.plan(self.dependencies, previous, effective)
+        # Runtime lower-link dependencies order participating owners even on an unchanged boot replay.
+        for owner, module in self.modules.items():
+            after = getattr(module, 'apply_after', None)
+            if after:
+                plan.requires.setdefault(owner, set()).update(after(effective))
+        return plan
+
     def _lifecycle(self, owner, effective, previous, recovery=False, report=None, *, check_only=False, snapshots=None, reapply_paths=(), startup=False):
         """Run one owner's lifecycle with read-only trees and registration context.
 
@@ -717,7 +726,7 @@ class Engine:
             affected.update(set(self.startup_errors) & self.schema.owners.keys())
             snapshots = (self.schema.ownership.snapshot(effective),
                          self.schema.ownership.snapshot(self.schema.defaults(before)))
-            reapplies = reapply.plan(self.dependencies, snapshots[1].configuration, effective)
+            reapplies = self._reapply_plan(snapshots[1].configuration, effective)
             ordered = reapplies.order(affected, self.schema)
             commit_id = self.commit_id
             self._start_activity('check', session)
@@ -793,7 +802,7 @@ class Engine:
             requires = self.schema.ownership.required_parents(prior, current)
             snapshots = (self.schema.ownership.snapshot(effective),
                          self.schema.ownership.snapshot(self.schema.defaults(before)))
-            reapplies = reapply.plan(self.dependencies, snapshots[1].configuration, effective)
+            reapplies = self._reapply_plan(snapshots[1].configuration, effective)
             affected.update(reapplies.paths)
             ordered = reapplies.order(affected, self.schema, requires)
             for consumer, providers in reapplies.requires.items():
@@ -1125,7 +1134,7 @@ class Engine:
         effective = self.schema.defaults(target)
         snapshots = (self.schema.ownership.snapshot(effective),
                      self.schema.ownership.snapshot(self.schema.defaults(before)))
-        reapplies = reapply.plan(self.dependencies, snapshots[1].configuration, effective)
+        reapplies = self._reapply_plan(snapshots[1].configuration, effective)
         ordered = reapplies.order(owners, self.schema)
         failures = []
 

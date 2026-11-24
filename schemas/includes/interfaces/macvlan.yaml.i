@@ -10,8 +10,8 @@ macvlan:
   hints:
     macvlanN: MACVLAN interface name
   script:
-    name: bridge
-    priority: 12
+    name: macvlan
+    priority: 13
   include_schema:
   - file: interfaces/common.yaml.i
     remove:

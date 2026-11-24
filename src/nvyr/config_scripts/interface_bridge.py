@@ -4,7 +4,7 @@ import ipaddress
 from collections.abc import Mapping
 
 from nvyr.errors import ValidationError
-from nvyr.helpers import bridge_config, interfaces, netlink, vxlan, vxlan_config
+from nvyr.helpers import bridge_config, interfaces, netlink
 from nvyr.tree import lookup
 
 ROOT = ('interfaces', 'bridge')
@@ -23,7 +23,6 @@ def get_config(context):
     return {
         'bridges': bridges,
         'tunnels': tunnels,
-        'macvlans': lookup(context.effective, ('interfaces', 'macvlan'), {}),
         'inventory': dict(interfaces.configured(context.effective)),
         'bond-members': interfaces.bond_members(context.effective),
         'vrfs': lookup(context.effective, ('vrf', 'name'), {}),
@@ -44,19 +43,16 @@ def link_definitions(configuration):
     bridges = configuration['bridges']
     links = interfaces.NetlinkManager.definitions('bridge', interfaces.settings(bridges))
     for name, values in bridges.items():
-        links[name]['attributes']['bridge'] = values
+        # Port policy is applied after devices exist, including tunnels using a bridge underlay.
+        settings = dict(values)
+        settings.pop('member', None)
+        settings.pop('static-mac', None)
+        if 'multicast' in settings:
+            settings['multicast'] = dict(settings['multicast'])
+            settings['multicast'].pop('static-group', None)
+        links[name]['attributes']['bridge'] = settings
 
-    # A bridge may be the underlay or the overlay master. Netlinkd orders all three links.
-    profiles = configuration['tunnels']
-    tunnels = interfaces.NetlinkManager.definitions('vxlan', interfaces.settings(profiles))
-    for name, values in profiles.items():
-        tunnels[name]['attributes']['vxlan'] = vxlan.settings(values)
-    profiles = configuration['macvlans']
-    children = interfaces.NetlinkManager.definitions('macvlan', interfaces.settings(profiles))
-    for name, values in profiles.items():
-        children[name]['attributes'].update(parent=values['source-interface'], mode=values['mode'])
-
-    return links | interfaces.vlan_definitions(bridges) | tunnels | children
+    return links | interfaces.vlan_definitions(bridges)
 
 
 def verify_vlans(configuration, path, *, local=False):
@@ -82,7 +78,7 @@ def verify_multicast(configuration, path):
         raise ValidationError(f'{path}: membership-interval must exceed query-interval')
 
 
-def verify(configuration, context):
+def verify_bridges(configuration):
     bridges = configuration['bridges']
     inventory = configuration['inventory']
 
@@ -98,26 +94,6 @@ def verify(configuration, context):
     if overlap:
         raise ValidationError(f'{min(overlap)}: interface cannot be both a bridge and a bond member')
     interfaces.verify_pd(inventory, members | configuration['bond-members'])
-
-    # VXLAN endpoints may use L3 settings directly or join a bridge as switched ports.
-    interfaces.verify_membership(configuration['tunnels'], vrfs=configuration['vrfs'], bridge_members=members,
-                                 bond_members=configuration['bond-members'])
-    filtered = {port for bridge in bridges.values() if 'vlan-filtering' in bridge
-                for port in lookup(bridge, ('member', 'interface'), {})}
-    for name, profile in configuration['tunnels'].items():
-        vxlan_config.verify_interface(name, profile, inventory, filtered)
-
-    # Routed MACVLANs use the same VRF and switched-port constraints as other links.
-    interfaces.verify_membership(configuration['macvlans'], vrfs=configuration['vrfs'], bridge_members=members,
-                                 bond_members=configuration['bond-members'])
-    for name, profile in configuration['macvlans'].items():
-        parent = profile.get('source-interface')
-        # Creation needs a real lower device, including a VIF created in this commit.
-        if not parent or parent == name or parent not in inventory:
-            raise ValidationError(f'{name}: source-interface must name a different configured interface')
-        # Linux flattens stacked MACVLANs onto the original lower device.
-        if parent in configuration['macvlans']:
-            raise ValidationError(f'{name}: select the underlying link of {parent} as the source-interface')
 
     # Child VLAN names and MTUs must fit their parent and kernel limits.
     interfaces.verify_vifs(bridges)
@@ -263,6 +239,10 @@ def verify(configuration, context):
                 if key in keys:
                     raise ValidationError(f'{group_path}: duplicate multicast membership')
                 keys.add(key)
+
+
+def verify(configuration, context):
+    verify_bridges(configuration)
 
     # Preflight the same link definitions used by apply, including native ownership checks.
     links = link_definitions(configuration)

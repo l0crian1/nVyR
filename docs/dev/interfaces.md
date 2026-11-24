@@ -10,6 +10,21 @@ to send complete desired link mappings to `nvyr-netlinkd`. The daemon uses
 route notifications, and reconciles affected interfaces from fresh kernel snapshots. There are
 no generated networkd profiles or networkctl calls. The ISO masks networkd.
 
+## Bridge, VXLAN and MACVLAN ownership
+
+`interface_bridge.py` creates bridges and their VLAN interfaces. `interface_macvlan.py`
+and `interface_vxlan.py` validate and apply their own links, including their lower
+interface references. Each submits only its own devices to netlinkd. MACVLAN
+normally runs first. Its `apply_after` hook orders VXLAN first when the candidate
+uses a VXLAN lower interface. This ordering also applies when replaying an
+unchanged saved configuration. Verification rejects opposing stacks on one router.
+
+`interface_bridge_ports.py` runs after link creation. It attaches the configured
+ports and applies their VLAN memberships, external VXLAN VLAN-to-VNI mappings,
+and static forwarding and multicast entries. A bridge SVI can therefore supply
+a VXLAN underlay in the same commit that attaches the tunnel to an overlay bridge.
+Netlinkd retains the port policy for reconciliation if a bridge or port is recreated.
+
 ## Static neighbors
 
 Static neighbors use the same interface lifecycle. Their schema is in
