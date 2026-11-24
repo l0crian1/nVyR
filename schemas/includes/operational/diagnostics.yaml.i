@@ -6,6 +6,7 @@ generate:
 
     include_schema:
     - file: operational/wireguard-actions.yaml.i
+    - file: operational/macsec-generate.yaml.i
 
     system:
       kind: node

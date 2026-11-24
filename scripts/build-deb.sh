@@ -163,6 +163,7 @@ printf '%s\n' '/etc/default/grub.d/20-nvyr-console.cfg' > "$stage/DEBIAN/conffil
 
 install -m 0644 "$repository/packaging/nvyr-ssh@.service" "$stage/usr/lib/systemd/system/nvyr-ssh@.service"
 install -m 0644 "$repository/packaging/nvyr-ntp.service" "$stage/usr/lib/systemd/system/nvyr-ntp.service"
+install -m 0644 "$repository/packaging/nvyr-macsec@.service" "$stage/usr/lib/systemd/system/nvyr-macsec@.service"
 install -m 0644 "$repository/packaging/nvyr-lldp.service" "$stage/usr/lib/systemd/system/nvyr-lldp.service"
 for unit in nvyr-dns@.service nvyr-dns-refresh.service nvyr-dns-refresh.timer; do
     install -m 0644 "$repository/packaging/$unit" "$stage/usr/lib/systemd/system/$unit"

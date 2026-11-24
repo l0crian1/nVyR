@@ -29,6 +29,7 @@ mtr-tiny
 curl
 iproute2
 wireguard-tools
+wpasupplicant
 net-tools
 netcat-openbsd
 procps

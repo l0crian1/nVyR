@@ -5903,6 +5903,72 @@ set
 │   ├── loopback <lo>
 │   │   ├── address <x.x.x.x/x|x:x:x:x:x:x/x>
 │   │   └── description <text>
+│   ├── macsec <macsecN>
+│   │   ├── address <x.x.x.x/x|x:x:x:x:x:x/x>
+│   │   ├── description <text>
+│   │   ├── disable
+│   │   ├── ip
+│   │   │   ├── accept-local
+│   │   │   ├── arp-accept <disable|enable|same-subnet>
+│   │   │   ├── arp-announce <any|subnet|best-local>
+│   │   │   ├── arp-cache-timeout <duration>
+│   │   │   ├── arp-entry <x.x.x.x>
+│   │   │   │   ├── description <text>
+│   │   │   │   └── mac-address <xx:xx:xx:xx:xx:xx>
+│   │   │   ├── arp-filter <enable|disable>
+│   │   │   ├── arp-ignore <0|1|2|3|8>
+│   │   │   ├── arp-notify <enable|disable>
+│   │   │   ├── arp-proxy <enable|disable>
+│   │   │   ├── arp-proxy-pvlan <enable|disable>
+│   │   │   ├── arp-retransmit-interval <duration>
+│   │   │   ├── arp-stale-time <duration>
+│   │   │   ├── directed-broadcast <enable|disable>
+│   │   │   ├── disable-forwarding
+│   │   │   ├── log-martians <enable|disable>
+│   │   │   ├── promote-secondaries
+│   │   │   ├── receive-redirects <enable|disable>
+│   │   │   ├── route-localnet
+│   │   │   ├── send-redirects <enable|disable>
+│   │   │   └── source-route <enable|disable>
+│   │   ├── ipv6
+│   │   │   ├── accept-router-advertisements
+│   │   │   ├── address-generation <eui64|stable-privacy>
+│   │   │   ├── autoconf
+│   │   │   ├── disable
+│   │   │   ├── duplicate-address-detection
+│   │   │   │   ├── disable
+│   │   │   │   └── probes <number>
+│   │   │   ├── eui64 <address>
+│   │   │   ├── hop-limit <number>
+│   │   │   ├── interface-identifier <address>
+│   │   │   ├── link-local-address <address>
+│   │   │   ├── maximum-autoconf-addresses <number>
+│   │   │   ├── neighbor <h:h::h>
+│   │   │   │   ├── description <text>
+│   │   │   │   └── mac-address <xx:xx:xx:xx:xx:xx>
+│   │   │   ├── neighbor-reachable-time <duration>
+│   │   │   ├── neighbor-retransmit-interval <duration>
+│   │   │   ├── neighbor-stale-time <duration>
+│   │   │   ├── no-default-link-local
+│   │   │   ├── no-default-route
+│   │   │   ├── no-ra-mtu
+│   │   │   ├── proxy-ndp
+│   │   │   ├── receive-redirects <enable|disable>
+│   │   │   ├── source-route <disable|routing-header-2>
+│   │   │   └── temporary-addresses <disable|prefer-public|prefer-temporary>
+│   │   ├── link-group <0-4294967295>
+│   │   ├── mka
+│   │   │   ├── key-server-priority <0-255>
+│   │   │   └── preshared-key
+│   │   │       ├── cak <hex>
+│   │   │       └── ckn <hex>
+│   │   ├── mtu <1280-65535>
+│   │   ├── replay-protection
+│   │   │   └── window <0-4294967295>
+│   │   ├── sci-port <1-65534>
+│   │   ├── source-interface <interface>
+│   │   ├── transmit-mode <encrypt|integrity-only>
+│   │   └── vrf <name>
 │   ├── virtual-ethernet <vethN>
 │   │   ├── address <x.x.x.x/x|x:x:x:x:x:x/x>
 │   │   ├── description <text>
@@ -10734,6 +10800,9 @@ operational mode
 │       └── developer-access
 ├── exit
 ├── generate
+│   ├── macsec
+│   │   └── preshared-key
+│   │       └── bits <128|256>
 │   ├── system
 │   │   └── diagnostics
 │   └── wireguard
@@ -12744,6 +12813,9 @@ operational mode
 │   │   │   ├── statistics
 │   │   │   └── transceiver
 │   │   ├── hardware-statistics
+│   │   ├── macsec [<macsecN>]
+│   │   │   ├── detail
+│   │   │   └── statistics
 │   │   ├── offload
 │   │   ├── queues
 │   │   ├── statistics
@@ -13495,6 +13567,10 @@ operational mode
 │   │   ├── task <name>
 │   │   └── zebra
 │   │       └── follow
+│   ├── macsec
+│   │   └── <macsecN>
+│   │       ├── counters
+│   │       └── detail
 │   ├── mpls
 │   │   ├── fec
 │   │   │   └── <prefix>

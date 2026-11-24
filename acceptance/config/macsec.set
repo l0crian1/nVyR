@@ -1,0 +1,11 @@
+# Public lab key shared only by the acceptance pair.
+set interfaces virtual-ethernet veth973 peer-name veth974
+set interfaces virtual-ethernet veth974 peer-name veth973
+set interfaces macsec macsec973 source-interface veth973 address 198.18.214.1/30
+set interfaces macsec macsec974 source-interface veth974 vrf BOOTLEFT address 198.18.214.2/30
+set interfaces macsec macsec973 mka preshared-key ckn 0973 cak 0123456789abcdef0123456789abcdef
+set interfaces macsec macsec974 mka preshared-key ckn 0973 cak 0123456789abcdef0123456789abcdef
+set interfaces macsec macsec973 mka key-server-priority 10
+set interfaces macsec macsec974 mka key-server-priority 20
+set interfaces macsec macsec973 replay-protection window 64
+set interfaces macsec macsec974 replay-protection

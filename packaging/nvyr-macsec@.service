@@ -1,0 +1,12 @@
+[Unit]
+Description=nVyR MACsec key agreement for %i
+BindsTo=sys-subsystem-net-devices-%i.device
+After=sys-subsystem-net-devices-%i.device
+
+[Service]
+Type=exec
+EnvironmentFile=/run/nvyr-netlink/macsec/%i/parent
+ExecStart=/usr/sbin/wpa_supplicant -D macsec_linux -i ${PARENT} -c /run/nvyr-netlink/macsec/%i/supplicant.conf
+Restart=on-failure
+RestartSec=2
+UMask=0077

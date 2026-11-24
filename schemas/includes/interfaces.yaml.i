@@ -11,4 +11,5 @@ interfaces:
     - file: interfaces/bridge.yaml.i
     - file: interfaces/bond.yaml.i
     - file: interfaces/wireguard.yaml.i
+    - file: interfaces/macsec.yaml.i
     - file: interfaces/vxlan.yaml.i

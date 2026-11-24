@@ -17,7 +17,7 @@ import socket
 import time
 
 from nvyr.errors import RouterError, ValidationError
-from nvyr.helpers import dhcp6, dhcp_options, vrf_rules, interface_ip, vxlan
+from nvyr.helpers import dhcp6, dhcp_options, vrf_rules, interface_ip, macsec, vxlan
 
 log = logging.getLogger(__name__)
 
@@ -264,6 +264,42 @@ class WireGuard(LinkType):
 
         super().remove(kernel, name)
         wireguard.forget(name)
+
+
+class Macsec(LinkType):
+    virtual = True
+    kernel_kind = 'macsec'
+    keymap = {key: entry for key, entry in LINK_KEYMAP.items() if key != 'mac'} | {
+        'macsec': NetlinkKey('', ('NVYR_MACSEC_SETTINGS',))}
+
+    def dependencies(self, spec):
+        return (*super().dependencies(spec), spec['attributes']['macsec']['parent'])
+
+    def validate(self, spec, links, previous=None):
+        settings = spec['attributes'].get('macsec', {})
+        # The parent is passed to iproute2 and used as the supplicant control socket name.
+        interface_name(settings.get('parent'))
+        # Parent and SCI identify the kernel channel and cannot be edited in place.
+        if previous and any(previous['attributes']['macsec'][field] != settings[field] for field in ('parent', 'port')):
+            raise ValidationError(f"{spec['name']}: delete and commit before changing source-interface or sci-port")
+
+    def create(self, kernel, spec):
+        from nvyr.helpers.process import cmd
+
+        name = spec['name']
+        settings = spec['attributes']['macsec']
+        cmd(['ip', 'link', 'add', 'link', settings['parent'], 'name', name, 'type', 'macsec',
+             'port', str(settings['port']), 'encrypt', 'on' if settings['encrypt'] else 'off', 'protect', 'on'])
+
+    def configure(self, kernel, spec, baseline):
+        attrs = dict(spec['attributes'])
+        settings = attrs.pop('macsec')
+        if spec['disabled']:
+            macsec.stop(spec['name'])
+        else:
+            macsec.synchronize(spec['name'], settings)
+        common = {key: value for key, value in baseline.items() if key != 'macsec'}
+        return super().configure(kernel, dict(spec, attributes=attrs), common)
 
 
 class Dummy(LinkType):
@@ -588,7 +624,7 @@ class Bridge(LinkType):
 
 TYPES = {'ethernet': LinkType(), 'dummy': Dummy(), 'loopback': Loopback(), 'vrf': VRF(),
          'virtual-ethernet': VirtualEthernet(), 'vlan': VLAN(), 'bridge': Bridge(), 'bond': Bond(),
-         'wireguard': WireGuard(), 'vxlan': VXLAN()}
+         'wireguard': WireGuard(), 'macsec': Macsec(), 'vxlan': VXLAN()}
 
 
 def register_type(name, driver):

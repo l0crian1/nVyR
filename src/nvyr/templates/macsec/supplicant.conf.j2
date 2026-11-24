@@ -1,0 +1,18 @@
+ctrl_interface={{ directory }}/ctrl
+ap_scan=0
+network={
+    key_mgmt=NONE
+    eapol_flags=0
+    macsec_policy=1
+    macsec_port={{ settings.port }}
+    macsec_integ_only={{ 0 if settings.encrypt else 1 }}
+{% if settings.window is not none %}
+    macsec_replay_protect=1
+    macsec_replay_window={{ settings.window }}
+{% endif %}
+{% if settings.priority is not none %}
+    mka_priority={{ settings.priority }}
+{% endif %}
+    mka_cak={{ settings.cak }}
+    mka_ckn={{ settings.ckn }}
+}

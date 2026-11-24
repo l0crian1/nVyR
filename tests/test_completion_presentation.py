@@ -105,7 +105,7 @@ def test_interface_help_order_and_question_key(controller, monkeypatch):
     interfaces = ['dum0', 'eth0', 'eth1', 'eth2', 'lo', 'pim6reg', 'pimreg']
     assert [name for name, _ in rows] == [
         '<Enter>', '<interface>', 'bond', 'bridge', 'detail', 'ethernet', 'hardware-statistics',
-        'offload', 'queues', 'statistics', 'transceiver', 'vxlan', 'wireguard',
+        'macsec', 'offload', 'queues', 'statistics', 'transceiver', 'vxlan', 'wireguard',
         *interfaces]
     assert rows[1] == ('<interface>', 'Interface name (for example eth0)')
     assert all(not description for name, description in rows if name in interfaces)

@@ -21,7 +21,7 @@ from nvyr.errors import RecoveryError, RouterError, ValidationError
 from nvyr.storage import atomic_json, sync_directory
 from nvyr.helpers.netlink import TYPES, interface_name, normalize, read_attributes
 from nvyr.helpers.dhcp_options import lease_routes, lease_spec
-from nvyr.helpers import interface_ip, ipv6_ra, kernel_settings, mpls, vxlan
+from nvyr.helpers import interface_ip, ipv6_ra, kernel_settings, macsec, mpls, vxlan
 from nvyr.helpers.kernel_settings_map import SETTINGS
 
 log = logging.getLogger(__name__)
@@ -461,6 +461,8 @@ class Manager:
             if self.dhcp6:
                 self.dhcp6.stop(name)
                 ipv6_ra.advertise(name, [])
+            if record['kind'] == 'macsec':
+                macsec.stop(name)
             device = self.kernel.device(name)
             if device:
                 if driver.virtual and (device['index'] != record['index'] or not driver.matches(device)):
@@ -647,7 +649,9 @@ class Manager:
                                   **({'lifetimes': lifetimes, 'previous6': record.get('dhcp6-addresses', ())}
                                      if lifetimes or record.get('dhcp6-addresses') else {}),
                                   lease=lease if not static_lease else None, ip_options=spec['ip-options'])
-        self.kernel.state(name, not spec['disabled'])
+        # MKA controls IFF_UP on the secured port as its associations change.
+        if spec['kind'] != 'macsec' or spec['disabled']:
+            self.kernel.state(name, not spec['disabled'])
         self._neighbors(name, record, {} if spec['disabled'] else interface_ip.neighbors(spec['ip-options']))
         if self.dhcp6:
             if sorted(lifetimes) != record.get('dhcp6-addresses', []):

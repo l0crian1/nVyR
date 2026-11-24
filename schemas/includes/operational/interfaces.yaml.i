@@ -50,6 +50,31 @@ interfaces:
           description: Interface packet and byte counters
           command: ['interfaces.nvyr.op', 'show', '--intf_type', 'wireguard', '--intf_name', '@4', '--statistics']
 
+    macsec:
+      kind: tag_node
+      optional_value: true
+      description: MACsec interface addresses and kernel state
+      command: ['interfaces.nvyr.op', 'show', '--intf_type', 'macsec', '--intf_name', '@4']
+      validators:
+        regex: {pattern: 'macsec[0-9]+'}
+      suggestors:
+        interfaces: {prefix: macsec}
+      hints:
+        macsecN: MACsec interface name
+      children:
+
+        detail:
+          kind: leaf_node
+          valueless: true
+          description: Detailed kernel interface information
+          command: ['interfaces.nvyr.op', 'show', '--intf_type', 'macsec', '--intf_name', '@4', '--detail']
+
+        statistics:
+          kind: leaf_node
+          valueless: true
+          description: Interface packet and byte counters
+          command: ['interfaces.nvyr.op', 'show', '--intf_type', 'macsec', '--intf_name', '@4', '--statistics']
+
     ethernet:
       kind: tag_node
       optional_value: true

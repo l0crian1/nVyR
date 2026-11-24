@@ -914,6 +914,21 @@ def check_mpls_ldp(options):
         assert_in('veth997', cmd(['mpls.nvyr.op', 'show', f'show mpls ldp {family} interface']))
 
 
+def check_macsec(options):
+    """A newly booted pair must negotiate fresh associations and carry tenant traffic."""
+    for name, window in [('macsec973', 64), ('macsec974', 0)]:
+        def secured():
+            return json.loads(cmd(['ip', '-j', 'macsec', 'show', name]))[0]
+
+        channel = wait_for(secured, lambda row: any(sa['active'] for sa in row['sa_list']),
+                           description=f'{name} active transmit association', timeout=30)
+        assert_equal(channel['encrypt'], True)
+        assert_equal(channel['replay'], True)
+        assert_equal(channel['window'], window)
+    cmd(['ping', '-I', 'macsec973', '-n', '-c', '2', '-w', '5', '198.18.214.2'])
+    assert_operational_output('show macsec macsec973 detail', 'Secured', 'Yes', '0973', 'GCM-AES-128')
+
+
 def check_wireguard(options):
     """Replayed keys establish dual-stack tunnels with inner traffic in a VRF."""
     from nvyr.helpers import wireguard
@@ -933,6 +948,7 @@ def check_wireguard(options):
 
 
 CHECKS = (
+    check_macsec,
     check_evpn,
     check_wireguard,
     check_bgp_vpn,

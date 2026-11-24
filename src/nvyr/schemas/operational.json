@@ -1714,6 +1714,52 @@
             }
           }
         },
+        "macsec": {
+          "kind": "node",
+          "access": "net-admin",
+          "description": "Generate MACsec key material",
+          "children": {
+            "preshared-key": {
+              "kind": "node",
+              "description": "Generate a CAK and CKN for both ends of a link",
+              "command": {
+                "argv": [
+                  "macsec.nvyr.op",
+                  "generate"
+                ]
+              },
+              "children": {
+                "bits": {
+                  "kind": "tag_node",
+                  "description": "Length of the CAK",
+                  "choices": {
+                    "128": "128-bit CAK (default)",
+                    "256": "256-bit CAK"
+                  },
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "list": {
+                        "name": "list",
+                        "args": {
+                          "values": "128 256"
+                        }
+                      }
+                    }
+                  },
+                  "command": {
+                    "argv": [
+                      "macsec.nvyr.op",
+                      "generate",
+                      "--bits",
+                      "@5"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
         "system": {
           "kind": "node",
           "description": "System diagnostic reports",
@@ -13119,6 +13165,77 @@
                 }
               }
             },
+            "macsec": {
+              "kind": "tag_node",
+              "optional_value": true,
+              "description": "MACsec interface addresses and kernel state",
+              "command": {
+                "argv": [
+                  "interfaces.nvyr.op",
+                  "show",
+                  "--intf_type",
+                  "macsec",
+                  "--intf_name",
+                  "@4"
+                ]
+              },
+              "validators": {
+                "mode": "AND",
+                "checks": {
+                  "regex": {
+                    "name": "regex",
+                    "args": {
+                      "pattern": "macsec[0-9]+"
+                    }
+                  }
+                }
+              },
+              "suggestors": [
+                {
+                  "name": "interfaces",
+                  "args": {
+                    "prefix": "macsec"
+                  }
+                }
+              ],
+              "hints": {
+                "macsecN": "MACsec interface name"
+              },
+              "children": {
+                "detail": {
+                  "kind": "leaf_node",
+                  "valueless": true,
+                  "description": "Detailed kernel interface information",
+                  "command": {
+                    "argv": [
+                      "interfaces.nvyr.op",
+                      "show",
+                      "--intf_type",
+                      "macsec",
+                      "--intf_name",
+                      "@4",
+                      "--detail"
+                    ]
+                  }
+                },
+                "statistics": {
+                  "kind": "leaf_node",
+                  "valueless": true,
+                  "description": "Interface packet and byte counters",
+                  "command": {
+                    "argv": [
+                      "interfaces.nvyr.op",
+                      "show",
+                      "--intf_type",
+                      "macsec",
+                      "--intf_name",
+                      "@4",
+                      "--statistics"
+                    ]
+                  }
+                }
+              }
+            },
             "ethernet": {
               "kind": "tag_node",
               "optional_value": true,
@@ -13364,6 +13481,81 @@
                         ]
                       }
                     }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "macsec": {
+          "kind": "node",
+          "description": "MACsec secure channel and key agreement status",
+          "command": {
+            "argv": [
+              "macsec.nvyr.op",
+              "show"
+            ]
+          },
+          "children": {
+            "interface": {
+              "kind": "tag_node",
+              "positional": true,
+              "description": "MACsec interface",
+              "validators": {
+                "mode": "AND",
+                "checks": {
+                  "regex": {
+                    "name": "regex",
+                    "args": {
+                      "pattern": "macsec[0-9]{1,9}"
+                    }
+                  }
+                }
+              },
+              "suggestors": [
+                {
+                  "name": "interfaces",
+                  "args": {
+                    "prefix": "macsec"
+                  }
+                }
+              ],
+              "hints": {
+                "macsecN": "MACsec interface name"
+              },
+              "command": {
+                "argv": [
+                  "macsec.nvyr.op",
+                  "show",
+                  "--interface",
+                  "@3"
+                ]
+              },
+              "children": {
+                "detail": {
+                  "kind": "node",
+                  "description": "Secure channel, key server and protection settings",
+                  "command": {
+                    "argv": [
+                      "macsec.nvyr.op",
+                      "show",
+                      "--interface",
+                      "@3",
+                      "--detail"
+                    ]
+                  }
+                },
+                "counters": {
+                  "kind": "node",
+                  "description": "Secure channel packet and byte counters",
+                  "command": {
+                    "argv": [
+                      "macsec.nvyr.op",
+                      "show",
+                      "--interface",
+                      "@3",
+                      "--counters"
+                    ]
                   }
                 }
               }

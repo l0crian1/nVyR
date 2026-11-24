@@ -93,6 +93,13 @@
     ]
   },
   {
+    "script": "macsec",
+    "priority": 11,
+    "paths": [
+      "interfaces macsec <name>"
+    ]
+  },
+  {
     "script": "bridge",
     "priority": 12,
     "paths": [

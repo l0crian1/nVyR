@@ -18,6 +18,7 @@ Configure and operate nVyR. For implementation and maintenance, use the
 - [VXLAN interfaces and VLAN-to-VNI mappings](vxlan.md)
 - [Bond interfaces and LACP](bonds.md)
 - [WireGuard interfaces](wireguard.md)
+- [MACsec interfaces and key agreement](macsec.md)
 - [Persistent Ethernet names](interface-naming.md)
 - [Interface diagnostics](interface-operations.md)
 - [Static routing](static.md)

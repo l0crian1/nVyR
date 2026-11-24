@@ -12,6 +12,15 @@ IPv4 addresses and virtual-network traffic checks still run without a cable.
 
 ## Recent configuration additions
 
+### MACsec
+
+Two nVyR interfaces on a veth pair negotiate using the saved CAK and CKN before
+and after reboot. The checks verify active transmit associations, encrypted
+traffic between routing domains, replay windows of 0 and 64, and MKA status
+through the operational CLI. The functional test peers with a native supplicant
+and OSPF router and exercises mismatched keys, peer restart, administrative
+disable, and integrity-only transmission.
+
 ### Single-homed VXLAN and EVPN
 
 The saved configuration carries VLANs 10 and 4000 on one external VXLAN device.

@@ -23,6 +23,7 @@ or consult the complete [command tree](docs/users/command-tree.md).
 - [Bridges, VLAN filtering, and spanning tree](docs/users/bridges.md)
 - [Bond interfaces and LACP](docs/users/bonds.md)
 - [WireGuard interfaces](docs/users/wireguard.md)
+- [MACsec interfaces](docs/users/macsec.md)
 - VRFs and interface link groups
 - Static IPv4/IPv6 addressing and DHCPv4 clients
 - [IPv4/IPv6 static routing](docs/users/static.md)
