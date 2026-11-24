@@ -25,8 +25,11 @@ def community_values(values, large=False):
     return ' '.join(native)
 
 
-def filter_operand(rule):
+def filter_operand(rule, family=None):
     """Normalize prefixes and wildcard comparisons to FRR's native spelling."""
+    if family == 'mac':
+        return rule.get('address', 'any').lower()
+
     if 'prefix' in rule:
         operand = str(ipaddress.ip_network(rule['prefix']))
         if 'exact-match' in rule:
@@ -58,6 +61,19 @@ def extended_values(rule):
 
 def matches(values):
     commands = []
+    evpn = values.get('evpn', {})
+    if 'route-type' in evpn:
+        names = {'1': 'ead', '2': 'macip', '3': 'multicast', '4': 'es', '5': 'prefix'}
+        commands.append('match evpn route-type ' + names[evpn['route-type']])
+    if 'vni' in evpn:
+        commands.append(f"match evpn vni {int(evpn['vni'])}")
+    if 'route-distinguisher' in evpn:
+        commands.append('match evpn rd ' + rd_rt(evpn['route-distinguisher']))
+    if 'default-route' in evpn:
+        commands.append('match evpn default-route')
+    if 'mac' in values:
+        commands.append('match mac address ' + values['mac']['access-list'])
+
     for family, keyword in (('ipv4', 'ip'), ('ipv6', 'ipv6')):
         matches = values.get(family, {})
         for field, settings in (('address', matches), ('next-hop', matches.get('next-hop', {}))):
@@ -114,6 +130,9 @@ def key_lifetime(values):
 
 def actions(values):
     commands = []
+    for family, address in values.get('evpn', {}).get('gateway-ip', {}).items():
+        commands.append(f'set evpn gateway-ip {family} {ipaddress.ip_address(address)}')
+
     for key in ('metric-type', 'forwarding-address'):
         if key in values:
             commands.append(f'set {key} {values[key]}')

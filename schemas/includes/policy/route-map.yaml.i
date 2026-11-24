@@ -57,6 +57,62 @@ route-map:
           anchor: true
           children:
 
+            evpn:
+              kind: node
+              description: EVPN route attributes
+              anchor: true
+              children:
+
+                route-type:
+                  kind: leaf_node
+                  description: EVPN NLRI route type
+                  validators:
+                    list: {values: '1 2 3 4 5'}
+                  choices:
+                    '1': Ethernet Auto-Discovery
+                    '2': MAC/IP Advertisement
+                    '3': Inclusive Multicast Ethernet Tag
+                    '4': Ethernet Segment
+                    '5': IP Prefix
+
+                vni:
+                  kind: leaf_node
+                  description: VNI label in VXLAN Type 1, 2 or 5 routes
+                  validators:
+                    integer-range: {minimum: 1, maximum: 16777215}
+                  hints:
+                    1-16777215: VXLAN network identifier
+
+                route-distinguisher:
+                  kind: leaf_node
+                  description: EVPN route distinguisher
+                  validators:
+                    bgp-rd-rt: {}
+                  hints:
+                    rd: ASN:number or IPv4:number
+
+                default-route:
+                  kind: leaf_node
+                  description: IPv4 or IPv6 EVPN default prefix
+                  valueless: true
+
+            mac:
+              kind: node
+              description: EVPN MAC/IP advertisement
+              anchor: true
+              children:
+
+                access-list:
+                  kind: leaf_node
+                  description: Match the advertised MAC address
+                  validators:
+                    regex: {pattern: '[A-Za-z_][A-Za-z0-9_.-]{0,127}'}
+                  hints:
+                    name: Configured MAC access-list
+                  depends: policy-access-list-mac
+                  suggestors:
+                    config-path: {path: policy access-list mac}
+
             ipv4:
               kind: "node"
               description: "IPv4 route matches"
@@ -367,6 +423,34 @@ route-map:
           description: "Attributes assigned to permitted routes"
           anchor: true
           children:
+
+            evpn:
+              kind: node
+              description: EVPN route attributes
+              anchor: true
+              children:
+
+                gateway-ip:
+                  kind: node
+                  description: Set the Type 5 gateway IP overlay index
+                  anchor: true
+                  children:
+
+                    ipv4:
+                      kind: leaf_node
+                      description: EVPN ipv4 gateway address
+                      validators:
+                        ipv4-address: {}
+                      hints:
+                        address: Overlay gateway IP
+
+                    ipv6:
+                      kind: leaf_node
+                      description: EVPN ipv6 gateway address
+                      validators:
+                        ipv6-address: {}
+                      hints:
+                        address: Overlay gateway IP
 
             tag:
               kind: leaf_node

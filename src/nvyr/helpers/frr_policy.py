@@ -4,7 +4,7 @@ import re
 
 
 POLICY_LINE = re.compile(
-    r'^(access-list|ipv6 access-list|ip prefix-list|ipv6 prefix-list|route-map|'
+    r'^(mac access-list|access-list|ipv6 access-list|ip prefix-list|ipv6 prefix-list|route-map|'
     r'bgp as-path access-list|bgp (?:(?:large-)?community-list|extcommunity-list) (?:standard|expanded)) (\S+) ')
 
 

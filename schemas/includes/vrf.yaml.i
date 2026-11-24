@@ -55,6 +55,8 @@ vrf:
                 /script/register/vrf: {tag: name}
             - file: protocols/bgp.yaml.i
               remove:
+              - /children/neighbor/children/address-family/children/l2vpn-evpn
+              - /children/peer-group/children/address-family/children/l2vpn-evpn
               - /children/parameters/children/labeled-unicast
               - /children/address-family/children/ipv4-vpn
               - /children/neighbor/children/address-family/children/ipv4-vpn
@@ -69,6 +71,10 @@ vrf:
               - /children/peer-group/children/address-family/children/ipv4-labeled-unicast
               - /children/peer-group/children/address-family/children/ipv6-labeled-unicast
               replace:
+                /children/address-family/children/l2vpn-evpn:
+                  include_schema:
+                  - file: protocols/bgp/evpn-tenant.yaml.i
+                    as: null
                 /script/register/vrf: {tag: name}
             - file: protocols/ospf.yaml.i
               remove:
@@ -94,6 +100,24 @@ vrf:
             - file: protocols/ripng.yaml.i
               replace:
                 /script/register/vrf: {tag: name}
+
+        vni:
+          kind: tag_node
+          description: Layer 3 VXLAN network identifier for this VRF
+          anchor: true
+          script: {name: evpn-vni, priority: 44}
+          validators:
+            mode: AND
+            regex: {pattern: '[1-9][0-9]{0,7}'}
+            integer-range: {minimum: 1, maximum: 16777215}
+          hints:
+            1-16777215: Tenant L3VNI
+          children:
+
+            prefix-routes-only:
+              kind: leaf_node
+              description: Use the L3VNI only for prefix routes; omit its RT from MAC/IP advertisements
+              valueless: true
 
         table:
           kind: leaf_node

@@ -88,6 +88,7 @@ bgp:
       children:
 
         include_schema:
+        - file: protocols/bgp/evpn.yaml.i
         - file: protocols/bgp/ipv4.yaml.i
         - file: protocols/bgp/ipv6.yaml.i
         - file: protocols/bgp/ipv4-lu.yaml.i

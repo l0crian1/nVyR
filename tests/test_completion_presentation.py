@@ -102,12 +102,13 @@ def test_interface_help_order_and_question_key(controller, monkeypatch):
     before = deepcopy(result)
     rows = completion_rows(result)
 
+    interfaces = ['dum0', 'eth0', 'eth1', 'eth2', 'lo', 'pim6reg', 'pimreg']
     assert [name for name, _ in rows] == [
         '<Enter>', '<interface>', 'bond', 'bridge', 'detail', 'ethernet', 'hardware-statistics',
-        'offload', 'queues', 'statistics', 'transceiver', 'wireguard',
-        'dum0', 'eth0', 'eth1', 'eth2', 'lo', 'pim6reg', 'pimreg']
+        'offload', 'queues', 'statistics', 'transceiver', 'vxlan', 'wireguard',
+        *interfaces]
     assert rows[1] == ('<interface>', 'Interface name (for example eth0)')
-    assert all(not description for _, description in rows[12:])
+    assert all(not description for name, description in rows if name in interfaces)
     assert result == before
     assert 'interface' not in dict(result['candidates'])
 

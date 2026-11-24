@@ -99,6 +99,7 @@ children: # operational
           /children/destination/children/rule/suggestors/config-path/path: nat66 destination rule
       - file: operational/conntrack.yaml.i
       - file: operational/static.yaml.i
+      - file: operational/evpn.yaml.i
       - file: operational/bgp.yaml.i
       - file: operational/policy-route-map.yaml.i
       - file: operational/containers-show.yaml.i

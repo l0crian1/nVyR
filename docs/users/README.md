@@ -23,6 +23,7 @@ Configure and operate nVyR. For implementation and maintenance, use the
 - [Static routing](static.md)
 - [Static routing displays](static-routing-operations.md)
 - [BGP unicast](bgp.md)
+- [BGP EVPN over VXLAN](evpn.md)
 - [OSPFv2 and OSPFv3](ospf.md)
 - [IS-IS](isis.md)
 - [RIP and RIPng](rip.md)

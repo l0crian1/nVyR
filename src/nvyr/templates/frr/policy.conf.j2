@@ -13,14 +13,14 @@ exit
 
 {% for kind in ('access-list', 'prefix-list') -%}
 {% for family, lists in configuration.get(kind, {}).items() | sort(case_sensitive=true) -%}
-{% set prefix = 'ipv6 ' if family == 'ipv6' else 'ip ' if kind == 'prefix-list' else '' -%}
+{% set prefix = 'mac ' if family == 'mac' else 'ipv6 ' if family == 'ipv6' else 'ip ' if kind == 'prefix-list' else '' -%}
 {% for name, values in lists.items() | sort(case_sensitive=true) -%}
 {% set base = prefix ~ kind ~ ' ' ~ name -%}
 {% if values.get('description', '').strip() -%}
 {{ base }} {{ 'remark' if kind == 'access-list' else 'description' }} {{ values['description'].split() | join(' ') }}
 {% endif -%}
 {% for sequence, rule in numeric_items(values['rule']) -%}
-{{ base }} seq {{ sequence | int }} {{ rule['action'] }} {{ policy_filter_operand(rule) }}
+{{ base }} seq {{ sequence | int }} {{ rule['action'] }} {{ policy_filter_operand(rule, family) }}
 {% endfor -%}
 {% endfor -%}
 {% endfor -%}

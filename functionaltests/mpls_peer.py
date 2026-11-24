@@ -174,7 +174,7 @@ def static_forwarding(namespace):
 
 
 @contextmanager
-def processes(directory, namespace, configuration, *, bgp=True):
+def processes(directory, namespace, configuration, *, bgp=True, daemons=None):
     """Keep native router processes alive for the shared topology's lifetime."""
     directory.mkdir(mode=0o755)
     cmd(['chown', 'frr:frr', str(directory)])
@@ -184,9 +184,13 @@ def processes(directory, namespace, configuration, *, bgp=True):
     empty = directory / 'empty.conf'
     empty.write_text('')
     empty.chmod(0o644)
-    names = ('mgmtd', 'zebra', 'ldpd', 'ospfd', 'ospf6d', 'isisd', 'ripd', 'ripngd')
+    if daemons is None:
+        daemons = ('mgmtd', 'zebra', 'ldpd', 'ospfd', 'ospf6d', 'isisd', 'ripd', 'ripngd')
+        if bgp:
+            daemons += ('bgpd',)
+
     with ExitStack() as cleanup:
-        for name in names + (('bgpd',) if bgp else ()):
+        for name in daemons:
             args = ['ip', 'netns', 'exec', namespace, '/usr/lib/frr/' + name,
                     '-N', namespace, '-z', str(directory / 'zserv.api'),
                     '--vty_socket', str(directory), '-i', str(directory / (name + '.pid')), '-P', '0']

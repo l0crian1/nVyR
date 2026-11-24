@@ -194,8 +194,11 @@ def test_restores_original_and_discards_candidate_on_every_exit(tmp_path, failur
     assert 'restored' in messages[-1]
 
 
-@pytest.mark.parametrize('failure', ['commit', 'comparison'])
-def test_restore_failure_retains_snapshot_and_reports_it(tmp_path, monkeypatch, failure):
+@pytest.mark.parametrize('failure,exception,message', [
+    ('commit', RuntimeError, 'restore failed'),
+    ('comparison', AssertionError, 'Configuration differs from the original snapshot'),
+])
+def test_restore_failure_retains_snapshot_and_reports_it(tmp_path, monkeypatch, failure, exception, message):
     config = FakeSession()
     original = config.get_config()
     messages = []
@@ -205,7 +208,7 @@ def test_restore_failure_retains_snapshot_and_reports_it(tmp_path, monkeypatch, 
             raise RuntimeError('restore failed')
 
     monkeypatch.setattr(config, 'commit', broken_commit)
-    with pytest.raises(RuntimeError):
+    with pytest.raises(exception, match=message):
         with preserved_configuration(config, directory=tmp_path, report=messages.append):
             config.running = {}
 

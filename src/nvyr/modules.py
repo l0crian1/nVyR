@@ -94,7 +94,7 @@ def registry(schema):
         container, firewall, logging, interface_ethernet, interface_dummy, interface_virtual_ethernet, interface_wireguard,
         interface_bridge, interface_bond, interface_loopback, protocols_static, protocols_bgp, protocols_ospf, protocols_ospfv3, protocols_rip, protocols_isis, policy,
         service_ssh, service_dhcp, service_dns_forwarding, service_lldp, system_dns, system_login, system_hostname, system_configuration, system_ntp, system_cpu,
-        system_static_hosts, system_task, system_timezone, vrf, vrf_conntrack, protocols_mpls, protocols_ldp,
+        system_static_hosts, system_task, system_timezone, vrf, evpn_vni, vrf_conntrack, protocols_mpls, protocols_ldp,
     )
 
     modules = {
@@ -113,6 +113,7 @@ def registry(schema):
         'bond': interface_bond,
         'wireguard': interface_wireguard,
         'vrf': vrf,
+        'evpn-vni': evpn_vni,
         'vrf_conntrack': vrf_conntrack,
         'static': protocols_static,
         'bgp': protocols_bgp,

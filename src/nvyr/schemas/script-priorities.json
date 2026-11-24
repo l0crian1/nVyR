@@ -151,6 +151,13 @@
     ]
   },
   {
+    "script": "evpn-vni",
+    "priority": 44,
+    "paths": [
+      "vrf name <name> vni <name>"
+    ]
+  },
+  {
     "script": "bgp",
     "priority": 45,
     "paths": [

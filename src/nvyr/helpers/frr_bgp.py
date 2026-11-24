@@ -153,6 +153,7 @@ class Instances:
         headers = {}
         sections = {}
         family = ''
+        vni = None
         for line, scope in configuration_lines(text):
             if scope not in result:
                 continue
@@ -169,6 +170,15 @@ class Instances:
             if stripped.startswith('address-family '):
                 family = stripped
                 sections[scope].setdefault(family, set())
+            elif family == 'address-family l2vpn evpn' and stripped.startswith('vni '):
+                vni = stripped
+                attributes = set()
+            elif stripped == 'exit-vni' and vni is not None:
+                block = [vni, *('   ' + attr for attr in sorted(attributes)), '  exit-vni']
+                sections[scope][family].add('\n'.join(block))
+                vni = None
+            elif vni is not None and stripped not in ('', '!'):
+                attributes.add(stripped)
             elif stripped == 'exit-address-family':
                 family = ''
             elif stripped not in ('', '!', 'exit'):

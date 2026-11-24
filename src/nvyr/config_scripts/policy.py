@@ -90,10 +90,16 @@ def _verify_call_graph(configuration):
         visit(name)
 
 
-def _verify_filter(kind, rule, path):
+def _verify_filter(kind, rule, path, family=None):
     # Every native entry needs an explicit verdict; an incomplete rule must not permit routes.
     if 'action' not in rule:
         raise ValidationError(f'{path}: action permit or deny is required')
+
+    if family == 'mac':
+        # A native MAC ACL entry takes exactly one Ethernet address or the wildcard.
+        if ('any' in rule) == ('address' in rule):
+            raise ValidationError(f'{path}: choose an address or any')
+        return
 
     if kind == 'prefix-list':
         # Prefix-list length comparisons have no meaning without a network prefix.
@@ -141,7 +147,7 @@ def _verify_nonempty_nodes(values, path):
     for key, value in values.items():
         if key in ('community-list', 'large-community-list', 'extended-community-list'):
             continue
-        if isinstance(value, Mapping) and key not in ('peer-address', 'unchanged', 'prefer-global', 'all', 'any', 'none'):
+        if isinstance(value, Mapping) and key not in ('peer-address', 'unchanged', 'prefer-global', 'all', 'any', 'none', 'default-route'):
             _verify_nonempty_nodes(value, f'{path} {key}')
 
 
@@ -155,6 +161,11 @@ def _verify_route_map(configuration, rule, path):
             _verify_nonempty_nodes(rule[key], f'{path} {key}')
 
     matches = lookup(rule, ('match',), {})
+    mac_list = lookup(matches, ('mac', 'access-list'), None)
+    # MAC matches resolve only against the Ethernet ACL namespace.
+    if mac_list is not None and mac_list not in lookup(configuration, ('access-list', 'mac'), {}):
+        raise ValidationError(f'{path}: MAC access-list {mac_list!r} is not configured')
+
     if 'as-path-list' in matches:
         _verify_reference(configuration, 'as-path-list', matches['as-path-list'], path)
     for kind in ('community-list', 'large-community-list', 'extended-community-list'):
@@ -262,7 +273,7 @@ def verify(configuration, context):
 
                 for sequence, rule in lookup(values, ('rule',), {}).items():
                     path = f'policy {kind} {family} {name} rule {sequence}'
-                    _verify_filter(kind, rule, path)
+                    _verify_filter(kind, rule, path, family)
 
     for name, values in lookup(configuration, ('route-map',), {}).items():
         # A named route-map needs a sequence to exist in FRR's native configuration.

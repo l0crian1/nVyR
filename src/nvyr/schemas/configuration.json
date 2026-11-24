@@ -22377,6 +22377,185 @@
                       "description": "Unicast advertisements",
                       "anchor": true,
                       "children": {
+                        "l2vpn-evpn": {
+                          "kind": "node",
+                          "description": "Tenant EVPN prefix advertisements and import/export targets",
+                          "anchor": true,
+                          "children": {
+                            "route-distinguisher": {
+                              "kind": "leaf_node",
+                              "description": "EVPN route distinguisher",
+                              "validators": {
+                                "mode": "AND",
+                                "checks": {
+                                  "bgp-rd-rt": {
+                                    "name": "bgp-rd-rt"
+                                  }
+                                }
+                              },
+                              "hints": {
+                                "rd": "ASN:number or IPv4:number"
+                              }
+                            },
+                            "route-target": {
+                              "kind": "node",
+                              "description": "EVPN import and export route targets",
+                              "anchor": true,
+                              "children": {
+                                "both": {
+                                  "kind": "leaf_node",
+                                  "description": "Route target for both",
+                                  "validators": {
+                                    "mode": "AND",
+                                    "checks": {
+                                      "bgp-rd-rt": {
+                                        "name": "bgp-rd-rt"
+                                      }
+                                    }
+                                  },
+                                  "hints": {
+                                    "rt": "ASN:number or IPv4:number"
+                                  },
+                                  "multi": true
+                                },
+                                "import": {
+                                  "kind": "leaf_node",
+                                  "description": "Route target for import",
+                                  "validators": {
+                                    "mode": "AND",
+                                    "checks": {
+                                      "bgp-rd-rt": {
+                                        "name": "bgp-rd-rt"
+                                      }
+                                    }
+                                  },
+                                  "hints": {
+                                    "rt": "ASN:number or IPv4:number"
+                                  },
+                                  "multi": true
+                                },
+                                "export": {
+                                  "kind": "leaf_node",
+                                  "description": "Route target for export",
+                                  "validators": {
+                                    "mode": "AND",
+                                    "checks": {
+                                      "bgp-rd-rt": {
+                                        "name": "bgp-rd-rt"
+                                      }
+                                    }
+                                  },
+                                  "hints": {
+                                    "rt": "ASN:number or IPv4:number"
+                                  },
+                                  "multi": true
+                                }
+                              }
+                            },
+                            "advertise": {
+                              "kind": "node",
+                              "description": "Advertise tenant unicast routes as EVPN IP prefixes",
+                              "anchor": true,
+                              "children": {
+                                "ipv4-unicast": {
+                                  "kind": "node",
+                                  "description": "Advertise ipv4 unicast prefixes",
+                                  "anchor": true,
+                                  "children": {
+                                    "gateway-ip": {
+                                      "kind": "leaf_node",
+                                      "description": "Use the gateway IP overlay index",
+                                      "valueless": true
+                                    },
+                                    "route-map": {
+                                      "kind": "leaf_node",
+                                      "description": "Select tenant unicast routes for export",
+                                      "validators": {
+                                        "mode": "AND",
+                                        "checks": {
+                                          "regex": {
+                                            "name": "regex",
+                                            "args": {
+                                              "pattern": "[A-Za-z_][A-Za-z0-9_.-]{0,127}"
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "hints": {
+                                        "name": "Configured route-map"
+                                      },
+                                      "depends": "policy-route-map",
+                                      "suggestors": [
+                                        {
+                                          "name": "config-path",
+                                          "args": {
+                                            "path": "policy route-map"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                },
+                                "ipv6-unicast": {
+                                  "kind": "node",
+                                  "description": "Advertise ipv6 unicast prefixes",
+                                  "anchor": true,
+                                  "children": {
+                                    "gateway-ip": {
+                                      "kind": "leaf_node",
+                                      "description": "Use the gateway IP overlay index",
+                                      "valueless": true
+                                    },
+                                    "route-map": {
+                                      "kind": "leaf_node",
+                                      "description": "Select tenant unicast routes for export",
+                                      "validators": {
+                                        "mode": "AND",
+                                        "checks": {
+                                          "regex": {
+                                            "name": "regex",
+                                            "args": {
+                                              "pattern": "[A-Za-z_][A-Za-z0-9_.-]{0,127}"
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "hints": {
+                                        "name": "Configured route-map"
+                                      },
+                                      "depends": "policy-route-map",
+                                      "suggestors": [
+                                        {
+                                          "name": "config-path",
+                                          "args": {
+                                            "path": "policy route-map"
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "default-originate": {
+                              "kind": "node",
+                              "description": "Originate an EVPN default prefix",
+                              "anchor": true,
+                              "children": {
+                                "ipv4": {
+                                  "kind": "leaf_node",
+                                  "description": "Originate an IPv4 default",
+                                  "valueless": true
+                                },
+                                "ipv6": {
+                                  "kind": "leaf_node",
+                                  "description": "Originate an IPv6 default",
+                                  "valueless": true
+                                }
+                              }
+                            }
+                          }
+                        },
                         "ipv4-unicast": {
                           "kind": "node",
                           "description": "IPv4 unicast advertisements",
@@ -34821,6 +35000,43 @@
                       "policy"
                     ]
                   }
+                }
+              }
+            },
+            "vni": {
+              "kind": "tag_node",
+              "description": "Layer 3 VXLAN network identifier for this VRF",
+              "anchor": true,
+              "script": {
+                "name": "evpn-vni",
+                "priority": 44
+              },
+              "validators": {
+                "mode": "AND",
+                "checks": {
+                  "regex": {
+                    "name": "regex",
+                    "args": {
+                      "pattern": "[1-9][0-9]{0,7}"
+                    }
+                  },
+                  "integer-range": {
+                    "name": "integer-range",
+                    "args": {
+                      "minimum": 1,
+                      "maximum": 16777215
+                    }
+                  }
+                }
+              },
+              "hints": {
+                "1-16777215": "Tenant L3VNI"
+              },
+              "children": {
+                "prefix-routes-only": {
+                  "kind": "leaf_node",
+                  "description": "Use the L3VNI only for prefix routes; omit its RT from MAC/IP advertisements",
+                  "valueless": true
                 }
               }
             },
@@ -119182,6 +119398,105 @@
                   "description": "Explicitly enabled BGP address families",
                   "anchor": true,
                   "children": {
+                    "l2vpn-evpn": {
+                      "kind": "node",
+                      "description": "Enable EVPN route exchange with this peer",
+                      "anchor": true,
+                      "children": {
+                        "route-map": {
+                          "kind": "node",
+                          "description": "Routing policy in each direction",
+                          "anchor": true,
+                          "children": {
+                            "import": {
+                              "kind": "leaf_node",
+                              "description": "Route-map applied to routes received from this peer",
+                              "validators": {
+                                "mode": "AND",
+                                "checks": {
+                                  "regex": {
+                                    "name": "regex",
+                                    "args": {
+                                      "pattern": "[A-Za-z_][A-Za-z0-9_.-]{0,127}"
+                                    }
+                                  }
+                                }
+                              },
+                              "hints": {
+                                "name": "Configured route-map"
+                              },
+                              "depends": "policy-route-map",
+                              "suggestors": [
+                                {
+                                  "name": "config-path",
+                                  "args": {
+                                    "path": "policy route-map"
+                                  }
+                                }
+                              ]
+                            },
+                            "export": {
+                              "kind": "leaf_node",
+                              "description": "Route-map applied to routes advertised to this peer",
+                              "validators": {
+                                "mode": "AND",
+                                "checks": {
+                                  "regex": {
+                                    "name": "regex",
+                                    "args": {
+                                      "pattern": "[A-Za-z_][A-Za-z0-9_.-]{0,127}"
+                                    }
+                                  }
+                                }
+                              },
+                              "hints": {
+                                "name": "Configured route-map"
+                              },
+                              "depends": "policy-route-map",
+                              "suggestors": [
+                                {
+                                  "name": "config-path",
+                                  "args": {
+                                    "path": "policy route-map"
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        "route-reflector-client": {
+                          "kind": "leaf_node",
+                          "description": "Treat this internal peer as a route-reflector client",
+                          "valueless": true
+                        },
+                        "send-community": {
+                          "kind": "leaf_node",
+                          "description": "Community classes to send; all classes when omitted",
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "list": {
+                                "name": "list",
+                                "args": {
+                                  "values": "standard extended large"
+                                }
+                              }
+                            }
+                          },
+                          "multi": true,
+                          "choices": {
+                            "standard": "Standard communities",
+                            "extended": "Extended communities",
+                            "large": "Large communities"
+                          }
+                        },
+                        "disable": {
+                          "kind": "leaf_node",
+                          "description": "Disable this family, including inherited activation",
+                          "valueless": true
+                        }
+                      }
+                    },
                     "ipv4-unicast": {
                       "kind": "node",
                       "description": "Enable IPv4 unicast for this peer",
@@ -124124,6 +124439,105 @@
                   "description": "Explicitly enabled BGP address families",
                   "anchor": true,
                   "children": {
+                    "l2vpn-evpn": {
+                      "kind": "node",
+                      "description": "Enable EVPN route exchange with this peer",
+                      "anchor": true,
+                      "children": {
+                        "route-map": {
+                          "kind": "node",
+                          "description": "Routing policy in each direction",
+                          "anchor": true,
+                          "children": {
+                            "import": {
+                              "kind": "leaf_node",
+                              "description": "Route-map applied to routes received from this peer",
+                              "validators": {
+                                "mode": "AND",
+                                "checks": {
+                                  "regex": {
+                                    "name": "regex",
+                                    "args": {
+                                      "pattern": "[A-Za-z_][A-Za-z0-9_.-]{0,127}"
+                                    }
+                                  }
+                                }
+                              },
+                              "hints": {
+                                "name": "Configured route-map"
+                              },
+                              "depends": "policy-route-map",
+                              "suggestors": [
+                                {
+                                  "name": "config-path",
+                                  "args": {
+                                    "path": "policy route-map"
+                                  }
+                                }
+                              ]
+                            },
+                            "export": {
+                              "kind": "leaf_node",
+                              "description": "Route-map applied to routes advertised to this peer",
+                              "validators": {
+                                "mode": "AND",
+                                "checks": {
+                                  "regex": {
+                                    "name": "regex",
+                                    "args": {
+                                      "pattern": "[A-Za-z_][A-Za-z0-9_.-]{0,127}"
+                                    }
+                                  }
+                                }
+                              },
+                              "hints": {
+                                "name": "Configured route-map"
+                              },
+                              "depends": "policy-route-map",
+                              "suggestors": [
+                                {
+                                  "name": "config-path",
+                                  "args": {
+                                    "path": "policy route-map"
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        "route-reflector-client": {
+                          "kind": "leaf_node",
+                          "description": "Treat this internal peer as a route-reflector client",
+                          "valueless": true
+                        },
+                        "send-community": {
+                          "kind": "leaf_node",
+                          "description": "Community classes to send; all classes when omitted",
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "list": {
+                                "name": "list",
+                                "args": {
+                                  "values": "standard extended large"
+                                }
+                              }
+                            }
+                          },
+                          "multi": true,
+                          "choices": {
+                            "standard": "Standard communities",
+                            "extended": "Extended communities",
+                            "large": "Large communities"
+                          }
+                        },
+                        "disable": {
+                          "kind": "leaf_node",
+                          "description": "Disable this family, including inherited activation",
+                          "valueless": true
+                        }
+                      }
+                    },
                     "ipv4-unicast": {
                       "kind": "node",
                       "description": "Enable IPv4 unicast for this peer",
@@ -128860,6 +129274,274 @@
               "description": "Unicast advertisements",
               "anchor": true,
               "children": {
+                "l2vpn-evpn": {
+                  "kind": "node",
+                  "description": "Ethernet VPN address family",
+                  "anchor": true,
+                  "children": {
+                    "advertise-all-vni": {
+                      "kind": "leaf_node",
+                      "description": "Advertise locally discovered VNIs",
+                      "valueless": true
+                    },
+                    "advertise-default-gw": {
+                      "kind": "leaf_node",
+                      "description": "Advertise default gateway MAC/IP routes",
+                      "valueless": true
+                    },
+                    "advertise-svi-ip": {
+                      "kind": "leaf_node",
+                      "description": "Advertise local SVI MAC/IP routes",
+                      "valueless": true
+                    },
+                    "flooding": {
+                      "kind": "leaf_node",
+                      "description": "BUM traffic replication",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "list": {
+                            "name": "list",
+                            "args": {
+                              "values": "head-end-replication disable"
+                            }
+                          }
+                        }
+                      },
+                      "choices": {
+                        "head-end-replication": "Replicate traffic to remote VTEPs",
+                        "disable": "Disable flooding"
+                      }
+                    },
+                    "auto-route-target": {
+                      "kind": "node",
+                      "description": "Automatic route target derivation",
+                      "anchor": true,
+                      "children": {
+                        "rfc8365-compatible": {
+                          "kind": "leaf_node",
+                          "description": "Derive route targets according to RFC 8365",
+                          "valueless": true
+                        }
+                      }
+                    },
+                    "duplicate-address-detection": {
+                      "kind": "node",
+                      "description": "Detect duplicate MAC or IP addresses",
+                      "anchor": true,
+                      "children": {
+                        "disable": {
+                          "kind": "leaf_node",
+                          "description": "Disable duplicate address detection",
+                          "valueless": true
+                        },
+                        "max-moves": {
+                          "kind": "leaf_node",
+                          "description": "Number of moves to trigger detection",
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "integer-range": {
+                                "name": "integer-range",
+                                "args": {
+                                  "minimum": 2,
+                                  "maximum": 1000
+                                }
+                              }
+                            }
+                          },
+                          "hints": {
+                            "2-1000": "MAC moves before detecting a duplicate"
+                          }
+                        },
+                        "time": {
+                          "kind": "leaf_node",
+                          "description": "Observation window in seconds",
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "integer-range": {
+                                "name": "integer-range",
+                                "args": {
+                                  "minimum": 2,
+                                  "maximum": 1800
+                                }
+                              }
+                            }
+                          },
+                          "hints": {
+                            "2-1800": "Observation window in seconds"
+                          }
+                        },
+                        "freeze": {
+                          "kind": "leaf_node",
+                          "description": "Freeze duplicates permanently or for a duration",
+                          "validators": {
+                            "mode": "OR",
+                            "checks": {
+                              "integer-range": {
+                                "name": "integer-range",
+                                "args": {
+                                  "minimum": 30,
+                                  "maximum": 3600
+                                }
+                              },
+                              "list": {
+                                "name": "list",
+                                "args": {
+                                  "values": "permanent"
+                                }
+                              }
+                            }
+                          },
+                          "choices": {
+                            "permanent": "Freeze until cleared"
+                          },
+                          "hints": {
+                            "30-3600": "Freeze time in seconds"
+                          }
+                        }
+                      }
+                    },
+                    "enable-resolve-overlay-index": {
+                      "kind": "leaf_node",
+                      "description": "Resolve Type 5 gateway IP overlay indexes",
+                      "valueless": true
+                    },
+                    "vni": {
+                      "kind": "tag_node",
+                      "description": "Policy for one L2VNI",
+                      "anchor": true,
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "regex": {
+                            "name": "regex",
+                            "args": {
+                              "pattern": "[1-9][0-9]{0,7}"
+                            }
+                          },
+                          "integer-range": {
+                            "name": "integer-range",
+                            "args": {
+                              "minimum": 1,
+                              "maximum": 16777215
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "1-16777215": "VXLAN network identifier"
+                      },
+                      "children": {
+                        "route-distinguisher": {
+                          "kind": "leaf_node",
+                          "description": "EVPN route distinguisher",
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "bgp-rd-rt": {
+                                "name": "bgp-rd-rt"
+                              }
+                            }
+                          },
+                          "hints": {
+                            "rd": "ASN:number or IPv4:number"
+                          }
+                        },
+                        "route-target": {
+                          "kind": "node",
+                          "description": "EVPN import and export route targets",
+                          "anchor": true,
+                          "children": {
+                            "both": {
+                              "kind": "leaf_node",
+                              "description": "Route target for both",
+                              "validators": {
+                                "mode": "AND",
+                                "checks": {
+                                  "bgp-rd-rt": {
+                                    "name": "bgp-rd-rt"
+                                  }
+                                }
+                              },
+                              "hints": {
+                                "rt": "ASN:number or IPv4:number"
+                              },
+                              "multi": true
+                            },
+                            "import": {
+                              "kind": "leaf_node",
+                              "description": "Route target for import",
+                              "validators": {
+                                "mode": "AND",
+                                "checks": {
+                                  "bgp-rd-rt": {
+                                    "name": "bgp-rd-rt"
+                                  }
+                                }
+                              },
+                              "hints": {
+                                "rt": "ASN:number or IPv4:number"
+                              },
+                              "multi": true
+                            },
+                            "export": {
+                              "kind": "leaf_node",
+                              "description": "Route target for export",
+                              "validators": {
+                                "mode": "AND",
+                                "checks": {
+                                  "bgp-rd-rt": {
+                                    "name": "bgp-rd-rt"
+                                  }
+                                }
+                              },
+                              "hints": {
+                                "rt": "ASN:number or IPv4:number"
+                              },
+                              "multi": true
+                            }
+                          }
+                        },
+                        "advertise-default-gw": {
+                          "kind": "leaf_node",
+                          "description": "Advertise default gateway MAC/IP routes",
+                          "valueless": true
+                        },
+                        "advertise-svi-ip": {
+                          "kind": "leaf_node",
+                          "description": "Advertise local SVI MAC/IP routes",
+                          "valueless": true
+                        },
+                        "advertise-subnet": {
+                          "kind": "leaf_node",
+                          "description": "Advertise connected SVI subnets as Type 5 routes",
+                          "valueless": true
+                        },
+                        "flooding": {
+                          "kind": "leaf_node",
+                          "description": "BUM traffic replication",
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "list": {
+                                "name": "list",
+                                "args": {
+                                  "values": "head-end-replication disable"
+                                }
+                              }
+                            }
+                          },
+                          "choices": {
+                            "head-end-replication": "Replicate traffic to remote VTEPs",
+                            "disable": "Disable flooding"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
                 "ipv4-unicast": {
                   "kind": "node",
                   "description": "IPv4 unicast advertisements",
@@ -141988,6 +142670,128 @@
           "description": "Routing access-lists",
           "anchor": true,
           "children": {
+            "mac": {
+              "kind": "tag_node",
+              "description": "Named MAC access-list",
+              "anchor": true,
+              "validators": {
+                "mode": "AND",
+                "checks": {
+                  "regex": {
+                    "name": "regex",
+                    "args": {
+                      "pattern": "[A-Za-z_][A-Za-z0-9_.-]{0,127}"
+                    }
+                  }
+                }
+              },
+              "hints": {
+                "name": "Named MAC access-list"
+              },
+              "dependency": "policy-access-list-mac",
+              "children": {
+                "description": {
+                  "kind": "leaf_node",
+                  "description": "Policy description",
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "text": {
+                        "name": "text"
+                      }
+                    }
+                  },
+                  "hints": {
+                    "text": "Description; quote spaces"
+                  }
+                },
+                "rule": {
+                  "kind": "tag_node",
+                  "description": "Ordered policy rule",
+                  "anchor": true,
+                  "validators": {
+                    "mode": "AND",
+                    "checks": {
+                      "integer-range": {
+                        "name": "integer-range",
+                        "args": {
+                          "minimum": 1,
+                          "maximum": 4294967295
+                        }
+                      },
+                      "regex": {
+                        "name": "regex",
+                        "args": {
+                          "pattern": "[1-9][0-9]*"
+                        }
+                      }
+                    }
+                  },
+                  "hints": {
+                    "1-4294967295": "Rule sequence number; lower values run first"
+                  },
+                  "children": {
+                    "action": {
+                      "kind": "leaf_node",
+                      "description": "Permit or deny matching routes",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "list": {
+                            "name": "list",
+                            "args": {
+                              "values": "permit deny"
+                            }
+                          }
+                        }
+                      },
+                      "choices": {
+                        "permit": "Permit matching routes",
+                        "deny": "Deny matching routes"
+                      }
+                    },
+                    "description": {
+                      "kind": "leaf_node",
+                      "description": "Policy description",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "text": {
+                            "name": "text"
+                          }
+                        }
+                      },
+                      "hints": {
+                        "text": "Description; quote spaces"
+                      }
+                    },
+                    "address": {
+                      "kind": "leaf_node",
+                      "description": "Exact MAC address to match",
+                      "validators": {
+                        "mode": "AND",
+                        "checks": {
+                          "mac": {
+                            "name": "mac",
+                            "args": {
+                              "unicast": false
+                            }
+                          }
+                        }
+                      },
+                      "hints": {
+                        "mac": "Ethernet address"
+                      }
+                    },
+                    "any": {
+                      "kind": "leaf_node",
+                      "description": "Match any MAC address",
+                      "valueless": true
+                    }
+                  }
+                }
+              }
+            },
             "ipv4": {
               "kind": "tag_node",
               "description": "Named IPv4 access-list",
@@ -143448,6 +144252,108 @@
                   "description": "Route matching conditions",
                   "anchor": true,
                   "children": {
+                    "evpn": {
+                      "kind": "node",
+                      "description": "EVPN route attributes",
+                      "anchor": true,
+                      "children": {
+                        "route-type": {
+                          "kind": "leaf_node",
+                          "description": "EVPN NLRI route type",
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "list": {
+                                "name": "list",
+                                "args": {
+                                  "values": "1 2 3 4 5"
+                                }
+                              }
+                            }
+                          },
+                          "choices": {
+                            "1": "Ethernet Auto-Discovery",
+                            "2": "MAC/IP Advertisement",
+                            "3": "Inclusive Multicast Ethernet Tag",
+                            "4": "Ethernet Segment",
+                            "5": "IP Prefix"
+                          }
+                        },
+                        "vni": {
+                          "kind": "leaf_node",
+                          "description": "VNI label in VXLAN Type 1, 2 or 5 routes",
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "integer-range": {
+                                "name": "integer-range",
+                                "args": {
+                                  "minimum": 1,
+                                  "maximum": 16777215
+                                }
+                              }
+                            }
+                          },
+                          "hints": {
+                            "1-16777215": "VXLAN network identifier"
+                          }
+                        },
+                        "route-distinguisher": {
+                          "kind": "leaf_node",
+                          "description": "EVPN route distinguisher",
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "bgp-rd-rt": {
+                                "name": "bgp-rd-rt"
+                              }
+                            }
+                          },
+                          "hints": {
+                            "rd": "ASN:number or IPv4:number"
+                          }
+                        },
+                        "default-route": {
+                          "kind": "leaf_node",
+                          "description": "IPv4 or IPv6 EVPN default prefix",
+                          "valueless": true
+                        }
+                      }
+                    },
+                    "mac": {
+                      "kind": "node",
+                      "description": "EVPN MAC/IP advertisement",
+                      "anchor": true,
+                      "children": {
+                        "access-list": {
+                          "kind": "leaf_node",
+                          "description": "Match the advertised MAC address",
+                          "validators": {
+                            "mode": "AND",
+                            "checks": {
+                              "regex": {
+                                "name": "regex",
+                                "args": {
+                                  "pattern": "[A-Za-z_][A-Za-z0-9_.-]{0,127}"
+                                }
+                              }
+                            }
+                          },
+                          "hints": {
+                            "name": "Configured MAC access-list"
+                          },
+                          "depends": "policy-access-list-mac",
+                          "suggestors": [
+                            {
+                              "name": "config-path",
+                              "args": {
+                                "path": "policy access-list mac"
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    },
                     "ipv4": {
                       "kind": "node",
                       "description": "IPv4 route matches",
@@ -144020,6 +144926,50 @@
                   "description": "Attributes assigned to permitted routes",
                   "anchor": true,
                   "children": {
+                    "evpn": {
+                      "kind": "node",
+                      "description": "EVPN route attributes",
+                      "anchor": true,
+                      "children": {
+                        "gateway-ip": {
+                          "kind": "node",
+                          "description": "Set the Type 5 gateway IP overlay index",
+                          "anchor": true,
+                          "children": {
+                            "ipv4": {
+                              "kind": "leaf_node",
+                              "description": "EVPN ipv4 gateway address",
+                              "validators": {
+                                "mode": "AND",
+                                "checks": {
+                                  "ipv4-address": {
+                                    "name": "ipv4-address"
+                                  }
+                                }
+                              },
+                              "hints": {
+                                "address": "Overlay gateway IP"
+                              }
+                            },
+                            "ipv6": {
+                              "kind": "leaf_node",
+                              "description": "EVPN ipv6 gateway address",
+                              "validators": {
+                                "mode": "AND",
+                                "checks": {
+                                  "ipv6-address": {
+                                    "name": "ipv6-address"
+                                  }
+                                }
+                              },
+                              "hints": {
+                                "address": "Overlay gateway IP"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
                     "tag": {
                       "kind": "leaf_node",
                       "description": "Set the route tag carried by redistributed routes",

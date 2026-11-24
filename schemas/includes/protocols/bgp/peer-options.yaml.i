@@ -136,6 +136,66 @@ children:
     anchor: true
     children:
 
+      l2vpn-evpn:
+        kind: node
+        description: Enable EVPN route exchange with this peer
+        anchor: true
+        children:
+
+          route-map:
+            kind: node
+            description: Routing policy in each direction
+            anchor: true
+            children:
+
+              import:
+                kind: leaf_node
+                description: Route-map applied to routes received from this peer
+                validators:
+                  regex:
+                    pattern: '[A-Za-z_][A-Za-z0-9_.-]{0,127}'
+                hints:
+                  name: Configured route-map
+                depends: policy-route-map
+                suggestors:
+                  config-path:
+                    path: policy route-map
+
+              export:
+                kind: leaf_node
+                description: Route-map applied to routes advertised to this peer
+                validators:
+                  regex:
+                    pattern: '[A-Za-z_][A-Za-z0-9_.-]{0,127}'
+                hints:
+                  name: Configured route-map
+                depends: policy-route-map
+                suggestors:
+                  config-path:
+                    path: policy route-map
+
+          route-reflector-client:
+            kind: leaf_node
+            description: Treat this internal peer as a route-reflector client
+            valueless: true
+
+          send-community:
+            kind: leaf_node
+            description: Community classes to send; all classes when omitted
+            validators:
+              list:
+                values: standard extended large
+            multi: true
+            choices:
+              standard: Standard communities
+              extended: Extended communities
+              large: Large communities
+
+          disable:
+            kind: leaf_node
+            description: Disable this family, including inherited activation
+            valueless: true
+
       ipv4-unicast:
         kind: node
         description: Enable IPv4 unicast for this peer

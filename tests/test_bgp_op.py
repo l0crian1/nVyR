@@ -9,6 +9,9 @@ from nvyr.op_scripts import bgp
 
 
 @pytest.mark.parametrize('line', [
+    'show bgp l2vpn evpn', 'show bgp l2vpn evpn summary', 'show bgp l2vpn evpn route', 'show bgp l2vpn evpn route type 2',
+    'show bgp l2vpn evpn vni', 'show bgp l2vpn evpn vni 10010', 'show evpn vni',
+    'show evpn vni 50000', 'show evpn mac vni 10010', 'show evpn arp-cache vni 10010',
     'show bgp', 'show bgp summary', 'show bgp summary failed',
     'show bgp summary established neighbor 192.0.2.2 terse wide',
     'show bgp summary remote-as external', 'show bgp summary remote-as 65001 terse',
@@ -86,7 +89,7 @@ def test_abbreviation_run_and_pipe_are_resolved_without_reordering(monkeypatch):
     'show bgp summary remote-as 0', 'show bgp summary remote-as 4294967296',
     'show bgp ipv4 unicast 192.0.2.1 longer-prefixes',
     'show bgp ipv4 unicast vrf BLUE', 'show bgp summary ipv4',
-    'show bgp l2vpn evpn', 'show bgp ipv4 multicast',
+    'show bgp l2vpn evpn route type 6', 'show bgp ipv4 multicast',
     'show bgp json', 'show bgp raw', 'show bgp vrf "BLUE\nconfigure terminal"',
 ])
 def test_invalid_displays_do_not_execute(monkeypatch, line):

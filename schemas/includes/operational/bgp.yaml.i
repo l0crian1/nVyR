@@ -27,6 +27,51 @@ bgp:
           command: ['bgp.nvyr.op', 'show', '@line']
     - file: operational/policy-as-path.yaml.i
 
+    l2vpn:
+      kind: node
+      description: Layer 2 VPN address families
+      children:
+
+        evpn:
+          kind: node
+          description: BGP Ethernet VPN
+          command: ['bgp.nvyr.op', 'show', '@line']
+          children:
+
+            summary:
+              kind: node
+              description: EVPN peer summary
+              command: ['bgp.nvyr.op', 'show', '@line']
+
+            route:
+              kind: node
+              description: BGP EVPN routes
+              command: ['bgp.nvyr.op', 'show', '@line']
+              children:
+
+                type:
+                  kind: tag_node
+                  description: Filter by EVPN route type
+                  validators:
+                    integer-range: {minimum: 1, maximum: 5}
+                  choices:
+                    '1': Ethernet Auto-Discovery
+                    '2': MAC/IP Advertisement
+                    '3': Inclusive Multicast Ethernet Tag
+                    '4': Ethernet Segment
+                    '5': IP Prefix
+                  command: ['bgp.nvyr.op', 'show', '@line']
+
+            vni:
+              kind: tag_node
+              description: VXLAN network identifier
+              validators:
+                integer-range: {minimum: 1, maximum: 16777215}
+              hints:
+                1-16777215: VXLAN network identifier
+              command: ['bgp.nvyr.op', 'show', '@line']
+              optional_value: true
+
     extcommunity-list:
       kind: node
       description: Extended-community list definitions

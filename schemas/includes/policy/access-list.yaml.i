@@ -4,6 +4,72 @@ access-list:
   anchor: true
   children:
 
+    mac:
+      kind: "tag_node"
+      description: "Named MAC access-list"
+      anchor: true
+      validators:
+        regex:
+          pattern: "[A-Za-z_][A-Za-z0-9_.-]{0,127}"
+      hints:
+        name: "Named MAC access-list"
+      dependency: "policy-access-list-mac"
+      children:
+
+        description:
+          kind: "leaf_node"
+          description: "Policy description"
+          validators:
+            text: {}
+          hints:
+            text: "Description; quote spaces"
+
+        rule:
+          kind: "tag_node"
+          description: "Ordered policy rule"
+          anchor: true
+          validators:
+            mode: AND
+            integer-range:
+              minimum: 1
+              maximum: 4294967295
+            regex:
+              pattern: "[1-9][0-9]*"
+          hints:
+            1-4294967295: "Rule sequence number; lower values run first"
+          children:
+
+            action:
+              kind: "leaf_node"
+              description: "Permit or deny matching routes"
+              validators:
+                list:
+                  values: "permit deny"
+              choices:
+                permit: "Permit matching routes"
+                deny: "Deny matching routes"
+
+            description:
+              kind: "leaf_node"
+              description: "Policy description"
+              validators:
+                text: {}
+              hints:
+                text: "Description; quote spaces"
+
+            address:
+              kind: leaf_node
+              description: Exact MAC address to match
+              validators:
+                mac: {unicast: false}
+              hints:
+                mac: Ethernet address
+
+            any:
+              kind: leaf_node
+              description: Match any MAC address
+              valueless: true
+
     ipv4:
       kind: "tag_node"
       description: "Named IPv4 access-list"

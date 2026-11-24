@@ -343,6 +343,24 @@ def verify_vpn(values, family, vrf, instances, path):
         raise ValidationError(f'{path}: per-nexthop allocation requires label auto')
 
 
+def verify_evpn(values, path):
+    detection = lookup(values, ('duplicate-address-detection',), {})
+    # FRR's move threshold and freeze commands enable detection.
+    if 'disable' in detection and len(detection) > 1:
+        raise ValidationError(f'{path}: disabled duplicate detection cannot configure thresholds or freezing')
+
+    if 'advertise-all-vni' in values:
+        return
+    # FRR only accepts these local VTEP advertisements after EVPN is enabled.
+    for flag in ('advertise-default-gw', 'advertise-svi-ip'):
+        if flag in values:
+            raise ValidationError(f'{path}: {flag} requires advertise-all-vni')
+    for vni, policy in lookup(values, ('vni',), {}).items():
+        # Per-L2VNI RD and RT setters explicitly check FRR's advertise-all-vni flag.
+        if 'route-distinguisher' in policy or 'route-target' in policy:
+            raise ValidationError(f'{path} vni {vni}: setting an RD or RT requires advertise-all-vni')
+
+
 def verify(configuration, context):
     """Validate VRF instances, inherited peer settings and referenced policies.
 
@@ -439,6 +457,8 @@ def verify(configuration, context):
             verify_peer(options, instance, policies, f'{path} neighbor {address}', require_remote=True)
 
         for family, values in lookup(instance, ('address-family',), {}).items():
+            if family == 'l2vpn-evpn':
+                verify_evpn(values, f'{path} {family}')
             verify_vpn(values, family, vrf, instances, f'{path} {family}')
             for prefix, aggregate in lookup(values, ('aggregate-address',), {}).items():
                 # Summary-only suppresses everything and would make a selective suppress-map ineffective.

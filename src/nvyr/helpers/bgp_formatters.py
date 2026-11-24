@@ -106,7 +106,66 @@ def peer_family_commands(name, options, inherited_options):
     return commands
 
 
+def evpn_attributes(options, padding):
+    commands = []
+    if 'route-distinguisher' in options:
+        commands.append(padding + 'rd ' + rd_rt(options['route-distinguisher']))
+    targets = options.get('route-target', {})
+    for direction in ('import', 'export'):
+        values = set(targets.get(direction, ())) | set(targets.get('both', ()))
+        for value in sorted({rd_rt(rt) for rt in values}):
+            commands.append(f'{padding}route-target {direction} {value}')
+
+    for flag in ('advertise-default-gw', 'advertise-svi-ip', 'advertise-subnet'):
+        if flag in options:
+            commands.append(padding + flag)
+    return commands
+
+
+def evpn_commands(options):
+    commands = evpn_attributes(options, '  ')
+    for flag in ('advertise-all-vni', 'enable-resolve-overlay-index'):
+        if flag in options:
+            commands.append('  ' + flag)
+    if 'rfc8365-compatible' in options.get('auto-route-target', {}):
+        commands.append('  autort rfc8365-compatible')
+    flooding = options.get('flooding', 'head-end-replication')
+    if flooding == 'disable':
+        commands.append('  flooding disable')
+
+    detection = options.get('duplicate-address-detection', {})
+    if 'disable' in detection:
+        commands.append('  no dup-addr-detection')
+    moves, window = int(detection.get('max-moves', 5)), int(detection.get('time', 180))
+    if (moves, window) != (5, 180):
+        commands.append(f'  dup-addr-detection max-moves {moves} time {window}')
+    if 'freeze' in detection:
+        freeze = detection['freeze']
+        commands.append('  dup-addr-detection freeze ' + ('permanent' if freeze == 'permanent' else str(int(freeze))))
+
+    for family, policy in options.get('advertise', {}).items():
+        command = '  advertise ' + family.replace('-', ' ')
+        if 'gateway-ip' in policy:
+            command += ' gateway-ip'
+        if 'route-map' in policy:
+            command += ' route-map ' + policy['route-map']
+        commands.append(command)
+    for family in options.get('default-originate', {}):
+        commands.append('  default-originate ' + family)
+
+    for identifier, policy in options.get('vni', {}).items():
+        commands.append(f'  vni {int(identifier)}')
+        commands.extend(evpn_attributes(policy, '   '))
+        if policy.get('flooding', flooding) != flooding:
+            commands.append('   flooding ' + policy['flooding'])
+        commands.append('  exit-vni')
+    return commands
+
+
 def family_commands(options, family='ipv4-unicast'):
+    if family == 'l2vpn-evpn':
+        return evpn_commands(options)
+
     commands = []
     for prefix, values in options.get('network', {}).items():
         if family.endswith('-vpn'):

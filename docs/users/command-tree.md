@@ -6387,14 +6387,21 @@ set
 │   │   │       ├── exact-match
 │   │   │       ├── prefix <x.x.x.x/x>
 │   │   │       └── wildcard-mask <x.x.x.x>
-│   │   └── ipv6 <name>
+│   │   ├── ipv6 <name>
+│   │   │   ├── description <text>
+│   │   │   └── rule <1-4294967295>
+│   │   │       ├── action <permit|deny>
+│   │   │       ├── any
+│   │   │       ├── description <text>
+│   │   │       ├── exact-match
+│   │   │       └── prefix <x:x::x/x>
+│   │   └── mac <name>
 │   │       ├── description <text>
 │   │       └── rule <1-4294967295>
 │   │           ├── action <permit|deny>
+│   │           ├── address <mac>
 │   │           ├── any
-│   │           ├── description <text>
-│   │           ├── exact-match
-│   │           └── prefix <x:x::x/x>
+│   │           └── description <text>
 │   ├── as-path-list <name>
 │   │   ├── description <text>
 │   │   └── rule <1-4294967295>
@@ -6480,6 +6487,11 @@ set
 │           │   ├── community-list <name>
 │           │   │   ├── any
 │           │   │   └── exact-match
+│           │   ├── evpn
+│           │   │   ├── default-route
+│           │   │   ├── route-distinguisher <rd>
+│           │   │   ├── route-type <1|2|3|4|5>
+│           │   │   └── vni <1-16777215>
 │           │   ├── extended-community-limit <0-65535>
 │           │   ├── extended-community-list <name>
 │           │   │   ├── any
@@ -6502,6 +6514,8 @@ set
 │           │   ├── large-community-list <name>
 │           │   │   └── exact-match
 │           │   ├── local-preference <0-4294967295>
+│           │   ├── mac
+│           │   │   └── access-list <name>
 │           │   ├── metric <0-4294967295>
 │           │   ├── peer <peer>
 │           │   ├── source-peer <peer>
@@ -6527,6 +6541,10 @@ set
 │               │              route-filter-translated-v4|route-filter-v4|
 │               │              route-filter-translated-v6|route-filter-v6|additive|none|asn:value>
 │               ├── community-delete <name>
+│               ├── evpn
+│               │   └── gateway-ip
+│               │       ├── ipv4 <address>
+│               │       └── ipv6 <address>
 │               ├── extended-community
 │               │   ├── none
 │               │   ├── route-target <rt>
@@ -6661,12 +6679,35 @@ set
 │   │   │   │           ├── both <rt>
 │   │   │   │           ├── export <rt>
 │   │   │   │           └── import <rt>
-│   │   │   └── ipv6-vpn
-│   │   │       ├── disable-retain-route-target-all
-│   │   │       └── network <prefix>
-│   │   │           └── route-distinguisher <rd>
-│   │   │               ├── label <16-1048574>
-│   │   │               └── route-map <name>
+│   │   │   ├── ipv6-vpn
+│   │   │   │   ├── disable-retain-route-target-all
+│   │   │   │   └── network <prefix>
+│   │   │   │       └── route-distinguisher <rd>
+│   │   │   │           ├── label <16-1048574>
+│   │   │   │           └── route-map <name>
+│   │   │   └── l2vpn-evpn
+│   │   │       ├── advertise-all-vni
+│   │   │       ├── advertise-default-gw
+│   │   │       ├── advertise-svi-ip
+│   │   │       ├── auto-route-target
+│   │   │       │   └── rfc8365-compatible
+│   │   │       ├── duplicate-address-detection
+│   │   │       │   ├── disable
+│   │   │       │   ├── freeze <permanent|30-3600>
+│   │   │       │   ├── max-moves <2-1000>
+│   │   │       │   └── time <2-1800>
+│   │   │       ├── enable-resolve-overlay-index
+│   │   │       ├── flooding <head-end-replication|disable>
+│   │   │       └── vni <1-16777215>
+│   │   │           ├── advertise-default-gw
+│   │   │           ├── advertise-subnet
+│   │   │           ├── advertise-svi-ip
+│   │   │           ├── flooding <head-end-replication|disable>
+│   │   │           ├── route-distinguisher <rd>
+│   │   │           └── route-target
+│   │   │               ├── both <rt>
+│   │   │               ├── export <rt>
+│   │   │               └── import <rt>
 │   │   ├── description <text>
 │   │   ├── local-as <1-4294967295>
 │   │   ├── neighbor <address|interface>
@@ -6950,61 +6991,68 @@ set
 │   │   │   │   │   │   └── inbound
 │   │   │   │   │   ├── unsuppress-map <name>
 │   │   │   │   │   └── weight <0-65535>
-│   │   │   │   └── ipv6-vpn
-│   │   │   │       ├── accept-own
-│   │   │   │       ├── access-list
-│   │   │   │       │   ├── in <name>
-│   │   │   │       │   └── out <name>
-│   │   │   │       ├── addpath
-│   │   │   │       │   ├── disable-receive
-│   │   │   │       │   ├── receive-limit <1-65535>
-│   │   │   │       │   └── transmit
-│   │   │   │       │       ├── all
-│   │   │   │       │       └── best-selected <1-6>
-│   │   │   │       ├── allowas-in
-│   │   │   │       │   ├── count <1-10>
-│   │   │   │       │   ├── origin
-│   │   │   │       │   └── route-map <name>
-│   │   │   │       ├── as-override
-│   │   │   │       ├── as-path-list
-│   │   │   │       │   ├── export <name>
-│   │   │   │       │   └── import <name>
-│   │   │   │       ├── attribute-unchanged
-│   │   │   │       │   ├── as-path
-│   │   │   │       │   ├── med
-│   │   │   │       │   └── next-hop
-│   │   │   │       ├── conditional-advertisement
-│   │   │   │       │   ├── advertise-map <name>
-│   │   │   │       │   ├── exist-map <name>
-│   │   │   │       │   └── non-exist-map <name>
+│   │   │   │   ├── ipv6-vpn
+│   │   │   │   │   ├── accept-own
+│   │   │   │   │   ├── access-list
+│   │   │   │   │   │   ├── in <name>
+│   │   │   │   │   │   └── out <name>
+│   │   │   │   │   ├── addpath
+│   │   │   │   │   │   ├── disable-receive
+│   │   │   │   │   │   ├── receive-limit <1-65535>
+│   │   │   │   │   │   └── transmit
+│   │   │   │   │   │       ├── all
+│   │   │   │   │   │       └── best-selected <1-6>
+│   │   │   │   │   ├── allowas-in
+│   │   │   │   │   │   ├── count <1-10>
+│   │   │   │   │   │   ├── origin
+│   │   │   │   │   │   └── route-map <name>
+│   │   │   │   │   ├── as-override
+│   │   │   │   │   ├── as-path-list
+│   │   │   │   │   │   ├── export <name>
+│   │   │   │   │   │   └── import <name>
+│   │   │   │   │   ├── attribute-unchanged
+│   │   │   │   │   │   ├── as-path
+│   │   │   │   │   │   ├── med
+│   │   │   │   │   │   └── next-hop
+│   │   │   │   │   ├── conditional-advertisement
+│   │   │   │   │   │   ├── advertise-map <name>
+│   │   │   │   │   │   ├── exist-map <name>
+│   │   │   │   │   │   └── non-exist-map <name>
+│   │   │   │   │   ├── disable
+│   │   │   │   │   ├── maximum-prefix
+│   │   │   │   │   │   ├── force
+│   │   │   │   │   │   ├── limit <1-4294967295>
+│   │   │   │   │   │   ├── restart <1-65535>
+│   │   │   │   │   │   ├── threshold <1-100>
+│   │   │   │   │   │   └── warning-only
+│   │   │   │   │   ├── maximum-prefix-out <1-4294967295>
+│   │   │   │   │   ├── next-hop-self
+│   │   │   │   │   │   └── force
+│   │   │   │   │   ├── prefix-list
+│   │   │   │   │   │   ├── in <name>
+│   │   │   │   │   │   └── out <name>
+│   │   │   │   │   ├── remove-private-as
+│   │   │   │   │   │   ├── all
+│   │   │   │   │   │   │   └── replace
+│   │   │   │   │   │   └── replace
+│   │   │   │   │   ├── route-map
+│   │   │   │   │   │   ├── export <name>
+│   │   │   │   │   │   └── import <name>
+│   │   │   │   │   ├── route-reflector-client
+│   │   │   │   │   ├── route-server-client
+│   │   │   │   │   ├── send-community <standard|extended|large>
+│   │   │   │   │   ├── site-of-origin <soo>
+│   │   │   │   │   ├── soft-reconfiguration
+│   │   │   │   │   │   └── inbound
+│   │   │   │   │   ├── unsuppress-map <name>
+│   │   │   │   │   └── weight <0-65535>
+│   │   │   │   └── l2vpn-evpn
 │   │   │   │       ├── disable
-│   │   │   │       ├── maximum-prefix
-│   │   │   │       │   ├── force
-│   │   │   │       │   ├── limit <1-4294967295>
-│   │   │   │       │   ├── restart <1-65535>
-│   │   │   │       │   ├── threshold <1-100>
-│   │   │   │       │   └── warning-only
-│   │   │   │       ├── maximum-prefix-out <1-4294967295>
-│   │   │   │       ├── next-hop-self
-│   │   │   │       │   └── force
-│   │   │   │       ├── prefix-list
-│   │   │   │       │   ├── in <name>
-│   │   │   │       │   └── out <name>
-│   │   │   │       ├── remove-private-as
-│   │   │   │       │   ├── all
-│   │   │   │       │   │   └── replace
-│   │   │   │       │   └── replace
 │   │   │   │       ├── route-map
 │   │   │   │       │   ├── export <name>
 │   │   │   │       │   └── import <name>
 │   │   │   │       ├── route-reflector-client
-│   │   │   │       ├── route-server-client
-│   │   │   │       ├── send-community <standard|extended|large>
-│   │   │   │       ├── site-of-origin <soo>
-│   │   │   │       ├── soft-reconfiguration
-│   │   │   │       │   └── inbound
-│   │   │   │       ├── unsuppress-map <name>
-│   │   │   │       └── weight <0-65535>
+│   │   │   │       └── send-community <standard|extended|large>
 │   │   │   ├── capability
 │   │   │   │   ├── disable-fqdn
 │   │   │   │   ├── disable-negotiation
@@ -7419,61 +7467,68 @@ set
 │   │       │   │   │   └── inbound
 │   │       │   │   ├── unsuppress-map <name>
 │   │       │   │   └── weight <0-65535>
-│   │       │   └── ipv6-vpn
-│   │       │       ├── accept-own
-│   │       │       ├── access-list
-│   │       │       │   ├── in <name>
-│   │       │       │   └── out <name>
-│   │       │       ├── addpath
-│   │       │       │   ├── disable-receive
-│   │       │       │   ├── receive-limit <1-65535>
-│   │       │       │   └── transmit
-│   │       │       │       ├── all
-│   │       │       │       └── best-selected <1-6>
-│   │       │       ├── allowas-in
-│   │       │       │   ├── count <1-10>
-│   │       │       │   ├── origin
-│   │       │       │   └── route-map <name>
-│   │       │       ├── as-override
-│   │       │       ├── as-path-list
-│   │       │       │   ├── export <name>
-│   │       │       │   └── import <name>
-│   │       │       ├── attribute-unchanged
-│   │       │       │   ├── as-path
-│   │       │       │   ├── med
-│   │       │       │   └── next-hop
-│   │       │       ├── conditional-advertisement
-│   │       │       │   ├── advertise-map <name>
-│   │       │       │   ├── exist-map <name>
-│   │       │       │   └── non-exist-map <name>
+│   │       │   ├── ipv6-vpn
+│   │       │   │   ├── accept-own
+│   │       │   │   ├── access-list
+│   │       │   │   │   ├── in <name>
+│   │       │   │   │   └── out <name>
+│   │       │   │   ├── addpath
+│   │       │   │   │   ├── disable-receive
+│   │       │   │   │   ├── receive-limit <1-65535>
+│   │       │   │   │   └── transmit
+│   │       │   │   │       ├── all
+│   │       │   │   │       └── best-selected <1-6>
+│   │       │   │   ├── allowas-in
+│   │       │   │   │   ├── count <1-10>
+│   │       │   │   │   ├── origin
+│   │       │   │   │   └── route-map <name>
+│   │       │   │   ├── as-override
+│   │       │   │   ├── as-path-list
+│   │       │   │   │   ├── export <name>
+│   │       │   │   │   └── import <name>
+│   │       │   │   ├── attribute-unchanged
+│   │       │   │   │   ├── as-path
+│   │       │   │   │   ├── med
+│   │       │   │   │   └── next-hop
+│   │       │   │   ├── conditional-advertisement
+│   │       │   │   │   ├── advertise-map <name>
+│   │       │   │   │   ├── exist-map <name>
+│   │       │   │   │   └── non-exist-map <name>
+│   │       │   │   ├── disable
+│   │       │   │   ├── maximum-prefix
+│   │       │   │   │   ├── force
+│   │       │   │   │   ├── limit <1-4294967295>
+│   │       │   │   │   ├── restart <1-65535>
+│   │       │   │   │   ├── threshold <1-100>
+│   │       │   │   │   └── warning-only
+│   │       │   │   ├── maximum-prefix-out <1-4294967295>
+│   │       │   │   ├── next-hop-self
+│   │       │   │   │   └── force
+│   │       │   │   ├── prefix-list
+│   │       │   │   │   ├── in <name>
+│   │       │   │   │   └── out <name>
+│   │       │   │   ├── remove-private-as
+│   │       │   │   │   ├── all
+│   │       │   │   │   │   └── replace
+│   │       │   │   │   └── replace
+│   │       │   │   ├── route-map
+│   │       │   │   │   ├── export <name>
+│   │       │   │   │   └── import <name>
+│   │       │   │   ├── route-reflector-client
+│   │       │   │   ├── route-server-client
+│   │       │   │   ├── send-community <standard|extended|large>
+│   │       │   │   ├── site-of-origin <soo>
+│   │       │   │   ├── soft-reconfiguration
+│   │       │   │   │   └── inbound
+│   │       │   │   ├── unsuppress-map <name>
+│   │       │   │   └── weight <0-65535>
+│   │       │   └── l2vpn-evpn
 │   │       │       ├── disable
-│   │       │       ├── maximum-prefix
-│   │       │       │   ├── force
-│   │       │       │   ├── limit <1-4294967295>
-│   │       │       │   ├── restart <1-65535>
-│   │       │       │   ├── threshold <1-100>
-│   │       │       │   └── warning-only
-│   │       │       ├── maximum-prefix-out <1-4294967295>
-│   │       │       ├── next-hop-self
-│   │       │       │   └── force
-│   │       │       ├── prefix-list
-│   │       │       │   ├── in <name>
-│   │       │       │   └── out <name>
-│   │       │       ├── remove-private-as
-│   │       │       │   ├── all
-│   │       │       │   │   └── replace
-│   │       │       │   └── replace
 │   │       │       ├── route-map
 │   │       │       │   ├── export <name>
 │   │       │       │   └── import <name>
 │   │       │       ├── route-reflector-client
-│   │       │       ├── route-server-client
-│   │       │       ├── send-community <standard|extended|large>
-│   │       │       ├── site-of-origin <soo>
-│   │       │       ├── soft-reconfiguration
-│   │       │       │   └── inbound
-│   │       │       ├── unsuppress-map <name>
-│   │       │       └── weight <0-65535>
+│   │       │       └── send-community <standard|extended|large>
 │   │       ├── capability
 │   │       │   ├── disable-fqdn
 │   │       │   ├── disable-negotiation
@@ -8630,52 +8685,68 @@ set
         │   │   │   │           ├── both <rt>
         │   │   │   │           ├── export <rt>
         │   │   │   │           └── import <rt>
-        │   │   │   └── ipv6-unicast
-        │   │   │       ├── aggregate-address <prefix>
-        │   │   │       │   ├── as-set
-        │   │   │       │   ├── matching-med-only
-        │   │   │       │   ├── origin <igp|egp|incomplete>
-        │   │   │       │   ├── route-map <name>
-        │   │   │       │   ├── summary-only
-        │   │   │       │   └── suppress-map <name>
-        │   │   │       ├── distance
-        │   │   │       │   ├── external <1-255>
-        │   │   │       │   ├── internal <1-255>
-        │   │   │       │   └── local <1-255>
-        │   │   │       ├── maximum-paths
-        │   │   │       │   ├── ebgp <1-256>
-        │   │   │       │   └── ibgp <1-256>
-        │   │   │       ├── network <prefix>
-        │   │   │       │   └── route-map <name>
-        │   │   │       ├── next-hop
-        │   │   │       │   └── prefer-global
-        │   │   │       ├── redistribute
-        │   │   │       │   ├── connected
-        │   │   │       │   │   ├── metric <0-4294967295>
+        │   │   │   ├── ipv6-unicast
+        │   │   │   │   ├── aggregate-address <prefix>
+        │   │   │   │   │   ├── as-set
+        │   │   │   │   │   ├── matching-med-only
+        │   │   │   │   │   ├── origin <igp|egp|incomplete>
+        │   │   │   │   │   ├── route-map <name>
+        │   │   │   │   │   ├── summary-only
+        │   │   │   │   │   └── suppress-map <name>
+        │   │   │   │   ├── distance
+        │   │   │   │   │   ├── external <1-255>
+        │   │   │   │   │   ├── internal <1-255>
+        │   │   │   │   │   └── local <1-255>
+        │   │   │   │   ├── maximum-paths
+        │   │   │   │   │   ├── ebgp <1-256>
+        │   │   │   │   │   └── ibgp <1-256>
+        │   │   │   │   ├── network <prefix>
+        │   │   │   │   │   └── route-map <name>
+        │   │   │   │   ├── next-hop
+        │   │   │   │   │   └── prefer-global
+        │   │   │   │   ├── redistribute
+        │   │   │   │   │   ├── connected
+        │   │   │   │   │   │   ├── metric <0-4294967295>
+        │   │   │   │   │   │   └── route-map <name>
+        │   │   │   │   │   ├── isis
+        │   │   │   │   │   │   ├── metric <0-4294967295>
+        │   │   │   │   │   │   └── route-map <name>
+        │   │   │   │   │   ├── kernel
+        │   │   │   │   │   │   ├── metric <0-4294967295>
+        │   │   │   │   │   │   └── route-map <name>
+        │   │   │   │   │   └── static
+        │   │   │   │   │       ├── metric <0-4294967295>
+        │   │   │   │   │       └── route-map <name>
+        │   │   │   │   └── vpn
+        │   │   │   │       ├── allocation-mode <per-vrf|per-nexthop>
+        │   │   │   │       ├── export
+        │   │   │   │       ├── import
+        │   │   │   │       ├── label <auto|16-1048574>
+        │   │   │   │       ├── next-hop <address>
+        │   │   │   │       ├── route-distinguisher <rd>
+        │   │   │   │       ├── route-map
+        │   │   │   │       │   ├── export <name>
+        │   │   │   │       │   └── import <name>
+        │   │   │   │       └── route-target
+        │   │   │   │           ├── both <rt>
+        │   │   │   │           ├── export <rt>
+        │   │   │   │           └── import <rt>
+        │   │   │   └── l2vpn-evpn
+        │   │   │       ├── advertise
+        │   │   │       │   ├── ipv4-unicast
+        │   │   │       │   │   ├── gateway-ip
         │   │   │       │   │   └── route-map <name>
-        │   │   │       │   ├── isis
-        │   │   │       │   │   ├── metric <0-4294967295>
-        │   │   │       │   │   └── route-map <name>
-        │   │   │       │   ├── kernel
-        │   │   │       │   │   ├── metric <0-4294967295>
-        │   │   │       │   │   └── route-map <name>
-        │   │   │       │   └── static
-        │   │   │       │       ├── metric <0-4294967295>
+        │   │   │       │   └── ipv6-unicast
+        │   │   │       │       ├── gateway-ip
         │   │   │       │       └── route-map <name>
-        │   │   │       └── vpn
-        │   │   │           ├── allocation-mode <per-vrf|per-nexthop>
-        │   │   │           ├── export
-        │   │   │           ├── import
-        │   │   │           ├── label <auto|16-1048574>
-        │   │   │           ├── next-hop <address>
-        │   │   │           ├── route-distinguisher <rd>
-        │   │   │           ├── route-map
-        │   │   │           │   ├── export <name>
-        │   │   │           │   └── import <name>
-        │   │   │           └── route-target
-        │   │   │               ├── both <rt>
-        │   │   │               ├── export <rt>
-        │   │   │               └── import <rt>
+        │   │   │       ├── default-originate
+        │   │   │       │   ├── ipv4
+        │   │   │       │   └── ipv6
+        │   │   │       ├── route-distinguisher <rd>
+        │   │   │       └── route-target
+        │   │   │           ├── both <rt>
+        │   │   │           ├── export <rt>
+        │   │   │           └── import <rt>
         │   │   ├── description <text>
         │   │   ├── local-as <1-4294967295>
         │   │   ├── neighbor <address|interface>
@@ -9952,7 +10023,9 @@ set
         │           │   └── threads <1-1024>
         │           ├── port <1-65535>
         │           └── source-address <IPv4|IPv6>
-        └── table <100-251|256-4294967295>
+        ├── table <100-251|256-4294967295>
+        └── vni <1-16777215>
+            └── prefix-routes-only
 ```
 
 ## Configuration-mode commands
@@ -11412,6 +11485,12 @@ operational mode
 │   │   │       │   │   └── wide
 │   │   │       │   └── wide
 │   │   │       └── version <number>
+│   │   ├── l2vpn
+│   │   │   └── evpn
+│   │   │       ├── route
+│   │   │       │   └── type <1|2|3|4|5>
+│   │   │       ├── summary
+│   │   │       └── vni [<1-16777215>]
 │   │   ├── labelpool
 │   │   │   ├── chunks
 │   │   │   ├── inuse
@@ -12315,6 +12394,12 @@ operational mode
 │   │           ├── local-data
 │   │           ├── statistics
 │   │           └── upstreams
+│   ├── evpn
+│   │   ├── arp-cache
+│   │   │   └── vni <1-16777215>
+│   │   ├── mac
+│   │   │   └── vni <1-16777215>
+│   │   └── vni [<1-16777215>]
 │   ├── firewall
 │   │   ├── detail
 │   │   ├── domain-group
