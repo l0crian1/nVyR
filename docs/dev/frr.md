@@ -120,6 +120,14 @@ nVyR `save` and its boot configuration remain authoritative. Restarting
 intent to be replayed. If FRR state is independently lost outside that service
 restart, restart configd to reconcile it.
 
+## 0.6.0 roadmap
+
+- Batch FRR changes into one integrated reload per commit or boot replay. Each
+  config script validates and generates its own section. A final apply step
+  merges the pending sections, reloads once if needed and verifies the result
+  before configd marks those scripts successful. Preserve rollback for partial
+  reloads, including related MPLS kernel changes.
+
 ## Static adapter and VRF retention
 
 `protocols_static.get_config()` uses the script's registered VRFs rather than
