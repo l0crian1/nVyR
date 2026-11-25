@@ -32,7 +32,7 @@ GENERATOR = '/usr/lib/systemd/system-generators/podman-system-generator'
 def read_state():
     """Read native inventory; configd remains the sole owner of configuration."""
     if not STATE.exists():
-        return {'objects': {}, 'interfaces': {}, 'images': {}, 'inputs': {}}
+        return {'objects': {}, 'interfaces': {}, 'inputs': {}}
     return json.loads(STATE.read_text())
 
 
@@ -267,13 +267,6 @@ def registry_text(configuration):
             + '\nshort-name-mode = "disabled"\n')
 
 
-def image_id(reference):
-    data = json.loads(cmd(['podman', 'image', 'inspect', reference]))
-    if not data or not data[0].get('Id'):
-        raise RouterError(f'Image {reference} is unavailable; use add container image first')
-    return data[0]['Id']
-
-
 def render_container(name, section, image):
     image_user = None
     if lookup(section, ('uid',), 'auto') == 'auto' and lookup(section, ('gid',), 'auto') != 'auto':
@@ -334,7 +327,7 @@ def volume_mounts(name, section, image=None):
     return mounts
 
 
-def installed_files(previous, changed, images):
+def installed_files(previous, changed):
     """Snapshot exact installed definitions for compensation, without re-rendering."""
     snapshot = {'registry': REGISTRIES.read_text() if REGISTRIES.exists() else registry_text(previous),
                 'networks': {}, 'pods': {}, 'containers': {}}
@@ -349,9 +342,10 @@ def installed_files(previous, changed, images):
             value = path.read_text()
             if kind == 'name':
                 environment = Path(config.environment_path(name))
+                section = lookup(previous, ('name', name), {})
                 value = {'text': value,
                          'environment': environment.read_text() if environment.exists() else None,
-                         'mounts': volume_mounts(name, lookup(previous, ('name', name), {}), lookup(images, (name,), None))}
+                         'mounts': volume_mounts(name, section, section.get('image'))}
             snapshot[destination][name] = value
     return snapshot
 
@@ -377,7 +371,6 @@ def generate(configuration, context):
     if pending is not None and not recovery:
         raise RecoveryError('An interrupted container operation needs recovery. Restart configd before retrying.')
 
-    images = {}
     environment = {}
     inputs = {}
     for name, section in lookup(configuration, ('name',), {}).items():
@@ -389,7 +382,7 @@ def generate(configuration, context):
             if '\x00' in contents:
                 raise RouterError('Environment file must not contain NUL bytes')
             environment[name] = contents
-        inputs[name] = {'configuration': fingerprint(section), 'environment': fingerprint(environment.get(name))}
+        inputs[name] = {'environment': fingerprint(environment.get(name))}
         previous_input = old['inputs'].get(name, {})
         if previous_input.get('environment') != inputs[name]['environment'] and name not in changed['name']:
             changed['name'].append(name)
@@ -398,16 +391,6 @@ def generate(configuration, context):
             metadata = Path(device).lstat()
             if not (stat.S_ISCHR(metadata.st_mode) or stat.S_ISBLK(metadata.st_mode)):
                 raise RouterError(f'Container device is not a character or block device: {device}')
-        # Unchanged instances keep their image digest across unrelated commits and restarts.
-        if inputs[name]['configuration'] == previous_input.get('configuration') and name in old['images']:
-            images[name] = old['images'][name]
-        else:
-            try:
-                images[name] = image_id(section['image'])
-            except RouterError:
-                if not recovery:
-                    raise
-                images[name] = section['image']
 
     forward = {'registry': registry_text(configuration), 'networks': {}, 'pods': {}, 'containers': {}}
     for name in changed['network']:
@@ -422,23 +405,27 @@ def generate(configuration, context):
         section = lookup(configuration, ('name', name), None)
         if section is not None and config.enabled(section, configuration):
             try:
-                forward['containers'][name] = {'text': render_container(name, section, images[name]),
+                image = section['image']
+                if not recovery:
+                    # Catch missing local images before stopping the existing service.
+                    cmd(['podman', 'image', 'inspect', '--format', '{{.Id}}', '--', image])
+                forward['containers'][name] = {'text': render_container(name, section, image),
                                               'environment': environment.get(name),
-                                              'mounts': volume_mounts(name, section, images[name])}
+                                              'mounts': volume_mounts(name, section, image)}
             except RouterError as error:
                 if not recovery:
                     raise
                 context.report(f'Container unavailable: {name}: {error}')
 
     record = inventory(configuration)
-    record.update(images=images, inputs=inputs)
+    record['inputs'] = inputs
     forward['inventory'] = json_text(record)
     if (not recovery and not any(changed.values()) and forward['inventory'] == json_text(old)
             and REGISTRIES.exists() and REGISTRIES.read_text() == forward['registry']):
         return None
 
     validate_units(forward)
-    rollback = installed_files(previous, changed, old['images']) if not recovery else None
+    rollback = installed_files(previous, changed) if not recovery else None
     if rollback is not None:
         rollback['inventory'] = json_text(old)
 

@@ -32,9 +32,9 @@ def read_output(argv, *, timeout=15):
 
 
 def configured_state():
-    """Use configd for intent and the native inventory only for pinned image IDs."""
+    """Read the configured container settings from configd."""
     configuration = services.running_configuration().get('container', {})
-    return {'configuration': configuration, 'images': container_script.read_state()['images']}
+    return {'configuration': configuration}
 
 
 def observations():

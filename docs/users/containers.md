@@ -455,20 +455,31 @@ update container image name docker.io/library/busybox:1.37
 update container image container TEST
 ```
 
-Both update forms and `add` run a normal `podman pull`, fetching the current image
-while reusing layers already available locally; they do not restart containers.
-Image names accept an optional registry, tag or sha256 digest. Local archive and
-directory transports are not exposed. Running instances are pinned to their
-selected image ID, including across unrelated commits and boot recovery.
+Both update forms and `add` pull the image into local Podman storage. The output
+identifies a new download, a changed image (old and new IDs), or an up-to-date image.
+The running container continues serving on its current image. Run
+`restart container TEST` to recreate it from the updated local tag. Boot uses the
+same configured reference. Neither operation needs to pull from the registry.
+An explicit image digest in configuration continues to select that exact image.
 
-To adopt an updated image, disable and commit the container, then delete its disable
-setting and commit again. Configuration changes recreate affected containers. A
-network change stops its consumers before recreating the network and its consumers.
-Other containers remain running. Commit failures attempt to restore previous
-definitions and selected images; failure to restore is reported as a recovery error.
-An operation journal records affected names before native changes, allowing boot
-recovery to clean up an interrupted apply. A successful commit confirms that the
-service started; it is not an application health check.
+To remove an image from local storage, use its name and tag or the image ID from
+`show containers images`. IDs also work for untagged images.
+
+```text
+delete container image docker.io/library/busybox:1.37
+delete container image 277de5039b89
+```
+
+Deletion uses Podman's normal, non-forced removal. A successful removal of one
+tag can leave the image available under another tag. Pulls perform no automatic
+cleanup.
+
+Configuration changes recreate affected containers. A network change stops its
+consumers before recreating the network and those consumers. Other containers
+keep running. A rollback restores the previous definitions and configured image
+references. An operation journal records affected names so boot recovery can
+clean up an interrupted apply. A successful commit confirms service startup.
+Check the container logs or the application itself to verify application health.
 
 Container startup failures are reported without preventing login. Use [container operations](container-operations.md) and [container logs](logging.md#container-logs) to inspect them.
 

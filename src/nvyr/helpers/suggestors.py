@@ -150,7 +150,7 @@ def container_capabilities(context):
 
 
 @register('container-images')
-def container_images(context):
+def container_images(context, include_ids=False):
     import json
 
     from nvyr.errors import RouterError
@@ -164,6 +164,8 @@ def container_images(context):
 
     names = set()
     for image in images:
+        if include_ids and image.get('Id'):
+            names.add(image['Id'].removeprefix('sha256:')[:12])
         for name in image.get('Names') or ():
             if '<none>' not in name:
                 names.add(name)

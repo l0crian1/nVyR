@@ -10,7 +10,7 @@ For configuration and command usage, see the [user guide](../users/containers.md
   VRF names. It uses `context.get_changed()` to identify affected objects and their
   network and pod consumers.
 - `verify()` checks relationships, required settings and conflicting options.
-- `generate()` resolves image IDs, captures environment-file contents, and renders
+- `generate()` checks local image availability, captures environment-file contents, and renders
   changed `.network`, `.pod` and `.container` files. It snapshots the installed files
   for rollback rather than rendering the previous configuration again.
 - `apply()` installs the generated result in dependency order. It does not render
@@ -39,8 +39,8 @@ removed afterward. An unchanged configuration and unchanged external inputs need
 no host worker.
 
 Configd is the source of running configuration, including for container operational
-commands. The container inventory stores managed object/interface names, pinned image
-IDs, and configuration/environment fingerprints. It does not store a second copy
+commands. The container inventory stores managed object/interface names and environment-file
+fingerprints. It does not store a second copy
 of the CLI configuration or environment contents. Before changing native objects,
 apply records the names that might need cleanup if interrupted. Configd's transaction
 journal determines the configuration to restore; the cleanup list only identifies
@@ -83,7 +83,7 @@ stopping workloads. During apply it opens sources without following symlinks and
 creates missing directories only under `/config/containers/`. Podman binds the
 source path directly at each container start.
 
-Generation resolves named volume owners from the pinned image's account files via
+Generation resolves named volume owners from the configured image's account files via
 a read-only inspection operation in the host worker. Podman mounts the image, the
 worker reads its account databases, and the image is unmounted in a finally block.
 No image entrypoint executes. Numeric IDs, source resolution, recursion and mode are

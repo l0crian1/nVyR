@@ -73,7 +73,7 @@ def test_container_observations_do_not_reconfigure():
     """Only deliberate lifecycle mutations should commit during individual container cases."""
     mutations = {'test_disable_and_reenable', 'test_unrelated_commit_preserves_workload',
                  'test_network_edit_recreates_attached_workload', 'test_persistent_volume_survives_recreation',
-                 'test_resource_overrides_and_removal'}
+                 'test_resource_overrides_and_removal', 'test_restart_container'}
     path = ROOT / 'functionaltests/workloads/test_container.py'
     for function in ast.parse(path.read_text()).body:
         if (isinstance(function, ast.FunctionDef) and function.name.startswith('test_')

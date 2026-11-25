@@ -58,7 +58,7 @@ def test_native_generation_inside_configd_restrictions_and_single_host_apply(mon
         container.apply(generated, context)
         installed = json.loads(cmd(['podman', 'container', 'inspect', 'STAGES']))[0]
         assert installed['State']['Running']
-        assert installed['Image'] == json.loads(generated['forward']['inventory'])['images']['STAGES']
+        assert installed['Image'] == cmd(['podman', 'image', 'inspect', '--format', '{{.Id}}', 'busybox:1.37']).strip()
         assert (container.QUADLETS / 'nvyr-container-535441474553.container').read_text() == generated['forward']['containers']['STAGES']['text']
     finally:
         context = CommitContext(ReadOnlyTree({}), ReadOnlyTree(desired), 'container', ('container',),

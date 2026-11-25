@@ -10,6 +10,7 @@ Incompatible: deleting the whole container tree or changing the shared bridge.
 import json
 from pathlib import Path
 import socket
+from uuid import uuid4
 
 import pytest
 
@@ -196,16 +197,32 @@ def test_show_container_statistics():
 
 
 def test_restart_container(config):
-    """Managed restart recreates the service workload using the same pinned image."""
-    previous = assert_container_running('CTRESTART')
-    configuration = config.get_config()
+    """Moving a local tag leaves the workload alone until a single managed restart."""
+    original = config.get_config()['container']['name']['CTRESTART']['image']
+    old_image = assert_container_running('CTRESTART')['Image']
+    tag = f'localhost/nvyr-restart-{uuid4().hex}:latest'
+    cmd(['podman', 'tag', old_image, tag])
+    try:
+        config.set(f'set container name CTRESTART image {tag}')
+        config.commit()
+        previous = assert_container_running('CTRESTART')
+        configuration = config.get_config()
+        updated = cmd(['podman', 'commit', '--quiet', '--change', 'LABEL test=restart', 'CTRESTART', tag]).strip()
+        assert_not_equal(updated, old_image)
+        assert_equal(assert_container_running('CTRESTART')['Id'], previous['Id'])
 
-    container_commands.restart('CTRESTART')
+        container_commands.restart('CTRESTART')
 
-    assert_container_restarted('CTRESTART', previous['Id'])
-    current = assert_container_running('CTRESTART')
-    assert_equal(current['Image'], previous['Image'])
-    assert_equal(config.get_config(), configuration)
+        assert_container_restarted('CTRESTART', previous['Id'])
+        assert_equal(assert_container_running('CTRESTART')['Image'], updated)
+        assert_equal(config.get_config(), configuration)
+        with assert_raises(SystemExit) as error:
+            container_commands.remove(updated)
+        assert_equal(error.value.code, 1)
+    finally:
+        config.set(f'set container name CTRESTART image {original}')
+        config.commit()
+        container_commands.remove(tag)
 
 
 def test_restart_disabled_container_rejected():

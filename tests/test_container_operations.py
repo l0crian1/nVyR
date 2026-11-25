@@ -359,11 +359,9 @@ def test_observations_read_configuration_from_configd_once(monkeypatch):
     calls = []
     configuration = {'container': {'name': {'DNS': {'image': 'alpine', 'disable': True}}}}
     monkeypatch.setattr(views.services, 'running_configuration', lambda: calls.append('read') or configuration)
-    monkeypatch.setattr(views.container_script, 'read_state', lambda: {'images': {'DNS': 'pinned'}})
 
     observed = views.observations()
     assert observed.read()['configuration'] == configuration['container']
-    assert observed.read()['images'] == {'DNS': 'pinned'}
     assert calls == ['read']
 
 
@@ -371,10 +369,10 @@ def test_observations_read_configuration_from_configd_once(monkeypatch):
 def restart_runtime(tmp_path):
     state = tmp_path / 'managed.json'
     state.write_text(json.dumps({'objects': {'name': ['DNS']}, 'interfaces': {},
-                                'images': {'DNS': 'pinned'}, 'inputs': {}}))
+                                'inputs': {}}))
     quadlets = tmp_path / 'quadlets'
     quadlets.mkdir()
-    (quadlets / (unit_name('DNS') + '.container')).write_text('Image=pinned\n')
+    (quadlets / (unit_name('DNS') + '.container')).write_text('Image=alpine\n')
     events = []
     runtime = ContainerHarness(state=state, quadlets=quadlets,
                                  execute=lambda argv, **kwargs: events.append(argv) or '', report=events.append)
@@ -384,7 +382,7 @@ def restart_runtime(tmp_path):
     return runtime
 
 
-def test_restart_retries_precreation_failure_without_mutating_config_or_digest(restart_runtime):
+def test_restart_retries_precreation_failure_without_mutating_inventory(restart_runtime):
     before = restart_runtime.state.read_bytes()
     restart_runtime.restart('DNS')
     unit = unit_name('DNS') + '.service'

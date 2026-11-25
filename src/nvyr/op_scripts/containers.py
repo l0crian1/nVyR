@@ -12,21 +12,41 @@ from nvyr.helpers import container_config as config
 from nvyr.helpers.validators import container_image as image_reference
 from nvyr.helpers.container_operations import configured_state, display
 from nvyr.helpers.containers import worker_command
-from nvyr.helpers.process import call, cmd
+from nvyr.helpers.process import call, cmd, rc_cmd
 
 
-def _pull(reference, *, report=print):
+def _pull(reference, *, name=None, report=print):
     if not image_reference(reference):
         raise RouterError('Use a container image name with an optional registry, tag or digest')
 
     current = configured_state()
     container_script.configure_registry(container_script.registry_text(current['configuration']))
-    cmd(['podman', 'pull', '--', reference], timeout=1800)
-    image = container_script.image_id(reference)
-    report(f'Image available: {reference} ({image})')
-    for name, section in current['configuration'].get('name', {}).items():
-        if section['image'] == reference and current['images'].get(name) not in (None, image):
-            report(f'{name}: the running image is unchanged. Disable/commit, then enable/commit to recreate it.')
+    status, output = rc_cmd(['podman', 'image', 'exists', '--', reference])
+    if status not in (0, 1):
+        raise RouterError(output.strip() or 'Could not read the local image store')
+
+    previous = ''
+    if status == 0:
+        previous = cmd(['podman', 'image', 'inspect', '--format', '{{.Id}}', '--', reference]).strip()
+    cmd(['podman', 'pull', '--quiet', '--', reference], timeout=1800)
+    image = cmd(['podman', 'image', 'inspect', '--format', '{{.Id}}', '--', reference]).strip()
+    if previous == image:
+        report(f'Already up to date: {reference} ({image[:12]})')
+    elif previous:
+        report(f'Updated {reference}: {previous[:12]} -> {image[:12]}')
+    else:
+        report(f'Downloaded {reference} ({image[:12]})')
+
+    if name:
+        report(f'Use "restart container {name}" to start it with the local image.')
+    else:
+        report('Running containers keep their current image until restarted.')
+
+
+def _remove(reference):
+    if not image_reference(reference):
+        raise RouterError('Use a local image name or image ID')
+    print(cmd(['podman', 'rmi', '--', reference]).strip())
 
 
 def _restart(name, *, report=print):
@@ -143,6 +163,11 @@ def connect(name: str, send_command: str | None = None):
 @opmode.command
 def add(image: str):
     _worker('add', image)
+
+
+@opmode.command
+def remove(image: str):
+    _worker('remove', image)
 
 
 @opmode.command

@@ -188,6 +188,8 @@ def test_ten_networks_have_distinct_names_and_preserve_ids():
 
 def test_image_operations_permissions_and_mapping(controller):
     for text, function in [('add container image ' + IMAGE, 'add'),
+                           ('delete container image ' + IMAGE, 'remove'),
+                           ('delete container image 277de5039b89', 'remove'),
                            ('update container image name ' + IMAGE, 'update'),
                            ('update container image container APP', 'update_container')]:
         with as_role('read-only'), pytest.raises(RouterError, match='net-admin'):
@@ -355,7 +357,6 @@ class FakeRuntime(ContainerHarness):
         self.events = []
         self.networks = set()
         self.fail_start = 0
-        self.available_image = IMAGE_ID
         self.links = []
 
     def command(self, argv, **kwargs):
@@ -379,9 +380,6 @@ class FakeRuntime(ContainerHarness):
     def status_command(self, argv, **kwargs):
         self.events.append(tuple(argv))
         return 0, ''
-
-    def image_id(self, reference):
-        return self.available_image
 
     def owned(self, kind, name):
         return kind == 'network' and name in self.networks
@@ -420,12 +418,32 @@ def test_runtime_noop_and_image_update_does_not_recreate(tmp_path):
     desired = configuration()
     runtime.apply(runtime.generate(desired))
     runtime.events.clear()
-    runtime.available_image = 'b' * 64
     runtime.pull(IMAGE)
     runtime.apply(runtime.generate(desired))
     assert not any(event[:2] == ('systemctl', 'stop') for event in runtime.events)
-    assert runtime.read()['images']['APP'] == IMAGE_ID
-    assert ('podman', 'pull', '--', IMAGE) in runtime.events
+    assert ('podman', 'pull', '--quiet', '--', IMAGE) in runtime.events
+    assert 'Image=' + IMAGE in (runtime.quadlets / 'nvyr-container-415050.container').read_text().splitlines()
+
+
+@pytest.mark.parametrize(('previous', 'current', 'expected'), [
+    (None, 'b' * 64, 'Downloaded'),
+    ('a' * 64, 'b' * 64, 'aaaaaaaaaaaa -> bbbbbbbbbbbb'),
+    ('b' * 64, 'b' * 64, 'Already up to date'),
+])
+def test_pull_reports_whether_local_tag_changed(tmp_path, previous, current, expected):
+    reports = []
+    inspections = iter([previous, current] if previous else [current])
+
+    def execute(argv, **kwargs):
+        if argv[:3] == ['podman', 'image', 'inspect']:
+            return next(inspections)
+        assert argv == ['podman', 'pull', '--quiet', '--', IMAGE]
+        return current
+
+    runtime = ContainerHarness(registries=tmp_path / 'registries.conf', execute=execute,
+                               status=lambda *args, **kwargs: (0 if previous else 1, ''), report=reports.append)
+    runtime.pull(IMAGE)
+    assert expected in reports[0]
 
 
 def test_registry_changes_do_not_restart_containers_and_reset_to_docker_hub(tmp_path):

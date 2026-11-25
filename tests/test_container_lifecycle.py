@@ -60,7 +60,6 @@ def test_apply_uses_generated_bytes_without_rendering_or_resolving_again(tmp_pat
 
     monkeypatch.setattr(container, 'render', unexpected)
     monkeypatch.setattr(container, 'verify', unexpected)
-    runtime.image_id = unexpected
     runtime.validate_units = unexpected
     runtime.apply(generated)
 
@@ -71,19 +70,16 @@ def test_apply_uses_generated_bytes_without_rendering_or_resolving_again(tmp_pat
     assert runtime.state.read_text() == generated['forward']['inventory']
 
 
-def test_unchanged_multivalues_preserve_pinned_image_and_skip_rendering(tmp_path, monkeypatch):
+def test_unchanged_multivalues_skip_rendering(tmp_path, monkeypatch):
     runtime = FakeRuntime(tmp_path)
     desired = configuration()
     desired['name']['APP']['capability'] = ['net-raw', 'net-admin']
     runtime.apply(runtime.generate(desired))
-    image = runtime.read()['images']['APP']
-    runtime.image_id = lambda *args: pytest.fail('Unchanged configuration resolved its image again')
     monkeypatch.setattr(container, 'render', lambda *args: pytest.fail('Unchanged units were rendered again'))
 
     generated = runtime.generate(desired)
 
     assert generated is None
-    assert runtime.read()['images']['APP'] == image
 
 
 def test_failed_apply_uses_prepared_rollback_without_regeneration(tmp_path, monkeypatch):
@@ -96,7 +92,6 @@ def test_failed_apply_uses_prepared_rollback_without_regeneration(tmp_path, monk
     snapshot = deepcopy(generated)
     runtime.fail_start = 1
     monkeypatch.setattr(container, 'render', lambda *args: pytest.fail('Rollback rendered configuration'))
-    runtime.image_id = lambda *args: pytest.fail('Rollback resolved an image tag')
 
     with pytest.raises(RouterError, match='previous configuration restored'):
         runtime.apply(generated)
@@ -185,25 +180,28 @@ def test_inventory_retains_native_identity_without_configuration_or_secrets(tmp_
     cleanup = json.loads(generated['cleanup'])
     assert saved['objects'] == {'name': ['APP'], 'pod': [], 'network': ['LAN']}
     assert saved['interfaces']['pd-APP-0'] == ['container', 'APP']
-    assert saved['images']['APP'] == runtime.available_image
-    assert saved['inputs']['APP']['configuration'] == container.fingerprint(desired['name']['APP'])
+    assert 'images' not in saved
+    assert saved['inputs']['APP']['environment'] == container.fingerprint(None)
     assert set(cleanup) == {'objects', 'interfaces'}
     assert 'private-value' not in runtime.state.read_text()
     assert 'private-value' not in generated['cleanup']
     assert not {'before', 'previous', 'configuration', 'before_text', 'record_text'} & generated.keys()
 
 
-def test_recovery_preserves_image_id_without_saved_cli_configuration(tmp_path):
+def test_recovery_uses_configured_tag_even_with_older_inventory(tmp_path):
     runtime = FakeRuntime(tmp_path)
     desired = configuration()
     runtime.apply(runtime.generate(desired))
-    pinned = runtime.read()['images']['APP']
+    old_inventory = json.loads(runtime.state.read_text())
+    old_inventory['images'] = {'APP': 'a' * 64}
+    runtime.state.write_text(json.dumps(old_inventory))
     runtime.configuration = {}  # Boot starts from configd's saved target, not a previous live tree.
-    runtime.available_image = 'b' * 64
 
     runtime.apply(runtime.generate(desired, recovery=True))
 
-    assert runtime.read()['images']['APP'] == pinned
+    unit = runtime.quadlets / 'nvyr-container-415050.container'
+    assert 'Image=' + desired['name']['APP']['image'] in unit.read_text().splitlines()
+    assert 'images' not in json.loads(runtime.state.read_text())
 
 
 def test_registry_only_change_does_not_inspect_or_restart_workloads(tmp_path):

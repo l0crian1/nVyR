@@ -84,6 +84,23 @@ children: # image management commands
     description: Remove an installed image (net-admin or higher)
     children: # delete
 
+      container:
+        kind: node
+        description: Container resources
+        children:
+
+          image:
+            kind: leaf_node
+            description: Remove a local image by name or ID
+            hints:
+              image: Repository and tag, or the image ID shown by show containers images
+            validators:
+              container-image: {}
+            suggestors:
+              container-images: {include_ids: true}
+            command: ['containers.nvyr.op', 'remove', '@4']
+            stream: true
+
       system:
         kind: node
         description: System resources

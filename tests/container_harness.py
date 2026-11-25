@@ -46,10 +46,10 @@ class ContainerHarness:
                                    ('cmd', self.execute), ('rc_cmd', self.status)):
                     patches.enter_context(patch.object(container, key, value))
                 patches.enter_context(patch.object(operations, 'cmd', self.execute))
+                patches.enter_context(patch.object(operations, 'rc_cmd', self.status))
                 patches.enter_context(patch.object(operations, 'configured_state',
-                                                   lambda: {'configuration': self.configuration,
-                                                            'images': container.read_state()['images']}))
-                for key in ('image_id', 'owned', 'validate_units'):
+                                                   lambda: {'configuration': self.configuration}))
+                for key in ('owned', 'validate_units'):
                     if key in self.__dict__ or key in type(self).__dict__:
                         patches.enter_context(patch.object(container, key, getattr(self, key)))
                 if name == 'generate':
@@ -70,7 +70,7 @@ class ContainerHarness:
                     self.configuration = self.generated_configurations.pop(id(args[0]))
                     return None
                 if name == 'read':
-                    return {'configuration': self.configuration, 'images': container.read_state()['images']}
+                    return {'configuration': self.configuration}
                 if name in ('pull', 'restart', 'restart_pod'):
                     kwargs['report'] = self.report
                 return function(*args, **kwargs)

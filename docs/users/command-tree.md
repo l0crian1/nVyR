@@ -10874,6 +10874,8 @@ operational mode
 │   └── container <name>
 │       └── send-command <command>
 ├── delete
+│   ├── container
+│   │   └── image <image>
 │   └── system
 │       └── image <name>
 ├── disable

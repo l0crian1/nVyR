@@ -28,18 +28,22 @@ def runtime(tmp_path):
             instance.registries.write_bytes(previous)
 
 
+def local_image_id(reference):
+    return cmd(['podman', 'image', 'inspect', '--format', '{{.Id}}', reference]).strip()
+
+
 def test_native_pull_without_registry_or_tag(runtime):
     """The wrapper must run a real pull, with Podman resolving the short name and latest tag."""
     runtime.pull('busybox')
-    assert runtime.image_id('busybox') == runtime.image_id('docker.io/library/busybox:latest')
+    assert local_image_id('busybox') == local_image_id('docker.io/library/busybox:latest')
 
 
 def test_native_pull_qualified_without_tag_and_refresh(runtime):
     """Qualified untagged names and an explicit latest tag both work on the packaged Podman."""
     runtime.pull('docker.io/library/busybox')
-    first = runtime.image_id('docker.io/library/busybox')
+    first = local_image_id('docker.io/library/busybox')
     runtime.pull('docker.io/library/busybox:latest')
-    assert runtime.image_id('docker.io/library/busybox:latest') == first
+    assert local_image_id('docker.io/library/busybox:latest') == first
 
 
 def test_native_pull_uses_configured_search_registry(runtime):
@@ -56,7 +60,7 @@ def test_native_pull_searches_multiple_registries_in_priority_order(runtime):
         'docker.io': {'priority': '20'}, '127.0.0.1:9': {'priority': '10'},
     }}
     runtime.pull('library/busybox:1.37')
-    assert runtime.image_id('library/busybox:1.37') == runtime.image_id('docker.io/library/busybox:1.37')
+    assert local_image_id('library/busybox:1.37') == local_image_id('docker.io/library/busybox:1.37')
 
 
 def test_packaged_storage_on_overlay_filesystem(tmp_path):

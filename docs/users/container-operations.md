@@ -56,7 +56,7 @@ retry message rather than an indefinite display wait.
 
 `restart container` requires net-admin or administrator. It restarts the
 generated systemd service, allowing a failed startup to be retried even when no
-native container exists. It preserves configuration and the image pinned by that
-service; it does not pull an image. Disabled containers, unmanaged objects, missing
+native container exists. It recreates the workload from the current local image matching
+the configured reference. Disabled containers, unmanaged objects, missing
 generated units and interrupted container transactions cannot be restarted this
 way. Startup failures are reported without a success message.

@@ -230,10 +230,12 @@ def test_image_suggestions_use_rootful_store(monkeypatch):
 
     def images(argv, **kwargs):
         calls.append(argv)
-        return json.dumps([{'Names': ['docker.io/library/alpine:latest']}, {'Names': None}])
+        return json.dumps([{'Names': ['docker.io/library/alpine:latest']}, {'Names': None, 'Id': 'a' * 64}])
 
     monkeypatch.setattr(process, 'cmd', images)
     result = suggestors.container_images(suggestors.Context())
     assert [item.value for item in result] == ['docker.io/library/alpine:latest']
+    removal = suggestors.container_images(suggestors.Context(), include_ids=True)
+    assert [item.value for item in removal] == ['a' * 12, 'docker.io/library/alpine:latest']
     assert calls[0][-1] == 'images'
     assert calls[0][0] == 'systemd-run'

@@ -12561,6 +12561,43 @@
       "kind": "node",
       "description": "Remove an installed image (net-admin or higher)",
       "children": {
+        "container": {
+          "kind": "node",
+          "description": "Container resources",
+          "children": {
+            "image": {
+              "kind": "leaf_node",
+              "description": "Remove a local image by name or ID",
+              "hints": {
+                "image": "Repository and tag, or the image ID shown by show containers images"
+              },
+              "validators": {
+                "mode": "AND",
+                "checks": {
+                  "container-image": {
+                    "name": "container-image"
+                  }
+                }
+              },
+              "suggestors": [
+                {
+                  "name": "container-images",
+                  "args": {
+                    "include_ids": true
+                  }
+                }
+              ],
+              "command": {
+                "argv": [
+                  "containers.nvyr.op",
+                  "remove",
+                  "@4"
+                ],
+                "stream": true
+              }
+            }
+          }
+        },
         "system": {
           "kind": "node",
           "description": "System resources",

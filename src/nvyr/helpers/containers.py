@@ -101,7 +101,9 @@ def main():
                 section = container_operations.configured_state()['configuration'].get('name', {}).get(value)
                 if section is None:
                     raise RouterError(f'Container {value} is not configured')
-                operations._pull(section['image'])
+                operations._pull(section['image'], name=value)
+            elif operation == 'remove':
+                operations._remove(value)
             elif operation == 'restart':
                 operations._restart(value)
             elif operation == 'restart-pod':
