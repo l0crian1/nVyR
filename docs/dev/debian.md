@@ -32,6 +32,10 @@ To build it locally instead:
 docker build -t nvyr-image-builder -f images/Dockerfile .
 ```
 
+Kernel compilation uses the CPUs available to the Docker builder by default,
+including its CPU affinity and cgroup v2 quota. To limit compiler jobs, add
+`--build-arg NVYR_BUILD_JOBS=4` to the `docker build` command.
+
 This installs the build tools and prepares the pinned kernel, FRR and container-stack
 packages. The initial kernel compilation is substantial; ISO builds reuse the
 compiled package. Docker caches these layers, so subsequent builds reuse unchanged work.
@@ -328,6 +332,17 @@ The image includes `netcat-openbsd` for `nc` diagnostics and scripts. Use the
 [Debian-maintained trixie package](https://packages.debian.org/trixie/netcat-openbsd)
 of [OpenBSD's nc](https://man.openbsd.org/nc.1), following Debian's updates for
 this supplementary tool rather than pinning a separate source build.
+
+The ISO also uses Debian's Trixie packages for on-demand network diagnostics:
+[NetHogs](https://tracker.debian.org/pkg/nethogs), [iftop](https://tracker.debian.org/pkg/iftop),
+[bmon](https://tracker.debian.org/pkg/bmon), [arping and tracepath](https://tracker.debian.org/pkg/iputils),
+[NDisc6](https://tracker.debian.org/pkg/ndisc6), [fping](https://tracker.debian.org/pkg/fping)
+and [sysstat](https://tracker.debian.org/pkg/sysstat). These follow
+[Debian 13's support lifecycle](https://www.debian.org/releases/trixie/).
+For sysstat 12.7.5-2, use trusted activity files with `sar` and `sadf`.
+[Upstream 12.8.1](https://sysstat.github.io/2026/11/15/sysstat-12.8.1.html)
+fixed two issues reading crafted files. Live sampling with `mpstat` does not
+read these files.
 
 ## Troubleshooting
 

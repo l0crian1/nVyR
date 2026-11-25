@@ -21,6 +21,10 @@ ethtool
 firmware-realtek
 iperf3
 tcpdump
+nethogs
+iftop
+bmon
+sysstat
 nmap
 usbutils
 dmidecode
@@ -34,6 +38,10 @@ net-tools
 netcat-openbsd
 procps
 iputils-ping
+iputils-arping
+iputils-tracepath
+ndisc6
+fping
 traceroute
 nftables
 conntrack

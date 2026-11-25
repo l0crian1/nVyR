@@ -4,6 +4,7 @@ import argparse
 from datetime import datetime, timezone
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import shutil
@@ -137,6 +138,25 @@ def source_bundle(destination, work, baseline, source):
             archive.add(path, arcname=name)
 
 
+def kernel_jobs():
+    override = os.environ.get('NVYR_BUILD_JOBS')
+    if override is not None:
+        jobs = int(override)
+        if jobs < 1:
+            raise ValueError('NVYR_BUILD_JOBS must be positive')
+        return jobs
+
+    jobs = len(os.sched_getaffinity(0))
+    # Docker can limit CPU time without narrowing the build process's CPU affinity.
+    cpu_max = Path('/sys/fs/cgroup/cpu.max')
+    if cpu_max.is_file():
+        quota, period = cpu_max.read_text().split()
+        if quota != 'max':
+            jobs = min(jobs, math.ceil(int(quota) / int(period)))
+
+    return jobs
+
+
 def build(destination):
     """Compile once inside the builder; subsequent ISO builds reuse checked packages."""
     if os.geteuid() != 0:
@@ -144,9 +164,7 @@ def build(destination):
     architecture = subprocess.check_output(['dpkg', '--print-architecture'], text=True).strip()
     if architecture != 'amd64':
         raise RuntimeError('The pinned kernel build targets amd64 only')
-    jobs = int(os.environ.get('NVYR_BUILD_JOBS', '4'))
-    if jobs < 1:
-        raise ValueError('NVYR_BUILD_JOBS must be positive')
+    jobs = kernel_jobs()
 
     # Kernel packaging does not declare every compression/BTF tool as a build dependency.
     missing = [tool for tool in ('zstd', 'xz', 'pahole', 'openssl', 'cpio', 'rsync', 'depmod')

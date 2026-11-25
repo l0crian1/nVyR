@@ -356,7 +356,9 @@ def test_iso_orchestration_stages_metadata_before_live_build(tmp_path, iso_build
     packages = (stage/'config/package-lists/router.list.chroot').read_text().splitlines()
 
     assert {'wget', 'ethtool', 'iperf3', 'tcpdump', 'nmap', 'usbutils', 'dmidecode',
-            'dnsutils', 'mtr-tiny', 'curl', 'python3-pytest', 'firmware-realtek'} <= set(packages)
+            'dnsutils', 'mtr-tiny', 'curl', 'python3-pytest', 'firmware-realtek',
+            'nethogs', 'iftop', 'bmon', 'sysstat', 'iputils-arping', 'iputils-tracepath',
+            'ndisc6', 'fping'} <= set(packages)
 
 
 @pytest.mark.skipif(sys.platform == 'win32', reason='ISO orchestration requires a POSIX shell')

@@ -1,4 +1,4 @@
-# builder-version: 0.1.8
+# builder-version: 0.1.9
 FROM debian:trixie
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -35,6 +35,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean
 COPY build_tools/kernel_packages.py /opt/nvyr-build/build_tools/kernel_packages.py
 COPY images/kernel-sources.lock images/Dockerfile /opt/nvyr-build/images/
+ARG NVYR_BUILD_JOBS
 RUN python3 /opt/nvyr-build/build_tools/kernel_packages.py /opt/nvyr-kernel-packages
 
 # Keep this small collector build after the routing and kernel package layers.
