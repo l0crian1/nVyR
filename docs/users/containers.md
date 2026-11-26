@@ -224,12 +224,25 @@ can take time for large directories. Verify account names against the image you 
 the `redis` example requires that account in the image.
 
 Deleting, disabling, or recreating a container preserves its persistent directories.
-The Podman image cache and writable container layers are separately stored in
-`/config/podman/storage`; these are not allowed as user-configured bind mounts.
-Podman uses `fuse-overlayfs` for image layers so storage works on the live ISO's
-overlay filesystem as well as installed systems.
-Writable container layers are disposable. Stop workloads before copying their data
-for an image upgrade if application-consistent data is required.
+Podman keeps workload images in `/var/lib/containers/images` and writable
+container layers and runtime records in `/var/lib/containers/storage` on each
+installed image. It uses `fuse-overlayfs`
+on both live and installed systems.
+
+Starting with the new storage layout, `add system image` copies the workload
+image directory directly, including local builds, tags and untagged images.
+Podman can use that copy immediately without contacting a registry. Writable
+container layers and Podman's runtime database stay with the original
+installation. Let native Podman builds or image changes finish before starting
+an upgrade. Disable database workloads before an upgrade
+when their persistent volume data requires a consistent copy.
+
+**Upgrading from 0.4.0.** Disable each workload, commit and save before running
+`add system image`. After boot, pull or load its images, delete the disable
+settings, commit and save. For a local-only image, use `podman save` before the
+upgrade and `podman load` afterward. The old installer still copies
+`/config/podman/storage`, but the new installation uses the new store. Keep
+`/config/podman/managed.json` and your configured bind volumes.
 
 Defaults are 512 MiB memory (no additional swap allowance), one CPU, 256 processes/
 threads, and `on-failure` restart policy. Override with:

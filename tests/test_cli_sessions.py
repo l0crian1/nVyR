@@ -225,7 +225,10 @@ def test_session_storage_and_environment_are_separate(monkeypatch):
     monkeypatch.setenv('CONTAINER_HOST', 'unix:///malicious')
     monkeypatch.setenv('PYTHONPATH', '/malicious')
     assert '/var/lib/nvyr-sessions/storage' in session_runtime.podman('ps')
-    assert '/config/podman/storage' not in session_runtime.podman('ps')
+    arguments = session_runtime.podman('ps')
+    assert arguments[arguments.index('--imagestore') + 1] == '/var/lib/nvyr-sessions/images'
+    assert arguments[arguments.index('--tmpdir') + 1] == '/run/nvyr-sessions/libpod'
+    assert '/var/lib/containers/storage' not in arguments
     assert 'CONTAINER_HOST' not in session_runtime.environment()
     assert 'PYTHONPATH' not in session_runtime.environment()
 

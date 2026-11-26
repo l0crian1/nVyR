@@ -68,7 +68,8 @@ def test_packaged_storage_on_overlay_filesystem(tmp_path):
     assert cmd(['stat', '-f', '-c', '%T', str(tmp_path)]).strip() == 'overlayfs'
     repository = Path(__file__).resolve().parents[1]
     text = (repository / 'packaging/containers-storage.conf').read_text()
-    text = text.replace('/config/podman/storage', str(tmp_path / 'graph'))
+    text = text.replace('/var/lib/containers/storage', str(tmp_path / 'graph'))
+    text = text.replace('/var/lib/containers/images', str(tmp_path / 'images'))
     text = text.replace('/run/containers/storage', str(tmp_path / 'run'))
     storage = tmp_path / 'storage.conf'
     storage.write_text(text)

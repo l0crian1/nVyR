@@ -24,6 +24,22 @@ from nvyr.storage import Store, atomic_json, read_saved, saved_document, has_sav
 UUID = '11111111-2222-3333-4444-555555555555'
 
 
+def test_stage_only_workload_image_store(tmp_path, monkeypatch):
+    source = tmp_path / 'containers'
+    staging = tmp_path / 'staging'
+    native_images = source / 'images'
+    native_images.mkdir(parents=True)
+    (native_images / 'image-data').write_text('layer')
+    (source / 'storage').mkdir()
+    (source / 'storage/db.sql').touch()
+    monkeypatch.setattr(image_migration, 'CONTAINER_RUNTIME', tmp_path)
+
+    image_migration.stage_workload_images(staging, native_images)
+    destination = staging / 'overlay/upper/var/lib/containers'
+    assert (destination / 'images/image-data').read_text() == 'layer'
+    assert not (destination / 'storage').exists()
+
+
 @pytest.fixture
 def media(tmp_path):
     path = tmp_path/'media'

@@ -39,6 +39,7 @@ ProtectSystem=strict
 # shadow tools atomically replace account databases and create account homes.
 ReadWritePaths=/run/nvyr-logging /var/log/nvyr
 ReadWritePaths=/run/nvyr-frr /run/nvyr-ssh /run/nvyr-kea /run/nvyr-containers /run/nvyr-ntp /run/nvyr-dns /etc /home /config
+ReadWritePaths=/var/lib/containers/storage /var/lib/containers/images
 # Firewall owns registered networking tunables; unrelated kernel trees stay protected.
 ReadWritePaths=/proc/sys/net/ipv4 /proc/sys/net/ipv6 /proc/sys/net/netfilter
 ReadWritePaths=/run/sysctl.d /run/nvyr-kernel-settings

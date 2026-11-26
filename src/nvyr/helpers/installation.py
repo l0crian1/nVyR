@@ -275,9 +275,14 @@ def ask_administrator():
             print(error)
 
 
-def space_required(document, source=None):
+def space_required(document, source=None, workload_images=None):
     payload = sum(item['bytes'] for item in document['files'].values())
-    copied = int(cmd(['du', '-sx', '--block-size=1', str(source)]).split()[0]) if source else 0
+    copied = 0
+    if source:
+        copied = int(cmd(['du', '-sx', '--block-size=1', '--exclude='+str(source/'podman/storage'),
+                          str(source)]).split()[0])
+    if workload_images is not None and workload_images.is_dir():
+        copied += int(cmd(['du', '-sx', '--block-size=1', str(workload_images)]).split()[0])
 
     return payload+copied+512*1024**2
 
@@ -382,12 +387,13 @@ def _add(source):
             return
 
         with images.locked():
-            if shutil.disk_usage(STORAGE).free < space_required(document, Path('/config')):
+            workload_images = image_migration.WORKLOAD_IMAGES
+            if shutil.disk_usage(STORAGE).free < space_required(document, Path('/config'), workload_images):
                 raise RouterError('Insufficient disk space for this image and an independent configuration copy')
 
             images.add(media, document, name, partial(image_migration.prepare, source=Path('/config'),
                        retain=retain, ssh_keys=ssh_keys, lock_state=Path('/var/lib/nvyr'),
-                       confirm_vanished=confirm_vanished,
+                       confirm_vanished=confirm_vanished, workload_images=workload_images,
                        exclude=('nvyr-images/'+iso.name,) if automatic else ()), make_default=make_default)
 
     if automatic:
@@ -462,7 +468,8 @@ def _install():
     recheck_disk(disk)
 
     if fresh:
-        if disk['size'] < space_required(document, Path('/config') if retain else None)+600*1024**2:
+        workload_images = image_migration.WORKLOAD_IMAGES if retain else None
+        if disk['size'] < space_required(document, Path('/config') if retain else None, workload_images)+600*1024**2:
             raise RouterError('The selected disk is too small for this image and configuration')
 
         esp_device, root_device = partition(disk['name'])
@@ -480,7 +487,7 @@ def _install():
                            source=Path('/config') if retain else None, retain=retain, ssh_keys=False,
                            live_state=Path('/var/lib/nvyr') if retain else None,
                            lock_state=Path('/var/lib/nvyr') if retain else None,
-                           confirm_vanished=confirm_vanished,
+                           confirm_vanished=confirm_vanished, workload_images=workload_images,
                            administrator=administrator, developer=developer), make_default=True, filesystem_uuid=filesystem_uuid)
                 bootloader(root, esp, disk['name'])
     else:
@@ -491,12 +498,15 @@ def _install():
                 if images.catalog() != catalog:
                     raise RouterError('The installation changed during confirmation; run install image again')
 
-                source = images.path(catalog['default'])/'config'
-                if shutil.disk_usage(root).free < space_required(document, source):
+                previous = images.path(catalog['default'])
+                source = previous/'config'
+                workload_images = previous/'overlay/upper'/image_migration.WORKLOAD_IMAGES.relative_to('/')
+                if shutil.disk_usage(root).free < space_required(document, source, workload_images):
                     raise RouterError('Insufficient free space for the new image')
 
                 images.add(media, document, name, partial(image_migration.prepare, source=source,
-                           retain=retain, ssh_keys=ssh_keys, confirm_vanished=confirm_vanished), make_default=make_default)
+                           retain=retain, ssh_keys=ssh_keys, confirm_vanished=confirm_vanished,
+                           workload_images=workload_images), make_default=make_default)
 
     print(f'Installed {name}. Remove the live ISO before booting from disk.')
 

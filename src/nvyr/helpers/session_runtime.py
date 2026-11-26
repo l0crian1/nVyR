@@ -26,7 +26,8 @@ SOCKET = '/run/nvyr/configd.sock'
 def podman(*arguments):
     """Never use workload storage, user container settings, or a remote Podman socket."""
     return ['/usr/bin/podman', '--root', str(STORAGE / 'storage'),
-            '--runroot', str(RUNTIME / 'storage'), '--storage-driver=overlay',
+            '--imagestore', str(STORAGE / 'images'), '--runroot', str(RUNTIME / 'storage'),
+            '--tmpdir', str(RUNTIME / 'libpod'), '--storage-driver=overlay',
             '--storage-opt=overlay.mount_program=/usr/bin/fuse-overlayfs', *arguments]
 
 

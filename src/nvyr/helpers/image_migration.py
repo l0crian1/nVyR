@@ -11,10 +11,12 @@ import shutil
 
 from nvyr.errors import RouterError
 from nvyr.helpers.accounts import factory_configuration
-from nvyr.helpers.container_config import VOLUME_ROOT
+from nvyr.helpers.container_config import RUNTIME as CONTAINER_RUNTIME, VOLUME_ROOT
 from nvyr.helpers.process import cmd, rc_cmd
 from nvyr.storage import atomic_json, read_saved, saved_document
 from nvyr.helpers.images import SAVED
+
+WORKLOAD_IMAGES = Path('/var/lib/containers/images')
 
 
 @contextmanager
@@ -46,13 +48,24 @@ def copy_directory(source, destination, *, exclude=(), vanished=None):
 
 def persistent_files(destination, *, source, **options):
     if source is not None:
-        copy_directory(source, destination, exclude=options.get('exclude', ()),
+        copy_directory(source, destination, exclude=('podman/storage', *options.get('exclude', ())),
                        vanished=options.get('vanished'))
 
 
 def daemon_state(destination, *, source, live_state=None, **options):
     if live_state is not None:
         copy_directory(Path(live_state), destination/'.nvyr', vanished=options.get('vanished'))
+
+
+def stage_workload_images(staging, source):
+    """Copy only Podman's native image store into the incoming image's writable root."""
+    if source.is_dir():
+        print('Copying local workload images...', flush=True)
+        destination = staging / 'overlay/upper' / WORKLOAD_IMAGES.relative_to('/')
+        # The running router's image update and delete commands use this same lock.
+        with (CONTAINER_RUNTIME / 'lock').open('a') as lock:
+            fcntl.flock(lock, fcntl.LOCK_SH)
+            copy_directory(source, destination)
 
 
 # Migration steps own separate parts of the target. Future persistent services
@@ -116,7 +129,8 @@ def validate_records(private):
 
 
 def prepare(staging, *, source=None, retain=True, ssh_keys=True, administrator=None,
-            live_state=None, lock_state=None, exclude=(), developer=None, confirm_vanished=None):
+            live_state=None, lock_state=None, exclude=(), developer=None, confirm_vanished=None,
+            workload_images=None):
     """Populate a staged image's persistent configuration before publication.
 
     Providers copy durable files under the optional source snapshot lock. Retain,
@@ -231,3 +245,6 @@ def prepare(staging, *, source=None, retain=True, ssh_keys=True, administrator=N
     archive.chmod(0o2775)
 
     atomic_json(saved, saved_document(configuration, metadata=metadata), mode=0o644)
+
+    if workload_images is not None:
+        stage_workload_images(staging, workload_images)
